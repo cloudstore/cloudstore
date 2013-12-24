@@ -15,6 +15,14 @@
 
 		<!-- Always aggregate. -->
 		<aggregate>true</aggregate>
+
+		<!-- Everything is UTF-8 (except for files that are specified differently - e.g. properties) -->		
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<!-- Java version. -->
+		<maven.compiler.source>6</maven.compiler.source>
+		<maven.compiler.target>6</maven.compiler.target>
 	</properties>
 
 	<dependencyManagement>
