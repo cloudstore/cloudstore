@@ -1,0 +1,98 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>co.codewizards.cloudstore</groupId>
+	<artifactId>co.codewizards.cloudstore.test</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<dependencies>
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.webapp</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.client</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>test</id>
+			<activation>
+				<property>
+					<name>maven.test.skip</name>
+					<value>!true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.mortbay.jetty</groupId>
+						<artifactId>jetty-maven-plugin</artifactId>
+						<!-- <version>8.1.0.RC2</version> -->
+						<configuration>
+							<war>${project.build.directory}/../../co.codewizards.cloudstore.webapp/target/co.codewizards.cloudstore.webapp-${cloudstore.version}.war</war>
+							<webAppConfig>
+								<contextPath>/co.codewizards.cloudstore.webapp</contextPath>
+							</webAppConfig>
+							<scanIntervalSeconds>10</scanIntervalSeconds>
+							<stopKey>foo</stopKey>
+							<stopPort>3999</stopPort>
+							<deamon>true</deamon>
+							<connectors>
+								<connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+									<port>4000</port>
+									<maxIdleTime>60000</maxIdleTime>
+								</connector>
+							</connectors>
+							<systemProperties>
+								<systemProperty>
+									<name>log4j.configuration</name>
+									<value>file:${project.basedir}/src/test/resources/log4j.properties</value>
+								</systemProperty>
+								<systemProperty>
+									<name>org.nightlabs.licence.webapp.LicenceREST.TEST_MODE</name>
+									<value>true</value>
+								</systemProperty>
+								<systemProperty>
+									<name>org.nightlabs.licence.webapp.LicenceREST.dataDirectory</name>
+									<value>${project.build.directory}/.org.nightlabs.licence</value>
+								</systemProperty>
+							</systemProperties>
+						</configuration>
+						<executions>
+							<execution>
+								<id>start-jetty</id>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>deploy-war</goal>
+								</goals>
+								<configuration>
+									<scanIntervalSeconds>0</scanIntervalSeconds>
+									<daemon>true</daemon>
+								</configuration>
+							</execution>
+							<execution>
+								<id>stop-jetty</id>
+								<phase>post-integration-test</phase>
+								<goals>
+									<goal>stop</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<build>
+		<plugins>
+
+		</plugins>
+	</build>
+</project>
