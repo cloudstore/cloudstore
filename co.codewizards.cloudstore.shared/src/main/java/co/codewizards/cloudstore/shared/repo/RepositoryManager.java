@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -20,24 +21,26 @@ import co.codewizards.cloudstore.shared.util.PropertiesUtil;
 
 public class RepositoryManager {
 
-	private final String VAR_LOCALROOT = "repository.localRoot";
+	private final String VAR_LOCALROOT = "repository.localRoot"; // TODO why is this not static?!
 
-	private final String META_DIRECTORY_NAME = ".cloudstore";
-	private final String META_FILE_NAME = "cloudstore-persistence.properties";
+	private final String META_DIRECTORY_NAME = ".cloudstore"; // TODO why is this not static?!
+	private final String META_FILE_NAME = "cloudstore-persistence.properties"; // TODO why is this not static?!
+
+	// TODO why is this a non-javadoc-comment instead of proper javadoc at the getter-method?!
 	/*
 	 * Canonical File
 	 */
 	private File localRoot;
 	private PersistenceManagerFactory persistenceManagerFactory;
 
-	public RepositoryManager(File localRoot, boolean createRepository) {
+	public RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
 		this.localRoot = assertNotNull("localRoot", localRoot);
 
 		initMetaDirectory(createRepository);
 		initPersistenceManagerFactory(createRepository);
 	}
 
-	private void initMetaDirectory(boolean createRepository) {
+	private void initMetaDirectory(boolean createRepository) throws RepositoryManagerException {
 		if (createRepository) {
 			File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
 			if (!metaDirectory.exists())
@@ -52,7 +55,7 @@ public class RepositoryManager {
 		}
 	}
 
-	private void initPersistenceManagerFactory(boolean createRepository) {
+	private void initPersistenceManagerFactory(boolean createRepository) throws RepositoryManagerException {
 		if (createRepository) {
 			Map<String, String> variablesMap = new HashMap<String, String>();
 			variablesMap.put(VAR_LOCALROOT, localRoot.getAbsolutePath());
@@ -87,6 +90,7 @@ public class RepositoryManager {
 				pm.close();
 			}
 		}
+		// TODO what about an existing repository?!
 	}
 
 	public File getLocalRoot() {
@@ -95,5 +99,14 @@ public class RepositoryManager {
 
 	public PersistenceManagerFactory getPersistenceManagerFactory() {
 		return persistenceManagerFactory;
+	}
+
+	public URL getRemoteRoot() {
+		throw new UnsupportedOperationException("NYI"); // TODO implement
+		// Read from the database!
+	}
+
+	public void setRemoteRoot(URL url) {
+		throw new UnsupportedOperationException("NYI"); // TODO implement
 	}
 }

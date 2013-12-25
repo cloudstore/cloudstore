@@ -4,7 +4,6 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class RepositoryManagerRegistry
 		return repositoryManager;
 	}
 
-	public RepositoryManager createRepositoryManager(File localRoot, URL url) {
+	public RepositoryManager createRepositoryManager(File localRoot) {
 		localRoot = canonicalize(localRoot);
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
