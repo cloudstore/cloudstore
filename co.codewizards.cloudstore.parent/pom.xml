@@ -40,6 +40,12 @@
 			</dependency>
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.test</artifactId>
+				<classifier>war</classifier>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.webapp</artifactId>
 				<type>war</type>
 				<version>${cloudstore.version}</version>
