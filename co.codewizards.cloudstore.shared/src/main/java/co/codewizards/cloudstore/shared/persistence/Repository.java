@@ -8,7 +8,8 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 
 @PersistenceCapable
-public class Repository extends Entity {
+public class Repository extends Entity
+{
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private UUID uuid;
 	private URL remoteRoot;

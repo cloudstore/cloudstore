@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.shared.repo;
 
-import static co.codewizards.cloudstore.shared.util.ObjectUtil.*;
+import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +27,21 @@ public class RepositoryManagerRegistry
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
 		if (repositoryManager == null) {
-			repositoryManager = new RepositoryManager(localRoot);
+			repositoryManager = new RepositoryManager(localRoot, false);
 			localRoot2RepositoryManager.put(localRoot, repositoryManager);
 		}
+		return repositoryManager;
+	}
+
+	public RepositoryManager createRepositoryManager(File localRoot, URL url) {
+		localRoot = canonicalize(localRoot);
+
+		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
+		if (repositoryManager != null) {
+			throw new IllegalArgumentException(String.format("Repository already exists: %s", localRoot));
+		}
+		repositoryManager = new RepositoryManager(localRoot, true);
+		localRoot2RepositoryManager.put(localRoot, repositoryManager);
 		return repositoryManager;
 	}
 
@@ -41,11 +53,5 @@ public class RepositoryManagerRegistry
 			throw new RuntimeException(e);
 		}
 		return localRoot;
-	}
-
-	public RepositoryManager createRepositoryManager(File localRoot, URL url) {
-		localRoot = canonicalize(localRoot);
-
-		throw new UnsupportedOperationException("NYI"); // TODO implement
 	}
 }
