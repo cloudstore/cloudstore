@@ -20,7 +20,15 @@ import co.codewizards.cloudstore.shared.persistence.Repository;
 import co.codewizards.cloudstore.shared.util.IOUtil;
 import co.codewizards.cloudstore.shared.util.PropertiesUtil;
 
-
+/**
+ * Manager of a repository.
+ * <p>
+ * All operations on a repository are performed via this manager (or an object associated with it).
+ * <p>
+ * For every repository (identified by its root directory) there is one single instance. Use the
+ * {@link RepositoryManagerRegistry} to obtain a {@code RepositoryManager}.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class RepositoryManager {
 
 	private final String VAR_LOCALROOT = "repository.localRoot"; // TODO why is this not static?!

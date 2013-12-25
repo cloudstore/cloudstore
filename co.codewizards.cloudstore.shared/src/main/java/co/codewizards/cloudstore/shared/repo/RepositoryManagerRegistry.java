@@ -10,6 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Registry of {@link RepositoryManager}s.
+ * <p>
+ * There is one single instance of this registry. It serves as the central point to obtain
+ * {@code RepositoryManager}s.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class RepositoryManagerRegistry
 {
 	private Map<File, RepositoryManager> localRoot2RepositoryManager = new HashMap<File, RepositoryManager>();
@@ -54,6 +61,8 @@ public class RepositoryManagerRegistry
 	 * relative or absolute.
 	 * @return the {@link RepositoryManager} for the given {@code localRoot}. Never <code>null</code>.
 	 * @see #createRepositoryManager(File)
+	 * @throws RepositoryManagerException if the given {@code localRoot} does not denote the root-directory
+	 * of an existing repository.
 	 */
 	public RepositoryManager getRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
 		localRoot = canonicalize(localRoot);
@@ -71,11 +80,18 @@ public class RepositoryManagerRegistry
 	 * <p>
 	 * This method turns an existing directory into a repository. If {@code localRoot} already is a repository,
 	 * a {@link FileAlreadyRepositoryException} is thrown.
-	 *
-	 * @param localRoot
-	 * @return
-	 * @throws RepositoryManagerException
-	 *
+	 * <p>
+	 * If {@code localRoot} is not an existing directory in the file system, one of the following
+	 * exceptions is thrown:
+	 * <ul>
+	 * <li>{@link FileNotFoundException}
+	 * <li>{@link FileNoDirectoryException}
+	 * </ul>
+	 * @param localRoot the directory which is turned into the repository's root. Must not be <code>null</code>.
+	 * Can be relative or absolute.
+	 * @return the {@link RepositoryManager} for the given {@code localRoot}. Never <code>null</code>.
+	 * @throws RepositoryManagerException if the given {@code localRoot} does not denote an existing directory
+	 * or if it is a directory inside an existing repository.
 	 */
 	public RepositoryManager createRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
 		localRoot = canonicalize(localRoot);
