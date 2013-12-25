@@ -1,4 +1,5 @@
-package co.codewizards.cloudstore.client;
+package co.codewizards.cloudstore.test;
+
 
 import java.io.File;
 

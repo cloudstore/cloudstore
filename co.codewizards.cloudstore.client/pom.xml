@@ -108,11 +108,6 @@
 		</dependency>
 		<!-- END logging -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.shared</artifactId>
 		</dependency>
