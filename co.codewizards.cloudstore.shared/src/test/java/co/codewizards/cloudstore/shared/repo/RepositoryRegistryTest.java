@@ -79,6 +79,25 @@ public class RepositoryRegistryTest {
 	public void createRepositoryManagerForRepoDirectory() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot();
 		assertThat(localRoot).doesNotExist();
+		localRoot.mkdirs();
+		assertThat(localRoot).isDirectory();
+		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(localRoot);
+		assertThat(repositoryManager).isNotNull();
+		repositoryManagerRegistry.createRepositoryManager(localRoot);
+	}
+
+	/**
+	 * Expects the same behaviour as {@link #createRepositoryManagerForRepoDirectory()}
+	 */
+	@Test(expected=FileAlreadyRepositoryException.class)
+	public void createRepositoryManagerForRepoDirectoryWithClose() throws Exception {
+		File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot).doesNotExist();
+		localRoot.mkdirs();
+		assertThat(localRoot).isDirectory();
+		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(localRoot);
+		assertThat(repositoryManager).isNotNull();
+		repositoryManager.close();
 		repositoryManagerRegistry.createRepositoryManager(localRoot);
 	}
 

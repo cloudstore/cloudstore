@@ -4,12 +4,28 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RepositoryManagerRegistry
 {
 	private Map<File, RepositoryManager> localRoot2RepositoryManager = new HashMap<File, RepositoryManager>();
+
+	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
+
+	private RepositoryManagerCloseListener repositoryManagerCloseListener = new RepositoryManagerCloseListener() {
+		@Override
+		public void preClose(RepositoryManagerCloseEvent event) {
+			preRepositoryManagerClose(event.getRepositoryManager());
+		}
+		@Override
+		public void postClose(RepositoryManagerCloseEvent event) {
+			postRepositoryManagerClose(event.getRepositoryManager());
+		}
+	};
 
 	private RepositoryManagerRegistry() {}
 
@@ -21,27 +37,75 @@ public class RepositoryManagerRegistry
 		return RepositoryManagerRegistryHolder.INSTANCE;
 	}
 
-	public RepositoryManager getRepositoryManager(File localRoot) {
+	/**
+	 * Get the {@link RepositoryManager} for the given {@code localRoot}.
+	 * <p>
+	 * If there is already a {@code RepositoryManager} instance for this {@code localRoot}, the same
+	 * instance is returned. If there is none, yet, it is implicitly instantiated and enlisted.
+	 * <p>
+	 * If {@code localRoot} is not an existing repository in the file system, one of the following
+	 * exceptions is thrown:
+	 * <ul>
+	 * <li>{@link FileNotFoundException}
+	 * <li>{@link FileNoDirectoryException}
+	 * <li>{@link FileNoRepositoryException}
+	 * </ul>
+	 * @param localRoot the root-directory of the repository. Must not be <code>null</code>. Can be
+	 * relative or absolute.
+	 * @return the {@link RepositoryManager} for the given {@code localRoot}. Never <code>null</code>.
+	 * @see #createRepositoryManager(File)
+	 */
+	public RepositoryManager getRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
 		localRoot = canonicalize(localRoot);
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
 		if (repositoryManager == null) {
 			repositoryManager = new RepositoryManager(localRoot, false);
-			localRoot2RepositoryManager.put(localRoot, repositoryManager);
+			enlist(repositoryManager);
 		}
 		return repositoryManager;
 	}
 
-	public RepositoryManager createRepositoryManager(File localRoot) {
+	/**
+	 * Create the {@link RepositoryManager} for the given {@code localRoot}.
+	 * <p>
+	 * This method turns an existing directory into a repository. If {@code localRoot} already is a repository,
+	 * a {@link FileAlreadyRepositoryException} is thrown.
+	 *
+	 * @param localRoot
+	 * @return
+	 * @throws RepositoryManagerException
+	 *
+	 */
+	public RepositoryManager createRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
 		localRoot = canonicalize(localRoot);
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
 		if (repositoryManager != null) {
-			throw new IllegalArgumentException(String.format("Repository already exists: %s", localRoot));
+			throw new FileAlreadyRepositoryException(localRoot);
 		}
 		repositoryManager = new RepositoryManager(localRoot, true);
-		localRoot2RepositoryManager.put(localRoot, repositoryManager);
+		enlist(repositoryManager);
 		return repositoryManager;
+	}
+
+	public synchronized void close() {
+		for (RepositoryManager repositoryManager : new ArrayList<RepositoryManager>(localRoot2RepositoryManager.values())) {
+			repositoryManager.close();
+		}
+	}
+
+	public void addRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
+		repositoryManagerCloseListeners.add(listener);
+	}
+
+	public void removeRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
+		repositoryManagerCloseListeners.remove(listener);
+	}
+
+	private void enlist(RepositoryManager repositoryManager) {
+		localRoot2RepositoryManager.put(repositoryManager.getLocalRoot(), repositoryManager);
+		repositoryManager.addRepositoryManagerCloseListener(repositoryManagerCloseListener);
 	}
 
 	private File canonicalize(File localRoot) {
@@ -52,5 +116,26 @@ public class RepositoryManagerRegistry
 			throw new RuntimeException(e);
 		}
 		return localRoot;
+	}
+
+	private void preRepositoryManagerClose(RepositoryManager repositoryManager) {
+		RepositoryManagerCloseEvent event = new RepositoryManagerCloseEvent(this, repositoryManager);
+		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+			listener.preClose(event);
+		}
+	}
+
+	private void postRepositoryManagerClose(RepositoryManager repositoryManager) {
+		assertNotNull("repositoryManager", repositoryManager);
+		synchronized (this) {
+			RepositoryManager repositoryManager2 = localRoot2RepositoryManager.remove(repositoryManager.getLocalRoot());
+			if (repositoryManager != repositoryManager2) {
+				throw new IllegalArgumentException("repositoryManager is unknown!");
+			}
+		}
+		RepositoryManagerCloseEvent event = new RepositoryManagerCloseEvent(this, repositoryManager);
+		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+			listener.postClose(event);
+		}
 	}
 }

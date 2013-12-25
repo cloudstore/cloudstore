@@ -6,9 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
@@ -32,8 +34,9 @@ public class RepositoryManager {
 	 */
 	private File localRoot;
 	private PersistenceManagerFactory persistenceManagerFactory;
+	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
 
-	public RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
+	protected RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
 		this.localRoot = assertNotNull("localRoot", localRoot);
 
 		initMetaDirectory(createRepository);
@@ -108,5 +111,31 @@ public class RepositoryManager {
 
 	public void setRemoteRoot(URL url) {
 		throw new UnsupportedOperationException("NYI"); // TODO implement
+	}
+
+	public void addRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
+		repositoryManagerCloseListeners.add(listener);
+	}
+
+	public void removeRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
+		repositoryManagerCloseListeners.remove(listener);
+	}
+
+	public void close() {
+		RepositoryManagerCloseEvent event = new RepositoryManagerCloseEvent(this, this);
+		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+			listener.preClose(event);
+		}
+
+		synchronized (this) {
+			if (persistenceManagerFactory != null) {
+				persistenceManagerFactory.close();
+				persistenceManagerFactory = null;
+			}
+		}
+
+		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+			listener.postClose(event);
+		}
 	}
 }
