@@ -16,6 +16,7 @@
 		<module>../co.codewizards.cloudstore.client</module>
 		<module>../co.codewizards.cloudstore.parent</module>
 		<module>../co.codewizards.cloudstore.shared</module>
+		<module>../co.codewizards.cloudstore.test</module>
 		<module>../co.codewizards.cloudstore.webapp</module>
 	</modules>
 </project>

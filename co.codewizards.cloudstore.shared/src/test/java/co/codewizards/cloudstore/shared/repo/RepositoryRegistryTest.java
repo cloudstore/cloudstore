@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.test;
+package co.codewizards.cloudstore.shared.repo;
 
 
 import java.io.File;
@@ -7,10 +7,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.shared.repo.RepositoryManagerRegistry;
+public class RepositoryRegistryTest {
+	private static final Logger logger = LoggerFactory.getLogger(RepositoryRegistryTest.class);
 
-public class TestRepositoryRegistry {
-	private static final Logger logger = LoggerFactory.getLogger(TestRepositoryRegistry.class);
 	@Test
 	public void createRepository() {
 		RepositoryManagerRegistry repositoryManagerRegistry = RepositoryManagerRegistry.getInstance();
