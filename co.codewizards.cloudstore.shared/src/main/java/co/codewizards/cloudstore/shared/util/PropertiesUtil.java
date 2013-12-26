@@ -16,9 +16,9 @@ import java.util.regex.Pattern;
  * @author Marc Klinger - marc[at]nightlabs[dot]de
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-public class PropertiesUtil
+public final class PropertiesUtil
 {
-	protected PropertiesUtil() { }
+	private PropertiesUtil() { }
 
 	/**
 	 * Suffix appended to the real property-key to store the boolean flag whether

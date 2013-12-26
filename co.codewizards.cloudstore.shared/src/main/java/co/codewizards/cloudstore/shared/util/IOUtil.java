@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 
-public class IOUtil {
+public final class IOUtil {
 	/**
 	 * UTF-8 caracter set name.
 	 */
@@ -48,6 +48,7 @@ public class IOUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(IOUtil.class);
 
+	private IOUtil() { }
 
 	/**
 	 * This method finds - if possible - a relative path for addressing

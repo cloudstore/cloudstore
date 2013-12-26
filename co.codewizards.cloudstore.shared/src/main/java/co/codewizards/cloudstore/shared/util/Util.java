@@ -4,9 +4,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-public class Util {
-	protected Util() { }
-	
+public final class Util {
+	private Util() { }
+
 	/**
 	 * Convert an URL to an URI.
 	 * @param url The URL to cenvert
@@ -34,7 +34,7 @@ public class Util {
 	{
 		return System.getProperty("user.name"); //$NON-NLS-1$
 	}
-	
+
 	public static <T> T assertNotNull(String name, T object) {
 		if (object == null)
 			throw new IllegalArgumentException(String.format("%s == null", name));

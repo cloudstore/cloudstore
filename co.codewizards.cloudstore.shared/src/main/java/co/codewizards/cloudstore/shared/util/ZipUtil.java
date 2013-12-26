@@ -22,8 +22,10 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 import co.codewizards.cloudstore.shared.progress.SubProgressMonitor;
 
-public class ZipUtil {
+public final class ZipUtil {
 	private static final Logger logger = LoggerFactory.getLogger(ZipUtil.class);
+
+	private ZipUtil() { }
 
 	/**
 	 * Recursively zips all entries of the given zipInputFolder to

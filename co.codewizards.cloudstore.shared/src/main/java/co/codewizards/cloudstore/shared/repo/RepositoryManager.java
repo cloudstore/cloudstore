@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.shared.repo;
 
+import static co.codewizards.cloudstore.shared.util.DerbyUtil.*;
 import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
@@ -43,6 +44,7 @@ public class RepositoryManager {
 	private final File localRoot;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
+	private String connectionURL;
 
 	private boolean deleteMetaDir;
 
@@ -167,6 +169,7 @@ public class RepositoryManager {
 			throw new RuntimeException(e);
 		}
 		Map<String, String> persistenceProperties = PropertiesUtil.filterProperties(rawProperties, variablesMap);
+		connectionURL = persistenceProperties.get(CONNECTION_URL_KEY);
 
 		if (createRepository) {
 			modifyConnectionURLForCreate(persistenceProperties);
@@ -175,7 +178,7 @@ public class RepositoryManager {
 	}
 
 	private void modifyConnectionURLForCreate(Map<String, String> persistenceProperties) {
-		String value = persistenceProperties.get(CONNECTION_URL_KEY);
+		String value = connectionURL;
 		if (value == null || value.trim().isEmpty()) {
 			throw new RepositoryCorruptException(localRoot,
 					String.format("Property '%s' missing in '%s'.", CONNECTION_URL_KEY, PERSISTENCE_PROPERTIES_FILE_NAME));
@@ -184,6 +187,7 @@ public class RepositoryManager {
 		String newValue = value.trim() + ";create=true";
 		persistenceProperties.put(CONNECTION_URL_KEY, newValue);
 	}
+
 
 	/**
 	 * Gets the repository's local root directory.
@@ -217,6 +221,7 @@ public class RepositoryManager {
 			if (persistenceManagerFactory != null) {
 				persistenceManagerFactory.close();
 				persistenceManagerFactory = null;
+				shutdownDerbyDatabase(connectionURL);
 			}
 		}
 
