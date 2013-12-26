@@ -33,6 +33,7 @@ import co.codewizards.cloudstore.shared.util.PropertiesUtil;
 public class RepositoryManager {
 
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
+	private static final String VAR_META_DIR = "repository.metaDir";
 
 	private static final String META_DIRECTORY_NAME = ".cloudstore";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
@@ -43,10 +44,22 @@ public class RepositoryManager {
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
 
+	private boolean deleteMetaDir;
+
 	protected RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
-		initMetaDirectory(createRepository);
-		initPersistenceManagerFactory(createRepository);
+		deleteMetaDir = false; // only delete, if it is created in initMetaDirectory(...)
+		try {
+			// TODO Make this more robust: If we have a power-outage between directory creation and the finally block,
+			// we end in an inconsistent state. We can avoid this, by tracking the creation process in a properties
+			// file later (somehow making this really transactional).
+			initMetaDir(createRepository);
+			initPersistenceManagerFactory(createRepository);
+			deleteMetaDir = false; // if we come here, creation is successful => NO deletion
+		} finally {
+			if (deleteMetaDir)
+				IOUtil.deleteDirectoryRecursively(getMetaDir());
+		}
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -61,15 +74,15 @@ public class RepositoryManager {
 		return localRoot;
 	}
 
-	private void initMetaDirectory(boolean createRepository) throws RepositoryManagerException {
-		File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
+	private void initMetaDir(boolean createRepository) throws RepositoryManagerException {
+		File metaDirectory = getMetaDir();
 		if (createRepository) {
-			if (!metaDirectory.exists())
-				metaDirectory.mkdir();
-			else
-				if (!metaDirectory.isDirectory()) {
-					throw new FileNoDirectoryException(metaDirectory);
-				}
+			if (metaDirectory.exists()) {
+				throw new FileAlreadyRepositoryException(localRoot);
+			}
+
+			deleteMetaDir = true;
+			metaDirectory.mkdir();
 
 			try {
 				IOUtil.copyResource(RepositoryManager.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME));
@@ -79,7 +92,7 @@ public class RepositoryManager {
 		}
 		else {
 			if (!metaDirectory.exists()) {
-				throw new FileNoRepositoryException(metaDirectory);
+				throw new FileNoRepositoryException(localRoot);
 			}
 		}
 	}
@@ -123,12 +136,17 @@ public class RepositoryManager {
 		pm.makePersistent(repository);
 	}
 
+	private File getMetaDir() {
+		return new File(localRoot, META_DIRECTORY_NAME);
+	}
+
 	private Map<String, String> getPersistenceProperties(boolean createRepository) {
-		File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
+		File metaDirectory = getMetaDir();
 		File persistencePropertiesFile = new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME);
 
 		Map<String, String> variablesMap = new HashMap<String, String>();
-		variablesMap.put(VAR_LOCAL_ROOT, localRoot.getAbsolutePath());
+		variablesMap.put(VAR_LOCAL_ROOT, localRoot.getPath());
+		variablesMap.put(VAR_META_DIR, getMetaDir().getPath());
 
 		Properties rawProperties;
 		try {
