@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -31,79 +32,135 @@ import co.codewizards.cloudstore.shared.util.PropertiesUtil;
  */
 public class RepositoryManager {
 
-	private final String VAR_LOCALROOT = "repository.localRoot"; // TODO why is this not static?!
+	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 
-	private final String META_DIRECTORY_NAME = ".cloudstore"; // TODO why is this not static?!
-	private final String META_FILE_NAME = "cloudstore-persistence.properties"; // TODO why is this not static?!
+	private static final String META_DIRECTORY_NAME = ".cloudstore";
+	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
-	// TODO why is this a non-javadoc-comment instead of proper javadoc at the getter-method?!
-	/*
-	 * Canonical File
-	 */
-	private File localRoot;
+	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
+
+	private final File localRoot;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
 
 	protected RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
-		this.localRoot = assertNotNull("localRoot", localRoot);
-
+		this.localRoot = assertValidLocalRoot(localRoot);
 		initMetaDirectory(createRepository);
 		initPersistenceManagerFactory(createRepository);
 	}
 
+	private File assertValidLocalRoot(File localRoot) {
+		assertNotNull("localRoot", localRoot);
+
+		if (!localRoot.exists())
+			throw new FileNotFoundException(localRoot);
+
+		if (!localRoot.isDirectory())
+			throw new FileNoDirectoryException(localRoot);
+
+		return localRoot;
+	}
+
 	private void initMetaDirectory(boolean createRepository) throws RepositoryManagerException {
+		File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
 		if (createRepository) {
-			File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
 			if (!metaDirectory.exists())
 				metaDirectory.mkdir();
+			else
+				if (!metaDirectory.isDirectory()) {
+					throw new FileNoDirectoryException(metaDirectory);
+				}
 
-			File templateFile = new File(META_FILE_NAME);
 			try {
-				IOUtil.copyFile(templateFile, new File(metaDirectory, META_FILE_NAME));
+				IOUtil.copyResource(RepositoryManager.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
+			}
+		}
+		else {
+			if (!metaDirectory.exists()) {
+				throw new FileNoRepositoryException(metaDirectory);
 			}
 		}
 	}
 
 	private void initPersistenceManagerFactory(boolean createRepository) throws RepositoryManagerException {
-		if (createRepository) {
-			Map<String, String> variablesMap = new HashMap<String, String>();
-			variablesMap.put(VAR_LOCALROOT, localRoot.getAbsolutePath());
+		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
+		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties );
+		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		try {
+			pm.currentTransaction().begin();
 
-			Properties properties;
-			Map<String, String> metaMap;
-			try {
-				File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
-				File metaFile = new File(metaDirectory, META_FILE_NAME);
-
-				properties = PropertiesUtil.load(metaFile);
-				metaMap = PropertiesUtil.filterProperties(properties, variablesMap);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+			if (createRepository) {
+				createAndPersistRepository(pm);
+			} else {
+				assertSinglePersistentRepository(pm);
 			}
 
-			Repository repository = new Repository();
-			repository.setUuid(UUID.randomUUID());
+			pm.currentTransaction().commit();
+		} finally {
+			if (pm.currentTransaction().isActive())
+				pm.currentTransaction().rollback();
 
-			persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(metaMap);
-			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
-			try {
-				pm.currentTransaction().begin();
-
-				pm.getExtent(Repository.class);
-				pm.makePersistent(repository);
-				pm.currentTransaction().commit();
-			} finally {
-				if (pm.currentTransaction().isActive())
-					pm.currentTransaction().rollback();
-
-				pm.close();
-			}
+			pm.close();
 		}
-		// TODO what about an existing repository?!
 	}
 
+	private void assertSinglePersistentRepository(PersistenceManager pm) {
+		Iterator<Repository> repositoryIterator = pm.getExtent(Repository.class).iterator();
+		if (!repositoryIterator.hasNext()) {
+			throw new RepositoryCorruptException(localRoot, "Repository entity not found in database.");
+		}
+		repositoryIterator.next();
+		if (repositoryIterator.hasNext()) {
+			throw new RepositoryCorruptException(localRoot, "Multiple Repository entities in database.");
+		}
+	}
+
+	private void createAndPersistRepository(PersistenceManager pm) {
+		Repository repository = new Repository();
+		repository.setUuid(UUID.randomUUID());
+		pm.makePersistent(repository);
+	}
+
+	private Map<String, String> getPersistenceProperties(boolean createRepository) {
+		File metaDirectory = new File(localRoot, META_DIRECTORY_NAME);
+		File persistencePropertiesFile = new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME);
+
+		Map<String, String> variablesMap = new HashMap<String, String>();
+		variablesMap.put(VAR_LOCAL_ROOT, localRoot.getAbsolutePath());
+
+		Properties rawProperties;
+		try {
+			rawProperties = PropertiesUtil.load(persistencePropertiesFile);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		Map<String, String> persistenceProperties = PropertiesUtil.filterProperties(rawProperties, variablesMap);
+
+		if (createRepository) {
+			modifyConnectionURLForCreate(persistenceProperties);
+		}
+		return persistenceProperties;
+	}
+
+	private void modifyConnectionURLForCreate(Map<String, String> persistenceProperties) {
+		String value = persistenceProperties.get(CONNECTION_URL_KEY);
+		if (value == null || value.trim().isEmpty()) {
+			throw new RepositoryCorruptException(localRoot,
+					String.format("Property '%s' missing in '%s'.", CONNECTION_URL_KEY, PERSISTENCE_PROPERTIES_FILE_NAME));
+		}
+
+		String newValue = value.trim() + ";create=true";
+		persistenceProperties.put(CONNECTION_URL_KEY, newValue);
+	}
+
+	/**
+	 * Gets the repository's local root directory.
+	 * <p>
+	 * This file is canonical (absolute and symbolic links resolved).
+	 * @return the repository's local root directory. Never <code>null</code>.
+	 */
 	public File getLocalRoot() {
 		return localRoot;
 	}

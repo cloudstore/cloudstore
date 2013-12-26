@@ -45,7 +45,7 @@ public class RepositoryManagerRegistry
 	}
 
 	/**
-	 * Get the {@link RepositoryManager} for the given {@code localRoot}.
+	 * Gets the {@link RepositoryManager} for the given {@code localRoot}.
 	 * <p>
 	 * If there is already a {@code RepositoryManager} instance for this {@code localRoot}, the same
 	 * instance is returned. If there is none, yet, it is implicitly instantiated and enlisted.
@@ -64,7 +64,7 @@ public class RepositoryManagerRegistry
 	 * @throws RepositoryManagerException if the given {@code localRoot} does not denote the root-directory
 	 * of an existing repository.
 	 */
-	public RepositoryManager getRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
+	public synchronized RepositoryManager getRepositoryManager(File localRoot) throws RepositoryManagerException {
 		localRoot = canonicalize(localRoot);
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);
@@ -76,7 +76,7 @@ public class RepositoryManagerRegistry
 	}
 
 	/**
-	 * Create the {@link RepositoryManager} for the given {@code localRoot}.
+	 * Creates the {@link RepositoryManager} for the given {@code localRoot}.
 	 * <p>
 	 * This method turns an existing directory into a repository. If {@code localRoot} already is a repository,
 	 * a {@link FileAlreadyRepositoryException} is thrown.
@@ -93,7 +93,7 @@ public class RepositoryManagerRegistry
 	 * @throws RepositoryManagerException if the given {@code localRoot} does not denote an existing directory
 	 * or if it is a directory inside an existing repository.
 	 */
-	public RepositoryManager createRepositoryManager(File localRoot) throws RepositoryManagerException { // TODO why is this not synchronized?!?
+	public synchronized RepositoryManager createRepositoryManager(File localRoot) throws RepositoryManagerException {
 		localRoot = canonicalize(localRoot);
 
 		RepositoryManager repositoryManager = localRoot2RepositoryManager.get(localRoot);

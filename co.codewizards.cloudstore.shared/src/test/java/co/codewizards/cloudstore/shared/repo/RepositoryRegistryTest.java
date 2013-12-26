@@ -16,15 +16,6 @@ public class RepositoryRegistryTest {
 
 	private static RepositoryManagerRegistry repositoryManagerRegistry = RepositoryManagerRegistry.getInstance();
 
-//	@Test
-//	public void createRepository() {
-//		RepositoryManagerRegistry repositoryManagerRegistry = RepositoryManagerRegistry.getInstance();
-//
-//		File target = new File("target");
-//		logger.trace("LocalRoot: " + target.getAbsolutePath());
-//		repositoryManagerRegistry.getRepositoryManager(target);
-//	}
-
 	@Test
 	public void createRepositoryManagerForExistingNonRepoDirectory() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot();
@@ -127,7 +118,9 @@ public class RepositoryRegistryTest {
 	}
 
 	private File getTestRepositoryBaseDir() {
-		return new File(new File("target"), "repo");
+		File dir = new File(new File("target"), "repo");
+		dir.mkdirs();
+		return dir;
 	}
 
 }
