@@ -30,6 +30,22 @@ public class RepositoryRegistryTest {
 		assertThat(repositoryManager2).isSameAs(repositoryManager);
 	}
 
+	@Test
+	public void getRepositoryManagerForRepository() throws Exception {
+		File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot).doesNotExist();
+		localRoot.mkdirs();
+		assertThat(localRoot).isDirectory();
+		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(localRoot);
+		assertThat(repositoryManager).isNotNull();
+
+		repositoryManager.close();
+
+		RepositoryManager repositoryManager2 = repositoryManagerRegistry.getRepositoryManager(new File(new File(localRoot, "bla"), ".."));
+		assertThat(repositoryManager2).isNotNull();
+		assertThat(repositoryManager2).isNotSameAs(repositoryManager);
+	}
+
 	@Test(expected=FileNotFoundException.class)
 	public void getRepositoryManagerForNonExistingDirectory() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot();
