@@ -4,7 +4,6 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +16,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import co.codewizards.cloudstore.shared.persistence.LocalRepository;
 import co.codewizards.cloudstore.shared.persistence.Repository;
 import co.codewizards.cloudstore.shared.util.IOUtil;
 import co.codewizards.cloudstore.shared.util.PropertiesUtil;
@@ -117,9 +117,9 @@ public class RepositoryManager {
 			pm.currentTransaction().begin();
 
 			if (createRepository) {
-				createAndPersistRepository(pm);
+				createAndPersistLocalRepository(pm);
 			} else {
-				assertSinglePersistentRepository(pm);
+				assertSinglePersistentLocalRepository(pm);
 			}
 
 			pm.currentTransaction().commit();
@@ -131,19 +131,19 @@ public class RepositoryManager {
 		}
 	}
 
-	private void assertSinglePersistentRepository(PersistenceManager pm) {
-		Iterator<Repository> repositoryIterator = pm.getExtent(Repository.class).iterator();
+	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
+		Iterator<LocalRepository> repositoryIterator = pm.getExtent(LocalRepository.class).iterator();
 		if (!repositoryIterator.hasNext()) {
-			throw new RepositoryCorruptException(localRoot, "Repository entity not found in database.");
+			throw new RepositoryCorruptException(localRoot, "LocalRepository entity not found in database.");
 		}
 		repositoryIterator.next();
 		if (repositoryIterator.hasNext()) {
-			throw new RepositoryCorruptException(localRoot, "Multiple Repository entities in database.");
+			throw new RepositoryCorruptException(localRoot, "Multiple LocalRepository entities in database.");
 		}
 	}
 
-	private void createAndPersistRepository(PersistenceManager pm) {
-		Repository repository = new Repository();
+	private void createAndPersistLocalRepository(PersistenceManager pm) {
+		Repository repository = new LocalRepository();
 		repository.setUuid(UUID.randomUUID());
 		pm.makePersistent(repository);
 	}
@@ -197,15 +197,6 @@ public class RepositoryManager {
 
 	public PersistenceManagerFactory getPersistenceManagerFactory() {
 		return persistenceManagerFactory;
-	}
-
-	public URL getRemoteRoot() {
-		throw new UnsupportedOperationException("NYI"); // TODO implement
-		// Read from the database!
-	}
-
-	public void setRemoteRoot(URL url) {
-		throw new UnsupportedOperationException("NYI"); // TODO implement
 	}
 
 	public void addRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
