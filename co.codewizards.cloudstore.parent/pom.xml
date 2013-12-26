@@ -16,13 +16,19 @@
 		<!-- Always aggregate. -->
 		<aggregate>true</aggregate>
 
-		<!-- Everything is UTF-8 (except for files that are specified differently - e.g. properties) -->		
+		<!-- Everything is UTF-8 (except for files that are specified differently 
+			- e.g. properties) -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Java version. -->
 		<maven.compiler.source>6</maven.compiler.source>
 		<maven.compiler.target>6</maven.compiler.target>
+
+		<maven-datanucleus-plugin.version>3.2.0-m1</maven-datanucleus-plugin.version>
+		<datanucleus-api-jdo.version>3.2.6</datanucleus-api-jdo.version>
+		<datanucleus-core.version>3.2.10</datanucleus-core.version>
+		<datanucleus-rdbms.version>3.2.9</datanucleus-rdbms.version>
 	</properties>
 
 	<dependencyManagement>
@@ -144,22 +150,22 @@
 				<version>${logback.version}</version>
 			</dependency>
 			<!-- END logging -->
-			
+
 			<!-- BEGIN datanucleus -->
 			<dependency>
 				<groupId>org.datanucleus</groupId>
 				<artifactId>datanucleus-core</artifactId>
-				<version>3.2.10</version>
+				<version>${datanucleus-core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.datanucleus</groupId>
 				<artifactId>datanucleus-api-jdo</artifactId>
-				<version>3.2.6</version>
+				<version>${datanucleus-api-jdo.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.datanucleus</groupId>
 				<artifactId>datanucleus-rdbms</artifactId>
-				<version>3.2.9</version>
+				<version>${datanucleus-rdbms.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-beanutils</groupId>
@@ -167,7 +173,7 @@
 				<version>1.8.3</version>
 			</dependency>
 			<!-- END datanucleus -->
-			
+
 			<!-- END third party -->
 		</dependencies>
 	</dependencyManagement>
@@ -270,6 +276,50 @@
 					<groupId>org.mortbay.jetty</groupId>
 					<artifactId>jetty-maven-plugin</artifactId>
 					<version>8.1.0.v20120127</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.datanucleus</groupId>
+					<artifactId>maven-datanucleus-plugin</artifactId>
+					<version>${maven-datanucleus-plugin.version}</version>
+					<inherited>true</inherited>
+					<extensions>true</extensions>
+					<configuration>
+						<verbose>true</verbose>
+						<!-- TODO: fork:true is the default but does not work in windows as 
+							the command line gets too long. -->
+						<fork>false</fork>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>process-classes</phase>
+							<goals>
+								<goal>enhance</goal>
+							</goals>
+						</execution>
+					</executions>
+					<dependencies>
+						<dependency>
+							<groupId>log4j</groupId>
+							<artifactId>log4j</artifactId>
+							<version>1.2.16</version>
+						</dependency>
+						<dependency>
+							<groupId>org.datanucleus</groupId>
+							<artifactId>datanucleus-api-jdo</artifactId>
+							<version>${datanucleus-api-jdo.version}</version>
+						</dependency>
+						<dependency>
+							<groupId>org.datanucleus</groupId>
+							<artifactId>datanucleus-core</artifactId>
+							<version>${datanucleus-core.version}</version>
+						</dependency>
+						<dependency>
+							<groupId>org.datanucleus</groupId>
+							<artifactId>datanucleus-rdbms</artifactId>
+							<version>${datanucleus-rdbms.version}</version>
+						</dependency>
+					</dependencies>
 				</plugin>
 			</plugins>
 		</pluginManagement>
