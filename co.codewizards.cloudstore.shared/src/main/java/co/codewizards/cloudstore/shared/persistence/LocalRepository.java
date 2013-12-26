@@ -4,7 +4,9 @@ import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
+import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
 
 /**
  * A {@code LocalRepository} represents the local repository inside the repository's database.
@@ -16,5 +18,15 @@ import javax.jdo.annotations.PersistenceCapable;
 @Inheritance(strategy=InheritanceStrategy.SUPERCLASS_TABLE)
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="LocalRepository")
 public class LocalRepository extends Repository {
+
+	@Persistent(nullValue=NullValue.DEFAULT)
+	private RepoFile root;
+
+	public RepoFile getRoot() {
+		return root;
+	}
+	public void setRoot(RepoFile root) {
+		this.root = root;
+	}
 
 }

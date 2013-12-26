@@ -3,19 +3,13 @@ package co.codewizards.cloudstore.shared.repo;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
-import java.math.BigInteger;
-import java.security.SecureRandom;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RepositoryRegistryTest {
+public class RepositoryRegistryTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryRegistryTest.class);
-	private static final SecureRandom random = new SecureRandom();
-
-	private static RepositoryManagerRegistry repositoryManagerRegistry = RepositoryManagerRegistry.getInstance();
-
 	@Test
 	public void createRepositoryManagerForExistingNonRepoDirectory() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot();
@@ -124,19 +118,6 @@ public class RepositoryRegistryTest {
 		assertThat(sub1SubAaaDir).isDirectory();
 
 		repositoryManagerRegistry.createRepositoryManager(sub1SubAaaDir);
-	}
-
-	private File newTestRepositoryLocalRoot() {
-		long timestamp = System.currentTimeMillis();
-		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
-		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36);
-		return new File(getTestRepositoryBaseDir(), repoName);
-	}
-
-	private File getTestRepositoryBaseDir() {
-		File dir = new File(new File("target"), "repo");
-		dir.mkdirs();
-		return dir;
 	}
 
 }

@@ -6,7 +6,6 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -17,8 +16,11 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import co.codewizards.cloudstore.shared.persistence.FileType;
 import co.codewizards.cloudstore.shared.persistence.LocalRepository;
-import co.codewizards.cloudstore.shared.persistence.Repository;
+import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.shared.persistence.RepoFile;
+import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 import co.codewizards.cloudstore.shared.util.IOUtil;
 import co.codewizards.cloudstore.shared.util.PropertiesUtil;
 
@@ -36,7 +38,7 @@ public class RepositoryManager {
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
-	private static final String META_DIR_NAME = ".cloudstore";
+	public static final String META_DIR_NAME = ".cloudstore";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
@@ -53,7 +55,7 @@ public class RepositoryManager {
 		deleteMetaDir = false; // only delete, if it is created in initMetaDirectory(...)
 		try {
 			// TODO Make this more robust: If we have a power-outage between directory creation and the finally block,
-			// we end in an inconsistent state. We can avoid this, by tracking the creation process in a properties
+			// we end in an inconsistent state. We can avoid this by tracking the creation process in a properties
 			// file later (somehow making this really transactional).
 			initMetaDir(createRepository);
 			initPersistenceManagerFactory(createRepository);
@@ -134,19 +136,20 @@ public class RepositoryManager {
 	}
 
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
-		Iterator<LocalRepository> repositoryIterator = pm.getExtent(LocalRepository.class).iterator();
-		if (!repositoryIterator.hasNext()) {
-			throw new RepositoryCorruptException(localRoot, "LocalRepository entity not found in database.");
-		}
-		repositoryIterator.next();
-		if (repositoryIterator.hasNext()) {
-			throw new RepositoryCorruptException(localRoot, "Multiple LocalRepository entities in database.");
+		try {
+			new LocalRepositoryDAO().getLocalRepositoryOrFail();
+		} catch (IllegalStateException x) {
+			throw new RepositoryCorruptException(localRoot, x.getMessage());
 		}
 	}
 
 	private void createAndPersistLocalRepository(PersistenceManager pm) {
-		Repository repository = new LocalRepository();
+		LocalRepository repository = new LocalRepository();
 		repository.setUuid(UUID.randomUUID());
+		RepoFile root = new RepoFile();
+		root.setFileType(FileType.DIRECTORY);
+		root.setName("");
+		repository.setRoot(root);
 		pm.makePersistent(repository);
 	}
 
@@ -188,7 +191,6 @@ public class RepositoryManager {
 		persistenceProperties.put(CONNECTION_URL_KEY, newValue);
 	}
 
-
 	/**
 	 * Gets the repository's local root directory.
 	 * <p>
@@ -199,7 +201,7 @@ public class RepositoryManager {
 		return localRoot;
 	}
 
-	public PersistenceManagerFactory getPersistenceManagerFactory() {
+	protected PersistenceManagerFactory getPersistenceManagerFactory() {
 		return persistenceManagerFactory;
 	}
 
@@ -227,6 +229,36 @@ public class RepositoryManager {
 
 		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
 			listener.postClose(event);
+		}
+	}
+
+	public synchronized boolean isOpen() {
+		return persistenceManagerFactory != null;
+	}
+
+	protected void assertOpen() {
+		if (!isOpen())
+			throw new IllegalStateException("This RepositoryManager is closed!");
+	}
+
+	public synchronized RepositoryTransaction createTransaction() {
+		assertOpen();
+		return new RepositoryTransaction(this);
+	}
+
+	/**
+	 * Synchronises the local file system with the database.
+	 * <p>
+	 * Registers every directory and file in the repository's {@link #getLocalRoot() local root} and its
+	 * sub-directories.
+	 */
+	public void sync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
+		RepositoryTransaction transaction = createTransaction();
+		try {
+			new LocalRepositorySyncer(transaction).sync(monitor);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
 		}
 	}
 }

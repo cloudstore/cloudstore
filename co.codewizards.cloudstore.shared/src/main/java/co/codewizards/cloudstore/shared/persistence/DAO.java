@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.shared.persistence;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -8,26 +9,53 @@ import javax.jdo.PersistenceManager;
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-public abstract class DAO<E extends Entity>
+public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 {
 	private Class<E> entityClass;
+	private Class<D> daoClass;
 
 	public DAO() {
 		ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
+		Type[] actualTypeArguments = superclass.getActualTypeArguments();
+		if (actualTypeArguments == null || actualTypeArguments.length < 2)
+			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
+
 		@SuppressWarnings("unchecked")
-		Class<E> c = (Class<E>) superclass.getActualTypeArguments()[0];
+		Class<E> c = (Class<E>) actualTypeArguments[0];
 		this.entityClass = c;
 		if (this.entityClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
+
+		@SuppressWarnings("unchecked")
+		Class<D> k = (Class<D>) actualTypeArguments[1];
+		this.daoClass = k;
+		if (this.daoClass == null)
+			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 	}
 
-	protected PersistenceManager pm;
+	private PersistenceManager pm;
 
 	public PersistenceManager getPersistenceManager() {
 		return pm;
 	}
 	public void setPersistenceManager(PersistenceManager persistenceManager) {
 		this.pm = persistenceManager;
+	}
+
+	protected PersistenceManager pm() {
+		if (pm == null) {
+			throw new IllegalStateException("persistenceManager not assigned!");
+		}
+		return pm;
+	}
+
+	public D persistenceManager(PersistenceManager persistenceManager) {
+		setPersistenceManager(persistenceManager);
+		return thisDAO();
+	}
+
+	protected D thisDAO() {
+		return daoClass.cast(this);
 	}
 
 	/**
@@ -81,7 +109,7 @@ public abstract class DAO<E extends Entity>
 			throw new IllegalArgumentException("entityID == null");
 
 		try {
-			Object result = pm.getObjectById(entityClass, entityID);
+			Object result = pm().getObjectById(entityClass, entityID);
 			return entityClass.cast(result);
 		} catch (JDOObjectNotFoundException x) {
 			if (throwExceptionIfNotFound)
@@ -93,11 +121,11 @@ public abstract class DAO<E extends Entity>
 
 	public E makePersistent(E entity)
 	{
-		return pm.makePersistent(entity);
+		return pm().makePersistent(entity);
 	}
 
 	public void deletePersistent(E entity)
 	{
-		pm.deletePersistent(entity);
+		pm().deletePersistent(entity);
 	}
 }
