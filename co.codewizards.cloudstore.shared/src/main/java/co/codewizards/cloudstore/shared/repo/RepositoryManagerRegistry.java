@@ -101,14 +101,6 @@ public class RepositoryManagerRegistry
 			throw new FileAlreadyRepositoryException(localRoot);
 		}
 
-		File parentFile = localRoot.getParentFile();
-		while (parentFile.getParentFile() != null) {
-			if (localRoot2RepositoryManager.get(parentFile) != null) {
-				throw new FileAlreadyRepositoryException(localRoot);
-			}
-			parentFile = parentFile.getParentFile();
-		}
-
 		repositoryManager = new RepositoryManager(localRoot, true);
 		enlist(repositoryManager);
 		return repositoryManager;

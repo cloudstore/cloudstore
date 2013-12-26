@@ -35,7 +35,7 @@ public class RepositoryManager {
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
-	private static final String META_DIRECTORY_NAME = ".cloudstore";
+	private static final String META_DIR_NAME = ".cloudstore";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
@@ -71,7 +71,19 @@ public class RepositoryManager {
 		if (!localRoot.isDirectory())
 			throw new FileNoDirectoryException(localRoot);
 
+		assertNotInsideOtherRepository(localRoot);
 		return localRoot;
+	}
+
+	private void assertNotInsideOtherRepository(File localRoot) {
+		File parentFile = localRoot.getParentFile();
+		while (parentFile != null) {
+			File parentMetaDir = new File(parentFile, META_DIR_NAME);
+			if (parentMetaDir.exists()) {
+				throw new FileAlreadyRepositoryException(localRoot);
+			}
+			parentFile = parentFile.getParentFile();
+		}
 	}
 
 	private void initMetaDir(boolean createRepository) throws RepositoryManagerException {
@@ -137,7 +149,7 @@ public class RepositoryManager {
 	}
 
 	private File getMetaDir() {
-		return new File(localRoot, META_DIRECTORY_NAME);
+		return new File(localRoot, META_DIR_NAME);
 	}
 
 	private Map<String, String> getPersistenceProperties(boolean createRepository) {
