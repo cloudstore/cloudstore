@@ -137,7 +137,7 @@ public class RepositoryManager {
 
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
 		try {
-			new LocalRepositoryDAO().getLocalRepositoryOrFail();
+			new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
 		} catch (IllegalStateException x) {
 			throw new RepositoryCorruptException(localRoot, x.getMessage());
 		}
