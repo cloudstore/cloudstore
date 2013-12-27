@@ -5,7 +5,7 @@ import org.junit.Test;
 public class TestServiceTest {
 
 	@Test
-	public void testREST() {
-
+	public void testInvokingREST() {
+//		ServiceInvoke serviceInvoke
 	}
 }
