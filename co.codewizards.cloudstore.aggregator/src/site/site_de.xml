@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/DECORATION/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/DECORATION/1.1.0 http://maven.apache.org/xsd/decoration-1.1.0.xsd"
+	name="CloudStore">
+
+	<skin>
+		<groupId>co.codewizards.cloudstore</groupId>
+		<artifactId>co.codewizards.cloudstore.site.skin</artifactId>
+		<version>${cloudstore.version}</version>
+	</skin>
+
+	<custom>
+		<hideMenu>
+			<path>index.html</path>
+			<path>screenshots/index.html</path>
+		</hideMenu>
+	</custom>
+
+	<body>
+		<head>
+			<link rel="icon" href="/site/current/images/favicon.ico" />
+		</head>
+
+		<links>
+			<item name="Hauptseite" href="./index.html" />
+			<item name="Dienstleistung" href="./service/index.html" />
+			<item name="Kontakt" href="./about/contact.html" />
+		</links>
+
+		<menu name="Dienstleistung">
+			<item name="Übersicht" href="./service/index.html" />
+			<item name="Architektur" href="./service/architecture.html" />
+			<item name="Entwicklung" href="./service/development.html" />
+			<item name="Beratung" href="./service/consulting.html" />
+			<item name="Coaching" href="./service/coaching.html" />
+		</menu>
+
+		<menu name="Über">
+			<item name="Kontakt" href="./about/contact.html" />
+			<item name="Impressum" href="./about/imprint.html" />
+		</menu>
+	</body>
+
+</project>

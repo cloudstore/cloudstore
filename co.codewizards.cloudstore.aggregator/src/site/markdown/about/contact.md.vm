@@ -1,0 +1,19 @@
+<head><title>Contact</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-contact.jpg")}
+#set( $H = '#' )
+
+Contact us
+-------
+
+$H$H$H E-mail
+
+The best way to contact us is by e-mail. We support secure communication
+with <a href="http://en.wikipedia.org/wiki/OpenPGP" target="_blank">OpenPGP</a>!
+
+Address: info *at* codewizards *dot* co  
+OpenPGP key: [0xFC577133.asc](http://www.codewizards.co/site/current/0xFC577133.asc) ([via HTTPS](https://www.codewizards.co/site/current/0xFC577133.asc))
+
+
+$H$H$H Web
+
+The CodeWizards are online on: http://codewizards.co

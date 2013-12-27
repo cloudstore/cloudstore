@@ -1,0 +1,19 @@
+<head><title>Contact</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-contact.jpg")}
+#set( $H = '#' )
+
+Kontaktieren Sie uns
+-------
+
+$H$H$H E-mail
+
+Der beste Weg, mit uns Kontakt aufzunehmen, ist via E-Mail. Wir unterstützen sichere Kommunikation
+mittels <a href="http://de.wikipedia.org/wiki/OpenPGP" target="_blank">OpenPGP</a>!
+
+Adresse: info *at* codewizards *dot* co  
+OpenPGP-Schlüssel: [0xFC577133.asc](http://www.codewizards.co/site/current/0xFC577133.asc) ([via HTTPS](https://www.codewizards.co/site/current/0xFC577133.asc))
+
+
+$H$H$H Web
+
+Die CodeWizards sind online auf: http://codewizards.co

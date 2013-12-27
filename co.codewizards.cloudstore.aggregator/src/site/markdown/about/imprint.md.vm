@@ -1,0 +1,34 @@
+<head><title>Imprint</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-jump.jpg")}
+#set( $H = '#' )
+
+Imprint
+-------
+
+Responsible for the contents of this web-site is:
+
+
+$H$H$H CodeWizards GmbH
+
+Körnerstr. 28  
+79115 Freiburg  
+Germany  
+
+WWW: http://codewizards.co  
+GitHub: https://github.com/cloudstore  
+E-Mail: info *at* codewizards *dot* co  
+<a href="http://en.wikipedia.org/wiki/OpenPGP" target="_blank">OpenPGP</a> key: [0xFC577133.asc](http://www.codewizards.co/site/current/0xFC577133.asc) ([via HTTPS](https://www.codewizards.co/site/current/0xFC577133.asc))
+
+Trade Register Entry: Amtsgericht Freiburg, HRB 710089
+
+VAT-Id: DE 815 439 578
+
+CEOs: Jonathan Nowak, Marco Schulze
+
+
+$H$H$H Disclaimer
+
+$H$H$H$H Referrals and Links
+
+Please note that we are not responsible for the content of other websites which are linked from this website.
+The responsibility is exclusively with the owner of the respective website.
