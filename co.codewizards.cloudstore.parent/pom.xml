@@ -7,6 +7,8 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
+	<url>http://cloudstore.codewizards.co</url>
+
 	<properties>
 		<cloudstore.version>${project.version}</cloudstore.version>
 		<slf4j.version>1.7.5</slf4j.version>
@@ -30,6 +32,28 @@
 		<datanucleus-core.version>3.2.10</datanucleus-core.version>
 		<datanucleus-rdbms.version>3.2.9</datanucleus-rdbms.version>
 	</properties>
+
+	<distributionManagement>
+		<!--
+		We configure this "junk" directory here in order to make Maven upload everyting but the
+		'co.codewizards.cloudstore.aggregator' to a directory which doesn't disturb us. I did not yet find out how to prevent
+		Maven from uploading the other modules completely. Marco.
+		-->
+		<site>
+			<id>cloudstore.codewizards.co</id>
+			<url>file:${java.io.tmpdir}/cloudstore-junk</url>
+		</site>
+		<repository>
+			<id>www.codewizards.co-private-libs-release-local</id>
+			<name>www.codewizards.co-private-libs-release-local</name>
+			<url>https://www.codewizards.co/maven-private/libs-release-local</url>
+		</repository>
+		<snapshotRepository>
+			<id>www.codewizards.co-private-libs-snapshot-local</id>
+			<name>www.codewizards.co-private-libs-snapshot-local</name>
+			<url>https://www.codewizards.co/maven-private/libs-snapshot-local</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencyManagement>
 		<dependencies>
