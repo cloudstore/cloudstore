@@ -1,11 +1,13 @@
 package co.codewizards.cloudstore.client.test;
 
+import static org.assertj.core.api.Assertions.*;
+
 import java.util.LinkedList;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response.Status.Family;
 
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,19 +54,13 @@ public class ServiceInvoke {
 		this.baseURL += "CloudStoreREST/";
 	}
 
-	@Test
 	public void testInvokingREST() {
 		Client client = acquireClient();
-		try {
-//			Builder builder = getChildVMAppResource(client, "validate").type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML_TYPE);
-//			LicenceValidationResponse response = builder.post(LicenceValidationResponse.class, request);
-//			return response;
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
-			throw x; // we do not expect null
-		} finally {
-			releaseClient(client);
-		}
+		WebResource resource = client.resource("localhost:4000/co.codewizards.cloudstore.webapp");
+		resource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+
+		ClientResponse response = resource.get(ClientResponse.class);
+		assertThat(response.getClientResponseStatus().getFamily()).isEqualTo(Family.SUCCESSFUL);
 	}
 
 	protected WebResource.Builder getChildVMAppResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
