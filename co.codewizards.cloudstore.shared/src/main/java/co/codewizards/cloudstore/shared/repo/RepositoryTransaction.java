@@ -16,7 +16,7 @@ public class RepositoryTransaction {
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
 	private LocalRepository localRepository;
-	private long revision = -1;
+	private long localRevision = -1;
 
 	public RepositoryTransaction(RepositoryManager repositoryManager) {
 		this.repositoryManager = assertNotNull("repositoryManager", repositoryManager);
@@ -30,14 +30,15 @@ public class RepositoryTransaction {
 		}
 		try {
 			persistenceManager = persistenceManagerFactory.getPersistenceManager();
+			hookLifecycleListeners();
 			jdoTransaction = persistenceManager.currentTransaction();
 			jdoTransaction.begin();
 
 			jdoTransaction.setSerializeRead(true);
 			LocalRepository lr = new LocalRepositoryDAO().persistenceManager(persistenceManager).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
-			revision = lr.getRevision() + 1;
-			lr.setRevision(revision);
+			localRevision = lr.getRevision() + 1;
+			lr.setRevision(localRevision);
 			persistenceManager.flush();
 			localRepository = lr;
 		} finally {
@@ -56,6 +57,10 @@ public class RepositoryTransaction {
 		}
 	}
 
+	private void hookLifecycleListeners() {
+		persistenceManager.addInstanceLifecycleListener(new AutoTrackLifecycleListener(this), (Class[]) null);
+	}
+
 	public synchronized void commit() {
 		if (!isActive()) {
 			throw new IllegalStateException("Transaction is not active!");
@@ -64,7 +69,7 @@ public class RepositoryTransaction {
 		persistenceManager.close();
 		jdoTransaction = null;
 		persistenceManager = null;
-		revision = -1;
+		localRevision = -1;
 	}
 
 	public synchronized boolean isActive() {
@@ -79,7 +84,7 @@ public class RepositoryTransaction {
 		persistenceManager.close();
 		jdoTransaction = null;
 		persistenceManager = null;
-		revision = -1;
+		localRevision = -1;
 	}
 
 	public synchronized void rollbackIfActive() {
@@ -94,8 +99,8 @@ public class RepositoryTransaction {
 		return persistenceManager;
 	}
 
-	public long getRevision() {
-		return revision;
+	public long getLocalRevision() {
+		return localRevision;
 	}
 
 	public RepositoryManager getRepositoryManager() {
