@@ -1,12 +1,10 @@
 package co.codewizards.cloudstore.webapp.service;
 
-import javax.jdo.PersistenceManager;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -21,9 +19,6 @@ public class TestService
 	{
 		logger.debug("<init>: Instance created.");
 	}
-
-	@Context
-	private PersistenceManager pm;
 
 //	private static SecureRandom random = new SecureRandom();
 

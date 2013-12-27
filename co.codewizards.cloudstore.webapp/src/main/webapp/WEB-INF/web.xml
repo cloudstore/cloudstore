@@ -1,17 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" metadata-complete="true" version="2.5">
-  <display-name>co.codewizards.cloudstore.webapp</display-name>
-  <servlet>
-    <servlet-name>co.codewizards.cloudstore.webapp.CloudStoreREST</servlet-name>
-    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-    <init-param>
-      <param-name>javax.ws.rs.Application</param-name>
-      <param-value>co.codewizards.cloudstore.webapp.CloudStoreREST</param-value>
-    </init-param>
-    <load-on-startup>100</load-on-startup>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>co.codewizards.cloudstore.webapp.CloudStoreREST</servlet-name>
-    <url-pattern>/CloudStoreREST/*</url-pattern>
-  </servlet-mapping>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	metadata-complete="true"
+	version="2.5">
+	<!--
+	metadata-complete="true" causes the annotations to be ignored, which speeds up the jetty startup significantly
+	(from about 30 sec to 1 sec).
+	-->
+
+	<display-name>co.codewizards.cloudstore.webapp</display-name>
+
+	<servlet>
+		<servlet-name>co.codewizards.cloudstore.webapp.CloudStoreREST</servlet-name>
+		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+		<init-param>
+			<param-name>javax.ws.rs.Application</param-name>
+			<param-value>co.codewizards.cloudstore.webapp.CloudStoreREST</param-value>
+		</init-param>
+<!--
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+			<param-value>org.nightlabs.licence.webapp.jersey.JDOTransactionRequestFilter</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+			<param-value>org.nightlabs.licence.webapp.jersey.JDOTransactionResponseFilter</param-value>
+		</init-param>
+-->
+		<load-on-startup>100</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>co.codewizards.cloudstore.webapp.CloudStoreREST</servlet-name>
+		<url-pattern>/CloudStoreREST/*</url-pattern>
+	</servlet-mapping>
+
+<!--
+	<resource-ref>
+		<description>Licence DataSource Reference</description>
+		<res-ref-name>jdbc/licenceDS</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
+-->
 </web-app>
