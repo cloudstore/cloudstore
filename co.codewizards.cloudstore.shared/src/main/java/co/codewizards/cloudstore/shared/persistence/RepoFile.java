@@ -60,6 +60,8 @@ public class RepoFile extends Entity implements AutoTrackLocalRevision {
 	 * <p>
 	 * Note that this does not include modifications of children (in case this is a directory).
 	 * If a child is modified, solely this child's localRevision is updated.
+	 * <p>
+	 * TODO document this: when children are added or removed, this changes in the parent directory!
 	 */
 	@Override
 	public long getLocalRevision() {
