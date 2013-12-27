@@ -1,17 +1,13 @@
-package co.codewizards.cloudstore.client.test;
-
-import static org.assertj.core.api.Assertions.*;
+package co.codewizards.cloudstore.client;
 
 import java.util.LinkedList;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Response.Status.Family;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.client.RemoteException;
 import co.codewizards.cloudstore.client.internal.QueryParameter;
 import co.codewizards.cloudstore.client.internal.RelativePathPart;
 import co.codewizards.cloudstore.shared.dto.Error;
@@ -20,13 +16,12 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.WebResource.Builder;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 
-public class ServiceInvoke {
+public class CloudStoreRESTClient {
 
-	private static final Logger logger = LoggerFactory.getLogger(ServiceInvoke.class);
+	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRESTClient.class);
 
 	private static final int TIMEOUT_SOCKET_CONNECT_MS = 10 * 1000; // TODO make timeout configurable
 	private static final int TIMEOUT_SOCKET_READ_MS = 90 * 1000; // TODO make timeout configurable
@@ -35,41 +30,47 @@ public class ServiceInvoke {
 
 	private LinkedList<Client> clientCache = new LinkedList<Client>();
 
-	public ServiceInvoke()
+	public CloudStoreRESTClient(String protocol, String host, int port)
 	{
-		this("http", "licence.nightlabs.com", 80); // TODO switch to HTTPS (and port 443)!!!
+		this(protocol, host, "co.codewizards.cloudstore.webapp", port);
 	}
 
-	public ServiceInvoke(String protocol, String host, int port)
-	{
-		this(protocol, host, "co.codewizards.cloudstore", port);
-	}
-
-	private ServiceInvoke(String protocol, String host, String webAppName, int port)
+	private CloudStoreRESTClient(String protocol, String host, String webAppName, int port)
 	{
 		this.baseURL = protocol + "://" + host + ":" + port + '/';
 
 		if (webAppName != null && !webAppName.isEmpty())
 			this.baseURL += webAppName + '/';
 
-		this.baseURL += "CloudStoreREST/";
+//		this.baseURL += "CloudStoreREST/"; // Using the root of the web-app directly (no suffix).
 	}
 
-	public void testInvokingREST() {
+	public void testSuccess() {
 		Client client = acquireClient();
-		ClientResponse response;
 		try {
-			Builder builder = getResource(client, "test").type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML_TYPE);
-			builder.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-			response = builder.get(ClientResponse.class);
+			String response = getResource(client, "test").accept(MediaType.TEXT_PLAIN).get(String.class);
+			if (!"SUCCESS".equals(response)) {
+				throw new IllegalStateException("Server response invalid: " + response);
+			}
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
 		}
+	}
 
-		assertThat(response.getClientResponseStatus().getFamily()).isEqualTo(Family.SUCCESSFUL);
+	public void testException() {
+		Client client = acquireClient();
+		try {
+			String response = getResource(client, "test?exception=true").accept(MediaType.TEXT_PLAIN).get(String.class);
+			throw new IllegalStateException("Server sent response instead of exception: " + response);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
 	}
 
 	protected WebResource.Builder getResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)

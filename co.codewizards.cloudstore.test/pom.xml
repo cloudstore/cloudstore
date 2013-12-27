@@ -96,7 +96,26 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/IT*.java</include>
+ <include>**/*IT.java</include>
+ <include>**/*ITCase.java</include>
+						<include>**/Test*.java</include>
+						<include>**/*Test.java</include>
+					</includes>
+				</configuration>
+			</plugin>
 
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- All tests in this project are integration tests. We therefore disable the maven-surefire-plugin entirely. -->
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>

@@ -33,6 +33,11 @@
 			<groupId>org.datanucleus</groupId>
 			<artifactId>datanucleus-rdbms</artifactId>
 		</dependency>
+		<dependency> <!-- http://www.datanucleus.org/servlet/jira/browse/NUCACCESS-104 -->
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- END datanucleus -->
 
 		<!-- BEGIN JDBC -->

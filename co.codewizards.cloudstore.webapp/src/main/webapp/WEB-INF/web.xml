@@ -31,7 +31,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>co.codewizards.cloudstore.webapp.CloudStoreREST</servlet-name>
-		<url-pattern>/CloudStoreREST/*</url-pattern>
+		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 
 <!--

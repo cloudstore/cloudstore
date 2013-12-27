@@ -20,14 +20,6 @@ public class TestService
 		logger.debug("<init>: Instance created.");
 	}
 
-//	private static SecureRandom random = new SecureRandom();
-
-//	@Context
-//	private LicenceDAO licenceDAO;
-//
-//	@Context
-//	private UserDAO userDAO;
-
 	private @QueryParam("exception") boolean exception;
 
 	@POST
@@ -39,32 +31,9 @@ public class TestService
 	@GET
 	public String test()
 	{
-//		logger.info("test: entered. exception={} pm={}", exception, pm);
-//		logger.info("test: pm={} pm.currentTransaction.active={}", pm, pm.currentTransaction().isActive());
-//		logger.info("test: licenceDAO={}", licenceDAO);
-//		logger.info("test: userDAO={}", userDAO);
-//
-//		if (licenceDAO == null)
-//			throw new IllegalStateException("Injection of licenceDAO failed!");
-//
-//		if (userDAO == null)
-//			throw new IllegalStateException("Injection of userDAO failed!");
-//
-//		licenceDAO.getLicence("a", "b", "c");
-////		Licence licence = new Licence();
-////		licence.setProductID("product" + random.nextInt(10));
-////		licence.setCustomerEmail("customer" + random.nextInt(1000) + "@domain.tld");
-////
-////		byte[] licenceKey = new byte[16];
-////		random.nextBytes(licenceKey);
-////		licence.setLicenceKey(Util.encodeHexStr(licenceKey));
-////
-////		pm.makePersistent(licence);
-//
-//		if (exception)
-//			throw new RuntimeException("Test");
+		if (exception)
+			throw new RuntimeException("Test");
 
-		return this.getClass().getName();
+		return "SUCCESS";
 	}
-
 }
