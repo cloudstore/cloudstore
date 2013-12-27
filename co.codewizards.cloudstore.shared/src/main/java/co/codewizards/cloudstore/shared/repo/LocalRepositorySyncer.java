@@ -30,8 +30,8 @@ class LocalRepositorySyncer {
 
 	public LocalRepositorySyncer(RepositoryTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
-		repoFileDAO = new RepoFileDAO().persistenceManager(transaction.getPersistenceManager());
-		localRoot = transaction.getRepositoryManager().getLocalRoot();
+		repoFileDAO = new RepoFileDAO().persistenceManager(this.transaction.getPersistenceManager());
+		localRoot = this.transaction.getRepositoryManager().getLocalRoot();
 	}
 
 	public void sync(ProgressMonitor monitor) { // TODO use this monitor!!!
@@ -73,13 +73,16 @@ class LocalRepositorySyncer {
 			if (difference > 5000)
 				return true;
 
-			return repoFile.getSize() != file.length();
+			return repoFile.getLength() != file.length();
 		} else {
 			return false;
 		}
 	}
 
 	private RepoFile createRepoFile(RepoFile parentRepoFile, File file) {
+		if (parentRepoFile == null)
+			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
+
 		RepoFile repoFile = new RepoFile();
 		repoFile.setParent(parentRepoFile);
 		repoFile.setName(file.getName());
@@ -89,28 +92,38 @@ class LocalRepositorySyncer {
 		} else if (file.isFile()) {
 			repoFile.setFileType(FileType.FILE);
 			repoFile.setLastModified(new Date(file.lastModified()));
-			repoFile.setSize(file.length());
+			repoFile.setLength(file.length());
 			repoFile.setSha(sha(file));
 		} else {
 			logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
 			return null;
 		}
 
-		repoFile.setRevision(transaction.getRevision());
+		// For consistency reasons, we touch the parent not only when deleting a child (which is required
+		// by our sync algorithm), but also when adding a new child.
+		parentRepoFile.setChanged(new Date());
+
 		return repoFileDAO.makePersistent(repoFile);
 	}
 
 	private void updateRepoFile(RepoFile repoFile, File file) {
 		repoFile.setLastModified(new Date(file.lastModified()));
-		repoFile.setSize(file.length());
+		repoFile.setLength(file.length());
 		repoFile.setSha(sha(file));
-		repoFile.setRevision(transaction.getRevision());
 	}
 
 	private void deleteRepoFile(RepoFile repoFile) {
+		RepoFile parentRepoFile = repoFile.getParent();
+		if (parentRepoFile == null)
+			throw new IllegalStateException("Deleting the root is not possible!");
+
+		// We must ensure the parent's localRevision + changed properties are updated. Though this happens
+		// automatically whenever the object is changed, we need to touch it somehow. We use setChanged(...)
+		// to do this, even though exactly this property is set automatically (because of the
+		// AutoTrackChanged interface).
+		parentRepoFile.setChanged(new Date());
+
 		repoFileDAO.deletePersistent(repoFile);
-		// TODO create history entries for synchronisation with remote repositories... somehow... think this through ;-)
-		// Or maybe mark the parent (=> increment its revision)? that's maybe even better.
 	}
 
 	private String sha(File file) {
