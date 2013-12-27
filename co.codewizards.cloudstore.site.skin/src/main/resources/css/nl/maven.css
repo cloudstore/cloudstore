@@ -1,0 +1,153 @@
+img {
+	border: none;
+}
+
+.poweredByBlock {
+	margin-top: 25px;
+}
+
+.poweredBy {
+	margin-top: 10px;
+	display: block;
+}
+
+#bannerLeft .poweredBy, #bannerRight .poweredBy {
+	margin-top: 0px;	
+	display: inline;
+}
+
+#nl_menu a.nl_nav_item.nl_nav_item_single {
+	top: 8px;
+}
+
+.nl_maven_left {
+	padding-top: 15px;
+	padding-left: 40px;
+	padding-right: 40px;
+    padding-bottom: 30px;
+    color: #6f6f6f;
+}
+
+div.nl_maven_left {
+	width: 860px;
+}
+
+td.nl_maven_left {
+	width: 630px;
+	vertical-align: top;
+}
+
+#nl_container .nl_maven_left a:hover {
+	color: #0F1D4F;
+	text-decoration: none;
+}
+
+.nl_maven_right {
+	width: 201px;
+	border-left: 1px solid #9EA5B0;
+	padding-top: 15px;
+	padding-left: 28px;
+    padding-bottom: 30px;
+	vertical-align: top;
+	color: #0F1D4F;
+    font-size: 9pt;
+    line-height: 16pt;
+}
+
+#nl_container .nl_maven_right a {
+	color: #6F6F6F;
+}
+
+#nl_container .nl_maven_right a:hover {
+	color: #0F1D4F;
+	text-decoration: none;
+}
+
+pre {
+    overflow-x: auto;
+}
+
+td.nl_maven_left pre {
+	width: 630px;
+}
+
+div.nl_maven_left pre {
+	width: 860px;
+}
+
+.nl_maven_right ul {
+	list-style: none outside none;
+    padding: 0;
+    margin-top: 11px;
+    margin-bottom: 11px;
+}
+
+.nl_maven_right ul li {
+}
+
+.nl_maven_right h5 {
+	font-size: 11pt;
+    line-height: 13pt;
+    margin-top: 22px;
+    margin-bottom: 4px;
+}
+
+.bodyTable {
+	border-collapse: collapse;
+}
+
+.bodyTable tr.a {
+	background-color: #f9f9f9;
+}
+
+.bodyTable tr.b {
+	background-color: #ffffff;
+}
+
+.bodyTable tr td {
+    padding: 5px 10px;
+    vertical-align: top;
+    margin: 0;
+}
+
+.bodyTable tr th {
+	background-image: url("../../images/nl/menu-gradient.png");
+    background-repeat: repeat-x;
+    background-color: #244c85;
+    color: #FFFFFF;
+    padding: 5px 10px;
+    font-weight: bold;
+    text-align: left;
+    vertical-align: top;
+    margin: 0;
+}
+
+#bannerLeft, #bannerRight {
+	color: #356b9e;
+    font-size: 22.45px;
+    font-weight: bold;
+    position: relative;
+}
+
+#bannerLeft a, #bannerRight a {
+	color: #356b9e;
+	text-decoration: none;
+}
+
+#bannerLeft {
+    margin-left: 40px;
+}
+
+#bannerRight {
+	float: right;
+    margin-right: 230px;
+}
+
+#bannerLeft img, #bannerRight img {
+	margin-right: 15px;
+}
+
+#bannerLeft span, #bannerRight span {
+    position: absolute;
+    top: 15px;
+}

@@ -239,6 +239,26 @@
 					</configuration>
 				</plugin>
 
+				<plugin>
+					<artifactId>maven-site-plugin</artifactId>
+					<!--
+					The version 3.0 has the bug that it deploys to
+					file:/tmp/vestigo-junk/../../opt/tomcat-jenkins/.jenkins/workspace/JDO_JPA_Query_Browser_Deploy_Stand-alone_Assemblies/scp:/nightly@eagle.nighthost.de/srv/www/nightly/vestigo.nightlabs.com/htdocs/0.1.1/download/stand-alone
+					instead of
+					scp:/nightly@eagle.nighthost.de/srv/www/nightly/vestigo.nightlabs.com/htdocs/0.1.1/download/stand-alone
+					Downgrading to the beta-3 instead. Marco :-)
+					-->
+					<version>3.0-beta-3</version>
+					<configuration>
+						<locales>en,de</locales>
+						<inputencoding>UTF-8</inputencoding>
+						<outputencoding>UTF-8</outputencoding>
+						<reportPlugins>
+							<!-- Suppress reports by this empty 'reportPlugins'-element. -->
+						</reportPlugins>
+					</configuration>
+				</plugin>
+
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>

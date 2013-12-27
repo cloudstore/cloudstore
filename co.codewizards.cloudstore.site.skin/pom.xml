@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>co.codewizards.cloudstore.site.skin</artifactId>
+
+	<parent>
+		<groupId>co.codewizards.cloudstore</groupId>
+		<artifactId>co.codewizards.cloudstore.parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../co.codewizards.cloudstore.parent</relativePath>
+	</parent>
+
+	<developers>
+		<developer>
+			<name>Marc Klinger</name>
+			<email>mklinger[at]nightlabs[dot]de</email>
+			<organization>NightLabs Consulting GmbH</organization>
+			<organizationUrl>http://www.nightlabs.de</organizationUrl>
+		</developer>
+		<developer>
+			<name>Alexander Bieber</name>
+			<email>abieber[at]nightlabs[dot]de</email>
+			<organization>NightLabs Consulting GmbH</organization>
+			<organizationUrl>http://www.nightlabs.de</organizationUrl>
+		</developer>
+		<developer>
+			<name>Marco Nguitragool-Schulze</name>
+			<email>marco[at]nightlabs[dot]de</email>
+			<organization>CodeWizards GmbH</organization>
+			<organizationUrl>http://www.codewizards.co</organizationUrl>
+		</developer>
+	</developers>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+			</plugins>
+		</pluginManagement>
+
+		<plugins>
+		</plugins>
+	</build>
+</project>

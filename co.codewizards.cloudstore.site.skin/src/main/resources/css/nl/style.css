@@ -1,0 +1,405 @@
+html {
+	height: 100%;
+}
+
+h1, h2, h3, h4, h5 {
+	font-family: 'Enriqueta', serif;
+	color: #0F1D4F;
+	line-height: 1.2em;
+}
+
+html body {
+	height: 100%;
+	background-color: #f9f9f9;
+	font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
+	background-image: url(../../images/nl/bg-gradient.png);
+	background-repeat: repeat-x;
+	font-size: 10pt;
+	line-height: 12pt;
+}
+
+.portlet-borderless-container {
+	margin: 20px;
+}
+
+.portlet-journal-content .portlet-borderless-container {
+	margin: 0px;
+}
+
+input[type="text"] {
+    background-color: #F9F9F9;
+    background-image: none;
+    border-color: #D9E0E9;
+    color: #6f6f6f;
+	font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
+}
+
+input[type="text"].focus {
+    background-color: white;
+}
+
+
+#nl_spacer_top {
+	height: 15px;
+}
+#nl_spacer_bottom {
+	height: 15px;
+}
+
+#nl_container {
+	width: 940px;
+	border: 1px solid #9ea5b0;
+	background-color: #f9f9f9;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: 11pt;
+	line-height: 16pt;
+	color: #6f6f6f;
+}
+
+#nl_container a {
+	color: #6f6f6f;
+}
+
+#nl_header {
+	/* height: 69px; */
+	height: 111px;
+	background-image: url(../../images/nl/logo.png);
+	background-repeat: no-repeat;
+	background-position: left top;
+	margin-top: 21px;
+	margin-right: 21px;
+	margin-left: 21px;
+}
+
+#nl_menu {
+	position: relative;
+	height: 33px;
+	background-image: url(../../images/nl/menu-gradient.png);
+	background-repeat: repeat-x;
+	border-top: 1px solid #9ea5b0;
+	padding-left: 21px;
+	color: #f9f9f9;
+}
+#nl_menu a.nl_nav_item {
+	color: #f9f9f9;
+	text-decoration: none;
+	text-transform: uppercase;
+	position: relative;
+	top: -11px;
+	font-weight: bold;
+}
+#nl_menu a.nl_nav_item.nl_selected, #nl_menu_children a.nl_nav_child.nl_selected,
+#nl_menu a.nl_nav_item:hover, #nl_menu_children a.nl_nav_child:hover {
+	color: #00a7e2;
+}
+#nl_menu .nl_menu_sep {
+	margin-left: 17px;
+	margin-right: 17px;
+}
+
+#nl_menu_children .nl_nav_item_children_wrapper {
+	display: none;
+	position: absolute;
+    width: 883px;
+	z-index: 10;
+	height: 24px;
+	background-image: url(../../images/nl/menu-gradient-rev.png);
+	background-repeat: repeat-x;
+	border-top: 1px solid #626b7a;
+	padding-left: 57px;
+	color: #f9f9f9;
+	font-size: 9.5pt;
+	font-weight: bold;
+}
+
+#nl_menu_children a.nl_nav_child {
+	position: relative;
+	top: 3px;
+	color: #f9f9f9;
+	text-decoration: none;
+	margin-right: 34px;
+} 
+
+#nl_language a {
+	color: #f9f9f9;
+	text-decoration: none;
+	font-size: 9pt;
+	text-transform: none;
+	position: absolute; 
+	right: 19px; 
+	top: 7px;
+	font-weight: normal; 
+}
+
+#nl_sysmenu {
+	padding: 10px;
+	font-size: 7pt;
+	line-height: 9pt;
+	position: fixed;
+	top: 15px;
+	right: 15px;
+	background-color: #F9F9F9;
+	border: 1px solid #9ea5b0;
+	color: #13325a;
+	display: none;
+	z-index: 1;
+}
+#nl_sysmenu a {
+	position: relative;
+	top: 0px;
+	color: #13325a;
+	text-transform: none;
+}
+
+#nl_sysmenu_trigger {
+	position: fixed;
+	top: 15px;
+	right: 15px;
+	width: 100px;
+	height: 200px;
+	z-index: 0;
+}
+
+/* ###### content ####### */
+
+#nl_container .lfr-grid .lfr-column {
+	padding: 0px;
+}
+
+#nl_container .lfr-grid #column-1 {
+	background-color: white;
+}
+
+#nl_container .lfr-grid #column-2 {
+	border-left: 1px solid #9ea5b0;
+	border-collapse: collapse;
+}
+
+#nl_container .journal-content-article .nl_content_header {
+	background-color: #dce2eb;
+	background-image: url(../../images/nl/content-header-gradient.png);
+	background-repeat: repeat-y;
+	background-position: right; 
+	padding-bottom: 18px;
+	margin-bottom: 46px;
+	border-top: 1px solid #9ea5b0;
+}
+
+#nl_container .journal-content-article .nl_content_header_teaser {
+	position: absolute;
+	width: 940px;
+	background-image: url(../../images/nl/content-header-teaser-gradient.png);
+	background-repeat: repeat-y;
+	background-position: right;
+	margin-top: 22px; 
+	padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+#nl_container .journal-content-article .nl_content_header_teaser p,
+#nl_container .journal-content-article .nl_content_header_teaser h1,
+#nl_container .journal-content-article .nl_content_header_teaser h2 {
+	/*margin-left: 540px;*/
+	text-align: right;
+	margin-right: 50px;
+}
+#nl_container .journal-content-article .nl_content_header_teaser p {
+	font-size: 9pt;
+	margin-bottom: 0;
+	font-weight: bold;
+	width: auto;
+}
+#nl_container .journal-content-article .nl_content_header_teaser h1 {
+	font-size: 12.5pt;
+	line-height: 18pt;
+}
+#nl_container .journal-content-article .nl_content_header_teaser h2 {
+	font-size: 10pt;
+	margin-bottom: 3px;
+	margin-top: 35px;
+}
+
+
+#nl_container .journal-content-article .nl_content_header h1 {
+	margin-top: 18px;
+	margin-bottom: 18px;
+	margin-left: 41px;
+	font-size: 18pt;
+	font-weight: bold;
+	line-height: 19pt;
+}
+
+#nl_container .journal-content-article .nl_content_header p {
+	margin-bottom: 0px;
+	margin-top: 0px;
+	margin-left: 41px;
+	font-size: 11pt;
+	line-height: 16pt;
+	font-weight: bold;
+}
+
+#nl_container .journal-content-article a:hover {
+	color: #0F1D4F;
+}
+
+#nl_container .journal-content-article p {
+	margin-left: 75px;
+	width: 540px;
+	/*
+	margin-right: 95px;
+	*/
+} 
+
+#nl_container ul {
+	list-style-image: url(../../images/nl/ul-bullet.png);
+}
+
+#nl_container li.none {
+	list-style: none;
+}
+/*
+
+#nl_container ul {
+	margin-left: 90px;
+	margin-right: 40px;
+	list-style-image: url(../../images/nl/ul-bullet.png);
+} 
+
+#nl_container ul li {
+	margin-top: 15px;
+	margin-bottom: 16px;
+}
+	*/
+
+#nl_container .journal-content-article table.nl_dl { 
+    margin-left: 120px;
+    margin-right: 120px;
+}
+
+#nl_container .journal-content-article td {
+	padding-top: 15px;
+}
+
+#nl_container .journal-content-article td.nl_dt {
+	font-weight: bold;
+	vertical-align: top;
+	padding-right: 32px;
+	width: 180px;
+}
+
+#nl_container .journal-content-article td.nl_dd {
+	vertical-align: top;
+}
+
+#nl_container .journal-content-article .margin-right {
+	padding-left: 28px;
+	margin-bottom: 2em;
+	border-top: 1px solid #9ea5b0;
+	color: #0F1D4F;
+	width: 202px;
+	font-size: 9pt;
+	line-height: 11pt;
+}
+
+#nl_container .journal-content-article .margin-right a {
+	color: #0F1D4F;
+}
+
+#nl_container .journal-content-article .margin-right a:hover {
+	color: #13325a;
+}
+
+#nl_container .journal-content-article .margin-right h1 {
+	font-size: 10pt;
+	line-height: 12pt;
+	font-weight: normal;
+	border-bottom: 1px solid #a3b5cb;
+	padding-bottom: 8px;
+    width: 134px;
+}
+
+#nl_container .journal-content-article .margin-right p {
+	margin-left: 0px;
+	margin-right: 0px;
+	width: 195px;
+}
+
+#nl_container .journal-content-article .margin-right form {
+	margin-bottom: 1em;
+}
+
+#nl_container .journal-content-article .margin-right input[type="text"] {
+	font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
+	background-image: none;
+	background-color: #F9F9F9;
+	border-color: #d9e0e9;
+	height: 15px;
+    width: 138px;
+    padding: 0px;
+    color: #13325a;
+}
+
+#nl_container .journal-content-article .margin-right input[type="text"]:focus {
+	background-color: white;
+}
+
+#nl_footer {
+    background-image: url("../../images/nl/footer-bg-full.png");
+    /*
+    background-repeat: repeat-x;
+    */
+    border: 1px solid #9EA5B0;
+    clear: both;
+    color: #B1B1B1;
+    font-size: 9px;
+    height: 43px;
+    margin: auto;
+    padding-left: 25px;
+    padding-right: 25px;
+    padding-top: 15px;
+    text-align: left;
+    width: 890px;
+}
+
+#nl_footer a{
+  color:#b1b1b1;
+  font-size:9px;
+}
+
+input[type="submit"].nl_link {
+	border: none;
+	padding: 0px;
+	background: none;
+	font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
+	text-decoration: underline;
+	font-weight: normal;
+}
+
+input[type="submit"].nl_link:hover {
+	text-decoration: none;
+}
+
+#nl_container .journal-content-article .margin-right input[type="submit"].nl_link {
+	color: #0F1D4F;
+}
+
+#nl_container .journal-content-article .margin-right input[type="submit"].nl_link:hover {
+	color: #13325a;
+}
+
+input[type="submit"].nl_link {
+	color: #13325a;
+}
+
+input[type="submit"].nl_link:hover {
+	color: #0F1D4F;
+}
+
+.headerfont {
+	font-family: 'Enriqueta', serif;
+}
+
+.headercolor {
+	color: #0F1D4F;
+}

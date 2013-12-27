@@ -1,0 +1,128 @@
+#content {
+    left: -40px;
+    top: -15px;
+	height: 425px;
+    width: 940px;
+    position: relative;
+}
+#slider {
+    overflow:scroll; 
+}
+#slider ul, #slider li {
+  margin:0;
+  padding:0;
+  list-style:none;
+  margin-top:0;
+}
+#slider li { 
+  width:940px;
+  height:425px;
+  margin-top:0;
+}
+#prevBtn a {
+	position: relative;
+	display:block;
+	width:36px;
+	height:36px;
+	left:0px;
+	top:-85px;
+	background:url("../images/slider_arrow_left.png") no-repeat 0 0;
+	
+}
+#nextBtn a { 
+	position: relative;
+	display:block;
+	width:36px;
+	height:36px;
+	left:904px;
+	top:-126px;
+	background:url("../images/slider_arrow_right.png") no-repeat 0 0;
+}														
+
+.beta-stamp {
+	background:url("../images/beta.png") no-repeat 0 0;
+}
+
+table.homepagecolumns {
+	width: 100%;
+	margin-top: -45px;
+}
+
+table.homepagecolumns ul {
+	margin-left: -20px
+}
+table.homepagecolumns li {	
+	margin-bottom: 16px;
+	margin-top: 15px;
+	margin-right: 20px
+}
+
+.vestigo-box {
+    background-image: url("../images/vestigo-box-bg.png");
+    color: #FFFFFF;
+    height: 250px;
+    left: -40px;
+    padding-top: 35px;
+    position: relative;
+    top: -63px;
+    width: 940px;
+}
+
+.vestigo-box-header {
+	/*
+	font-family: Palatino;
+	padding-top: 15px;
+	*/
+	padding-left: 35px;
+	padding-top: 20px;
+}
+
+.vestigo-box-header h1 {
+    color: #FFFFFF;
+    text-shadow: 1px 2px 3px #111111
+}
+
+.vestigo-box-content {
+	padding-top: 20px;
+    padding-left: 35px;
+    width: 600px;
+	line-height: 18px;    
+}
+
+.arrows {
+	background-image: url('../images/arrows-right-list.png');
+	background-position: left top;
+	background-repeat: no-repeat;
+	padding-left: 15px;
+	display: block;
+}
+
+div.slider {
+	position: relative; 
+	background: url('../images/slider_bg.jpg'); no-repeat 
+	height: 425px;
+}
+div.slider_header {
+	position: absolute; 
+	bottom: 280px; 
+	left: 560px;	
+}
+div.slider_text {
+	position: absolute; 
+	top: 165px; 
+	left: 565px; 
+	line-height: 1.5em; 
+	font-size: 13pt;	
+}
+div.slider_button {
+	position: absolute; 
+	top: 325px; 
+	left: 550px; 
+}
+a.download_link {
+    background-image:url('../images/get-your-copy-now.png');
+    display:block;
+    height:55px;
+    width:248px;
+    text-indent:-9999px;
+}
