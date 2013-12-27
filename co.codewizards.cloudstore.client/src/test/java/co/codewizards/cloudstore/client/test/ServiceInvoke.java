@@ -20,6 +20,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.WebResource.Builder;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 
@@ -56,19 +57,27 @@ public class ServiceInvoke {
 
 	public void testInvokingREST() {
 		Client client = acquireClient();
-		WebResource resource = client.resource("localhost:4000/co.codewizards.cloudstore.webapp");
-		resource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+		ClientResponse response;
+		try {
+			Builder builder = getResource(client, "test").type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML_TYPE);
+			builder.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+			response = builder.get(ClientResponse.class);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
 
-		ClientResponse response = resource.get(ClientResponse.class);
 		assertThat(response.getClientResponseStatus().getFamily()).isEqualTo(Family.SUCCESSFUL);
 	}
 
-	protected WebResource.Builder getChildVMAppResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
+	protected WebResource.Builder getResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
 	{
-		return getChildVMAppResource(client, dtoClass, relativePathParts).accept(MediaType.APPLICATION_XML_TYPE);
+		return getResource(client, dtoClass, relativePathParts).accept(MediaType.APPLICATION_XML_TYPE);
 	}
 
-	protected WebResource getChildVMAppResource(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
+	protected WebResource getResource(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
 	{
 		StringBuilder relativePath = new StringBuilder();
 		relativePath.append(dtoClass.getSimpleName());
@@ -93,10 +102,10 @@ public class ServiceInvoke {
 				relativePath.append(relativePathPart.toString());
 			}
 		}
-		return getChildVMAppResource(client, relativePath.toString());
+		return getResource(client, relativePath.toString());
 	}
 
-	protected WebResource getChildVMAppResource(Client client, String relativePath)
+	protected WebResource getResource(Client client, String relativePath)
 	{
 		return client.resource(baseURL + relativePath);
 	}
