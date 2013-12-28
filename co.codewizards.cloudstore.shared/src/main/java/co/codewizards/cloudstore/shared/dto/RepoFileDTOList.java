@@ -14,4 +14,8 @@ public class RepoFileDTOList {
 		return elements;
 	}
 
+	public void setElements(List<RepoFileDTO> elements) {
+		this.elements = elements;
+	}
+
 }

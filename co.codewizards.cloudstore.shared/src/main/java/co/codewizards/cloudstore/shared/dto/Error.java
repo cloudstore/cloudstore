@@ -13,11 +13,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Error
 implements Serializable
 {
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 1L;
 
 	private String className;
 	private String message;
-	private List<ErrorStackTraceElement> stackTraceElements = new ArrayList<ErrorStackTraceElement>();
+	private List<ErrorStackTraceElement> stackTraceElements;
 	private Error cause;
 
 	public Error() { }
@@ -44,6 +44,9 @@ implements Serializable
 	}
 
 	public List<ErrorStackTraceElement> getStackTraceElements() {
+		if (stackTraceElements == null)
+			stackTraceElements = new ArrayList<ErrorStackTraceElement>();
+
 		return stackTraceElements;
 	}
 	public void setStackTraceElements(List<ErrorStackTraceElement> stackTraceElements) {
