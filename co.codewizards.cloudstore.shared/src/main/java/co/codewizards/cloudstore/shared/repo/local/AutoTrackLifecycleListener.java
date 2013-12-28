@@ -42,12 +42,15 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	public void postStore(InstanceLifecycleEvent event) { }
 
 	@Override
-	public void preDirty(InstanceLifecycleEvent event) {
-		onWrite(event.getPersistentInstance());
-	}
+	public void preDirty(InstanceLifecycleEvent event) { }
 
 	@Override
-	public void postDirty(InstanceLifecycleEvent event) { }
+	public void postDirty(InstanceLifecycleEvent event) {
+		// We must use postDirty(...), because preDirty(...) causes a StackOverflowError. preDirty(...) seems to be
+		// called again for the same object until it is dirty (IIUC). Thus, our onWrite(...) recursively calls preDirty(...)
+		// and itself again.
+		onWrite(event.getPersistentInstance());
+	}
 
 	@Override
 	public void preAttach(InstanceLifecycleEvent event) { }
