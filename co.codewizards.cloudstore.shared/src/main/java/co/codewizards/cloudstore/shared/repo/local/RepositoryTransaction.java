@@ -15,7 +15,6 @@ public class RepositoryTransaction {
 	private final PersistenceManagerFactory persistenceManagerFactory;
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
-	private LocalRepository localRepository;
 	private long localRevision = -1;
 
 	public RepositoryTransaction(RepositoryManager repositoryManager) {
@@ -28,33 +27,10 @@ public class RepositoryTransaction {
 		if (isActive()) {
 			throw new IllegalStateException("Transaction is already active!");
 		}
-		try {
-			persistenceManager = persistenceManagerFactory.getPersistenceManager();
-			hookLifecycleListeners();
-			jdoTransaction = persistenceManager.currentTransaction();
-			jdoTransaction.begin();
-
-			jdoTransaction.setSerializeRead(true);
-			LocalRepository lr = new LocalRepositoryDAO().persistenceManager(persistenceManager).getLocalRepositoryOrFail();
-			jdoTransaction.setSerializeRead(null);
-			localRevision = lr.getRevision() + 1;
-			lr.setRevision(localRevision);
-			persistenceManager.flush();
-			localRepository = lr;
-		} finally {
-			if (localRepository == null) {
-				if (jdoTransaction != null) {
-					if (jdoTransaction.isActive())
-						jdoTransaction.rollback();
-
-					jdoTransaction = null;
-				}
-				if (persistenceManager != null) {
-					persistenceManager.close();
-					persistenceManager = null;
-				}
-			}
-		}
+		persistenceManager = persistenceManagerFactory.getPersistenceManager();
+		hookLifecycleListeners();
+		jdoTransaction = persistenceManager.currentTransaction();
+		jdoTransaction.begin();
 	}
 
 	private void hookLifecycleListeners() {
@@ -100,6 +76,14 @@ public class RepositoryTransaction {
 	}
 
 	public long getLocalRevision() {
+		if (localRevision < 0) {
+			jdoTransaction.setSerializeRead(true);
+			LocalRepository lr = new LocalRepositoryDAO().persistenceManager(persistenceManager).getLocalRepositoryOrFail();
+			jdoTransaction.setSerializeRead(null);
+			localRevision = lr.getRevision() + 1;
+			lr.setRevision(localRevision);
+			persistenceManager.flush();
+		}
 		return localRevision;
 	}
 

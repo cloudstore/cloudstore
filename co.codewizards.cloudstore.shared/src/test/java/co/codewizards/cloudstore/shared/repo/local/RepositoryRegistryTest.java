@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.shared.repo;
+package co.codewizards.cloudstore.shared.repo.local;
 
 import static org.assertj.core.api.Assertions.*;
 

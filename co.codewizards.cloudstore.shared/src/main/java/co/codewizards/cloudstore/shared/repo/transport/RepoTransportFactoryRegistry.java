@@ -10,6 +10,16 @@ import java.util.ServiceLoader;
 
 public class RepoTransportFactoryRegistry {
 
+	private static class RepoTransportFactoryRegistryHolder {
+		public static final RepoTransportFactoryRegistry instance = new RepoTransportFactoryRegistry();
+	}
+
+	public static RepoTransportFactoryRegistry getInstance() {
+		return RepoTransportFactoryRegistryHolder.instance;
+	}
+
+	protected RepoTransportFactoryRegistry() { }
+
 	private List<RepoTransportFactory> repoTransportFactories = null;
 
 	public RepoTransportFactory getRepoTransportFactoryOrFail(URL remoteRoot) {

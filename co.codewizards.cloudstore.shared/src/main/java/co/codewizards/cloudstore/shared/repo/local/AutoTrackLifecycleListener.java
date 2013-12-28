@@ -4,6 +4,8 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.util.Date;
 
+import javax.jdo.listener.AttachLifecycleListener;
+import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.StoreLifecycleListener;
 
@@ -19,9 +21,9 @@ import co.codewizards.cloudstore.shared.persistence.AutoTrackLocalRevision;
  * interfaces are implemented by the persistence-capable object.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class AutoTrackLifecycleListener implements StoreLifecycleListener {
+public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener {
 
-	private RepositoryTransaction transaction;
+	private final RepositoryTransaction transaction;
 
 	public AutoTrackLifecycleListener(RepositoryTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -33,18 +35,41 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener {
 
 	@Override
 	public void preStore(InstanceLifecycleEvent event) {
-		Object pc = event.getPersistentInstance();
+		onWrite(event.getPersistentInstance());
+	}
+
+	@Override
+	public void postStore(InstanceLifecycleEvent event) { }
+
+	@Override
+	public void preDirty(InstanceLifecycleEvent event) {
+		onWrite(event.getPersistentInstance());
+	}
+
+	@Override
+	public void postDirty(InstanceLifecycleEvent event) { }
+
+	@Override
+	public void preAttach(InstanceLifecycleEvent event) { }
+
+	@Override
+	public void postAttach(InstanceLifecycleEvent event) {
+		// We must write it after attaching, because the affected fields might not be detached.
+		onWrite(event.getPersistentInstance());
+	}
+
+	private void onWrite(Object pc) {
+		// We always obtain the localRevision - no matter, if the current write operation is on
+		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
+		// localRevision in the database.
+		long localRevision = transaction.getLocalRevision();
 		if (pc instanceof AutoTrackChanged) {
 			AutoTrackChanged entity = (AutoTrackChanged) pc;
 			entity.setChanged(new Date());
 		}
 		if (pc instanceof AutoTrackLocalRevision) {
 			AutoTrackLocalRevision entity = (AutoTrackLocalRevision) pc;
-			entity.setLocalRevision(transaction.getLocalRevision());
+			entity.setLocalRevision(localRevision);
 		}
 	}
-
-	@Override
-	public void postStore(InstanceLifecycleEvent event) { }
-
 }

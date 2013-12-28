@@ -2,7 +2,8 @@ package co.codewizards.cloudstore.shared.repo.transport;
 
 import java.net.URL;
 
-import co.codewizards.cloudstore.shared.dto.RepoFileDTOList;
+import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
+import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
 
 public interface RepoTransport {
 
@@ -12,6 +13,6 @@ public interface RepoTransport {
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 
-	RepoFileDTOList getRepoFileDTOsChangedAfter(long localRevision);
+	ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest);
 
 }

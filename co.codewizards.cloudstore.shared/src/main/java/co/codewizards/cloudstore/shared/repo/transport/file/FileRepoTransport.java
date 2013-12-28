@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.shared.repo.transport.file;
 
+import static co.codewizards.cloudstore.shared.util.Util.*;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -8,12 +10,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
+import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
 import co.codewizards.cloudstore.shared.dto.DirectoryDTO;
 import co.codewizards.cloudstore.shared.dto.EntityID;
 import co.codewizards.cloudstore.shared.dto.NormalFileDTO;
 import co.codewizards.cloudstore.shared.dto.RepoFileDTO;
-import co.codewizards.cloudstore.shared.dto.RepoFileDTOList;
+import co.codewizards.cloudstore.shared.dto.RepositoryDTO;
 import co.codewizards.cloudstore.shared.persistence.Directory;
+import co.codewizards.cloudstore.shared.persistence.LocalRepository;
+import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.shared.persistence.NormalFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
@@ -40,22 +46,40 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public RepoFileDTOList getRepoFileDTOsChangedAfter(long localRevision) {
-		RepoFileDTOList result = new RepoFileDTOList();
+	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
+		assertNotNull("changeSetRequest", changeSetRequest);
+		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
 		RepositoryTransaction transaction = repositoryManager.createTransaction();
 		try {
+			LocalRepositoryDAO localRepositoryDAO = new LocalRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
 			RepoFileDAO repoFileDAO = new RepoFileDAO().persistenceManager(transaction.getPersistenceManager());
-			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(localRevision);
+
+			// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
+			// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the
+			// next run.
+			changeSetResponse.setRepositoryDTO(toRepositoryDTO(localRepositoryDAO.getLocalRepositoryOrFail()));
+
+			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(changeSetRequest.getRevision());
 			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFileDAO, repoFiles);
-			result.setElements(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
+			changeSetResponse.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
+
 			transaction.commit();
-			return result;
+			return changeSetResponse;
 		} finally {
 			transaction.rollbackIfActive();
 		}
 	}
 
+	private RepositoryDTO toRepositoryDTO(LocalRepository localRepository) {
+		RepositoryDTO repositoryDTO = new RepositoryDTO();
+		repositoryDTO.setEntityID(localRepository.getEntityID());
+		repositoryDTO.setRevision(localRepository.getRevision());
+		return repositoryDTO;
+	}
+
 	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(RepoFileDAO repoFileDAO, Collection<RepoFile> repoFiles) {
+		assertNotNull("repoFileDAO", repoFileDAO);
+		assertNotNull("repoFiles", repoFiles);
 		Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = new HashMap<EntityID, RepoFileDTO>();
 		for (RepoFile repoFile : repoFiles) {
 			RepoFile rf = repoFile;
@@ -70,6 +94,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	private RepoFileDTO toRepoFileDTO(RepoFileDAO repoFileDAO, RepoFile repoFile) {
+		assertNotNull("repoFileDAO", repoFileDAO);
+		assertNotNull("repoFile", repoFile);
 		RepoFileDTO repoFileDTO;
 		if (repoFile instanceof NormalFile) {
 			NormalFile normalFile = (NormalFile) repoFile;
