@@ -10,6 +10,15 @@ import javax.jdo.listener.StoreLifecycleListener;
 import co.codewizards.cloudstore.shared.persistence.AutoTrackChanged;
 import co.codewizards.cloudstore.shared.persistence.AutoTrackLocalRevision;
 
+/**
+ * JDO lifecycle-listener updating the {@link AutoTrackChanged#getChanged() changed} and the
+ * {@link AutoTrackLocalRevision#getLocalRevision() localRevision} properties of persistence-capable
+ * objects.
+ * <p>
+ * Whenever an object is written to the datastore, said properties are updated, if the appropriate
+ * interfaces are implemented by the persistence-capable object.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class AutoTrackLifecycleListener implements StoreLifecycleListener {
 
 	private RepositoryTransaction transaction;

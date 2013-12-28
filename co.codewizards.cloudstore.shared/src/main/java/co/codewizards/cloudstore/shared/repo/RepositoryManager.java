@@ -16,10 +16,12 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import co.codewizards.cloudstore.shared.persistence.FileType;
+import co.codewizards.cloudstore.shared.persistence.Directory;
 import co.codewizards.cloudstore.shared.persistence.LocalRepository;
 import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
-import co.codewizards.cloudstore.shared.persistence.RepoFile;
+import co.codewizards.cloudstore.shared.persistence.NormalFile;
+import co.codewizards.cloudstore.shared.persistence.RemoteRepository;
+import co.codewizards.cloudstore.shared.persistence.Symlink;
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 import co.codewizards.cloudstore.shared.util.IOUtil;
 import co.codewizards.cloudstore.shared.util.PropertiesUtil;
@@ -118,6 +120,8 @@ public class RepositoryManager {
 		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties );
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
+			initPersistenceCapableClasses(pm);
+
 			pm.currentTransaction().begin();
 
 			if (createRepository) {
@@ -135,6 +139,14 @@ public class RepositoryManager {
 		}
 	}
 
+	private void initPersistenceCapableClasses(PersistenceManager pm) {
+		pm.getExtent(Directory.class);
+		pm.getExtent(LocalRepository.class);
+		pm.getExtent(NormalFile.class);
+		pm.getExtent(RemoteRepository.class);
+		pm.getExtent(Symlink.class);
+	}
+
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
 		try {
 			new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
@@ -146,8 +158,7 @@ public class RepositoryManager {
 	private void createAndPersistLocalRepository(PersistenceManager pm) {
 		LocalRepository repository = new LocalRepository();
 		repository.setUuid(UUID.randomUUID());
-		RepoFile root = new RepoFile();
-		root.setFileType(FileType.DIRECTORY);
+		Directory root = new Directory();
 		root.setName("");
 		repository.setRoot(root);
 		pm.makePersistent(repository);

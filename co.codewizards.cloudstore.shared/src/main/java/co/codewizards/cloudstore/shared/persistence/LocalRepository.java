@@ -19,9 +19,13 @@ import javax.jdo.annotations.Persistent;
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="LocalRepository")
 public class LocalRepository extends Repository {
 
-	@Persistent(nullValue=NullValue.DEFAULT)
+	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RepoFile root;
 
+	/**
+	 * Get the root directory of this repository.
+	 * @return the root directory of this repository. Never <code>null</code> in persistence.
+	 */
 	public RepoFile getRoot() {
 		return root;
 	}

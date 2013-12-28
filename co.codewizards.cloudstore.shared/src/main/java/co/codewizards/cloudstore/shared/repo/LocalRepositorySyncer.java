@@ -14,7 +14,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.shared.persistence.FileType;
+import co.codewizards.cloudstore.shared.persistence.Directory;
+import co.codewizards.cloudstore.shared.persistence.NormalFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
@@ -40,6 +41,14 @@ class LocalRepositorySyncer {
 
 	private void sync(RepoFile parentRepoFile, File file) {
 		RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+
+		// If the type changed - e.g. from normal file to directory - we must delete
+		// the old instance.
+		if (repoFile != null && !isRepoFileTypeCorrect(repoFile, file)) {
+			deleteRepoFile(repoFile);
+			repoFile = null;
+		}
+
 		if (repoFile == null) {
 			repoFile = createRepoFile(parentRepoFile, file);
 			if (repoFile == null) { // ignoring non-normal files.
@@ -66,14 +75,30 @@ class LocalRepositorySyncer {
 		}
 	}
 
+	private boolean isRepoFileTypeCorrect(RepoFile repoFile, File file) {
+		// TODO support symlinks!
+		if (file.isFile())
+			return repoFile instanceof NormalFile;
+
+		if (file.isDirectory())
+			return repoFile instanceof Directory;
+
+		return true;
+	}
+
 	private boolean isModified(RepoFile repoFile, File file) {
 		if (file.isFile()) {
-			long difference = Math.abs(repoFile.getLastModified().getTime() - file.lastModified());
+			if (!(repoFile instanceof NormalFile))
+				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
+
+			NormalFile normalFile = (NormalFile) repoFile;
+
+			long difference = Math.abs(normalFile.getLastModified().getTime() - file.lastModified());
 			// TODO make time difference threshold configurable
 			if (difference > 5000)
 				return true;
 
-			return repoFile.getLength() != file.length();
+			return normalFile.getLength() != file.length();
 		} else {
 			return false;
 		}
@@ -83,21 +108,24 @@ class LocalRepositorySyncer {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
 
-		RepoFile repoFile = new RepoFile();
-		repoFile.setParent(parentRepoFile);
-		repoFile.setName(file.getName());
+		// TODO support symlinks!
+
+		RepoFile repoFile;
 
 		if (file.isDirectory()) {
-			repoFile.setFileType(FileType.DIRECTORY);
+			repoFile = new Directory();
 		} else if (file.isFile()) {
-			repoFile.setFileType(FileType.FILE);
-			repoFile.setLastModified(new Date(file.lastModified()));
-			repoFile.setLength(file.length());
-			repoFile.setSha(sha(file));
+			NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
+			normalFile.setLastModified(new Date(file.lastModified()));
+			normalFile.setLength(file.length());
+			normalFile.setSha1(sha(file));
 		} else {
 			logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
 			return null;
 		}
+
+		repoFile.setParent(parentRepoFile);
+		repoFile.setName(file.getName());
 
 		// For consistency reasons, we touch the parent not only when deleting a child (which is required
 		// by our sync algorithm), but also when adding a new child.
@@ -107,9 +135,15 @@ class LocalRepositorySyncer {
 	}
 
 	private void updateRepoFile(RepoFile repoFile, File file) {
-		repoFile.setLastModified(new Date(file.lastModified()));
-		repoFile.setLength(file.length());
-		repoFile.setSha(sha(file));
+		if (file.isFile()) {
+			if (!(repoFile instanceof NormalFile))
+				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
+
+			NormalFile normalFile = (NormalFile) repoFile;
+			normalFile.setLastModified(new Date(file.lastModified()));
+			normalFile.setLength(file.length());
+			normalFile.setSha1(sha(file));
+		}
 	}
 
 	private void deleteRepoFile(RepoFile repoFile) {
