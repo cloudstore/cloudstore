@@ -4,6 +4,8 @@ import java.io.File;
 import java.math.BigInteger;
 import java.util.Random;
 
+import co.codewizards.cloudstore.shared.repo.local.RepositoryManagerRegistry;
+
 public abstract class AbstractTest {
 
 	protected static final Random random = new Random();

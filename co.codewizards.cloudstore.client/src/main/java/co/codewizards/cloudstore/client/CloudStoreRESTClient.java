@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.client.internal.QueryParameter;
 import co.codewizards.cloudstore.client.internal.RelativePathPart;
+import co.codewizards.cloudstore.client.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.shared.dto.Error;
 
 import com.sun.jersey.api.client.Client;
@@ -115,8 +116,7 @@ public class CloudStoreRESTClient {
 	{
 		Client client = clientCache.poll();
 		if (client == null) {
-//			ClientConfig clientConfig = new DefaultClientConfig(JavaNativeMessageBodyReader.class, JavaNativeMessageBodyWriter.class);
-			ClientConfig clientConfig = new DefaultClientConfig();
+			ClientConfig clientConfig = new DefaultClientConfig(CloudStoreJaxbContextResolver.class);
 			clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_CONNECT_MS)); // must be a java.lang.Integer
 			clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_READ_MS)); // must be a java.lang.Integer
 			client = Client.create(clientConfig);

@@ -1,27 +1,26 @@
-package co.codewizards.cloudstore.shared.repo;
+package co.codewizards.cloudstore.shared.repo.local;
 
 import java.io.File;
 
 /**
  * Thrown if a {@link RepositoryManager} could not be created for a given {@link File}, because the file
- * is not yet a repository.
+ * is already a repository and the {@code RepositoryManager} was instructed to create a new repository
+ * from a simple file.
  * <p>
- * Note, that the path denotes an existing directory in the file system, though. However, it was expected
- * to be a repository and not only a simple directory. A repository contains appropriate meta-data, while
- * a simple directory does not.
+ * Note, that this exception is thrown for simple files or directories inside a repository, too.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class FileNoRepositoryException extends RepositoryManagerException {
+public class FileAlreadyRepositoryException extends RepositoryManagerException {
 	private static final long serialVersionUID = 1L;
 
 	private File file;
 
-	public FileNoRepositoryException(File file) {
+	public FileAlreadyRepositoryException(File file) {
 		super(createMessage(file));
 		this.file = file;
 	}
 
-	public FileNoRepositoryException(File file, Throwable cause) {
+	public FileAlreadyRepositoryException(File file, Throwable cause) {
 		super(createMessage(file), cause);
 		this.file = file;
 	}

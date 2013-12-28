@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
+import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
 
 public class RepositoryTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryTest.class);

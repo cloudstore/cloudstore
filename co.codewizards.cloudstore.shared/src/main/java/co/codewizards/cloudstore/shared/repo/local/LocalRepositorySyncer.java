@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.shared.repo;
+package co.codewizards.cloudstore.shared.repo.local;
 
 import static co.codewizards.cloudstore.shared.util.Util.*;
 
@@ -83,7 +83,7 @@ class LocalRepositorySyncer {
 		if (file.isDirectory())
 			return repoFile instanceof Directory;
 
-		return true;
+		return false;
 	}
 
 	private boolean isModified(RepoFile repoFile, File file) {

@@ -8,6 +8,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.shared.repo.local.FileAlreadyRepositoryException;
+import co.codewizards.cloudstore.shared.repo.local.FileNoDirectoryException;
+import co.codewizards.cloudstore.shared.repo.local.FileNoRepositoryException;
+import co.codewizards.cloudstore.shared.repo.local.FileNotFoundException;
+import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
+
 public class RepositoryRegistryTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryRegistryTest.class);
 	@Test

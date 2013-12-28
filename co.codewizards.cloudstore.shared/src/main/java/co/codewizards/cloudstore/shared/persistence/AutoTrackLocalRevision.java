@@ -6,7 +6,7 @@ package co.codewizards.cloudstore.shared.persistence;
  * <p>
  * This interface is implemented by persistence-capable (a.k.a. entity) classes.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
- * @see co.codewizards.cloudstore.shared.repo.AutoTrackLifecycleListener
+ * @see co.codewizards.cloudstore.shared.repo.local.AutoTrackLifecycleListener
  */
 public interface AutoTrackLocalRevision {
 	/**

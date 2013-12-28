@@ -10,6 +10,7 @@ import javax.ws.rs.ApplicationPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.webapp.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.webapp.jersey.CloudStoreRESTProvider;
 import co.codewizards.cloudstore.webapp.jersey.DAOProvider;
 import co.codewizards.cloudstore.webapp.jersey.DefaultExceptionMapper;
@@ -47,7 +48,7 @@ extends DefaultResourceConfig
 
 			// BEGIN providers
 			// providers are not services (they are infrastructure), but they are registered the same way.
-			//		JAXBContextResolver.class
+			CloudStoreJaxbContextResolver.class,
 			DefaultExceptionMapper.class
 			// END providers
 	})));

@@ -5,6 +5,9 @@ import java.lang.reflect.Type;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
+import co.codewizards.cloudstore.shared.dto.EntityID;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
@@ -73,7 +76,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	 * @return the entity-instance referenced by the specified identifier. Never <code>null</code>.
 	 * @throws JDOObjectNotFoundException if the entity referenced by the given identifier does not exist.
 	 */
-	public E getObjectByIdOrFail(Object entityID)
+	public E getObjectByIdOrFail(EntityID entityID)
 	throws JDOObjectNotFoundException
 	{
 		return getObjectById(entityID, true);
@@ -86,10 +89,12 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	 * @return the entity-instance referenced by the specified identifier or <code>null</code>, if no
 	 * such entity exists.
 	 */
-	public E getObjectByIdOrNull(Object entityID)
+	public E getObjectByIdOrNull(EntityID entityID)
 	{
 		return getObjectById(entityID, false);
 	}
+
+	private Query queryGetObjectById;
 
 	/**
 	 * Get the entity-instance referenced by the specified identifier.
@@ -102,21 +107,40 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	 * @throws JDOObjectNotFoundException if the entity referenced by the given identifier does not exist
 	 * and <code>throwExceptionIfNotFound == true</code>.
 	 */
-	private E getObjectById(Object entityID, boolean throwExceptionIfNotFound)
+	private E getObjectById(EntityID entityID, boolean throwExceptionIfNotFound)
 	throws JDOObjectNotFoundException
 	{
 		if (entityID == null)
 			throw new IllegalArgumentException("entityID == null");
 
-		try {
-			Object result = pm().getObjectById(entityClass, entityID);
-			return entityClass.cast(result);
-		} catch (JDOObjectNotFoundException x) {
-			if (throwExceptionIfNotFound)
-				throw x;
-			else
-				return null;
+//		try {
+//			Object result = pm.getObjectById(entityClass, entityID);
+//			return entityClass.cast(result);
+//		} catch (JDOObjectNotFoundException x) {
+//			if (throwExceptionIfNotFound)
+//				throw x;
+//			else
+//				return null;
+//		}
+
+		// The above currently fails :-(
+		// See: http://www.datanucleus.org/servlet/forum/viewthread_thread,7079
+		// Thus using the workaround below instead. Marco :-)
+
+		Query query = queryGetObjectById;
+		if (query == null) {
+			query = pm.newQuery(entityClass);
+			query.setFilter("this.idHigh == :entityID_idHigh && this.idLow == :entityID_idLow");
+			query.setUnique(true);
+			queryGetObjectById = query;
 		}
+		Object result = query.execute(entityID.idHigh, entityID.idLow);
+		if (result == null && throwExceptionIfNotFound)
+			throw new JDOObjectNotFoundException("There is no entity of type " + entityClass.getName() + " with entityID=" + entityID + '!');
+
+		// No idea, if this is still an issue - I copied the stuff from an older project and don't know which DN version...
+
+		return entityClass.cast(result);
 	}
 
 	public E makePersistent(E entity)

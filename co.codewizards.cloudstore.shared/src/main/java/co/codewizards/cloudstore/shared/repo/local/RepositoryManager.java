@@ -1,26 +1,28 @@
-package co.codewizards.cloudstore.shared.repo;
+package co.codewizards.cloudstore.shared.repo.local;
 
 import static co.codewizards.cloudstore.shared.util.DerbyUtil.*;
 import static co.codewizards.cloudstore.shared.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import co.codewizards.cloudstore.shared.dto.EntityID;
 import co.codewizards.cloudstore.shared.persistence.Directory;
 import co.codewizards.cloudstore.shared.persistence.LocalRepository;
 import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.shared.persistence.NormalFile;
 import co.codewizards.cloudstore.shared.persistence.RemoteRepository;
+import co.codewizards.cloudstore.shared.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.shared.persistence.Symlink;
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 import co.codewizards.cloudstore.shared.util.IOUtil;
@@ -40,7 +42,7 @@ public class RepositoryManager {
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
-	public static final String META_DIR_NAME = ".cloudstore";
+	public static final String META_DIR_NAME = ".cloudstore-repo";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
@@ -157,7 +159,6 @@ public class RepositoryManager {
 
 	private void createAndPersistLocalRepository(PersistenceManager pm) {
 		LocalRepository repository = new LocalRepository();
-		repository.setUuid(UUID.randomUUID());
 		Directory root = new Directory();
 		root.setName("");
 		repository.setRoot(root);
@@ -267,6 +268,70 @@ public class RepositoryManager {
 		RepositoryTransaction transaction = createTransaction();
 		try {
 			new LocalRepositorySyncer(transaction).sync(monitor);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	/**
+	 * Add a remote repository.
+	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>. This is
+	 * {@link LocalRepository#getEntityID() LocalRepository.entityID} in the remote database and will become
+	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
+	 * @param remoteRoot the URL of the remote repository. Must not be <code>null</code>.
+	 */
+	public void addRemoteRepository(EntityID entityID, URL remoteRoot) {
+		assertNotNull("entityID", entityID);
+		assertNotNull("remoteRoot", remoteRoot);
+		RepositoryTransaction transaction = createTransaction();
+		try {
+			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepository remoteRepository = new RemoteRepository(entityID);
+			remoteRepository.setRemoteRoot(remoteRoot);
+			remoteRepository.setRevision(-1);
+			remoteRepositoryDAO.makePersistent(remoteRepository);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	/**
+	 * Move the remote repository to another URL.
+	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
+	 * @param newRemoteRoot the new URL of the remote repository. Must not be <code>null</code>.
+	 */
+	public void moveRemoteRepository(EntityID entityID, URL newRemoteRoot) {
+		assertNotNull("entityID", entityID);
+		assertNotNull("newRemoteRoot", newRemoteRoot);
+		RepositoryTransaction transaction = createTransaction();
+		try {
+			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(entityID);
+			remoteRepository.setRemoteRoot(newRemoteRoot);
+			remoteRepositoryDAO.makePersistent(remoteRepository);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	/**
+	 * Delete a remote repository.
+	 * <p>
+	 * Does nothing, if the specified repository does not exist.
+	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
+	 */
+	public void deleteRemoteRepository(EntityID entityID) {
+		assertNotNull("entityID", entityID);
+		RepositoryTransaction transaction = createTransaction();
+		try {
+			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(entityID);
+			if (remoteRepository != null)
+				remoteRepositoryDAO.deletePersistent(remoteRepository);
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
