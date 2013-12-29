@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.jdo.PersistenceManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +33,7 @@ class LocalRepositorySyncer {
 
 	public LocalRepositorySyncer(RepositoryTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
-		repoFileDAO = new RepoFileDAO().persistenceManager(this.transaction.getPersistenceManager());
+		repoFileDAO = this.transaction.createDAO(RepoFileDAO.class);
 		localRoot = this.transaction.getRepositoryManager().getLocalRoot();
 	}
 
@@ -157,6 +159,25 @@ class LocalRepositorySyncer {
 		// AutoTrackChanged interface).
 		parentRepoFile.setChanged(new Date());
 
+		PersistenceManager pm = transaction.getPersistenceManager();
+
+		// We make sure, nothing interferes with our deletions (see comment below).
+		pm.flush();
+
+		deleteRepoFileWithAllChildrenRecursively(repoFile);
+
+		// DN batches UPDATE and DELETE statements. This sometimes causes foreign key violations and other errors in
+		// certain situations. Additionally, the deleted objects still linger in the 1st-level-cache and re-using them
+		// causes "javax.jdo.JDOUserException: Cannot read fields from a deleted object". This happens when switching
+		// from a directory to a file (or vice versa).
+		// We therefore must flush to be on the safe side. And to be extra-safe, we flush before and after deletion.
+		pm.flush();
+	}
+
+	private void deleteRepoFileWithAllChildrenRecursively(RepoFile repoFile) {
+		for (RepoFile childRepoFile : repoFileDAO.getChildRepoFiles(repoFile)) {
+			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
+		}
 		repoFileDAO.deletePersistent(repoFile);
 	}
 

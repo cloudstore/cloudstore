@@ -8,7 +8,6 @@ import java.util.Collection;
 import javax.jdo.Query;
 
 public class NormalFileDAO extends DAO<NormalFile, NormalFileDAO> {
-
 	/**
 	 * Get those {@link RepoFile}s whose {@link RepoFile#getSha1() sha1} and {@link RepoFile#getLength() length}
 	 * match the given parameters.

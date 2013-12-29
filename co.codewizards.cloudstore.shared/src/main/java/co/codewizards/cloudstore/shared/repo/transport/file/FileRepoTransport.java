@@ -49,10 +49,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
 		assertNotNull("changeSetRequest", changeSetRequest);
 		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
-		RepositoryTransaction transaction = repositoryManager.createTransaction();
+		RepositoryTransaction transaction = repositoryManager.beginTransaction();
 		try {
-			LocalRepositoryDAO localRepositoryDAO = new LocalRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
-			RepoFileDAO repoFileDAO = new RepoFileDAO().persistenceManager(transaction.getPersistenceManager());
+			LocalRepositoryDAO localRepositoryDAO = transaction.createDAO(LocalRepositoryDAO.class);
+			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
 
 			// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
 			// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the

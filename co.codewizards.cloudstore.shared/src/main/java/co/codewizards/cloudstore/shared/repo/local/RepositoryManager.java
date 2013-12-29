@@ -253,7 +253,7 @@ public class RepositoryManager {
 			throw new IllegalStateException("This RepositoryManager is closed!");
 	}
 
-	public synchronized RepositoryTransaction createTransaction() {
+	public synchronized RepositoryTransaction beginTransaction() {
 		assertOpen();
 		return new RepositoryTransaction(this);
 	}
@@ -264,8 +264,8 @@ public class RepositoryManager {
 	 * Registers every directory and file in the repository's {@link #getLocalRoot() local root} and its
 	 * sub-directories.
 	 */
-	public void sync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
-		RepositoryTransaction transaction = createTransaction();
+	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
+		RepositoryTransaction transaction = beginTransaction();
 		try {
 			new LocalRepositorySyncer(transaction).sync(monitor);
 			transaction.commit();
@@ -284,9 +284,9 @@ public class RepositoryManager {
 	public void addRemoteRepository(EntityID entityID, URL remoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("remoteRoot", remoteRoot);
-		RepositoryTransaction transaction = createTransaction();
+		RepositoryTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = new RemoteRepository(entityID);
 			remoteRepository.setRemoteRoot(remoteRoot);
 			remoteRepository.setRevision(-1);
@@ -305,9 +305,9 @@ public class RepositoryManager {
 	public void moveRemoteRepository(EntityID entityID, URL newRemoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("newRemoteRoot", newRemoteRoot);
-		RepositoryTransaction transaction = createTransaction();
+		RepositoryTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(entityID);
 			remoteRepository.setRemoteRoot(newRemoteRoot);
 			remoteRepositoryDAO.makePersistent(remoteRepository);
@@ -325,9 +325,9 @@ public class RepositoryManager {
 	 */
 	public void deleteRemoteRepository(EntityID entityID) {
 		assertNotNull("entityID", entityID);
-		RepositoryTransaction transaction = createTransaction();
+		RepositoryTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = new RemoteRepositoryDAO().persistenceManager(transaction.getPersistenceManager());
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(entityID);
 			if (remoteRepository != null)
 				remoteRepositoryDAO.deletePersistent(remoteRepository);

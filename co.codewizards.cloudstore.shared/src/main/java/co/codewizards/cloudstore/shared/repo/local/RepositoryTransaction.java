@@ -6,6 +6,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
+import co.codewizards.cloudstore.shared.persistence.DAO;
 import co.codewizards.cloudstore.shared.persistence.LocalRepository;
 import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 
@@ -78,7 +79,7 @@ public class RepositoryTransaction {
 	public long getLocalRevision() {
 		if (localRevision < 0) {
 			jdoTransaction.setSerializeRead(true);
-			LocalRepository lr = new LocalRepositoryDAO().persistenceManager(persistenceManager).getLocalRepositoryOrFail();
+			LocalRepository lr = createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
 			localRevision = lr.getRevision() + 1;
 			lr.setRevision(localRevision);
@@ -89,5 +90,19 @@ public class RepositoryTransaction {
 
 	public RepositoryManager getRepositoryManager() {
 		return repositoryManager;
+	}
+
+	public <D extends DAO<?, ?>> D createDAO(Class<D> daoClass) {
+		PersistenceManager pm = getPersistenceManager();
+		D dao;
+		try {
+			dao = daoClass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+		dao.persistenceManager(pm);
+		return dao;
 	}
 }

@@ -48,6 +48,9 @@ public abstract class AbstractTest {
 
 	protected File createDirectory(File parent, String name) throws IOException {
 		File dir = new File(parent, name);
+		return createDirectory(dir);
+	}
+	protected File createDirectory(File dir) throws IOException {
 		assertThat(dir).doesNotExist();
 		dir.mkdir();
 		assertThat(dir).isDirectory();
@@ -73,6 +76,10 @@ public abstract class AbstractTest {
 
 	protected File createFileWithRandomContent(File parent, String name) throws IOException {
 		File file = new File(parent, name);
+		return createFileWithRandomContent(file);
+	}
+
+	protected File createFileWithRandomContent(File file) throws IOException {
 		assertThat(file).doesNotExist(); // prevent accidentally overwriting important data ;-)
 		OutputStream out = new FileOutputStream(file);
 		byte[] buf = new byte[1 + random.nextInt(10241)];
@@ -85,6 +92,21 @@ public abstract class AbstractTest {
 		assertThat(file).isFile();
 		addToFilesInRepo(file);
 		return file;
+	}
+
+	protected void deleteFile(File file) throws IOException {
+		file = file.getAbsoluteFile();
+		assertThat(file).exists();
+		file.delete();
+		assertThat(file).doesNotExist();
+
+		File localRoot = getLocalRootOrFail(file);
+		Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
+		if (filesInRepo == null)
+			throw new IllegalStateException("No filesInRepo for localRoot: " + localRoot);
+
+		if (!filesInRepo.remove(file))
+			throw new IllegalStateException("File did not exist in filesInRepo: " + file);
 	}
 
 	private File getLocalRootOrFail(File file) throws IOException {
@@ -102,9 +124,9 @@ public abstract class AbstractTest {
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
 		RepositoryManager repositoryManager = RepositoryManagerRegistry.getInstance().getRepositoryManager(localRoot);
 		localRoot = repositoryManager.getLocalRoot(); // get canonical File
-		RepositoryTransaction transaction = repositoryManager.createTransaction();
+		RepositoryTransaction transaction = repositoryManager.beginTransaction();
 		try {
-			RepoFileDAO repoFileDAO = new RepoFileDAO().persistenceManager(transaction.getPersistenceManager());
+			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 			assertThat(filesInRepo).isNotNull();
 

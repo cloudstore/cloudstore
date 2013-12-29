@@ -10,6 +10,9 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.shared.dto.EntityID;
 
 /**
@@ -17,8 +20,9 @@ import co.codewizards.cloudstore.shared.dto.EntityID;
  */
 public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 {
-	private Class<E> entityClass;
-	private Class<D> daoClass;
+	private final Logger logger;
+	private final Class<E> entityClass;
+	private final Class<D> daoClass;
 
 	public DAO() {
 		ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
@@ -37,6 +41,8 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		this.daoClass = k;
 		if (this.daoClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
+
+		logger = LoggerFactory.getLogger(String.format("%s<%s>", DAO.class.getName(), entityClass.getSimpleName()));
 	}
 
 	private PersistenceManager pm;
@@ -157,11 +163,13 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 
 	public E makePersistent(E entity)
 	{
+		logger.debug("makePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		return pm().makePersistent(entity);
 	}
 
 	public void deletePersistent(E entity)
 	{
+		logger.debug("deletePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		pm().deletePersistent(entity);
 	}
 }

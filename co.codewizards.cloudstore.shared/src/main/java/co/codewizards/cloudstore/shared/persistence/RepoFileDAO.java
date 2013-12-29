@@ -9,7 +9,6 @@ import java.util.Collection;
 import javax.jdo.Query;
 
 public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
-
 	/**
 	 * Get the child of the given {@code parent} with the specified {@code name}.
 	 * @param parent the {@link RepoFile#getParent() parent} of the queried child.
