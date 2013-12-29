@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.shared.repo.transport.file;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.shared.AbstractTest;
 import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.shared.dto.DirectoryDTO;
 import co.codewizards.cloudstore.shared.dto.EntityID;
 import co.codewizards.cloudstore.shared.dto.RepoFileDTO;
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
@@ -57,6 +59,7 @@ public class FileTransportTest extends AbstractTest {
 
 		File child_2_1 = createDirectory(child_2, "1");
 		createFileWithRandomContent(child_2_1, "a");
+		createFileWithRandomContent(child_2_1, "b");
 
 		File child_3 = createDirectory(remoteRoot, "3");
 
@@ -84,10 +87,10 @@ public class FileTransportTest extends AbstractTest {
 
 		// changeSetResponse1 should contain the entire repository - including the root -, because really
 		// every localRevision must be > -1.
-		assertThat(changeSetResponse1.getRepoFileDTOs()).hasSize(14);
+		assertThat(changeSetResponse1.getRepoFileDTOs()).hasSize(15);
 
 		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDTOs());
-		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/3/a", "/3/b", "/3/c", "/3/d");
+		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
 
 		repositoryManager.close();
 	}
@@ -100,7 +103,7 @@ public class FileTransportTest extends AbstractTest {
 
 		File child_2 = new File(remoteRoot, "2");
 		File child_2_1 = new File(child_2, "1");
-		createFileWithRandomContent(child_2_1, "b");
+		createFileWithRandomContent(child_2_1, "c");
 
 		repositoryManager.localSync(new LoggerProgressMonitor(logger));
 
@@ -126,7 +129,107 @@ public class FileTransportTest extends AbstractTest {
 
 		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDTOs());
 		assertThat(paths).hasSize(1);
+		assertThat(paths.iterator().next()).isEqualTo("/2/1/c");
+
+		repositoryManager.close();
+	}
+
+	@Test
+	public void getChangeSetForModifiedFile() throws Exception {
+		getChangeSetForEntireRepository();
+
+		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(remoteRoot);
+
+		File child_2 = new File(remoteRoot, "2");
+		File child_2_1 = new File(child_2, "1");
+		File child_2_1_b = new File(child_2_1, "b");
+		FileOutputStream out = new FileOutputStream(child_2_1_b, true);
+		out.write(4);
+		out.close();
+
+		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		URL remoteRootURL = remoteRoot.toURI().toURL();
+		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+
+		ChangeSetRequest changeSetRequest2 = new ChangeSetRequest();
+		changeSetRequest2.setRevision(changeSetResponse1.getRepositoryDTO().getRevision());
+
+		ChangeSetResponse changeSetResponse2 = repoTransport.getChangeSet(changeSetRequest2);
+		assertThat(changeSetResponse2).isNotNull();
+		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
+		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDTO().getEntityID()).isNotNull();
+
+		// We expect the changed file and all parent-directories (recursively) until (including) the
+		// root, because they are required to have a complete relative path for each modified RepoFile.
+		assertThat(changeSetResponse2.getRepoFileDTOs()).hasSize(4);
+
+		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDTOs());
+		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1/b");
+
+		repositoryManager.close();
+	}
+
+	@Test
+	public void getChangeSetForDeletedFile() throws Exception {
+		getChangeSetForEntireRepository();
+
+		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(remoteRoot);
+
+		File child_2 = new File(remoteRoot, "2");
+		File child_2_1 = new File(child_2, "1");
+		File child_2_1_b = new File(child_2_1, "b");
+		deleteFile(child_2_1_b);
+
+		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		URL remoteRootURL = remoteRoot.toURI().toURL();
+		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+
+		ChangeSetRequest changeSetRequest2 = new ChangeSetRequest();
+		changeSetRequest2.setRevision(changeSetResponse1.getRepositoryDTO().getRevision());
+
+		ChangeSetResponse changeSetResponse2 = repoTransport.getChangeSet(changeSetRequest2);
+		assertThat(changeSetResponse2).isNotNull();
+		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
+		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDTO().getEntityID()).isNotNull();
+
+		// We expect the direct parent of the deleted file, because it is modified (new localRevision).
+		// Additionally, we expect all parent-directories (recursively) until (including) the root, because they
+		// are required to have a complete relative path for each modified RepoFile.
+		assertThat(changeSetResponse2.getRepoFileDTOs()).hasSize(3);
+
+		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDTOs());
+		assertThat(paths).hasSize(1);
+		assertThat(paths.iterator().next()).isEqualTo("/2/1");
+
+		RepoFileDTOTreeNode rootNode = buildTree(changeSetResponse2.getRepoFileDTOs());
+		List<RepoFileDTOTreeNode> leafs = getLeafs(rootNode);
+		RepoFileDTOTreeNode leaf = leafs.get(0);
+		assertThat(leaf.current).isInstanceOf(DirectoryDTO.class);
+		DirectoryDTO leafDir = (DirectoryDTO) leaf.current;
+		assertThat(leafDir.isChildNamesLoaded()).isTrue();
+		assertThat(leafDir.getChildNames()).containsOnly("a");
+
+		// All parents' childNames should *not* be loaded, because they serve solely the purpose of a complete path
+		// and have not been modified.
+		RepoFileDTOTreeNode parent = leaf.parent;
+		while (parent != null) {
+			assertThat(parent.current).isInstanceOf(DirectoryDTO.class);
+			DirectoryDTO parentDirDTO = (DirectoryDTO) parent.current;
+			assertThat(parentDirDTO.isChildNamesLoaded()).isFalse();
+			assertThat(parentDirDTO.getChildNames()).isEmpty();
+			parent = parent.parent;
+		}
 
 		repositoryManager.close();
 	}
@@ -134,8 +237,7 @@ public class FileTransportTest extends AbstractTest {
 	private Set<String> getPaths(Collection<RepoFileDTO> repoFileDTOs) {
 		RepoFileDTOTreeNode rootNode = buildTree(repoFileDTOs);
 		assertThat(rootNode.current.getName()).isEqualTo("");
-		List<RepoFileDTOTreeNode> leafs = new ArrayList<FileTransportTest.RepoFileDTOTreeNode>();
-		populateLeafs(rootNode, leafs);
+		List<RepoFileDTOTreeNode> leafs = getLeafs(rootNode);
 		Set<String> paths = new HashSet<String>(leafs.size());
 		for (RepoFileDTOTreeNode leaf : leafs) {
 			paths.add(leaf.getPath());
@@ -166,6 +268,12 @@ public class FileTransportTest extends AbstractTest {
 		}
 		assertThat(rootNode).isNotNull();
 		return rootNode;
+	}
+
+	private List<RepoFileDTOTreeNode> getLeafs(RepoFileDTOTreeNode rootNode) {
+		List<RepoFileDTOTreeNode> leafs = new ArrayList<FileTransportTest.RepoFileDTOTreeNode>();
+		populateLeafs(rootNode, leafs);
+		return leafs;
 	}
 
 	private void populateLeafs(RepoFileDTOTreeNode node, List<RepoFileDTOTreeNode> leafs) {

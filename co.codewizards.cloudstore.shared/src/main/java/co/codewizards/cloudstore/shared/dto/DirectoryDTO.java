@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class DirectoryDTO extends RepoFileDTO {
 
+	private boolean childNamesLoaded;
 	private List<String> childNames;
 
 	public List<String> getChildNames() {
@@ -21,4 +22,10 @@ public class DirectoryDTO extends RepoFileDTO {
 		this.childNames = childNames;
 	}
 
+	public boolean isChildNamesLoaded() {
+		return childNamesLoaded;
+	}
+	public void setChildNamesLoaded(boolean childNamesLoaded) {
+		this.childNamesLoaded = childNamesLoaded;
+	}
 }

@@ -60,7 +60,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			changeSetResponse.setRepositoryDTO(toRepositoryDTO(localRepositoryDAO.getLocalRepositoryOrFail()));
 
 			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(changeSetRequest.getRevision());
-			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFileDAO, repoFiles);
+			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO, changeSetRequest.getRevision());
 			changeSetResponse.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
 
 			transaction.commit();
@@ -77,7 +77,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repositoryDTO;
 	}
 
-	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(RepoFileDAO repoFileDAO, Collection<RepoFile> repoFiles) {
+	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO, long localRevision) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFiles", repoFiles);
 		Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = new HashMap<EntityID, RepoFileDTO>();
@@ -85,7 +85,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			RepoFile rf = repoFile;
 			while (rf != null) {
 				if (!entityID2RepoFileDTO.containsKey(rf.getEntityID())) {
-					entityID2RepoFileDTO.put(rf.getEntityID(), toRepoFileDTO(repoFileDAO, rf));
+					entityID2RepoFileDTO.put(rf.getEntityID(), toRepoFileDTO(rf, repoFileDAO, localRevision));
 				}
 				rf = rf.getParent();
 			}
@@ -93,7 +93,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return entityID2RepoFileDTO;
 	}
 
-	private RepoFileDTO toRepoFileDTO(RepoFileDAO repoFileDAO, RepoFile repoFile) {
+	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO, long localRevision) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFile", repoFile);
 		RepoFileDTO repoFileDTO;
@@ -108,10 +108,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		else if (repoFile instanceof Directory) {
 			DirectoryDTO directoryDTO;
 			repoFileDTO = directoryDTO = new DirectoryDTO();
-			Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
-			List<String> childNames = directoryDTO.getChildNames();
-			for (RepoFile childRepoFile : childRepoFiles) {
-				childNames.add(childRepoFile.getName());
+
+			if (repoFile.getLocalRevision() <= localRevision)
+				directoryDTO.setChildNamesLoaded(false);
+			else {
+				directoryDTO.setChildNamesLoaded(true);
+				Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
+				List<String> childNames = directoryDTO.getChildNames();
+				for (RepoFile childRepoFile : childRepoFiles) {
+					childNames.add(childRepoFile.getName());
+				}
 			}
 		}
 		else // TODO support symlinks!
