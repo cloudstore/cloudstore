@@ -2,6 +2,9 @@ package co.codewizards.cloudstore.shared.persistence;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -114,7 +117,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 			throw new IllegalArgumentException("entityID == null");
 
 //		try {
-//			Object result = pm.getObjectById(entityClass, entityID);
+//			Object result = pm().getObjectById(entityClass, entityID);
 //			return entityClass.cast(result);
 //		} catch (JDOObjectNotFoundException x) {
 //			if (throwExceptionIfNotFound)
@@ -129,7 +132,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 
 		Query query = queryGetObjectById;
 		if (query == null) {
-			query = pm.newQuery(entityClass);
+			query = pm().newQuery(entityClass);
 			query.setFilter("this.idHigh == :entityID_idHigh && this.idLow == :entityID_idLow");
 			query.setUnique(true);
 			queryGetObjectById = query;
@@ -141,6 +144,15 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		// No idea, if this is still an issue - I copied the stuff from an older project and don't know which DN version...
 
 		return entityClass.cast(result);
+	}
+
+	public Collection<E> getObjects() {
+		ArrayList<E> result = new ArrayList<E>();
+		Iterator<E> iterator = pm().getExtent(entityClass).iterator();
+		while (iterator.hasNext()) {
+			result.add(iterator.next());
+		}
+		return result;
 	}
 
 	public E makePersistent(E entity)

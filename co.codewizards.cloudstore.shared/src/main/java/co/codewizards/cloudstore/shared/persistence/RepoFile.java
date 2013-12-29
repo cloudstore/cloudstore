@@ -1,5 +1,12 @@
 package co.codewizards.cloudstore.shared.persistence;
 
+import static co.codewizards.cloudstore.shared.util.Util.*;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Index;
@@ -60,5 +67,38 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	@Override
 	public void setLocalRevision(long revision) {
 		this.localRevision = revision;
+	}
+
+	/**
+	 * Gets the path within the repository from the {@link LocalRepository#getRoot() root} (excluding) to <code>this</code> (including).
+	 * <p>
+	 * The first element in the list is the RepoFile having the {@code root} as parent (not the root itself!).
+	 * The last element is <code>this</code>.
+	 * <p>
+	 * If this method is called on the {@code root} itself, the result will be an empty list.
+	 * @return the path within the repository from the {@link LocalRepository#getRoot() root} (excluding) to <code>this</code> (including).
+	 */
+	public List<RepoFile> getRepoFilePath() {
+		LinkedList<RepoFile> path = new LinkedList<RepoFile>();
+		RepoFile rf = this;
+		while (rf.getParent() != null) { // ignore the root
+			path.addFirst(rf);
+			rf = rf.getParent();
+		}
+		return Collections.unmodifiableList(path);
+	}
+
+	/**
+	 * Gets the {@link File} represented by this {@link RepoFile} inside the given repository's {@code localRoot} directory.
+	 * @param localRoot the repository's root directory.
+	 * @return the {@link File} represented by this {@link RepoFile} inside the given repository's {@code localRoot} directory.
+	 */
+	public File getFile(File localRoot) {
+		assertNotNull("localRoot", localRoot);
+		File result = localRoot;
+		for (RepoFile repoFile : getRepoFilePath()) {
+			result = new File(result, repoFile.getName());
+		}
+		return result;
 	}
 }

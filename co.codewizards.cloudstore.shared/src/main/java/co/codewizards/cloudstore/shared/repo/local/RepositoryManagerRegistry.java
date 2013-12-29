@@ -5,6 +5,8 @@ import static co.codewizards.cloudstore.shared.util.Util.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,14 @@ public class RepositoryManagerRegistry
 
 	public static RepositoryManagerRegistry getInstance() {
 		return RepositoryManagerRegistryHolder.INSTANCE;
+	}
+
+	/**
+	 * Gets all {@link RepositoryManager}s that are currently open.
+	 * @return all {@link RepositoryManager}s that are currently open. Never <code>null</code>; but maybe empty.
+	 */
+	public synchronized Collection<RepositoryManager> getRepositoryManagers() {
+		return Collections.unmodifiableList(new ArrayList<RepositoryManager>(localRoot2RepositoryManager.values()));
 	}
 
 	/**

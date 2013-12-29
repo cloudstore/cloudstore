@@ -3,48 +3,84 @@ package co.codewizards.cloudstore.shared.repo.local;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
 
 public class RepositoryTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryTest.class);
 
+	private File localRoot;
+
 	@Test
 	public void syncExistingDirectoryGraph() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
+		localRoot = newTestRepositoryLocalRoot();
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		File child_1 = new File(localRoot, "1");
-		child_1.mkdir();
-
-		File child_1_a = new File(child_1, "a");
-		OutputStream out = new FileOutputStream(child_1_a);
-		byte[] buf = new byte[1 + random.nextInt(10241)];
-		int loops = 1 + random.nextInt(100);
-		for (int i = 0; i < loops; ++i) {
-			random.nextBytes(buf);
-			out.write(buf);
-		}
-		out.close();
-
-		File child_2 = new File(localRoot, "2");
-		child_2.mkdir();
-		File child_3 = new File(localRoot, "3");
-		child_3.mkdir();
-
 		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(localRoot);
 		assertThat(repositoryManager).isNotNull();
+
+		File child_1 = createDirectory(localRoot, "1");
+
+		createFileWithRandomContent(child_1, "a");
+		createFileWithRandomContent(child_1, "b");
+		createFileWithRandomContent(child_1, "c");
+
+		File child_2 = createDirectory(localRoot, "2");
+
+		createFileWithRandomContent(child_2, "a");
+
+		File child_2_1 = createDirectory(child_2, "1");
+		createFileWithRandomContent(child_2_1, "a");
+
+		File child_3 = createDirectory(localRoot, "3");
+
+		createFileWithRandomContent(child_3, "a");
+		createFileWithRandomContent(child_3, "b");
+		createFileWithRandomContent(child_3, "c");
+		createFileWithRandomContent(child_3, "d");
+
 		repositoryManager.sync(new LoggerProgressMonitor(logger));
 
-		// TODO check DB and assert all expected data is there as it should be. Maybe introduce and use appropriate API for this purpose.
+		assertThatFilesInRepoAreCorrect(localRoot);
+
+		repositoryManager.close();
 	}
+
+	@Test
+	public void syncAddedFiles() throws Exception {
+		syncExistingDirectoryGraph();
+		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
+		assertThat(repositoryManager).isNotNull();
+
+		File child_1 = new File(localRoot, "1");
+		File child_1_1 = createDirectory(child_1, "1");
+		File child_1_2 = createDirectory(child_1, "2");
+		File child_2 = new File(localRoot, "2");
+
+		createFileWithRandomContent(child_1, "d");
+
+		createFileWithRandomContent(child_1_1, "aa");
+		createFileWithRandomContent(child_1_1, "bb");
+
+		createFileWithRandomContent(child_1_2, "aaa");
+		createFileWithRandomContent(child_1_2, "bbb");
+		createFileWithRandomContent(child_1_2, "ccc");
+		createFileWithRandomContent(child_1_2, "ddd");
+
+		createFileWithRandomContent(child_2, "b");
+		createFileWithRandomContent(child_2, "c");
+
+		repositoryManager.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(localRoot);
+
+		repositoryManager.close();
+	}
+
 }
