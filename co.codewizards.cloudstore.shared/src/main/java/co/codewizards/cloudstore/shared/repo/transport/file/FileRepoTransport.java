@@ -49,7 +49,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
 		assertNotNull("changeSetRequest", changeSetRequest);
 		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
-		RepositoryTransaction transaction = repositoryManager.beginTransaction();
+		RepositoryTransaction transaction = getRepositoryManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.createDAO(LocalRepositoryDAO.class);
 			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
@@ -123,5 +123,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		repoFileDTO.setParentEntityID(repoFile.getParent() == null ? null : repoFile.getParent().getEntityID());
 
 		return repoFileDTO;
+	}
+
+	@Override
+	public void close() {
+		// nothing to do - for now. later, we might have a pooling with reference counting on the RepositoryManager and we might close it (delayed).
+
 	}
 }

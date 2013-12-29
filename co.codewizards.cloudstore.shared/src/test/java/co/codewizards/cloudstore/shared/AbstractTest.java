@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.shared.repo.local;
+package co.codewizards.cloudstore.shared;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -19,6 +19,9 @@ import org.junit.Before;
 
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
+import co.codewizards.cloudstore.shared.repo.local.RepositoryManagerRegistry;
+import co.codewizards.cloudstore.shared.repo.local.RepositoryTransaction;
 
 public abstract class AbstractTest {
 

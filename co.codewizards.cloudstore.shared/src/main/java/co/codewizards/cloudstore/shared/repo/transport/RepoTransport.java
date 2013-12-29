@@ -15,4 +15,6 @@ public interface RepoTransport {
 
 	ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest);
 
+	void close();
+
 }

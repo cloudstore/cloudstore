@@ -8,13 +8,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.shared.AbstractTest;
 import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
 
-public class RepositoryTest extends AbstractTest {
-	private static final Logger logger = LoggerFactory.getLogger(RepositoryTest.class);
+public class RepositoryManagerTest extends AbstractTest {
+	private static final Logger logger = LoggerFactory.getLogger(RepositoryManagerTest.class);
 
 	private File localRoot;
 
@@ -220,7 +221,7 @@ public class RepositoryTest extends AbstractTest {
 	}
 
 	@Test
-	public void checkParentLocalRevisionAfterChildAdddition() throws Exception {
+	public void checkParentLocalRevisionAfterChildAddition() throws Exception {
 		syncExistingDirectoryGraph();
 		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
 		assertThat(repositoryManager).isNotNull();

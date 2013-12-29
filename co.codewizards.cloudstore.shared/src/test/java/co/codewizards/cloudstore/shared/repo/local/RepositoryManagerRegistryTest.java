@@ -8,14 +8,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.shared.AbstractTest;
 import co.codewizards.cloudstore.shared.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.shared.repo.local.FileNoDirectoryException;
 import co.codewizards.cloudstore.shared.repo.local.FileNoRepositoryException;
 import co.codewizards.cloudstore.shared.repo.local.FileNotFoundException;
 import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
 
-public class RepositoryRegistryTest extends AbstractTest {
-	private static final Logger logger = LoggerFactory.getLogger(RepositoryRegistryTest.class);
+public class RepositoryManagerRegistryTest extends AbstractTest {
+	private static final Logger logger = LoggerFactory.getLogger(RepositoryManagerRegistryTest.class);
 	@Test
 	public void createRepositoryManagerForExistingNonRepoDirectory() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot();

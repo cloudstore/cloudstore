@@ -17,6 +17,7 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 			throw new IllegalStateException(String.format("Implementation error in class %s: _createRepoTransport(...) returned null!", this.getClass().getName()));
 
 		repoTransport.setRepoTransportFactory(this);
+		repoTransport.setRemoteRoot(remoteRoot);
 		return repoTransport;
 	}
 
