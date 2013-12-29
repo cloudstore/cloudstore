@@ -104,6 +104,8 @@ public class FileTransportTest extends AbstractTest {
 
 		repositoryManager.localSync(new LoggerProgressMonitor(logger));
 
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
