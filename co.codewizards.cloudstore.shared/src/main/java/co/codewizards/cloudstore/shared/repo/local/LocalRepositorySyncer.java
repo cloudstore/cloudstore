@@ -34,7 +34,7 @@ class LocalRepositorySyncer {
 	public LocalRepositorySyncer(RepositoryTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 		repoFileDAO = this.transaction.createDAO(RepoFileDAO.class);
-		localRoot = this.transaction.getRepositoryManager().getLocalRoot();
+		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
 	}
 
 	public void sync(ProgressMonitor monitor) { // TODO use this monitor!!!

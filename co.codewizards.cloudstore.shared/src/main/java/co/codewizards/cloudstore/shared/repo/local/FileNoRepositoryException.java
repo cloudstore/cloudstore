@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.shared.repo.local;
 import java.io.File;
 
 /**
- * Thrown if a {@link RepositoryManager} could not be created for a given {@link File}, because the file
+ * Thrown if a {@link LocalRepoManager} could not be created for a given {@link File}, because the file
  * is not yet a repository.
  * <p>
  * Note, that the path denotes an existing directory in the file system, though. However, it was expected
@@ -11,7 +11,7 @@ import java.io.File;
  * a simple directory does not.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class FileNoRepositoryException extends RepositoryManagerException {
+public class FileNoRepositoryException extends LocalRepoManagerException {
 	private static final long serialVersionUID = 1L;
 
 	private File file;

@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.shared.repo.local;
 
 import java.io.File;
 
-public class RepositoryCorruptException extends RepositoryManagerException {
+public class RepositoryCorruptException extends LocalRepoManagerException {
 
 	private static final long serialVersionUID = 1L;
 

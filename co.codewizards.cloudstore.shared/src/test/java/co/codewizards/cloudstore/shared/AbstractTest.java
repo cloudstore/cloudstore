@@ -19,14 +19,14 @@ import org.junit.Before;
 
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManagerRegistry;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.shared.repo.local.RepositoryTransaction;
 
 public abstract class AbstractTest {
 
 	protected static final Random random = new Random();
-	protected static RepositoryManagerRegistry repositoryManagerRegistry = RepositoryManagerRegistry.getInstance();
+	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
 	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
 
 	protected File newTestRepositoryLocalRoot() throws IOException {
@@ -114,20 +114,20 @@ public abstract class AbstractTest {
 
 	private File getLocalRootOrFail(File file) throws IOException {
 		String filePath = file.getCanonicalPath();
-		Collection<RepositoryManager> repositoryManagers = repositoryManagerRegistry.getRepositoryManagers();
-		for (RepositoryManager repositoryManager : repositoryManagers) {
-			String localRootPath = repositoryManager.getLocalRoot().getPath();
+		Set<File> localRoots = localRepoManagerFactory.getLocalRoots();
+		for (File localRoot : localRoots) {
+			String localRootPath = localRoot.getPath();
 			if (filePath.startsWith(localRootPath)) {
-				return repositoryManager.getLocalRoot();
+				return localRoot;
 			}
 		}
 		throw new IllegalArgumentException("file is not contained in any open repository: " + filePath);
 	}
 
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
-		RepositoryManager repositoryManager = RepositoryManagerRegistry.getInstance().getRepositoryManager(localRoot);
-		localRoot = repositoryManager.getLocalRoot(); // get canonical File
-		RepositoryTransaction transaction = repositoryManager.beginTransaction();
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		localRoot = localRepoManager.getLocalRoot(); // get canonical File
+		RepositoryTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);

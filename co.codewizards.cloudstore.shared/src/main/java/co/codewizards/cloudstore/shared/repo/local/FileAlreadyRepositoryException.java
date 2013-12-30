@@ -3,14 +3,14 @@ package co.codewizards.cloudstore.shared.repo.local;
 import java.io.File;
 
 /**
- * Thrown if a {@link RepositoryManager} could not be created for a given {@link File}, because the file
- * is already a repository and the {@code RepositoryManager} was instructed to create a new repository
+ * Thrown if a {@link LocalRepoManager} could not be created for a given {@link File}, because the file
+ * is already a repository and the {@code LocalRepoManager} was instructed to create a new repository
  * from a simple file.
  * <p>
  * Note, that this exception is thrown for simple files or directories inside a repository, too.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class FileAlreadyRepositoryException extends RepositoryManagerException {
+public class FileAlreadyRepositoryException extends LocalRepoManagerException {
 	private static final long serialVersionUID = 1L;
 
 	private File file;
