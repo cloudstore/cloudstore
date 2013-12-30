@@ -388,6 +388,7 @@
 		</pluginManagement>
 
 		<plugins>
+		<!--
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
@@ -395,6 +396,7 @@
 					<manifestLocation>META-INF</manifestLocation>
 				</configuration>
 			</plugin>
+		-->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>cobertura-maven-plugin</artifactId>
