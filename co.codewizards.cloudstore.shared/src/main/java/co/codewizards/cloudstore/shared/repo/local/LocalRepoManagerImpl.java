@@ -268,14 +268,14 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized RepositoryTransaction beginTransaction() {
+	public synchronized LocalRepoTransaction beginTransaction() {
 		assertOpen();
-		return new RepositoryTransaction(this);
+		return new LocalRepoTransaction(this);
 	}
 
 	@Override
 	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
-		RepositoryTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			new LocalRepositorySyncer(transaction).sync(monitor);
 			transaction.commit();
@@ -288,7 +288,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void addRemoteRepository(EntityID entityID, URL remoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("remoteRoot", remoteRoot);
-		RepositoryTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = new RemoteRepository(entityID);
@@ -305,7 +305,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void moveRemoteRepository(EntityID entityID, URL newRemoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("newRemoteRoot", newRemoteRoot);
-		RepositoryTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(entityID);
@@ -320,7 +320,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	@Override
 	public void deleteRemoteRepository(EntityID entityID) {
 		assertNotNull("entityID", entityID);
-		RepositoryTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(entityID);

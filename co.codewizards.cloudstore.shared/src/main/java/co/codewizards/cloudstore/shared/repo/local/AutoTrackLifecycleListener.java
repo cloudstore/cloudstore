@@ -23,13 +23,13 @@ import co.codewizards.cloudstore.shared.persistence.AutoTrackLocalRevision;
  */
 public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener {
 
-	private final RepositoryTransaction transaction;
+	private final LocalRepoTransaction transaction;
 
-	public AutoTrackLifecycleListener(RepositoryTransaction transaction) {
+	public AutoTrackLifecycleListener(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 	}
 
-	public RepositoryTransaction getTransaction() {
+	public LocalRepoTransaction getTransaction() {
 		return transaction;
 	}
 

@@ -186,7 +186,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 
 		long localRepositoryRevisionBeforeSync;
 		long child_1_localRevisionBeforeSync;
-		RepositoryTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
@@ -231,7 +231,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 
 		long localRepositoryRevisionBeforeSync;
 		long child_1_localRevisionBeforeSync;
-		RepositoryTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);

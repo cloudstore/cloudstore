@@ -25,7 +25,7 @@ import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryTransaction;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.shared.repo.transport.AbstractRepoTransport;
 
 public class FileRepoTransport extends AbstractRepoTransport {
@@ -49,7 +49,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
 		assertNotNull("changeSetRequest", changeSetRequest);
 		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
-		RepositoryTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.createDAO(LocalRepositoryDAO.class);
 			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);

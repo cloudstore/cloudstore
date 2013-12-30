@@ -10,7 +10,7 @@ import co.codewizards.cloudstore.shared.persistence.DAO;
 import co.codewizards.cloudstore.shared.persistence.LocalRepository;
 import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 
-public class RepositoryTransaction {
+public class LocalRepoTransaction {
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
@@ -18,7 +18,7 @@ public class RepositoryTransaction {
 	private Transaction jdoTransaction;
 	private long localRevision = -1;
 
-	public RepositoryTransaction(LocalRepoManagerImpl localRepoManager) {
+	public LocalRepoTransaction(LocalRepoManagerImpl localRepoManager) {
 		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
 		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
 		begin();

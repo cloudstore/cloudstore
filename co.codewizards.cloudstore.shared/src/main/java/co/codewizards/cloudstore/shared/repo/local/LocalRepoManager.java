@@ -43,7 +43,7 @@ public interface LocalRepoManager {
 	 */
 	void close();
 
-	RepositoryTransaction beginTransaction();
+	LocalRepoTransaction beginTransaction();
 
 	/**
 	 * Synchronises the local file system with the local database.

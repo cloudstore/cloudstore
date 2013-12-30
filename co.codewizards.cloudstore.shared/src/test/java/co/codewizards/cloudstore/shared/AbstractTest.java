@@ -21,7 +21,7 @@ import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryTransaction;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoTransaction;
 
 public abstract class AbstractTest {
 
@@ -127,7 +127,7 @@ public abstract class AbstractTest {
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
-		RepositoryTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
