@@ -26,7 +26,7 @@ import co.codewizards.cloudstore.shared.dto.DirectoryDTO;
 import co.codewizards.cloudstore.shared.dto.EntityID;
 import co.codewizards.cloudstore.shared.dto.RepoFileDTO;
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.shared.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.shared.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.shared.repo.transport.RepoTransportFactoryRegistry;
@@ -44,8 +44,8 @@ public class FileTransportTest extends AbstractTest {
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
 
-		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(remoteRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -68,7 +68,7 @@ public class FileTransportTest extends AbstractTest {
 		createFileWithRandomContent(child_3, "c");
 		createFileWithRandomContent(child_3, "d");
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -92,20 +92,20 @@ public class FileTransportTest extends AbstractTest {
 		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDTOs());
 		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void getChangeSetForAddedFile() throws Exception {
 		getChangeSetForEntireRepository();
 
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(remoteRoot);
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
 		File child_2 = new File(remoteRoot, "2");
 		File child_2_1 = new File(child_2, "1");
 		createFileWithRandomContent(child_2_1, "c");
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -131,14 +131,14 @@ public class FileTransportTest extends AbstractTest {
 		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1/c");
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void getChangeSetForModifiedFile() throws Exception {
 		getChangeSetForEntireRepository();
 
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(remoteRoot);
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
 		File child_2 = new File(remoteRoot, "2");
 		File child_2_1 = new File(child_2, "1");
@@ -147,7 +147,7 @@ public class FileTransportTest extends AbstractTest {
 		out.write(4);
 		out.close();
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -172,21 +172,21 @@ public class FileTransportTest extends AbstractTest {
 		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1/b");
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void getChangeSetForDeletedFile() throws Exception {
 		getChangeSetForEntireRepository();
 
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(remoteRoot);
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
 		File child_2 = new File(remoteRoot, "2");
 		File child_2_1 = new File(child_2, "1");
 		File child_2_1_b = new File(child_2_1, "b");
 		deleteFile(child_2_1_b);
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -231,7 +231,7 @@ public class FileTransportTest extends AbstractTest {
 			parent = parent.parent;
 		}
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	private Set<String> getPaths(Collection<RepoFileDTO> repoFileDTOs) {

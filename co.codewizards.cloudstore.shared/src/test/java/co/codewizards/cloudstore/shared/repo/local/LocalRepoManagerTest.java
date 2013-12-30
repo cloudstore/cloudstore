@@ -14,8 +14,8 @@ import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
 
-public class RepositoryManagerTest extends AbstractTest {
-	private static final Logger logger = LoggerFactory.getLogger(RepositoryManagerTest.class);
+public class LocalRepoManagerTest extends AbstractTest {
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerTest.class);
 
 	private File localRoot;
 
@@ -26,8 +26,8 @@ public class RepositoryManagerTest extends AbstractTest {
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		RepositoryManager repositoryManager = repositoryManagerRegistry.createRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = createDirectory(localRoot, "1");
 
@@ -49,18 +49,18 @@ public class RepositoryManagerTest extends AbstractTest {
 		createFileWithRandomContent(child_3, "c");
 		createFileWithRandomContent(child_3, "d");
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void syncAddedFiles() throws Exception {
 		syncExistingDirectoryGraph();
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = new File(localRoot, "1");
 		File child_1_1 = createDirectory(child_1, "1");
@@ -80,18 +80,18 @@ public class RepositoryManagerTest extends AbstractTest {
 		createFileWithRandomContent(child_2, "b");
 		createFileWithRandomContent(child_2, "c");
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void syncDeletedFiles() throws Exception {
 		syncExistingDirectoryGraph();
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = new File(localRoot, "1");
 		assertThat(child_1).isDirectory();
@@ -119,18 +119,18 @@ public class RepositoryManagerTest extends AbstractTest {
 		deleteFile(child_2_1);
 		deleteFile(child_2);
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void syncSwitchingFromFilesToDirectoriesAndViceVersa() throws Exception {
 		syncExistingDirectoryGraph();
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = new File(localRoot, "1");
 		assertThat(child_1).isDirectory();
@@ -166,18 +166,18 @@ public class RepositoryManagerTest extends AbstractTest {
 		createDirectory(child_1_b);
 		assertThat(child_1_b).isDirectory();
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void checkParentLocalRevisionAfterChildDeletion() throws Exception {
 		syncExistingDirectoryGraph();
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = new File(localRoot, "1");
 		assertThat(child_1).isDirectory();
@@ -186,7 +186,7 @@ public class RepositoryManagerTest extends AbstractTest {
 
 		long localRepositoryRevisionBeforeSync;
 		long child_1_localRevisionBeforeSync;
-		RepositoryTransaction transaction = repositoryManager.beginTransaction();
+		RepositoryTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
@@ -197,13 +197,13 @@ public class RepositoryManagerTest extends AbstractTest {
 
 		deleteFile(child_1_b);
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
 		long localRepositoryRevisionAfterSync;
 		long child_1_localRevisionAfterSync;
-		transaction = repositoryManager.beginTransaction();
+		transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionAfterSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
@@ -217,21 +217,21 @@ public class RepositoryManagerTest extends AbstractTest {
 		assertThat(child_1_localRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
 		assertThat(child_1_localRevisionAfterSync).isEqualTo(localRepositoryRevisionAfterSync);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 
 	@Test
 	public void checkParentLocalRevisionAfterChildAddition() throws Exception {
 		syncExistingDirectoryGraph();
-		RepositoryManager repositoryManager = repositoryManagerRegistry.getRepositoryManager(localRoot);
-		assertThat(repositoryManager).isNotNull();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
 
 		File child_1 = new File(localRoot, "1");
 		assertThat(child_1).isDirectory();
 
 		long localRepositoryRevisionBeforeSync;
 		long child_1_localRevisionBeforeSync;
-		RepositoryTransaction transaction = repositoryManager.beginTransaction();
+		RepositoryTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
@@ -242,13 +242,13 @@ public class RepositoryManagerTest extends AbstractTest {
 
 		createFileWithRandomContent(child_1, "d");
 
-		repositoryManager.localSync(new LoggerProgressMonitor(logger));
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
 		long localRepositoryRevisionAfterSync;
 		long child_1_localRevisionAfterSync;
-		transaction = repositoryManager.beginTransaction();
+		transaction = localRepoManager.beginTransaction();
 		try {
 			localRepositoryRevisionAfterSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
 			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
@@ -262,6 +262,6 @@ public class RepositoryManagerTest extends AbstractTest {
 		assertThat(child_1_localRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
 		assertThat(child_1_localRevisionAfterSync).isEqualTo(localRepositoryRevisionAfterSync);
 
-		repositoryManager.close();
+		localRepoManager.close();
 	}
 }

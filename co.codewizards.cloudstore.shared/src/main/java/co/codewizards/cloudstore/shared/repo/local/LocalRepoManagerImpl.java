@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
@@ -34,27 +35,27 @@ import co.codewizards.cloudstore.shared.util.PropertiesUtil;
  * All operations on a repository are performed via this manager (or an object associated with it).
  * <p>
  * For every repository (identified by its root directory) there is one single instance. Use the
- * {@link RepositoryManagerRegistry} to obtain a {@code RepositoryManager}.
+ * {@link LocalRepoManagerFactory} to obtain a {@code LocalRepoManager}.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class RepositoryManager {
+class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
-	public static final String META_DIR_NAME = ".cloudstore-repo";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
 
 	private final File localRoot;
 	private PersistenceManagerFactory persistenceManagerFactory;
-	private List<RepositoryManagerCloseListener> repositoryManagerCloseListeners = new CopyOnWriteArrayList<RepositoryManagerCloseListener>();
+	private final AtomicInteger openReferenceCounter = new AtomicInteger();
+	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
 
-	protected RepositoryManager(File localRoot, boolean createRepository) throws RepositoryManagerException {
+	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
 		deleteMetaDir = false; // only delete, if it is created in initMetaDirectory(...)
 		try {
@@ -68,6 +69,10 @@ public class RepositoryManager {
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
+	}
+
+	protected void open() {
+		openReferenceCounter.incrementAndGet();
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -94,7 +99,7 @@ public class RepositoryManager {
 		}
 	}
 
-	private void initMetaDir(boolean createRepository) throws RepositoryManagerException {
+	private void initMetaDir(boolean createRepository) throws LocalRepoManagerException {
 		File metaDirectory = getMetaDir();
 		if (createRepository) {
 			if (metaDirectory.exists()) {
@@ -105,7 +110,7 @@ public class RepositoryManager {
 			metaDirectory.mkdir();
 
 			try {
-				IOUtil.copyResource(RepositoryManager.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME));
+				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -117,7 +122,7 @@ public class RepositoryManager {
 		}
 	}
 
-	private void initPersistenceManagerFactory(boolean createRepository) throws RepositoryManagerException {
+	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
 		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties );
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
@@ -203,12 +208,7 @@ public class RepositoryManager {
 		persistenceProperties.put(CONNECTION_URL_KEY, newValue);
 	}
 
-	/**
-	 * Gets the repository's local root directory.
-	 * <p>
-	 * This file is canonical (absolute and symbolic links resolved).
-	 * @return the repository's local root directory. Never <code>null</code>.
-	 */
+	@Override
 	public File getLocalRoot() {
 		return localRoot;
 	}
@@ -217,17 +217,30 @@ public class RepositoryManager {
 		return persistenceManagerFactory;
 	}
 
-	public void addRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
-		repositoryManagerCloseListeners.add(listener);
+	@Override
+	public void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+		localRepoManagerCloseListeners.add(listener);
 	}
 
-	public void removeRepositoryManagerCloseListener(RepositoryManagerCloseListener listener) {
-		repositoryManagerCloseListeners.remove(listener);
+	@Override
+	public void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+		localRepoManagerCloseListeners.remove(listener);
 	}
 
+	@Override
 	public void close() {
-		RepositoryManagerCloseEvent event = new RepositoryManagerCloseEvent(this, this);
-		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+		int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
+		if (openReferenceCounterValue > 0) {
+			return;
+		}
+		if (openReferenceCounterValue < 0) {
+			throw new IllegalStateException("openReferenceCounterValue < 0");
+		}
+
+		// TODO defer this (don't immediately close)
+		// TODO the timeout should be configurable
+		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);
+		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.preClose(event);
 		}
 
@@ -239,31 +252,28 @@ public class RepositoryManager {
 			}
 		}
 
-		for (RepositoryManagerCloseListener listener : repositoryManagerCloseListeners) {
+		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.postClose(event);
 		}
 	}
 
+	@Override
 	public synchronized boolean isOpen() {
 		return persistenceManagerFactory != null;
 	}
 
 	protected void assertOpen() {
 		if (!isOpen())
-			throw new IllegalStateException("This RepositoryManager is closed!");
+			throw new IllegalStateException("This LocalRepoManagerImpl is closed!");
 	}
 
+	@Override
 	public synchronized RepositoryTransaction beginTransaction() {
 		assertOpen();
 		return new RepositoryTransaction(this);
 	}
 
-	/**
-	 * Synchronises the local file system with the database.
-	 * <p>
-	 * Registers every directory and file in the repository's {@link #getLocalRoot() local root} and its
-	 * sub-directories.
-	 */
+	@Override
 	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
 		RepositoryTransaction transaction = beginTransaction();
 		try {
@@ -274,13 +284,7 @@ public class RepositoryManager {
 		}
 	}
 
-	/**
-	 * Add a remote repository.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>. This is
-	 * {@link LocalRepository#getEntityID() LocalRepository.entityID} in the remote database and will become
-	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
-	 * @param remoteRoot the URL of the remote repository. Must not be <code>null</code>.
-	 */
+	@Override
 	public void addRemoteRepository(EntityID entityID, URL remoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("remoteRoot", remoteRoot);
@@ -297,11 +301,7 @@ public class RepositoryManager {
 		}
 	}
 
-	/**
-	 * Move the remote repository to another URL.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
-	 * @param newRemoteRoot the new URL of the remote repository. Must not be <code>null</code>.
-	 */
+	@Override
 	public void moveRemoteRepository(EntityID entityID, URL newRemoteRoot) {
 		assertNotNull("entityID", entityID);
 		assertNotNull("newRemoteRoot", newRemoteRoot);
@@ -317,12 +317,7 @@ public class RepositoryManager {
 		}
 	}
 
-	/**
-	 * Delete a remote repository.
-	 * <p>
-	 * Does nothing, if the specified repository does not exist.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
-	 */
+	@Override
 	public void deleteRemoteRepository(EntityID entityID) {
 		assertNotNull("entityID", entityID);
 		RepositoryTransaction transaction = beginTransaction();

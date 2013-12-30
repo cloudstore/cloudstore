@@ -23,33 +23,33 @@ import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.shared.persistence.NormalFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManager;
-import co.codewizards.cloudstore.shared.repo.local.RepositoryManagerRegistry;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.shared.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.shared.repo.local.RepositoryTransaction;
 import co.codewizards.cloudstore.shared.repo.transport.AbstractRepoTransport;
 
 public class FileRepoTransport extends AbstractRepoTransport {
 
-	private RepositoryManager repositoryManager;
+	private LocalRepoManager localRepoManager;
 
-	protected RepositoryManager getRepositoryManager() {
-		if (repositoryManager == null) {
+	protected LocalRepoManager getLocalRepoManager() {
+		if (localRepoManager == null) {
 			File remoteRootFile;
 			try {
 				remoteRootFile = new File(getRemoteRoot().toURI());
 			} catch (URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
-			repositoryManager = RepositoryManagerRegistry.getInstance().getRepositoryManager(remoteRootFile);
+			localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(remoteRootFile);
 		}
-		return repositoryManager;
+		return localRepoManager;
 	}
 
 	@Override
 	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
 		assertNotNull("changeSetRequest", changeSetRequest);
 		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
-		RepositoryTransaction transaction = getRepositoryManager().beginTransaction();
+		RepositoryTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.createDAO(LocalRepositoryDAO.class);
 			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
@@ -133,7 +133,6 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void close() {
-		// nothing to do - for now. later, we might have a pooling with reference counting on the RepositoryManager and we might close it (delayed).
-
+		localRepoManager.close();
 	}
 }

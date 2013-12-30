@@ -7,7 +7,7 @@ public class FilenameFilterSkipMetaDir implements FilenameFilter {
 
 	@Override
 	public boolean accept(File dir, String name) {
-		return !RepositoryManager.META_DIR_NAME.equals(name);
+		return !LocalRepoManager.META_DIR_NAME.equals(name);
 	}
 
 }

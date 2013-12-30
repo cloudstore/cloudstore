@@ -3,10 +3,10 @@ package co.codewizards.cloudstore.shared.repo.local;
 import java.io.File;
 
 /**
- * Thrown if a {@link RepositoryManager} could not be created for a given {@link File}, because the file does not exist.
+ * Thrown if a {@link LocalRepoManager} could not be created for a given {@link File}, because the file does not exist.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class FileNotFoundException extends RepositoryManagerException {
+public class FileNotFoundException extends LocalRepoManagerException {
 	private static final long serialVersionUID = 1L;
 
 	private File file;

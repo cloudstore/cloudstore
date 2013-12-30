@@ -12,15 +12,15 @@ import co.codewizards.cloudstore.shared.persistence.LocalRepositoryDAO;
 
 public class RepositoryTransaction {
 
-	private final RepositoryManager repositoryManager;
+	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
 	private long localRevision = -1;
 
-	public RepositoryTransaction(RepositoryManager repositoryManager) {
-		this.repositoryManager = assertNotNull("repositoryManager", repositoryManager);
-		this.persistenceManagerFactory = assertNotNull("repositoryManager.persistenceManagerFactory", repositoryManager.getPersistenceManagerFactory());
+	public RepositoryTransaction(LocalRepoManagerImpl localRepoManager) {
+		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
+		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
 		begin();
 	}
 
@@ -88,8 +88,8 @@ public class RepositoryTransaction {
 		return localRevision;
 	}
 
-	public RepositoryManager getRepositoryManager() {
-		return repositoryManager;
+	public LocalRepoManager getLocalRepoManager() {
+		return localRepoManager;
 	}
 
 	public <D extends DAO<?, ?>> D createDAO(Class<D> daoClass) {
