@@ -24,6 +24,7 @@ import co.codewizards.cloudstore.shared.persistence.AutoTrackLocalRevision;
 public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener {
 
 	private final LocalRepoTransaction transaction;
+//	private boolean enabled = true;
 
 	public AutoTrackLifecycleListener(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -66,6 +67,11 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
 		// localRevision in the database.
 		long localRevision = transaction.getLocalRevision();
+
+//		if (!isEnabled()) {
+//			return;
+//		}
+
 		if (pc instanceof AutoTrackChanged) {
 			AutoTrackChanged entity = (AutoTrackChanged) pc;
 			entity.setChanged(new Date());
@@ -75,4 +81,11 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 			entity.setLocalRevision(localRevision);
 		}
 	}
+
+//	public void setEnabled(boolean enabled) {
+//		this.enabled = enabled;
+//	}
+//	public boolean isEnabled() {
+//		return enabled;
+//	}
 }

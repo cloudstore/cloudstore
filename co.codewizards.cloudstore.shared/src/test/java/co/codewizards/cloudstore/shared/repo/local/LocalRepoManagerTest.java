@@ -188,8 +188,8 @@ public class LocalRepoManagerTest extends AbstractTest {
 		long child_1_localRevisionBeforeSync;
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
-			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
-			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
+			localRepositoryRevisionBeforeSync = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
+			RepoFile childRepoFile_1 = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
 			child_1_localRevisionBeforeSync = childRepoFile_1.getLocalRevision();
 		} finally {
 			transaction.rollbackIfActive();
@@ -205,8 +205,8 @@ public class LocalRepoManagerTest extends AbstractTest {
 		long child_1_localRevisionAfterSync;
 		transaction = localRepoManager.beginTransaction();
 		try {
-			localRepositoryRevisionAfterSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
-			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
+			localRepositoryRevisionAfterSync = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
+			RepoFile childRepoFile_1 = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
 			child_1_localRevisionAfterSync = childRepoFile_1.getLocalRevision();
 		} finally {
 			transaction.rollbackIfActive();
@@ -233,8 +233,8 @@ public class LocalRepoManagerTest extends AbstractTest {
 		long child_1_localRevisionBeforeSync;
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
-			localRepositoryRevisionBeforeSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
-			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
+			localRepositoryRevisionBeforeSync = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
+			RepoFile childRepoFile_1 = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
 			child_1_localRevisionBeforeSync = childRepoFile_1.getLocalRevision();
 		} finally {
 			transaction.rollbackIfActive();
@@ -250,8 +250,8 @@ public class LocalRepoManagerTest extends AbstractTest {
 		long child_1_localRevisionAfterSync;
 		transaction = localRepoManager.beginTransaction();
 		try {
-			localRepositoryRevisionAfterSync = transaction.createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
-			RepoFile childRepoFile_1 = transaction.createDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
+			localRepositoryRevisionAfterSync = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail().getRevision();
+			RepoFile childRepoFile_1 = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, child_1);
 			child_1_localRevisionAfterSync = childRepoFile_1.getLocalRevision();
 		} finally {
 			transaction.rollbackIfActive();

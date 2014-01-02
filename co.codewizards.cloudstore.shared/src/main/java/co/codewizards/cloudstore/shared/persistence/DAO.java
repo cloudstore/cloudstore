@@ -162,7 +162,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		return result;
 	}
 
-	public E makePersistent(E entity)
+	public <P extends E> P makePersistent(P entity)
 	{
 		logger.debug("makePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		return pm().makePersistent(entity);

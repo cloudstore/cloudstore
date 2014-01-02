@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,9 +20,11 @@ import org.junit.Before;
 
 import co.codewizards.cloudstore.shared.persistence.RepoFile;
 import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.shared.repo.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.shared.util.IOUtil;
 
 public abstract class AbstractTest {
 
@@ -129,7 +132,7 @@ public abstract class AbstractTest {
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
-			RepoFileDAO repoFileDAO = transaction.createDAO(RepoFileDAO.class);
+			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 			assertThat(filesInRepo).isNotNull();
 
@@ -150,6 +153,35 @@ public abstract class AbstractTest {
 			}
 		} finally {
 			transaction.rollbackIfActive();
+		}
+	}
+
+	protected void assertDirectoriesAreEqualRecursively(File dir1, File dir2) throws IOException {
+		assertThat(dir1).isDirectory();
+		assertThat(dir2).isDirectory();
+
+		String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
+		assertThat(children1).isNotNull();
+
+		String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
+		assertThat(children2).isNotNull();
+
+		Arrays.sort(children1);
+		Arrays.sort(children2);
+
+		assertThat(children1).containsOnly(children2);
+
+		for (String childName : children1) {
+			File child1 = new File(dir1, childName);
+			File child2 = new File(dir2, childName);
+
+			if (child1.isFile()) {
+				assertThat(child2.isFile());
+				assertThat(IOUtil.compareFiles(child1, child2)).isTrue();
+			}
+
+			if (child1.isDirectory())
+				assertDirectoriesAreEqualRecursively(child1, child2);
 		}
 	}
 

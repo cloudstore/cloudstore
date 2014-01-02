@@ -285,7 +285,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
-			new LocalRepositorySync(transaction).sync(monitor);
+			new LocalRepoSync(transaction).sync(monitor);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -298,7 +298,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("remoteRoot", remoteRoot);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = new RemoteRepository(repositoryID);
 			remoteRepository.setRemoteRoot(remoteRoot);
 			remoteRepository.setRevision(-1);
@@ -315,7 +315,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("newRemoteRoot", newRemoteRoot);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(repositoryID);
 			remoteRepository.setRemoteRoot(newRemoteRoot);
 			remoteRepositoryDAO.makePersistent(remoteRepository);
@@ -330,7 +330,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("entityID", repositoryID);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
 			if (remoteRepository != null)
 				remoteRepositoryDAO.deletePersistent(remoteRepository);

@@ -5,15 +5,10 @@ import static org.assertj.core.api.Assertions.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -23,8 +18,8 @@ import co.codewizards.cloudstore.shared.AbstractTest;
 import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
 import co.codewizards.cloudstore.shared.dto.DirectoryDTO;
-import co.codewizards.cloudstore.shared.dto.EntityID;
 import co.codewizards.cloudstore.shared.dto.RepoFileDTO;
+import co.codewizards.cloudstore.shared.dto.RepoFileDTOTreeNode;
 import co.codewizards.cloudstore.shared.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.shared.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.shared.repo.transport.RepoTransport;
@@ -212,93 +207,37 @@ public class FileTransportTest extends AbstractTest {
 		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1");
 
-		RepoFileDTOTreeNode rootNode = buildTree(changeSetResponse2.getRepoFileDTOs());
-		List<RepoFileDTOTreeNode> leafs = getLeafs(rootNode);
+		RepoFileDTOTreeNode rootNode = RepoFileDTOTreeNode.createTree(changeSetResponse2.getRepoFileDTOs());
+		List<RepoFileDTOTreeNode> leafs = rootNode.getLeafs();
 		RepoFileDTOTreeNode leaf = leafs.get(0);
-		assertThat(leaf.current).isInstanceOf(DirectoryDTO.class);
-		DirectoryDTO leafDir = (DirectoryDTO) leaf.current;
+		assertThat(leaf.getRepoFileDTO()).isInstanceOf(DirectoryDTO.class);
+		DirectoryDTO leafDir = (DirectoryDTO) leaf.getRepoFileDTO();
 		assertThat(leafDir.isChildNamesLoaded()).isTrue();
 		assertThat(leafDir.getChildNames()).containsOnly("a");
 
 		// All parents' childNames should *not* be loaded, because they serve solely the purpose of a complete path
 		// and have not been modified.
-		RepoFileDTOTreeNode parent = leaf.parent;
+		RepoFileDTOTreeNode parent = leaf.getParent();
 		while (parent != null) {
-			assertThat(parent.current).isInstanceOf(DirectoryDTO.class);
-			DirectoryDTO parentDirDTO = (DirectoryDTO) parent.current;
+			assertThat(parent.getRepoFileDTO()).isInstanceOf(DirectoryDTO.class);
+			DirectoryDTO parentDirDTO = (DirectoryDTO) parent.getRepoFileDTO();
 			assertThat(parentDirDTO.isChildNamesLoaded()).isFalse();
 			assertThat(parentDirDTO.getChildNames()).isEmpty();
-			parent = parent.parent;
+			parent = parent.getParent();
 		}
 
 		localRepoManager.close();
 	}
 
 	private Set<String> getPaths(Collection<RepoFileDTO> repoFileDTOs) {
-		RepoFileDTOTreeNode rootNode = buildTree(repoFileDTOs);
-		assertThat(rootNode.current.getName()).isEqualTo("");
-		List<RepoFileDTOTreeNode> leafs = getLeafs(rootNode);
+		RepoFileDTOTreeNode rootNode = RepoFileDTOTreeNode.createTree(repoFileDTOs);
+		assertThat(rootNode.getRepoFileDTO().getName()).isEqualTo("");
+		List<RepoFileDTOTreeNode> leafs = rootNode.getLeafs();
 		Set<String> paths = new HashSet<String>(leafs.size());
 		for (RepoFileDTOTreeNode leaf : leafs) {
 			paths.add(leaf.getPath());
 		}
 		return paths;
 	}
-
-	private RepoFileDTOTreeNode buildTree(Collection<RepoFileDTO> repoFileDTOs) {
-		Map<EntityID, RepoFileDTOTreeNode> entityID2RepoFileDTOTreeNode = new HashMap<EntityID, RepoFileDTOTreeNode>();
-		for (RepoFileDTO repoFileDTO : repoFileDTOs) {
-			entityID2RepoFileDTOTreeNode.put(repoFileDTO.getEntityID(), new RepoFileDTOTreeNode(repoFileDTO));
-		}
-		RepoFileDTOTreeNode rootNode = null;
-		for (RepoFileDTOTreeNode node : entityID2RepoFileDTOTreeNode.values()) {
-			EntityID parentEntityID = node.current.getParentEntityID();
-			if (parentEntityID == null) {
-				if (rootNode != null)
-					Assert.fail("Multiple root nodes!");
-
-				rootNode = node;
-			}
-			else {
-				RepoFileDTOTreeNode parentNode = entityID2RepoFileDTOTreeNode.get(parentEntityID);
-				assertThat(parentNode).isNotNull();
-				node.parent = parentNode;
-				parentNode.children.add(node);
-			}
-		}
-		assertThat(rootNode).isNotNull();
-		return rootNode;
-	}
-
-	private List<RepoFileDTOTreeNode> getLeafs(RepoFileDTOTreeNode rootNode) {
-		List<RepoFileDTOTreeNode> leafs = new ArrayList<FileTransportTest.RepoFileDTOTreeNode>();
-		populateLeafs(rootNode, leafs);
-		return leafs;
-	}
-
-	private void populateLeafs(RepoFileDTOTreeNode node, List<RepoFileDTOTreeNode> leafs) {
-		if (node.children.isEmpty()) {
-			leafs.add(node);
-		}
-		for (RepoFileDTOTreeNode child : node.children) {
-			populateLeafs(child, leafs);
-		}
-	}
-
-	private static class RepoFileDTOTreeNode {
-		public RepoFileDTOTreeNode parent;
-		public final RepoFileDTO current;
-		public List<RepoFileDTOTreeNode> children = new ArrayList<RepoFileDTOTreeNode>(0);
-		public RepoFileDTOTreeNode(RepoFileDTO current) {
-			this.current = current;
-		}
-		public String getPath() {
-			if (parent == null)
-				return current.getName();
-			else
-				return parent.getPath() + '/' + current.getName();
-		}
-	}
-
 
 }

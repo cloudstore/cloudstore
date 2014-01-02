@@ -68,11 +68,12 @@ public class RepoSyncTest extends AbstractTest {
 		RepoSync repoSync = new RepoSync(localRoot, remoteRootURL);
 		repoSync.sync(new LoggerProgressMonitor(logger));
 
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
 		localRepoManagerLocal.close();
 		localRepoManagerRemote.close();
 
-		// TODO compare directory graphs of localRoot and remoteRoot!
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
-
 
 }

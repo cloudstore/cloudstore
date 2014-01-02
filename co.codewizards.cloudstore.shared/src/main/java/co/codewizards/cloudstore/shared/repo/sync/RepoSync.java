@@ -8,9 +8,13 @@ import java.net.URL;
 
 import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.shared.dto.DirectoryDTO;
 import co.codewizards.cloudstore.shared.dto.EntityID;
+import co.codewizards.cloudstore.shared.dto.NormalFileDTO;
 import co.codewizards.cloudstore.shared.dto.RepoFileDTO;
+import co.codewizards.cloudstore.shared.dto.RepoFileDTOTreeNode;
 import co.codewizards.cloudstore.shared.dto.RepositoryDTO;
+import co.codewizards.cloudstore.shared.dto.StringList;
 import co.codewizards.cloudstore.shared.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.shared.persistence.LastSyncToRemoteRepoDAO;
 import co.codewizards.cloudstore.shared.persistence.RemoteRepository;
@@ -47,7 +51,7 @@ public class RepoSync {
 
 	public void sync(ProgressMonitor monitor) {
 		assertNotNull("monitor", monitor);
-		monitor.beginTask("Synchronising...", 101);
+		monitor.beginTask("Synchronising remotely...", 101);
 		try {
 			readRemoteRepositoryID();
 			monitor.worked(1);
@@ -61,7 +65,7 @@ public class RepoSync {
 	private void readRemoteRepositoryID() {
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.createDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
 			remoteRepositoryID = remoteRepository.getEntityID();
 
 			transaction.commit();
@@ -86,7 +90,7 @@ public class RepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", 100);
+		monitor.beginTask("Synchronising remotely...", 100);
 		try {
 			ChangeSetRequest changeSetRequest = createChangeSetRequest(fromRepoTransport, toRepoTransport);
 			monitor.worked(1);
@@ -104,13 +108,46 @@ public class RepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetResponse changeSetResponse, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetResponse.getRepoFileDTOs().size());
+		monitor.beginTask("Synchronising remotely...", changeSetResponse.getRepoFileDTOs().size());
 		try {
-			for (RepoFileDTO repoFileDTO : changeSetResponse.getRepoFileDTOs()) {
-
-
-				monitor.worked(1);
+			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetResponse.getRepoFileDTOs());
+			for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
+				RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
+				if (repoFileDTO instanceof DirectoryDTO)
+					sync(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+				else if (repoFileDTO instanceof NormalFileDTO)
+					sync(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (NormalFileDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+				else
+					throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
 			}
+		} finally {
+			monitor.done();
+		}
+	}
+
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
+		// TODO sync last-modified-timestamp, too!!!
+		monitor.beginTask("Synchronising remotely...", 100);
+		try {
+			StringList childNamesToKeep = null;
+			if (directoryDTO.isChildNamesLoaded()) {
+				// All children not contained in childNamesToKeep are deleted!
+				childNamesToKeep = new StringList();
+				childNamesToKeep.setElements(directoryDTO.getChildNames());
+			}
+			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath(), childNamesToKeep);
+		} finally {
+			monitor.done();
+		}
+	}
+
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, NormalFileDTO normalFileDTO, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising remotely...", 100);
+		try {
+			// TODO sync file in a chunked, efficient way!
+			// TODO sync last-modified-timestamp, too!!!
+			byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath());
+			toRepoTransport.putFileData(repoFileDTOTreeNode.getPath(), fileData);
 		} finally {
 			monitor.done();
 		}
@@ -120,11 +157,11 @@ public class RepoSync {
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
 			ChangeSetRequest changeSetRequest = new ChangeSetRequest();
-			RemoteRepository remoteRepository = transaction.createDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
+			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
 
 			if (localRepoTransport == fromRepoTransport && remoteRepoTransport == toRepoTransport) {
 				// UPloading (changeSetRequest is sent to the *local* repo)
-				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.createDAO(LastSyncToRemoteRepoDAO.class);
+				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
 
 				if (lastSyncToRemoteRepo == null)
@@ -149,11 +186,11 @@ public class RepoSync {
 	private void storeRepositoryDTOFromChangeSetResponse(RepositoryDTO repositoryDTO) {
 		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.createDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
+			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
 
 			if (localRepositoryID.equals(repositoryDTO.getEntityID())) {
 				// UPloading (changeSetResponse came from the *local* repo)
-				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.createDAO(LastSyncToRemoteRepoDAO.class);
+				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
 
 				if (lastSyncToRemoteRepo == null) {

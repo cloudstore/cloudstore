@@ -14,6 +14,7 @@ public class LocalRepoTransaction {
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
+//	private final AutoTrackLifecycleListener autoTrackLifecycleListener = new AutoTrackLifecycleListener(this);
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
 	private long localRevision = -1;
@@ -35,8 +36,13 @@ public class LocalRepoTransaction {
 	}
 
 	private void hookLifecycleListeners() {
+//		persistenceManager.addInstanceLifecycleListener(autoTrackLifecycleListener, (Class[]) null);
 		persistenceManager.addInstanceLifecycleListener(new AutoTrackLifecycleListener(this), (Class[]) null);
 	}
+
+//	public void setAutoTrackLifecycleListenerEnabled(boolean enabled) {
+//		autoTrackLifecycleListener.setEnabled(enabled);
+//	}
 
 	public synchronized void commit() {
 		if (!isActive()) {
@@ -80,7 +86,7 @@ public class LocalRepoTransaction {
 	public long getLocalRevision() {
 		if (localRevision < 0) {
 			jdoTransaction.setSerializeRead(true);
-			LocalRepository lr = createDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			LocalRepository lr = getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
 			localRevision = lr.getRevision() + 1;
 			lr.setRevision(localRevision);
@@ -93,7 +99,7 @@ public class LocalRepoTransaction {
 		return localRepoManager;
 	}
 
-	public <D extends DAO<?, ?>> D createDAO(Class<D> daoClass) {
+	public <D extends DAO<?, ?>> D getDAO(Class<D> daoClass) {
 		PersistenceManager pm = getPersistenceManager();
 		D dao;
 		try {
