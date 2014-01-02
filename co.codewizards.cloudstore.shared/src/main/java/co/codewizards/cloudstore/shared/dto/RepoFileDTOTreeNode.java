@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 
 	/**
@@ -36,7 +34,7 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 			EntityID parentEntityID = node.getRepoFileDTO().getParentEntityID();
 			if (parentEntityID == null) {
 				if (rootNode != null)
-					Assert.fail("Multiple root nodes!");
+					throw new IllegalArgumentException("Multiple root nodes!");
 
 				rootNode = node;
 			}
