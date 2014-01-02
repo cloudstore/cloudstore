@@ -23,15 +23,15 @@ import co.codewizards.cloudstore.shared.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.shared.progress.ProgressMonitor;
 import co.codewizards.cloudstore.shared.util.HashUtil;
 
-class LocalRepositorySyncer {
+class LocalRepositorySync {
 
-	private static final Logger logger = LoggerFactory.getLogger(LocalRepositorySyncer.class);
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepositorySync.class);
 
 	private final LocalRepoTransaction transaction;
 	private final RepoFileDAO repoFileDAO;
 	private final File localRoot;
 
-	public LocalRepositorySyncer(LocalRepoTransaction transaction) {
+	public LocalRepositorySync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 		repoFileDAO = this.transaction.createDAO(RepoFileDAO.class);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();

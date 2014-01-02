@@ -4,10 +4,6 @@ import java.util.Iterator;
 
 public class LocalRepositoryDAO extends DAO<LocalRepository, LocalRepositoryDAO> {
 
-	public LocalRepositoryDAO() {
-		// TODO Auto-generated constructor stub
-	}
-
 	public LocalRepository getLocalRepositoryOrFail() {
 		Iterator<LocalRepository> repositoryIterator = pm().getExtent(LocalRepository.class).iterator();
 		if (!repositoryIterator.hasNext()) {

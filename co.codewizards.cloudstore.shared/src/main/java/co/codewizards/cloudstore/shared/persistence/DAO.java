@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.shared.persistence;
 
+import static co.codewizards.cloudstore.shared.util.Util.*;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -119,8 +121,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	private E getObjectById(EntityID entityID, boolean throwExceptionIfNotFound)
 	throws JDOObjectNotFoundException
 	{
-		if (entityID == null)
-			throw new IllegalArgumentException("entityID == null");
+		assertNotNull("entityID", entityID);
 
 //		try {
 //			Object result = pm().getObjectById(entityClass, entityID);

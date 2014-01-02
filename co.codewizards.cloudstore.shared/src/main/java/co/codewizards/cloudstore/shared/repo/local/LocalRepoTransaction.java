@@ -42,6 +42,7 @@ public class LocalRepoTransaction {
 		if (!isActive()) {
 			throw new IllegalStateException("Transaction is not active!");
 		}
+		persistenceManager.flush();
 		jdoTransaction.commit();
 		persistenceManager.close();
 		jdoTransaction = null;

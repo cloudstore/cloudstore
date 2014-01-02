@@ -20,6 +20,14 @@ public interface LocalRepoManager {
 	 */
 	File getLocalRoot();
 
+	/**
+	 * Gets the local repository's unique ID.
+	 * <p>
+	 * This is {@link LocalRepository#getEntityID() LocalRepository.entityID} in the local repository database.
+	 * @return the local repository's unique ID. Never <code>null</code>.
+	 */
+	EntityID getLocalRepositoryID();
+
 	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
 
 	void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
@@ -55,26 +63,26 @@ public interface LocalRepoManager {
 
 	/**
 	 * Adds a remote repository to the local database.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>. This is
+	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>. This is
 	 * {@link LocalRepository#getEntityID() LocalRepository.entityID} in the remote database and will become
 	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
 	 * @param remoteRoot the URL of the remote repository. Must not be <code>null</code>.
 	 */
-	void addRemoteRepository(EntityID entityID, URL remoteRoot);
+	void addRemoteRepository(EntityID repositoryID, URL remoteRoot);
 
 	/**
 	 * Moves the remote repository (in the local database) to another URL.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
+	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
 	 * @param newRemoteRoot the new URL of the remote repository. Must not be <code>null</code>.
 	 */
-	void moveRemoteRepository(EntityID entityID, URL newRemoteRoot);
+	void moveRemoteRepository(EntityID repositoryID, URL newRemoteRoot);
 
 	/**
 	 * Deletes a remote repository from the local database.
 	 * <p>
 	 * Does nothing, if the specified repository does not exist.
-	 * @param entityID the remote repository's unique ID. Must not be <code>null</code>.
+	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
 	 */
-	void deleteRemoteRepository(EntityID entityID);
+	void deleteRemoteRepository(EntityID repositoryID);
 
 }

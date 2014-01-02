@@ -48,6 +48,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
 
 	private final File localRoot;
+	private EntityID repositoryID;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private final AtomicInteger openReferenceCounter = new AtomicInteger();
 	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
@@ -156,18 +157,20 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
 		try {
-			new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
+			LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
+			repositoryID = localRepository.getEntityID();
 		} catch (IllegalStateException x) {
 			throw new RepositoryCorruptException(localRoot, x.getMessage());
 		}
 	}
 
 	private void createAndPersistLocalRepository(PersistenceManager pm) {
-		LocalRepository repository = new LocalRepository();
+		LocalRepository localRepository = new LocalRepository();
 		Directory root = new Directory();
 		root.setName("");
-		repository.setRoot(root);
-		pm.makePersistent(repository);
+		localRepository.setRoot(root);
+		localRepository = pm.makePersistent(localRepository);
+		repositoryID = localRepository.getEntityID();
 	}
 
 	private File getMetaDir() {
@@ -258,6 +261,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
+	public EntityID getLocalRepositoryID() {
+		return repositoryID;
+	}
+
+	@Override
 	public synchronized boolean isOpen() {
 		return persistenceManagerFactory != null;
 	}
@@ -277,7 +285,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
-			new LocalRepositorySyncer(transaction).sync(monitor);
+			new LocalRepositorySync(transaction).sync(monitor);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -285,13 +293,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void addRemoteRepository(EntityID entityID, URL remoteRoot) {
-		assertNotNull("entityID", entityID);
+	public void addRemoteRepository(EntityID repositoryID, URL remoteRoot) {
+		assertNotNull("entityID", repositoryID);
 		assertNotNull("remoteRoot", remoteRoot);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = new RemoteRepository(entityID);
+			RemoteRepository remoteRepository = new RemoteRepository(repositoryID);
 			remoteRepository.setRemoteRoot(remoteRoot);
 			remoteRepository.setRevision(-1);
 			remoteRepositoryDAO.makePersistent(remoteRepository);
@@ -302,13 +310,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void moveRemoteRepository(EntityID entityID, URL newRemoteRoot) {
-		assertNotNull("entityID", entityID);
+	public void moveRemoteRepository(EntityID repositoryID, URL newRemoteRoot) {
+		assertNotNull("entityID", repositoryID);
 		assertNotNull("newRemoteRoot", newRemoteRoot);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(entityID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(repositoryID);
 			remoteRepository.setRemoteRoot(newRemoteRoot);
 			remoteRepositoryDAO.makePersistent(remoteRepository);
 			transaction.commit();
@@ -318,12 +326,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void deleteRemoteRepository(EntityID entityID) {
-		assertNotNull("entityID", entityID);
+	public void deleteRemoteRepository(EntityID repositoryID) {
+		assertNotNull("entityID", repositoryID);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.createDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(entityID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
 			if (remoteRepository != null)
 				remoteRepositoryDAO.deletePersistent(remoteRepository);
 
