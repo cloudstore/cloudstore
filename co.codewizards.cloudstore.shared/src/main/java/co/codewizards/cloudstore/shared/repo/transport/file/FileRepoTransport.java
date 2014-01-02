@@ -133,6 +133,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void close() {
-		localRepoManager.close();
+		if (localRepoManager != null)
+			localRepoManager.close();
 	}
 }

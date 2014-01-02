@@ -20,7 +20,7 @@ public class RepoTransportFactoryRegistry {
 
 	protected RepoTransportFactoryRegistry() { }
 
-	private List<RepoTransportFactory> repoTransportFactories = null;
+	private List<RepoTransportFactory> repoTransportFactories;
 
 	public RepoTransportFactory getRepoTransportFactoryOrFail(URL remoteRoot) {
 		RepoTransportFactory repoTransportFactory = getRepoTransportFactory(remoteRoot);

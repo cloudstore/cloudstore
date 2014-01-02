@@ -14,6 +14,7 @@ import co.codewizards.cloudstore.webapp.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.webapp.jersey.CloudStoreRESTProvider;
 import co.codewizards.cloudstore.webapp.jersey.DAOProvider;
 import co.codewizards.cloudstore.webapp.jersey.DefaultExceptionMapper;
+import co.codewizards.cloudstore.webapp.service.ChangeSetService;
 import co.codewizards.cloudstore.webapp.service.TestService;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
@@ -43,6 +44,7 @@ extends DefaultResourceConfig
 
 	private static final Set<Class<?>> classes = Collections.unmodifiableSet(new HashSet<Class<?>>(Arrays.asList(new Class<?>[] {
 			// BEGIN services
+			ChangeSetService.class,
 			TestService.class,
 			// END services
 

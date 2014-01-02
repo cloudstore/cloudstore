@@ -5,7 +5,6 @@ import java.net.URL;
 import javax.jdo.Query;
 
 public class RemoteRepositoryDAO extends DAO<RemoteRepository, RemoteRepositoryDAO> {
-
 	public RemoteRepository getRemoteRepository(URL remoteRoot) {
 		Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepository_remoteRootSha1");
 		try {

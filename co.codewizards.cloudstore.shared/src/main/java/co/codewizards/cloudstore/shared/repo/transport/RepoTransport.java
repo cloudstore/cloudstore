@@ -12,9 +12,9 @@ public interface RepoTransport {
 
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
+	
+	void close();
 
 	ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest);
-
-	void close();
 
 }
