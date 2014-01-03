@@ -5,17 +5,26 @@ import static org.assertj.core.api.Assertions.*;
 import java.io.File;
 import java.lang.reflect.Proxy;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import co.codewizards.cloudstore.core.AbstractTest;
-import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
-import co.codewizards.cloudstore.core.repo.local.FileNoDirectoryException;
-import co.codewizards.cloudstore.core.repo.local.FileNoRepositoryException;
-import co.codewizards.cloudstore.core.repo.local.FileNotFoundException;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerInvocationHandler;
 
 public class LocalRepoManagerFactoryTest extends AbstractTest {
+
+	private static long closeDeferredMillis;
+
+	@BeforeClass
+	public static void beforeClass() {
+		closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
+		LocalRepoManagerImpl.closeDeferredMillis = 0;
+	}
+
+	@AfterClass
+	public static void afterClass() {
+		LocalRepoManagerImpl.closeDeferredMillis = closeDeferredMillis;
+	}
 
 	@Test
 	public void createLocalRepoManagerForExistingNonRepoDirectory() throws Exception {

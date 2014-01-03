@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -66,6 +68,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
+	private static Timer closeDeferredTimer = new Timer(true);
+	private TimerTask closeDeferredTimerTask;
 
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
@@ -86,6 +90,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	protected void open() {
+		synchronized(this) {
+			if (closeDeferredTimerTask != null) {
+				closeDeferredTimerTask.cancel();
+				closeDeferredTimerTask = null;
+			}
+		}
+
 		openReferenceCounter.incrementAndGet();
 	}
 
@@ -261,8 +272,35 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			throw new IllegalStateException("openReferenceCounterValue < 0");
 		}
 
-		logger.info("[{}]close: Shutting down real LocalRepoManager.", repositoryID);
+		long closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
+		if (closeDeferredMillis > 0) {
+			synchronized(this) {
+				if (closeDeferredTimerTask == null) {
+					closeDeferredTimerTask = new TimerTask() {
+						@Override
+						public void run() {
+							_close();
+						}
+					};
+					closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
+				}
+			}
+		}
+		else
+			_close();
+	}
 
+	protected static volatile long closeDeferredMillis = 60 * 1000L; // TODO make properly configurable!
+
+	private void _close() {
+		synchronized(this) {
+			if (closeDeferredTimerTask != null) {
+				closeDeferredTimerTask.cancel();
+				closeDeferredTimerTask = null;
+			}
+		}
+
+		logger.info("[{}]close: Shutting down real LocalRepoManager.", repositoryID);
 		// TODO defer this (don't immediately close)
 		// TODO the timeout should be configurable
 		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);
