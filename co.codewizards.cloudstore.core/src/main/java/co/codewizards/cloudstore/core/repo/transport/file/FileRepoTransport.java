@@ -12,26 +12,29 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
-import co.codewizards.cloudstore.core.dto.StringList;
+import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
 import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.Modification;
+import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
+import co.codewizards.cloudstore.core.persistence.RemoteRepository;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
-import co.codewizards.cloudstore.core.repo.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -59,10 +62,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
 		assertNotNull("changeSetRequest", changeSetRequest);
+		assertNotNull("changeSetRequest.clientRepositoryID", changeSetRequest.getClientRepositoryID());
 		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 
 			// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
@@ -70,8 +76,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			// next run.
 			changeSetResponse.setRepositoryDTO(toRepositoryDTO(localRepositoryDAO.getLocalRepositoryOrFail()));
 
-			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(changeSetRequest.getRevision());
-			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO, changeSetRequest.getRevision());
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(changeSetRequest.getClientRepositoryID());
+			Collection<Modification> modifications = modificationDAO.getModificationsAfter(remoteRepository, changeSetRequest.getServerRevision());
+			changeSetResponse.setModificationDTOs(toModificationDTOs(modifications));
+
+			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(changeSetRequest.getServerRevision());
+			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO, changeSetRequest.getServerRevision());
 			changeSetResponse.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
 
 			transaction.commit();
@@ -79,6 +89,31 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		} finally {
 			transaction.rollbackIfActive();
 		}
+	}
+
+	private List<ModificationDTO> toModificationDTOs(Collection<Modification> modifications) {
+		List<ModificationDTO> result = new ArrayList<ModificationDTO>(assertNotNull("modifications", modifications).size());
+		for (Modification modification : modifications) {
+			result.add(toModificationDTO(modification));
+		}
+		return result;
+	}
+
+	private ModificationDTO toModificationDTO(Modification modification) {
+		ModificationDTO modificationDTO;
+		if (modification instanceof DeleteModification) {
+			DeleteModification deleteModification = (DeleteModification) modification;
+			DeleteModificationDTO deleteModificationDTO;
+			modificationDTO = deleteModificationDTO = new DeleteModificationDTO();
+			deleteModificationDTO.setPath(deleteModification.getPath());
+		}
+		else
+			throw new IllegalArgumentException("Unknown modification type: " + modification);
+
+		modificationDTO.setEntityID(modification.getEntityID());
+		modificationDTO.setLocalRevision(modification.getLocalRevision());
+
+		return modificationDTO;
 	}
 
 	private RepositoryDTO toRepositoryDTO(LocalRepository localRepository) {
@@ -117,19 +152,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			normalFileDTO.setSha1(normalFile.getSha1());
 		}
 		else if (repoFile instanceof Directory) {
-			DirectoryDTO directoryDTO;
-			repoFileDTO = directoryDTO = new DirectoryDTO();
-
-			if (repoFile.getLocalRevision() <= localRevision)
-				directoryDTO.setChildNamesLoaded(false);
-			else {
-				directoryDTO.setChildNamesLoaded(true);
-				Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
-				List<String> childNames = directoryDTO.getChildNames();
-				for (RepoFile childRepoFile : childRepoFiles) {
-					childNames.add(childRepoFile.getName());
-				}
-			}
+			repoFileDTO = new DirectoryDTO();
 		}
 		else // TODO support symlinks!
 			throw new UnsupportedOperationException("RepoFile type not yet supported: " + repoFile);
@@ -149,42 +172,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeDirectory(String path, StringList childNamesToKeep) {
+	public void makeDirectory(String path) {
 		File file = getFile(assertNotNull("path", path));
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 //			transaction.setAutoTrackLifecycleListenerEnabled(false);
 			mkDir(transaction, file);
-			if (childNamesToKeep != null) {
-				deleteChildrenExcept(transaction, file, new HashSet<String>(childNamesToKeep.getElements()));
-			}
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
-		}
-	}
-
-	private void deleteChildrenExcept(LocalRepoTransaction transaction, File directory, Set<String> fileNamesToKeep) {
-		assertNotNull("transaction", transaction);
-		assertNotNull("directory", directory);
-		assertNotNull("fileNamesToKeep", fileNamesToKeep);
-		String[] fileNames = directory.list(new FilenameFilterSkipMetaDir());
-		if (fileNames != null) {
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
-			File localRoot = getLocalRepoManager().getLocalRoot();
-			for (String fileName : fileNames) {
-				if (fileNamesToKeep.contains(fileName))
-					continue;
-
-				File file = new File(directory, fileName);
-				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
-
-				if (!IOUtil.deleteDirectoryRecursively(file))
-					throw new IllegalStateException("Deleting file/directory failed: " + file);
-
-				if (repoFile != null)
-					deleteRepoFileWithAllChildrenRecursively(repoFileDAO, repoFile);
-			}
 		}
 	}
 

@@ -293,32 +293,27 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void addRemoteRepository(EntityID repositoryID, URL remoteRoot) {
+	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot) {
 		assertNotNull("entityID", repositoryID);
-		assertNotNull("remoteRoot", remoteRoot);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = new RemoteRepository(repositoryID);
-			remoteRepository.setRemoteRoot(remoteRoot);
-			remoteRepository.setRevision(-1);
-			remoteRepositoryDAO.makePersistent(remoteRepository);
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
-	}
 
-	@Override
-	public void moveRemoteRepository(EntityID repositoryID, URL newRemoteRoot) {
-		assertNotNull("entityID", repositoryID);
-		assertNotNull("newRemoteRoot", newRemoteRoot);
-		LocalRepoTransaction transaction = beginTransaction();
-		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(repositoryID);
-			remoteRepository.setRemoteRoot(newRemoteRoot);
-			remoteRepositoryDAO.makePersistent(remoteRepository);
+			if (remoteRoot != null) {
+				RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
+				if (otherRepoWithSameRemoteRoot != null && !repositoryID.equals(otherRepoWithSameRemoteRoot.getEntityID()))
+					throw new IllegalStateException(String.format("Duplicate remoteRoot! The RemoteRepository '%s' already has the same remoteRoot '%s'! The remoteRoot must be unique!", otherRepoWithSameRemoteRoot.getEntityID(), remoteRoot));
+			}
+
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
+			if (remoteRepository == null) {
+				remoteRepository = new RemoteRepository(repositoryID);
+				remoteRepository.setRevision(-1);
+			}
+			remoteRepository.setRemoteRoot(remoteRoot);
+
+			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();

@@ -57,8 +57,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	 * {@inheritDoc}
 	 * <p>
 	 * Note that this does not include modifications of children (in case this is a directory).
-	 * If a child is modified, solely this child's localRevision is updated. However, when a child is
-	 * added or removed, the local-revision of the parent directory is modified, too!
+	 * If a child is modified, solely this child's localRevision is updated.
 	 */
 	@Override
 	public long getLocalRevision() {
@@ -70,22 +69,38 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	}
 
 	/**
-	 * Gets the path within the repository from the {@link LocalRepository#getRoot() root} (excluding) to <code>this</code> (including).
+	 * Gets the path within the repository from the {@link LocalRepository#getRoot() root} (including) to <code>this</code> (including).
 	 * <p>
-	 * The first element in the list is the RepoFile having the {@code root} as parent (not the root itself!).
-	 * The last element is <code>this</code>.
+	 * The first element in the list is the {@code root}. The last element is <code>this</code>.
 	 * <p>
-	 * If this method is called on the {@code root} itself, the result will be an empty list.
-	 * @return the path within the repository from the {@link LocalRepository#getRoot() root} (excluding) to <code>this</code> (including).
+	 * If this method is called on the {@code root} itself, the result will be a list with one single element (the root itself).
+	 * @return the path within the repository from the {@link LocalRepository#getRoot() root} (including) to <code>this</code> (including). Never <code>null</code>.
 	 */
-	public List<RepoFile> getRepoFilePath() {
+	public List<RepoFile> getPathList() {
 		LinkedList<RepoFile> path = new LinkedList<RepoFile>();
 		RepoFile rf = this;
-		while (rf.getParent() != null) { // ignore the root
+		while (rf != null) {
 			path.addFirst(rf);
 			rf = rf.getParent();
 		}
 		return Collections.unmodifiableList(path);
+	}
+
+	/**
+	 * Gets the path from the root to <code>this</code>.
+	 * <p>
+	 * The path's elements are separated by a slash ("/").
+	 * @return the path from the root to <code>this</code>. Never <code>null</code>. The repository's root itself has the path "/".
+	 */
+	public String getPath() {
+		StringBuilder sb = new StringBuilder();
+		for (RepoFile repoFile : getPathList()) {
+			if (sb.length() == 0 || sb.charAt(sb.length() - 1) != '/')
+				sb.append('/');
+
+			sb.append(repoFile.getName());
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -96,7 +111,10 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	public File getFile(File localRoot) {
 		assertNotNull("localRoot", localRoot);
 		File result = localRoot;
-		for (RepoFile repoFile : getRepoFilePath()) {
+		for (RepoFile repoFile : getPathList()) {
+			if (repoFile.getParent() == null) // skip the root
+				continue;
+
 			result = new File(result, repoFile.getName());
 		}
 		return result;

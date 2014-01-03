@@ -62,20 +62,14 @@ public interface LocalRepoManager {
 	void localSync(ProgressMonitor monitor);
 
 	/**
-	 * Adds a remote repository to the local database.
+	 * Adds or relocates a remote repository.
 	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>. This is
 	 * {@link LocalRepository#getEntityID() LocalRepository.entityID} in the remote database and will become
 	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
-	 * @param remoteRoot the URL of the remote repository. Must not be <code>null</code>.
+	 * @param remoteRoot the URL of the remote repository. May be <code>null</code> (in the server, a
+	 * {@code RemoteRepository} never has a {@code remoteRoot}).
 	 */
-	void addRemoteRepository(EntityID repositoryID, URL remoteRoot);
-
-	/**
-	 * Moves the remote repository (in the local database) to another URL.
-	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
-	 * @param newRemoteRoot the new URL of the remote repository. Must not be <code>null</code>.
-	 */
-	void moveRemoteRepository(EntityID repositoryID, URL newRemoteRoot);
+	void putRemoteRepository(EntityID repositoryID, URL remoteRoot);
 
 	/**
 	 * Deletes a remote repository from the local database.

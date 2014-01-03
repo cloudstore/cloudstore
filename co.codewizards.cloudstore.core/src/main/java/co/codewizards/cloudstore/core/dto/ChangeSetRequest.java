@@ -5,30 +5,38 @@ import co.codewizards.cloudstore.core.persistence.LocalRepository;
 /**
  * Request for a change set.
  * <p>
- * All changes <code>after</code> the specified {@link #getRevision() revision} are expected in the
+ * All changes <code>after</code> the specified {@link #getServerRevision() serverRevision} are expected in the
  * {@link ChangeSetResponse}.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class ChangeSetRequest {
 
-	private long revision;
+	private EntityID clientRepositoryID;
+
+	private long serverRevision;
 
 	/**
 	 * Get the last revision that was synchronized.
 	 * <p>
 	 * This specifies the {@link LocalRepository#getRevision() LocalRepository.revision} on the server side.
-	 * The server is expected to send all changes that were done after this revision. Most importantly, this means
+	 * The server is expected to send all changes that were done after this serverRevision. Most importantly, this means
 	 * to send all {@link RepoFileDTO}s whose corresponding
 	 * {@link co.codewizards.cloudstore.core.persistence.RepoFile#getLocalRevision() RepoFile.localRevision} have
 	 * a value greater than (&gt) than the value specified here.
-	 * @return the last revision that was synchronized.
+	 * @return the last serverRevision that was synchronized.
 	 */
-	public long getRevision() {
-		return revision;
+	public long getServerRevision() {
+		return serverRevision;
 	}
 
-	public void setRevision(long localRevision) {
-		this.revision = localRevision;
+	public void setServerRevision(long localRevision) {
+		this.serverRevision = localRevision;
 	}
 
+	public EntityID getClientRepositoryID() {
+		return clientRepositoryID;
+	}
+	public void setClientRepositoryID(EntityID clientRepositoryID) {
+		this.clientRepositoryID = clientRepositoryID;
+	}
 }

@@ -5,10 +5,12 @@ import javax.xml.bind.JAXBException;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
+import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOList;
@@ -23,10 +25,12 @@ public class CloudStoreJaxbContext {
 				jaxbContext = JAXBContext.newInstance(
 						ChangeSetRequest.class,
 						ChangeSetResponse.class,
+						DeleteModificationDTO.class,
 						DirectoryDTO.class,
 						EntityID.class,
 						Error.class,
 						ErrorStackTraceElement.class,
+						ModificationDTO.class,
 						NormalFileDTO.class,
 						RepoFileDTO.class,
 						RepoFileDTOList.class,

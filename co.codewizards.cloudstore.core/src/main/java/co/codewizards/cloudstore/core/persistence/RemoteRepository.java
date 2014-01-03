@@ -8,13 +8,11 @@ import java.security.NoSuchAlgorithmException;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
-import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Query;
-import javax.jdo.annotations.Unique;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.HashUtil;
@@ -23,16 +21,14 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.SUPERCLASS_TABLE)
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="RemoteRepository")
-//@Unique(name="RemoteRepository_remoteRoot", members="remoteRoot") // Indexing a CLOB with Derby throws an exception :-( [should be a warning, IMHO for portability reasons]
-@Unique(name="RemoteRepository_remoteRootSha1", members="remoteRootSha1")
+//@Index(name="RemoteRepository_remoteRoot", members="remoteRoot") // Indexing a CLOB with Derby throws an exception :-( [should be a warning, IMHO for portability reasons]
+@Index(name="RemoteRepository_remoteRootSha1", members="remoteRootSha1")
 @Query(name="getRemoteRepository_remoteRootSha1", value="SELECT UNIQUE WHERE this.remoteRootSha1 == :remoteRootSha1")
 public class RemoteRepository extends Repository {
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
 	@Column(jdbcType="CLOB")
 	private URL remoteRoot;
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String remoteRootSha1;
 
 	public RemoteRepository() { }

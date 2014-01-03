@@ -14,7 +14,6 @@ import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
-import co.codewizards.cloudstore.core.dto.StringList;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
@@ -129,13 +128,7 @@ public class RepoSync {
 		// TODO sync last-modified-timestamp, too!!!
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
-			StringList childNamesToKeep = null;
-			if (directoryDTO.isChildNamesLoaded()) {
-				// All children not contained in childNamesToKeep are deleted!
-				childNamesToKeep = new StringList();
-				childNamesToKeep.setElements(directoryDTO.getChildNames());
-			}
-			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath(), childNamesToKeep);
+			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath());
 		} finally {
 			monitor.done();
 		}
@@ -165,13 +158,13 @@ public class RepoSync {
 				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
 
 				if (lastSyncToRemoteRepo == null)
-					changeSetRequest.setRevision(-1);
+					changeSetRequest.setServerRevision(-1);
 				else
-					changeSetRequest.setRevision(lastSyncToRemoteRepo.getLocalRepositoryRevision());
+					changeSetRequest.setServerRevision(lastSyncToRemoteRepo.getLocalRepositoryRevision());
 
 			} else if (localRepoTransport == toRepoTransport && remoteRepoTransport == fromRepoTransport) {
 				// DOWNloading (changeSetRequest is sent to the *remote* repo)
-				changeSetRequest.setRevision(remoteRepository.getRevision());
+				changeSetRequest.setServerRevision(remoteRepository.getRevision());
 			}
 			else
 				throw new IllegalStateException("fromRepoTransport and toRepoTransport do not match localRepoTransport and remoteRepoTransport!");

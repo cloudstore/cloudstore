@@ -16,8 +16,12 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
+import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
+import co.codewizards.cloudstore.core.persistence.RemoteRepository;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
@@ -28,13 +32,17 @@ class LocalRepoSync {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoSync.class);
 
 	private final LocalRepoTransaction transaction;
-	private final RepoFileDAO repoFileDAO;
 	private final File localRoot;
+	private final RepoFileDAO repoFileDAO;
+	private final RemoteRepositoryDAO remoteRepositoryDAO;
+	private final ModificationDAO modificationDAO;
 
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
-		repoFileDAO = this.transaction.getDAO(RepoFileDAO.class);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
+		repoFileDAO = this.transaction.getDAO(RepoFileDAO.class);
+		remoteRepositoryDAO = this.transaction.getDAO(RemoteRepositoryDAO.class);
+		modificationDAO = this.transaction.getDAO(ModificationDAO.class);
 	}
 
 	public void sync(ProgressMonitor monitor) { // TODO use this monitor!!!
@@ -129,10 +137,6 @@ class LocalRepoSync {
 		repoFile.setParent(parentRepoFile);
 		repoFile.setName(file.getName());
 
-		// For consistency reasons, we touch the parent not only when deleting a child (which is required
-		// by our sync algorithm), but also when adding a new child.
-		parentRepoFile.setChanged(new Date());
-
 		return repoFileDAO.makePersistent(repoFile);
 	}
 
@@ -153,17 +157,12 @@ class LocalRepoSync {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");
 
-		// We must ensure the parent's localRevision + changed properties are updated. Though this happens
-		// automatically whenever the object is changed, we need to touch it somehow. We use setChanged(...)
-		// to do this, even though exactly this property is set automatically (because of the
-		// AutoTrackChanged interface).
-		parentRepoFile.setChanged(new Date());
-
 		PersistenceManager pm = transaction.getPersistenceManager();
 
 		// We make sure, nothing interferes with our deletions (see comment below).
 		pm.flush();
 
+		createDeleteModifications(repoFile);
 		deleteRepoFileWithAllChildrenRecursively(repoFile);
 
 		// DN batches UPDATE and DELETE statements. This sometimes causes foreign key violations and other errors in
@@ -174,7 +173,18 @@ class LocalRepoSync {
 		pm.flush();
 	}
 
+	private void createDeleteModifications(RepoFile repoFile) {
+		assertNotNull("repoFile", repoFile);
+		for (RemoteRepository remoteRepository : remoteRepositoryDAO.getObjects()) {
+			DeleteModification deleteModification = new DeleteModification();
+			deleteModification.setRemoteRepository(remoteRepository);
+			deleteModification.setPath(repoFile.getPath());
+			modificationDAO.makePersistent(deleteModification);
+		}
+	}
+
 	private void deleteRepoFileWithAllChildrenRecursively(RepoFile repoFile) {
+		assertNotNull("repoFile", repoFile);
 		for (RepoFile childRepoFile : repoFileDAO.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}

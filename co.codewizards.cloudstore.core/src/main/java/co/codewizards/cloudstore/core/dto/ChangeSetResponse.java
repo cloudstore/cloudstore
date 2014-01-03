@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class ChangeSetResponse {
 	private RepositoryDTO repositoryDTO;
+	private List<ModificationDTO> modificationDTOs;
 	private List<RepoFileDTO> repoFileDTOs;
 
 	public RepositoryDTO getRepositoryDTO() {
@@ -15,6 +16,16 @@ public class ChangeSetResponse {
 	}
 	public void setRepositoryDTO(RepositoryDTO repositoryDTO) {
 		this.repositoryDTO = repositoryDTO;
+	}
+
+	public List<ModificationDTO> getModificationDTOs() {
+		if (modificationDTOs == null)
+			modificationDTOs = new ArrayList<ModificationDTO>();
+
+		return modificationDTOs;
+	}
+	public void setModificationDTOs(List<ModificationDTO> modificationDTOs) {
+		this.modificationDTOs = modificationDTOs;
 	}
 
 	public List<RepoFileDTO> getRepoFileDTOs() {

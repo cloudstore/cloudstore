@@ -39,7 +39,7 @@ public class RepoSyncTest extends AbstractTest {
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		localRepoManagerLocal.addRemoteRepository(localRepoManagerRemote.getLocalRepositoryID(), remoteRootURL);
+		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getLocalRepositoryID(), remoteRootURL);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
