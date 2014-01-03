@@ -274,6 +274,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 		long closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
 		if (closeDeferredMillis > 0) {
+			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", repositoryID, closeDeferredMillis);
 			synchronized(this) {
 				if (closeDeferredTimerTask == null) {
 					closeDeferredTimerTask = new TimerTask() {
