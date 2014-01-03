@@ -4,7 +4,7 @@ import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 
-import co.codewizards.cloudstore.shared.dto.jaxb.CloudStoreJaxbContext;
+import co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContext;
 
 @Provider
 public class CloudStoreJaxbContextResolver implements ContextResolver<JAXBContext> {

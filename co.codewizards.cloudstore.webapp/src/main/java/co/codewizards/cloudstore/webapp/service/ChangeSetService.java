@@ -12,13 +12,13 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.shared.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.shared.dto.ChangeSetResponse;
-import co.codewizards.cloudstore.shared.dto.EntityID;
-//import co.codewizards.cloudstore.shared.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.shared.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.shared.repo.transport.RepoTransportFactory;
-import co.codewizards.cloudstore.shared.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
+import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.EntityID;
+//import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
 @Path("ChangeSet")
 @Consumes(MediaType.APPLICATION_XML)

@@ -4,7 +4,7 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.core.Context;
 
-import co.codewizards.cloudstore.shared.persistence.DAO;
+import co.codewizards.cloudstore.core.persistence.DAO;
 import co.codewizards.cloudstore.webapp.CloudStoreREST;
 
 import com.sun.jersey.core.spi.component.ComponentContext;

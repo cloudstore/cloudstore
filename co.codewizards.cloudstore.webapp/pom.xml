@@ -73,7 +73,7 @@
 
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.shared</artifactId>
+			<artifactId>co.codewizards.cloudstore.core</artifactId>
 		</dependency>
 
 		<!-- BEGIN datanucleus -->

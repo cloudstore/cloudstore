@@ -9,8 +9,8 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.shared.dto.Error;
-import co.codewizards.cloudstore.shared.dto.ErrorStackTraceElement;
+import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 import co.codewizards.cloudstore.webapp.CloudStoreREST;
 
 /**

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.client;
 
-import co.codewizards.cloudstore.shared.dto.Error;
-import co.codewizards.cloudstore.shared.dto.ErrorStackTraceElement;
+import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de

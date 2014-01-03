@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.client.internal;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import co.codewizards.cloudstore.shared.util.IOUtil;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
