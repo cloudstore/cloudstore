@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -44,7 +45,7 @@ public class ChangeSetService
 	}
 
 	private URL getRepoURL(EntityID repoID) {
-//		LocalRepoRegistry registry = LocalRepoRegistry.getInstance();
+		LocalRepoRegistry registry = LocalRepoRegistry.getInstance();
 		throw new UnsupportedOperationException("NYI");
 	}
 }
