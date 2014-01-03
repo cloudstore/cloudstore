@@ -2,65 +2,75 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.persistence.RepoFile;
-import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.core.persistence.LocalRepository;
+import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 
 public class LocalRepoRegistry 
 {
 	public static final String META_CONFIG_DIR = ".cloudstore";
-	public static final String LOCAL_REPO_REGISTRY_FILE = "registry";
-	
+	public static final String LOCAL_REPO_REGISTRY_FILE = "repositories";
+
+	public static final String DEFAULT_REPOSITORY_URL = IOUtil.getUserHome().getAbsolutePath();
+
+	private static final File CONFIG_DIR = new File(IOUtil.getUserHome(), META_CONFIG_DIR);
+	private static final File CONFIG_FILE = new File(CONFIG_DIR, LOCAL_REPO_REGISTRY_FILE);
+
 	private static class LocalRepoRegistryHolder {
 		public static final LocalRepoRegistry INSTANCE = new LocalRepoRegistry();
 	}
-	
+
 	public static LocalRepoRegistry getInstance() {
 		return LocalRepoRegistryHolder.INSTANCE;
 	}
-	
+
 	private LocalRepoRegistry() {
 		initConfigDir();
-		createEntityID2FileMapPropertiesFile();
+		createRepositoryID2URLMapPropertiesFile();
 	}
 
-	private void createEntityID2FileMapPropertiesFile() {
-		RepoFileDAO repoFileDAO = new RepoFileDAO();
-		Collection<RepoFile> repoFiles = repoFileDAO.getObjects();
+	private void createRepositoryID2URLMapPropertiesFile() {
+		LocalRepositoryDAO localRepoDAO = new LocalRepositoryDAO();
+		LocalRepository localRepo = localRepoDAO.getLocalRepositoryOrFail();
 		Properties props = new Properties();
-		for (RepoFile repoFile : repoFiles) {
-			List<RepoFile> repoFilePath = repoFile.getRepoFilePath();
-			
-			
-//			props.put(repoFile.getEntityID(), repoFile.get)
+		props.put(localRepo.getEntityID(), DEFAULT_REPOSITORY_URL);
+
+		try {
+			PropertiesUtil.store(CONFIG_FILE, props, "Repository Location");
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
 		}
 	}
 
 	private void initConfigDir() {
-		File configDir = new File(IOUtil.getUserHome(), META_CONFIG_DIR);
-		if (!configDir.exists()) {
+		if (!CONFIG_DIR.exists()) {
 			try {
-				configDir.createNewFile();
+				CONFIG_DIR.createNewFile();
 			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			}
 		}
 	}
 
-	private Map<EntityID, File> entityID2FileMap;
-	public Map<EntityID, File> getEntityID2URLMap() {
-		if (entityID2FileMap == null) {
-			entityID2FileMap = new HashMap<EntityID, File>();
+	private Map<EntityID, URL> repositoryID2URLMap;
+	public Map<EntityID, URL> getEntityID2URLMap(EntityID entityID) {
+		if (repositoryID2URLMap == null) {
+			repositoryID2URLMap = new HashMap<EntityID, URL>();
+			try {
+				Properties props = PropertiesUtil.load(CONFIG_FILE);
+				repositoryID2URLMap.put(entityID, (URL)props.get(entityID));
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
 		}
-
-		return entityID2FileMap;
+		return repositoryID2URLMap;
 	}
 }
