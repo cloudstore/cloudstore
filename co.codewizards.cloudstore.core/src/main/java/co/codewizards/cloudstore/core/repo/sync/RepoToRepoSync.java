@@ -41,8 +41,8 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
  * Logic for synchronising a local with a remote repository.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class RepoSync {
-	private static final Logger logger = LoggerFactory.getLogger(RepoSync.class);
+public class RepoToRepoSync {
+	private static final Logger logger = LoggerFactory.getLogger(RepoToRepoSync.class);
 
 	private final URL remoteRoot;
 	private final LocalRepoManager localRepoManager;
@@ -51,7 +51,7 @@ public class RepoSync {
 	private final EntityID localRepositoryID;
 	private EntityID remoteRepositoryID;
 
-	public RepoSync(File localRoot, URL remoteRoot) {
+	public RepoToRepoSync(File localRoot, URL remoteRoot) {
 		this.remoteRoot = assertNotNull("remoteRoot", remoteRoot);
 		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(assertNotNull("localRoot", localRoot));
 		localRepositoryID = localRepoManager.getLocalRepositoryID();

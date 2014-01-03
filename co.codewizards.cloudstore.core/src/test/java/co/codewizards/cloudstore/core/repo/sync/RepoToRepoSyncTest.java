@@ -14,8 +14,8 @@ import co.codewizards.cloudstore.core.AbstractTest;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 
-public class RepoSyncTest extends AbstractTest {
-	private static Logger logger = LoggerFactory.getLogger(RepoSyncTest.class);
+public class RepoToRepoSyncTest extends AbstractTest {
+	private static Logger logger = LoggerFactory.getLogger(RepoToRepoSyncTest.class);
 
 	private File localRoot;
 	private File remoteRoot;
@@ -67,8 +67,9 @@ public class RepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoSync repoSync = new RepoSync(localRoot, remoteRootURL);
-		repoSync.sync(new LoggerProgressMonitor(logger));
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -81,6 +82,9 @@ public class RepoSyncTest extends AbstractTest {
 	@Test
 	public void syncRemoteRootToLocalRootWithAddedFilesAndDirectories() throws Exception {
 		syncRemoteRootToLocalRootInitially();
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
 
 		File child_2 = new File(remoteRoot, "2");
 		assertThat(child_2).isDirectory();
@@ -97,15 +101,13 @@ public class RepoSyncTest extends AbstractTest {
 
 		createFileWithRandomContent(child_3, "e");
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
-		assertThat(localRepoManagerRemote).isNotNull();
-
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
-		repoSync.sync(new LoggerProgressMonitor(logger));
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -117,6 +119,9 @@ public class RepoSyncTest extends AbstractTest {
 	@Test
 	public void syncRemoteRootToLocalRootWithModifiedFile() throws Exception {
 		syncRemoteRootToLocalRootInitially();
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
 
 		File child_2 = new File(remoteRoot, "2");
 		assertThat(child_2).isDirectory();
@@ -139,15 +144,13 @@ public class RepoSyncTest extends AbstractTest {
 			raf.close();
 		}
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
-		assertThat(localRepoManagerRemote).isNotNull();
-
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
-		repoSync.sync(new LoggerProgressMonitor(logger));
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -160,6 +163,9 @@ public class RepoSyncTest extends AbstractTest {
 	public void syncRemoteRootToLocalRootWithDeletedFile() throws Exception {
 		syncRemoteRootToLocalRootInitially();
 
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
 		File child_2 = new File(remoteRoot, "2");
 		assertThat(child_2).isDirectory();
 
@@ -171,15 +177,13 @@ public class RepoSyncTest extends AbstractTest {
 
 		deleteFile(child_2_1_a);
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
-		assertThat(localRepoManagerRemote).isNotNull();
-
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
-		repoSync.sync(new LoggerProgressMonitor(logger));
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
@@ -191,6 +195,9 @@ public class RepoSyncTest extends AbstractTest {
 	@Test
 	public void syncRemoteRootToLocalRootWithDeletedDir() throws Exception {
 		syncRemoteRootToLocalRootInitially();
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
 
 		File child_2 = new File(remoteRoot, "2");
 		assertThat(child_2).isDirectory();
@@ -208,15 +215,14 @@ public class RepoSyncTest extends AbstractTest {
 
 		deleteFile(child_2);
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
-		assertThat(localRepoManagerRemote).isNotNull();
 
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
-		repoSync.sync(new LoggerProgressMonitor(logger));
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 

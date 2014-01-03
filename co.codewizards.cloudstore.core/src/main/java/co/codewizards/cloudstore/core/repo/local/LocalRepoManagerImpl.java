@@ -18,6 +18,9 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
@@ -46,6 +49,7 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 class LocalRepoManagerImpl implements LocalRepoManager {
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerImpl.class);
 
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
@@ -250,11 +254,14 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void close() {
 		int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
 		if (openReferenceCounterValue > 0) {
+			logger.debug("[{}]close: leaving with openReferenceCounterValue={}", repositoryID, openReferenceCounterValue);
 			return;
 		}
 		if (openReferenceCounterValue < 0) {
 			throw new IllegalStateException("openReferenceCounterValue < 0");
 		}
+
+		logger.info("[{}]close: Shutting down real LocalRepoManager.", repositoryID);
 
 		// TODO defer this (don't immediately close)
 		// TODO the timeout should be configurable

@@ -153,6 +153,7 @@ public abstract class AbstractTest {
 			}
 		} finally {
 			transaction.rollbackIfActive();
+			localRepoManager.close();
 		}
 	}
 
