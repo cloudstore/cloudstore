@@ -250,7 +250,13 @@ public class LocalRepoManagerTest extends AbstractTest {
 			transaction.rollbackIfActive();
 		}
 
+		long child_1LastModifiedBeforeModification = child_1.lastModified();
+
 		deleteFile(child_1_b);
+
+		// In GNU/Linux, the parent-directory's last-modified timestamp is changed, if a child is added or removed.
+		// To make sure, this has no influence on our test, we reset this timestamp after our change.
+		child_1.setLastModified(child_1LastModifiedBeforeModification);
 
 		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
@@ -303,7 +309,13 @@ public class LocalRepoManagerTest extends AbstractTest {
 			transaction.rollbackIfActive();
 		}
 
+		long child_1LastModifiedBeforeModification = child_1.lastModified();
+
 		createFileWithRandomContent(child_1, "d");
+
+		// In GNU/Linux, the parent-directory's last-modified timestamp is changed, if a child is added or removed.
+		// To make sure, this has no influence on our test, we reset this timestamp after our change.
+		child_1.setLastModified(child_1LastModifiedBeforeModification);
 
 		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 

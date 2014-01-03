@@ -197,7 +197,14 @@ public class FileTransportTest extends AbstractTest {
 		File child_2 = new File(remoteRoot, "2");
 		File child_2_1 = new File(child_2, "1");
 		File child_2_1_b = new File(child_2_1, "b");
+
+		long child_2_1LastModifiedBeforeModification = child_2_1.lastModified();
+
 		deleteFile(child_2_1_b);
+
+		// In GNU/Linux, the parent-directory's last-modified timestamp is changed, if a child is added or removed.
+		// To make sure, this has no influence on our test, we reset this timestamp after our change.
+		child_2_1.setLastModified(child_2_1LastModifiedBeforeModification);
 
 		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 

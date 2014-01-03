@@ -97,17 +97,29 @@ public class LocalRepoSync {
 	}
 
 	private boolean isModified(RepoFile repoFile, File file) {
-		if (repoFile.getLastModified().getTime() != file.lastModified())
+		if (repoFile.getLastModified().getTime() != file.lastModified()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("isModified: repoFile.lastModified != file.lastModified: repoFile.lastModified={} file.lastModified={} file={}",
+						repoFile.getLastModified(), new Date(file.lastModified()), file);
+			}
 			return true;
+		}
 
 		if (file.isFile()) {
-			if (!(repoFile instanceof RepoFile))
-				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
+			if (!(repoFile instanceof NormalFile))
+				throw new IllegalArgumentException("repoFile is not an instance of NormalFile! file=" + file);
 
 			NormalFile normalFile = (NormalFile) repoFile;
-			return normalFile.getLength() != file.length();
-		} else
-			return false;
+			if (normalFile.getLength() != file.length()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("isModified: normalFile.length != file.length: repoFile.length={} file.length={} file={}",
+							normalFile.getLength(), file.length(), file);
+				}
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private RepoFile createRepoFile(RepoFile parentRepoFile, File file) {
@@ -137,6 +149,7 @@ public class LocalRepoSync {
 	}
 
 	public void updateRepoFile(RepoFile repoFile, File file) {
+		logger.debug("updateRepoFile: entityID={} idHigh={} idLow={} file={}", repoFile.getEntityID(), repoFile.getIdHigh(), repoFile.getIdLow(), file);
 		if (file.isFile()) {
 			if (!(repoFile instanceof NormalFile))
 				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");

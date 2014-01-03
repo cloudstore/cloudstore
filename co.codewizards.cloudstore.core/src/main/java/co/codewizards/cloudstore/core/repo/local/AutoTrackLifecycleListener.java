@@ -10,6 +10,9 @@ import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.StoreLifecycleListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.persistence.AutoTrackChanged;
 import co.codewizards.cloudstore.core.persistence.AutoTrackLocalRevision;
 
@@ -23,6 +26,7 @@ import co.codewizards.cloudstore.core.persistence.AutoTrackLocalRevision;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener, DeleteLifecycleListener {
+	private static final Logger logger = LoggerFactory.getLogger(AutoTrackLifecycleListener.class);
 
 	private final LocalRepoTransaction transaction;
 
@@ -79,10 +83,13 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		long localRevision = transaction.getLocalRevision();
 
 		if (pc instanceof AutoTrackChanged) {
+			Date changed = new Date();
+			logger.debug("onWrite: setChanged({}) for {}", changed, pc);
 			AutoTrackChanged entity = (AutoTrackChanged) pc;
-			entity.setChanged(new Date());
+			entity.setChanged(changed);
 		}
 		if (pc instanceof AutoTrackLocalRevision) {
+			logger.debug("onWrite: setLocalRevision({}) for {}", localRevision, pc);
 			AutoTrackLocalRevision entity = (AutoTrackLocalRevision) pc;
 			entity.setLocalRevision(localRevision);
 		}
