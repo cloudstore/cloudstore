@@ -174,12 +174,14 @@ public class RepoToRepoSync {
 				return;
 			}
 			assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
+			monitor.worked(10);
 
 			FileChunkSetResponse toFileChunkSetResponse = toRepoTransport.getFileChunkSet(createFileChunkSetRequest(repoFileDTOTreeNode));
 			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
 				logger.info("File is already equal on destination side: {}", repoFileDTOTreeNode.getPath());
 				return;
 			}
+			monitor.worked(10);
 
 			List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();
 			Iterator<FileChunk> toFileChunkIterator = toFileChunkSetResponse.getFileChunks().iterator();
@@ -197,7 +199,10 @@ public class RepoToRepoSync {
 			}
 
 			toRepoTransport.createFile(repoFileDTOTreeNode.getPath());
+			monitor.worked(1);
 
+			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 78);
+			subMonitor.beginTask("Synchronising remotely...", fromFileChunksDirty.size());
 			for (FileChunk fileChunk : fromFileChunksDirty) {
 				byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileChunk.getLength());
 
@@ -210,9 +215,12 @@ public class RepoToRepoSync {
 				}
 
 				toRepoTransport.putFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileData);
+				subMonitor.worked(1);
 			}
+			subMonitor.done();
 
 			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified());
+			monitor.worked(1);
 		} finally {
 			monitor.done();
 		}
