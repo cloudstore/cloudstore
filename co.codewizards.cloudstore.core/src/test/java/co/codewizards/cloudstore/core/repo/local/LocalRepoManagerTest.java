@@ -3,18 +3,22 @@ package co.codewizards.cloudstore.core.repo.local;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.AbstractTest;
+import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.Modification;
+import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 
 public class LocalRepoManagerTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerTest.class);
@@ -215,11 +219,68 @@ public class LocalRepoManagerTest extends AbstractTest {
 		}
 
 		assertThat(localRepositoryRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isGreaterThan(child_1_localRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isEqualTo(localRepositoryRevisionAfterSync);
+		assertThat(child_1_localRevisionAfterSync).isEqualTo(child_1_localRevisionBeforeSync);
 
 		localRepoManager.close();
+	}
+
+	@Test
+	public void checkDeleteModificationAfterFileDeletion() throws Exception {
+		syncExistingDirectoryGraph();
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRepoManager).isNotNull();
+
+		// We must connect another repository, because there is otherwise no DeleteModification created.
+		// Only if at least one DeleteModification is created, we'll have a change.
+		File localRoot2 = newTestRepositoryLocalRoot();
+		localRoot2.mkdir();
+		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
+		localRepoManager.putRemoteRepository(localRepoManager2.getLocalRepositoryID(), null);
+
+		File child_1 = new File(localRoot, "1");
+		assertThat(child_1).isDirectory();
+		File child_1_b = new File(child_1, "b");
+		assertThat(child_1_b).isFile();
+
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		try {
+			Collection<Modification> modifications = transaction.getDAO(ModificationDAO.class).getObjects();
+			assertThat(getDeleteModifications(modifications)).isEmpty();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+
+		deleteFile(child_1_b);
+
+		localRepoManager.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(localRoot);
+
+		transaction = localRepoManager.beginTransaction();
+		try {
+			Collection<Modification> modifications = transaction.getDAO(ModificationDAO.class).getObjects();
+			List<DeleteModification> deleteModifications = getDeleteModifications(modifications);
+			assertThat(deleteModifications).hasSize(1);
+			DeleteModification deleteModification = deleteModifications.get(0);
+			assertThat(deleteModification).isNotNull();
+			assertThat(deleteModification.getPath()).isEqualTo("/1/b");
+			assertThat(deleteModification.getRemoteRepository()).isNotNull();
+			assertThat(deleteModification.getRemoteRepository().getEntityID()).isEqualTo(localRepoManager2.getLocalRepositoryID());
+		} finally {
+			transaction.rollbackIfActive();
+		}
+
+		localRepoManager2.close();
+		localRepoManager.close();
+	}
+
+	private List<DeleteModification> getDeleteModifications(Collection<Modification> modifications) {
+		List<DeleteModification> result = new ArrayList<DeleteModification>();
+		for (Modification modification : modifications) {
+			if (modification instanceof DeleteModification)
+				result.add((DeleteModification) modification);
+		}
+		return result;
 	}
 
 	@Test
@@ -260,9 +321,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 		}
 
 		assertThat(localRepositoryRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isGreaterThan(child_1_localRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isGreaterThan(localRepositoryRevisionBeforeSync);
-		assertThat(child_1_localRevisionAfterSync).isEqualTo(localRepositoryRevisionAfterSync);
+		assertThat(child_1_localRevisionAfterSync).isEqualTo(child_1_localRevisionBeforeSync);
 
 		localRepoManager.close();
 	}

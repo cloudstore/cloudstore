@@ -5,6 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.util.Date;
 
 import javax.jdo.listener.AttachLifecycleListener;
+import javax.jdo.listener.DeleteLifecycleListener;
 import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.StoreLifecycleListener;
@@ -21,10 +22,9 @@ import co.codewizards.cloudstore.core.persistence.AutoTrackLocalRevision;
  * interfaces are implemented by the persistence-capable object.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener {
+public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener, DeleteLifecycleListener {
 
 	private final LocalRepoTransaction transaction;
-//	private boolean enabled = true;
 
 	public AutoTrackLifecycleListener(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -62,15 +62,21 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		onWrite(event.getPersistentInstance());
 	}
 
+	@Override
+	public void preDelete(InstanceLifecycleEvent event) {
+		// We want to ensure that the revision is incremented, even if we do not have any remote repository connected
+		// (and thus no DeleteModification being created).
+		transaction.getLocalRevision();
+	}
+
+	@Override
+	public void postDelete(InstanceLifecycleEvent event) { }
+
 	private void onWrite(Object pc) {
 		// We always obtain the localRevision - no matter, if the current write operation is on
 		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
 		// localRevision in the database.
 		long localRevision = transaction.getLocalRevision();
-
-//		if (!isEnabled()) {
-//			return;
-//		}
 
 		if (pc instanceof AutoTrackChanged) {
 			AutoTrackChanged entity = (AutoTrackChanged) pc;
@@ -81,11 +87,4 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 			entity.setLocalRevision(localRevision);
 		}
 	}
-
-//	public void setEnabled(boolean enabled) {
-//		this.enabled = enabled;
-//	}
-//	public boolean isEnabled() {
-//		return enabled;
-//	}
 }

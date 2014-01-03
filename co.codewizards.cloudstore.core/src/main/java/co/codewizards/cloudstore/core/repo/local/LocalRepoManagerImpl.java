@@ -18,12 +18,18 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
+import co.codewizards.cloudstore.core.persistence.Entity;
+import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
 import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.Modification;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.RepoFile;
+import co.codewizards.cloudstore.core.persistence.Repository;
 import co.codewizards.cloudstore.core.persistence.Symlink;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -148,10 +154,16 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceCapableClasses(PersistenceManager pm) {
+		pm.getExtent(DeleteModification.class);
 		pm.getExtent(Directory.class);
+		pm.getExtent(Entity.class);
+		pm.getExtent(LastSyncToRemoteRepo.class);
 		pm.getExtent(LocalRepository.class);
+		pm.getExtent(Modification.class);
 		pm.getExtent(NormalFile.class);
 		pm.getExtent(RemoteRepository.class);
+		pm.getExtent(Repository.class);
+		pm.getExtent(RepoFile.class);
 		pm.getExtent(Symlink.class);
 	}
 
