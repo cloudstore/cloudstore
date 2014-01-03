@@ -2,27 +2,25 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.persistence.LocalRepository;
-import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 
 public class LocalRepoRegistry 
 {
-	public static final String META_CONFIG_DIR = ".cloudstore";
-	public static final String LOCAL_REPO_REGISTRY_FILE = "repositories";
+	public static final String REPOSITORY_REGISTRY_DIR = ".cloudstore";
+	public static final String LOCAL_REPO_REGISTRY_FILE = "repositoryList.properties";
 
-	public static final String DEFAULT_REPOSITORY_URL = IOUtil.getUserHome().getAbsolutePath();
-
-	private static final File CONFIG_DIR = new File(IOUtil.getUserHome(), META_CONFIG_DIR);
-	private static final File CONFIG_FILE = new File(CONFIG_DIR, LOCAL_REPO_REGISTRY_FILE);
 
 	private static class LocalRepoRegistryHolder {
 		public static final LocalRepoRegistry INSTANCE = new LocalRepoRegistry();
@@ -34,43 +32,68 @@ public class LocalRepoRegistry
 
 	private LocalRepoRegistry() {
 		initConfigDir();
-		createRepositoryID2URLMapPropertiesFile();
 	}
 
-	private void createRepositoryID2URLMapPropertiesFile() {
-		LocalRepositoryDAO localRepoDAO = new LocalRepositoryDAO();
-		LocalRepository localRepo = localRepoDAO.getLocalRepositoryOrFail();
-		Properties props = new Properties();
-		props.put(localRepo.getEntityID(), DEFAULT_REPOSITORY_URL);
+	public File getRegistryDir() {
+		return new File(IOUtil.getUserHome(), REPOSITORY_REGISTRY_DIR);
+	}
+	
+	private File getRegistryFile() {
+		return new File(getRegistryDir(), LOCAL_REPO_REGISTRY_FILE);
+	}
+
+	public Map<EntityID, File> repositoryID2FileMap;
+	
+	public Map<EntityID, File> getRepositoryID2FileMap() {
+		if (repositoryID2FileMap == null) {
+			repositoryID2FileMap = new HashMap<EntityID, File>();
+		}
 
 		try {
-			PropertiesUtil.store(CONFIG_FILE, props, "Repository Location");
+			Properties props = PropertiesUtil.load(new File(getRegistryDir(), LOCAL_REPO_REGISTRY_FILE));
+			Set<Entry<Object, Object>> entrySet = props.entrySet();
+			for (Entry<Object, Object> entry : entrySet) {
+				EntityID entityID = new EntityID(entry.getKey().toString());
+				URI	uri = new URI(entry.getValue().toString());
+				File file = new File(uri);
+				repositoryID2FileMap.put(entityID, file);
+			}
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+		return repositoryID2FileMap;
+	}
+	
+	public void registerRepository(EntityID repositoryID, File file) {
+		File registryFile = getRegistryFile();
+		if (!registryFile.exists()) {
+			try {
+				Files.createFile(Paths.get(registryFile.toURI()));
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		
+		Properties props;
+		try {
+			props = PropertiesUtil.load(registryFile);
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+		
+		props.put(repositoryID.toString(), file.toURI().toString());
+		
+		try {
+			PropertiesUtil.store(registryFile, props, "Repository List");
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 	}
 
 	private void initConfigDir() {
-		if (!CONFIG_DIR.exists()) {
-			try {
-				CONFIG_DIR.createNewFile();
-			} catch (IOException e) {
-				throw new IllegalStateException(e);
-			}
+		File configDir = new File(IOUtil.getUserHome(), REPOSITORY_REGISTRY_DIR);
+		if (!configDir.exists()) {
+			configDir.mkdir();
 		}
-	}
-
-	private Map<EntityID, URL> repositoryID2URLMap;
-	public Map<EntityID, URL> getEntityID2URLMap(EntityID entityID) {
-		if (repositoryID2URLMap == null) {
-			repositoryID2URLMap = new HashMap<EntityID, URL>();
-			try {
-				Properties props = PropertiesUtil.load(CONFIG_FILE);
-				repositoryID2URLMap.put(entityID, (URL)props.get(entityID));
-			} catch (IOException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		return repositoryID2URLMap;
 	}
 }
