@@ -30,6 +30,6 @@ public class FileAlreadyRepositoryException extends LocalRepoManagerException {
 	}
 
 	private static String createMessage(File file) {
-		return String.format("File is an existing directory, but it is not a repository: %s", file == null ? null : file.getAbsolutePath());
+		return String.format("File is already (in) a repository (cannot be converted into one): %s", file == null ? null : file.getAbsolutePath());
 	}
 }

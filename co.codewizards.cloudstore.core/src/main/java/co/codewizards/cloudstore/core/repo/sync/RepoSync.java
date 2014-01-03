@@ -203,6 +203,9 @@ public class RepoSync {
 
 				if (fileData == null || fileData.length != fileChunk.getLength()) {
 					logger.warn("Source file was modified or deleted during sync: {}", repoFileDTOTreeNode.getPath());
+					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
+					// direction. The file should be synced again in the correct direction in the next run (after the source
+					// repo did a local sync, too).
 					return;
 				}
 
@@ -210,9 +213,6 @@ public class RepoSync {
 			}
 
 			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified());
-
-			// TODO sync file in a chunked, efficient way!
-			// TODO sync last-modified-timestamp, too!!!
 		} finally {
 			monitor.done();
 		}

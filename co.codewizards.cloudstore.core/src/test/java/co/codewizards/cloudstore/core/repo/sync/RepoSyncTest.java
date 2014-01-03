@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.net.URL;
 
 import org.junit.Test;
@@ -77,4 +78,150 @@ public class RepoSyncTest extends AbstractTest {
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
 
+	@Test
+	public void syncRemoteRootToLocalRootWithAddedFilesAndDirectories() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File child_2 = new File(remoteRoot, "2");
+		assertThat(child_2).isDirectory();
+
+		File child_2_1 = new File(child_2, "1");
+		assertThat(child_2_1).isDirectory();
+
+		File child_2_1_5 = createDirectory(child_2_1, "5");
+		createFileWithRandomContent(child_2_1_5, "aaa");
+		createFileWithRandomContent(child_2_1_5, "bbb");
+
+		File child_3 = new File(remoteRoot, "3");
+		assertThat(child_3).isDirectory();
+
+		createFileWithRandomContent(child_3, "e");
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		localRepoManagerRemote.close();
+
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithModifiedFile() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File child_2 = new File(remoteRoot, "2");
+		assertThat(child_2).isDirectory();
+
+		File child_2_1 = new File(child_2, "1");
+		assertThat(child_2_1).isDirectory();
+
+		File child_2_1_a = new File(child_2_1, "a");
+		assertThat(child_2_1_a).isFile();
+
+		RandomAccessFile raf = new RandomAccessFile(child_2_1_a, "rw");
+		try {
+			raf.seek(random.nextInt((int)child_2_1_a.length()));
+
+			byte[] buf = new byte[1 + random.nextInt(10)];
+			random.nextBytes(buf);
+
+			raf.write(buf);
+		} finally {
+			raf.close();
+		}
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		localRepoManagerRemote.close();
+
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithDeletedFile() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File child_2 = new File(remoteRoot, "2");
+		assertThat(child_2).isDirectory();
+
+		File child_2_1 = new File(child_2, "1");
+		assertThat(child_2_1).isDirectory();
+
+		File child_2_1_a = new File(child_2_1, "a");
+		assertThat(child_2_1_a).isFile();
+
+		deleteFile(child_2_1_a);
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		localRepoManagerRemote.close();
+
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithDeletedDir() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File child_2 = new File(remoteRoot, "2");
+		assertThat(child_2).isDirectory();
+
+		File child_2_1 = new File(child_2, "1");
+		assertThat(child_2_1).isDirectory();
+
+		for (File child : child_2_1.listFiles()) {
+			deleteFile(child);
+		}
+
+		for (File child : child_2.listFiles()) {
+			deleteFile(child);
+		}
+
+		deleteFile(child_2);
+
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		RepoSync repoSync = new RepoSync(localRoot, remoteRoot.toURI().toURL());
+		repoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		localRepoManagerRemote.close();
+
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+	}
 }

@@ -443,6 +443,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				normalFile.setInProgress(true);
 				repoFile = normalFile = repoFileDAO.makePersistent(normalFile);
 			}
+			else
+				((NormalFile) repoFile).setInProgress(true);
 
 			transaction.commit();
 		} finally {
