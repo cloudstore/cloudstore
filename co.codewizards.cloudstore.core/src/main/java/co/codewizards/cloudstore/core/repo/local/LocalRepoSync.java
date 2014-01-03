@@ -27,7 +27,7 @@ import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
-class LocalRepoSync {
+public class LocalRepoSync {
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoSync.class);
 
@@ -97,21 +97,17 @@ class LocalRepoSync {
 	}
 
 	private boolean isModified(RepoFile repoFile, File file) {
+		if (repoFile.getLastModified().getTime() != file.lastModified())
+			return true;
+
 		if (file.isFile()) {
-			if (!(repoFile instanceof NormalFile))
+			if (!(repoFile instanceof RepoFile))
 				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
 
 			NormalFile normalFile = (NormalFile) repoFile;
-
-			long difference = Math.abs(normalFile.getLastModified().getTime() - file.lastModified());
-			// TODO make time difference threshold configurable
-			if (difference > 5000)
-				return true;
-
 			return normalFile.getLength() != file.length();
-		} else {
+		} else
 			return false;
-		}
 	}
 
 	private RepoFile createRepoFile(RepoFile parentRepoFile, File file) {
@@ -126,7 +122,6 @@ class LocalRepoSync {
 			repoFile = new Directory();
 		} else if (file.isFile()) {
 			NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
-			normalFile.setLastModified(new Date(file.lastModified()));
 			normalFile.setLength(file.length());
 			normalFile.setSha1(sha(file));
 		} else {
@@ -136,24 +131,25 @@ class LocalRepoSync {
 
 		repoFile.setParent(parentRepoFile);
 		repoFile.setName(file.getName());
+		repoFile.setLastModified(new Date(file.lastModified()));
 
 		return repoFileDAO.makePersistent(repoFile);
 	}
 
-	private void updateRepoFile(RepoFile repoFile, File file) {
+	public void updateRepoFile(RepoFile repoFile, File file) {
 		if (file.isFile()) {
 			if (!(repoFile instanceof NormalFile))
 				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
 
 			NormalFile normalFile = (NormalFile) repoFile;
-			normalFile.setLastModified(new Date(file.lastModified()));
 			normalFile.setLength(file.length());
 			normalFile.setSha1(sha(file));
 		}
+		repoFile.setLastModified(new Date(file.lastModified()));
 	}
 
-	private void deleteRepoFile(RepoFile repoFile) {
-		RepoFile parentRepoFile = repoFile.getParent();
+	public void deleteRepoFile(RepoFile repoFile) {
+		RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");
 
@@ -163,6 +159,7 @@ class LocalRepoSync {
 		pm.flush();
 
 		createDeleteModifications(repoFile);
+
 		deleteRepoFileWithAllChildrenRecursively(repoFile);
 
 		// DN batches UPDATE and DELETE statements. This sometimes causes foreign key violations and other errors in
@@ -189,6 +186,7 @@ class LocalRepoSync {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}
 		repoFileDAO.deletePersistent(repoFile);
+		repoFileDAO.getPersistenceManager().flush(); // We run *sometimes* into foreign key violations if we don't delete immediately :-(
 	}
 
 	private String sha(File file) {
@@ -200,7 +198,7 @@ class LocalRepoSync {
 			FileInputStream in = new FileInputStream(file);
 			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in);
 			in.close();
-			return HashUtil.encodeHexStr(hash, 0, hash.length);
+			return HashUtil.encodeHexStr(hash);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {

@@ -18,6 +18,11 @@ public final class HashUtil {
 
 	private HashUtil() { }
 
+	public static String encodeHexStr(byte[] buf)
+	{
+		return encodeHexStr(buf, 0, buf.length);
+	}
+
 	/**
 	 * Encode a byte array into a human readable hex string. For each byte,
 	 * two hex digits are produced. They are concatenated without any separators.

@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
 import java.io.File;
-import java.util.Date;
 
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
@@ -26,26 +25,13 @@ import javax.jdo.annotations.Query;
 })
 public class NormalFile extends RepoFile {
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
-	private Date lastModified;
-
 	private long length;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String sha1;
 
-	/**
-	 * Gets the timestamp of the file's last modification.
-	 * <p>
-	 * It reflects the {@link File#lastModified() File.lastModified} property.
-	 * @return the timestamp of the file's last modification.
-	 */
-	public Date getLastModified() {
-		return lastModified;
-	}
-	public void setLastModified(Date lastModified) {
-		this.lastModified = lastModified;
-	}
+	private boolean inProgress;
+
 	/**
 	 * Gets the file size in bytes.
 	 * <p>
@@ -67,5 +53,21 @@ public class NormalFile extends RepoFile {
 	}
 	public void setSha1(String sha) {
 		this.sha1 = sha;
+	}
+
+	/**
+	 * Is this file in progress of being synced?
+	 * <p>
+	 * If yes, it is ignored in change-sets in order to prevent inconsistent data to propagate further.
+	 * <p>
+	 * TODO We should later implement a mechanism that parks all modifications locally (not in the DB, but in the
+	 * meta-directorY) before applying them to the file in one transaction.
+	 * @return <code>true</code>, if it is currently in progress of being synced; <code>false</code> otherwise.
+	 */
+	public boolean isInProgress() {
+		return inProgress;
+	}
+	public void setInProgress(boolean inProgress) {
+		this.inProgress = inProgress;
 	}
 }

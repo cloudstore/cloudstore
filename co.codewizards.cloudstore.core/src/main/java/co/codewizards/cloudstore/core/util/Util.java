@@ -42,7 +42,11 @@ public final class Util {
 		return object;
 	}
 
-	public static boolean equals(Object one, Object two) {
+	public static boolean equal(Object one, Object two) {
 		return one == null ? two == null : one.equals(two);
+	}
+
+	public static boolean equal(long one, long two) {
+		return one == two;
 	}
 }

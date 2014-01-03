@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.AbstractTest;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.repo.sync.RepoSync;
 
 public class RepoSyncTest extends AbstractTest {
 	private static Logger logger = LoggerFactory.getLogger(RepoSyncTest.class);
@@ -40,6 +39,7 @@ public class RepoSyncTest extends AbstractTest {
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getLocalRepositoryID(), remoteRootURL);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getLocalRepositoryID(), null);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 

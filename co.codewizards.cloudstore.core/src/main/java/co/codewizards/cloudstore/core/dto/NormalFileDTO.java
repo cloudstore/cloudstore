@@ -1,31 +1,16 @@
 package co.codewizards.cloudstore.core.dto;
 
 import java.io.File;
-import java.util.Date;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class NormalFileDTO extends RepoFileDTO {
 
-	private Date lastModified;
-
 	private long length;
 
 	private String sha1;
 
-	/**
-	 * Gets the timestamp of the file's last modification.
-	 * <p>
-	 * It reflects the {@link File#lastModified() File.lastModified} property.
-	 * @return the timestamp of the file's last modification.
-	 */
-	public Date getLastModified() {
-		return lastModified;
-	}
-	public void setLastModified(Date lastModified) {
-		this.lastModified = lastModified;
-	}
 	/**
 	 * Gets the file size in bytes.
 	 * <p>

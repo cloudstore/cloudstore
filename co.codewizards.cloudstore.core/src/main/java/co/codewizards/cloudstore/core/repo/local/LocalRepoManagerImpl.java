@@ -6,6 +6,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
-		
+
 		LocalRepoRegistry.getInstance().registerRepository(repositoryID, localRoot);
 	}
 
@@ -182,6 +183,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		LocalRepository localRepository = new LocalRepository();
 		Directory root = new Directory();
 		root.setName("");
+		root.setLastModified(new Date(localRoot.lastModified()));
 		localRepository.setRoot(root);
 		localRepository = pm.makePersistent(localRepository);
 		repositoryID = localRepository.getEntityID();

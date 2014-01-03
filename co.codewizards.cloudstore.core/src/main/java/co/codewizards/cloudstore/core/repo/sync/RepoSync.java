@@ -5,12 +5,22 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
 import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.NormalFileDTO;
+import co.codewizards.cloudstore.core.dto.FileChunk;
+import co.codewizards.cloudstore.core.dto.FileChunkSetRequest;
+import co.codewizards.cloudstore.core.dto.FileChunkSetResponse;
+import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
@@ -32,6 +42,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class RepoSync {
+	private static final Logger logger = LoggerFactory.getLogger(RepoSync.class);
 
 	private final URL remoteRoot;
 	private final LocalRepoManager localRepoManager;
@@ -107,15 +118,19 @@ public class RepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetResponse changeSetResponse, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", changeSetResponse.getRepoFileDTOs().size());
+		monitor.beginTask("Synchronising remotely...", changeSetResponse.getModificationDTOs().size() + changeSetResponse.getRepoFileDTOs().size());
 		try {
+			for (ModificationDTO modificationDTO : changeSetResponse.getModificationDTOs()) {
+				syncModification(fromRepoTransport, toRepoTransport, modificationDTO, new SubProgressMonitor(monitor, 1));
+			}
+
 			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetResponse.getRepoFileDTOs());
 			for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
 				RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
 				if (repoFileDTO instanceof DirectoryDTO)
-					sync(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-				else if (repoFileDTO instanceof NormalFileDTO)
-					sync(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (NormalFileDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+					syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+				else if (repoFileDTO instanceof RepoFileDTO)
+					syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
 				else
 					throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
 			}
@@ -124,26 +139,97 @@ public class RepoSync {
 		}
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
-		// TODO sync last-modified-timestamp, too!!!
+	private void syncModification(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ModificationDTO modificationDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
-			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath());
+			if (modificationDTO instanceof DeleteModificationDTO) {
+				DeleteModificationDTO deleteModificationDTO = (DeleteModificationDTO) modificationDTO;
+				toRepoTransport.delete(deleteModificationDTO.getPath());
+			}
+			else
+				throw new IllegalStateException("Unknown modificationDTO type: " + modificationDTO);
 		} finally {
 			monitor.done();
 		}
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, NormalFileDTO normalFileDTO, ProgressMonitor monitor) {
+	private void syncDirectory(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
-			// TODO sync file in a chunked, efficient way!
-			// TODO sync last-modified-timestamp, too!!!
-			byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath());
-			toRepoTransport.putFileData(repoFileDTOTreeNode.getPath(), fileData);
+			// TODO maybe only one request?!
+			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath());
+			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), directoryDTO.getLastModified());
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising remotely...", 100);
+		try {
+			// TODO the check-sums should be obtained simultaneously with 2 threads.
+			FileChunkSetResponse fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(createFileChunkSetRequest(repoFileDTOTreeNode));
+			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
+				logger.warn("File was deleted during sync on source side: {}", repoFileDTOTreeNode.getPath());
+				return;
+			}
+			assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
+
+			FileChunkSetResponse toFileChunkSetResponse = toRepoTransport.getFileChunkSet(createFileChunkSetRequest(repoFileDTOTreeNode));
+			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+				logger.info("File is already equal on destination side: {}", repoFileDTOTreeNode.getPath());
+				return;
+			}
+
+			List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();
+			Iterator<FileChunk> toFileChunkIterator = toFileChunkSetResponse.getFileChunks().iterator();
+			int fileChunkIndex = -1;
+			for (FileChunk fromFileChunk : fromFileChunkSetResponse.getFileChunks()) {
+				FileChunk toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
+				++fileChunkIndex;
+				if (toFileChunk != null
+						&& equal(fromFileChunk.getLength(), toFileChunk.getLength())
+						&& equal(fromFileChunk.getSha1(), toFileChunk.getSha1())) {
+					logger.debug("Skipping FileChunk {} (already equal on destination side). File: {}", fileChunkIndex, repoFileDTOTreeNode.getPath());
+					continue;
+				}
+				fromFileChunksDirty.add(fromFileChunk);
+			}
+
+			toRepoTransport.createFile(repoFileDTOTreeNode.getPath());
+
+			for (FileChunk fileChunk : fromFileChunksDirty) {
+				byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileChunk.getLength());
+
+				if (fileData == null || fileData.length != fileChunk.getLength()) {
+					logger.warn("Source file was modified or deleted during sync: {}", repoFileDTOTreeNode.getPath());
+					return;
+				}
+
+				toRepoTransport.putFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileData);
+			}
+
+			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified());
+
+			// TODO sync file in a chunked, efficient way!
+			// TODO sync last-modified-timestamp, too!!!
+		} finally {
+			monitor.done();
+		}
+	}
+
+	private boolean areFilesExistingAndEqual(FileChunkSetResponse fromFileChunkSetResponse, FileChunkSetResponse toFileChunkSetResponse) {
+		return (fromFileChunkSetResponse.isFileExists()
+				&& toFileChunkSetResponse.isFileExists()
+				&& equal(fromFileChunkSetResponse.getLength(), toFileChunkSetResponse.getLength())
+				&& equal(fromFileChunkSetResponse.getLastModified(), toFileChunkSetResponse.getLastModified())
+				&& equal(fromFileChunkSetResponse.getSha1(), toFileChunkSetResponse.getSha1()));
+	}
+
+	private FileChunkSetRequest createFileChunkSetRequest(RepoFileDTOTreeNode repoFileDTOTreeNode) {
+		FileChunkSetRequest request = new FileChunkSetRequest();
+		request.setPath(repoFileDTOTreeNode.getPath());
+		return request;
 	}
 
 	private ChangeSetRequest createChangeSetRequest(RepoTransport fromRepoTransport, RepoTransport toRepoTransport) {
@@ -154,6 +240,8 @@ public class RepoSync {
 
 			if (localRepoTransport == fromRepoTransport && remoteRepoTransport == toRepoTransport) {
 				// UPloading (changeSetRequest is sent to the *local* repo)
+				changeSetRequest.setClientRepositoryID(remoteRepositoryID);
+
 				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
 
@@ -164,6 +252,7 @@ public class RepoSync {
 
 			} else if (localRepoTransport == toRepoTransport && remoteRepoTransport == fromRepoTransport) {
 				// DOWNloading (changeSetRequest is sent to the *remote* repo)
+				changeSetRequest.setClientRepositoryID(localRepositoryID);
 				changeSetRequest.setServerRevision(remoteRepository.getRevision());
 			}
 			else

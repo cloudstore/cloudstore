@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -38,6 +39,9 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	private String name;
 
 	private long localRevision;
+
+	@Persistent(nullValue = NullValue.EXCEPTION)
+	private Date lastModified;
 
 	public RepoFile getParent() {
 		return parent;
@@ -118,5 +122,17 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 			result = new File(result, repoFile.getName());
 		}
 		return result;
+	}
+	/**
+	 * Gets the timestamp of the file's last modification.
+	 * <p>
+	 * It reflects the {@link File#lastModified() File.lastModified} property.
+	 * @return the timestamp of the file's last modification.
+	 */
+	public Date getLastModified() {
+		return lastModified;
+	}
+	public void setLastModified(Date lastModified) {
+		this.lastModified = lastModified;
 	}
 }

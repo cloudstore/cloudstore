@@ -59,7 +59,7 @@ public class RemoteRepository extends Repository {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return HashUtil.encodeHexStr(hash, 0, hash.length);
+		return HashUtil.encodeHexStr(hash);
 	}
 
 	public String getRemoteRootSha1() {
