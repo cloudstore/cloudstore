@@ -28,8 +28,8 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
-public class FileTransportTest extends AbstractTest {
-	private static final Logger logger = LoggerFactory.getLogger(FileTransportTest.class);
+public class FileRepoTransportTest extends AbstractTest {
+	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransportTest.class);
 
 	private File remoteRoot;
 	private EntityID remoteRepositoryID;

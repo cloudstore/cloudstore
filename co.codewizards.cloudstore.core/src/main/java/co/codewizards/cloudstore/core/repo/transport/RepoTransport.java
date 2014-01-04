@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Date;
 
@@ -30,19 +31,12 @@ public interface RepoTransport {
 	 * @param path the path of the directory. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
+	 * @param lastModified the {@link File#lastModified() File.lastModified} the newly created directory will be set to.
+	 * May be <code>null</code> (in which case the {@code lastModified} property is not touched). This applies only to the
+	 * actual directory and not to the parent-directories! The parent-directories' {@code lastModified} properties are never
+	 * touched - even if the parent-directories are newly created.
 	 */
-	void makeDirectory(String path);
-
-	/**
-	 * Creates the specified file in the file system (if necessary with parent-directories) and the database.
-	 * <p>
-	 * The file should not be synchronised to any other repository, yet! It should be ignored, until
-	 * {@link #setLastModified(String, Date)} was called for it.
-	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
-	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
-	 * It is always relative to the repository's root directory.
-	 */
-	void createFile(String path);
+	void makeDirectory(String path, Date lastModified);
 
 	/**
 	 * Deletes the file (or directory) specified by {@code path}.
@@ -58,8 +52,6 @@ public interface RepoTransport {
 
 	FileChunkSetResponse getFileChunkSet(FileChunkSetRequest fileChunkSetRequest);
 
-	void setLastModified(String path, Date lastModified);
-
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.
 	 * <p>
@@ -71,8 +63,36 @@ public interface RepoTransport {
 	byte[] getFileData(String path, long offset, int length);
 
 	/**
-	 * @param offset
+	 * Begins a file transfer to this {@code RepoTransport}.
+	 * <p>
+	 * Usually, this method creates the specified file in the file system (if necessary with parent-directories)
+	 * and in the database. But this operation may be deferred until {@link #endFile(String, Date, long)}.
+	 * <p>
+	 * If the file is immediately created, it should not be synchronised to any other repository, yet! It should
+	 * be ignored, until {@link #endFile(String, Date, long)} was called for it.
+	 * <p>
+	 * In normal operation, zero or more invocations of {@link #putFileData(String, long, byte[])} and
+	 * finally one invocation of {@link #endFile(String, Date, long)} follow this method. However, this is not
+	 * guaranteed and the file transfer may be interrupted. If it is resumed, later this method is called again,
+	 * without {@link #endFile(String, Date, long)} ever having been called inbetween.
+	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
+	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
+	 * It is always relative to the repository's root directory.
+	 * @see #putFileData(String, long, byte[])
+	 * @see #endFile(String, Date, long)
+	 */
+	void beginFile(String path);
+
+	/**
+	 * Write a block of binary data into the file.
+	 * <p>
+	 * This method may only be called after {@link #beginFile(String)} and before {@link #endFile(String, Date, long)}.
+	 * @param offset the 0-based position in the file at which the block should be written.
+	 * @see #beginFile(String)
+	 * @see #endFile(String, Date, long)
 	 */
 	void putFileData(String path, long offset, byte[] fileData);
+
+	void endFile(String path, Date lastModified, long length);
 
 }

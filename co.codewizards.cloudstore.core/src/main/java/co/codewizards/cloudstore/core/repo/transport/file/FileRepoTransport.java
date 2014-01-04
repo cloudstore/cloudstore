@@ -95,11 +95,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeDirectory(String path) {
+	public void makeDirectory(String path, Date lastModified) {
 		File file = getFile(assertNotNull("path", path));
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
-			mkDir(transaction, file);
+			mkDir(transaction, file, lastModified);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -189,47 +189,6 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			throw new RuntimeException(x);
 		}
 		return response;
-	}
-
-	@Override
-	public void setLastModified(String path, Date lastModified) {
-		File file = getFile(assertNotNull("path", path));
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
-		try {
-
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-			if (repoFile instanceof NormalFile) {
-				NormalFile normalFile = (NormalFile) repoFile;
-				if (!normalFile.isInProgress()
-						&& normalFile.getLength() == file.length()
-						&& normalFile.getLastModified().getTime() == file.lastModified()) {
-					file.setLastModified(lastModified.getTime());
-					normalFile.setLastModified(lastModified);
-				}
-				else {
-					// The file was modified; it is not in sync with the repo's DB. Hence we must resync it to make
-					// sure the SHA1 is correct. We cannot simply set the timestamp because this might cause the
-					// file to never be synced again (and the stale SHA1 to linger forever).
-					LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-					file.setLastModified(lastModified.getTime());
-					localRepoSync.updateRepoFile(normalFile, file);
-					normalFile.setInProgress(false);
-				}
-			}
-			else if (repoFile instanceof Directory) {
-				file.setLastModified(lastModified.getTime());
-				repoFile.setLastModified(lastModified);
-			}
-//			else if (repoFile instanceof Symlink) {
-//				// If a Symlink has a lastModified, we can set it. This is a separate timestamp from the real file's timestamp. But currently it does not have one anyway, yet.
-//			}
-			else
-				throw new IllegalStateException("Unknown repoFile type: " + repoFile);
-
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
 	}
 
 	protected LocalRepoManager getLocalRepoManager() {
@@ -326,7 +285,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repoFileDTO;
 	}
 
-	protected void mkDir(LocalRepoTransaction transaction, File file) {
+	private void mkDir(LocalRepoTransaction transaction, File file, Date lastModified) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("file", file);
+
 		File localRoot = getLocalRepoManager().getLocalRoot();
 		if (localRoot.equals(file)) {
 			return;
@@ -336,7 +298,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		RepoFile parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
 
 		if (!localRoot.equals(parentFile) && (!parentFile.isDirectory() || parentRepoFile == null))
-			mkDir(transaction, parentFile);
+			mkDir(transaction, parentFile, null);
 
 		if (parentRepoFile == null)
 			parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
@@ -358,9 +320,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
 		if (repoFile != null && !(repoFile instanceof Directory)) {
+			transaction.getPersistenceManager().flush();
 			transaction.getDAO(RepoFileDAO.class).deletePersistent(repoFile);
+			transaction.getPersistenceManager().flush();
 			repoFile = null;
 		}
+
+		if (lastModified != null)
+			file.setLastModified(lastModified.getTime());
 
 		if (repoFile == null) {
 			Directory directory;
@@ -408,7 +375,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void createFile(String path) {
+	public void beginFile(String path) {
 		File file = getFile(path);
 		File parentFile = file.getParentFile();
 		if (file.exists() && !file.isFile())
@@ -467,7 +434,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			NormalFile normalFile = (NormalFile) repoFile;
 			if (!normalFile.isInProgress())
-				throw new IllegalStateException("NormalFile.inProgress == false for file: " + file);
+				throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+						repoFile, file));
 
 			try {
 				RandomAccessFile raf = new RandomAccessFile(file, "rw");
@@ -480,6 +448,45 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
+	public void endFile(String path, Date lastModified, long length) {
+		File file = getFile(assertNotNull("path", path));
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		try {
+
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+			if (!(repoFile instanceof NormalFile)) {
+				throw new IllegalStateException(String.format("RepoFile is not an instance of NormalFile! repoFile=%s file=%s",
+						repoFile, file));
+			}
+
+			NormalFile normalFile = (NormalFile) repoFile;
+			if (!normalFile.isInProgress())
+				throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+						repoFile, file));
+
+			try {
+				RandomAccessFile raf = new RandomAccessFile(file, "rw");
+				try {
+					raf.setLength(length);
+				} finally {
+					raf.close();
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			file.setLastModified(lastModified.getTime());
+			localRepoSync.updateRepoFile(normalFile, file);
+			normalFile.setInProgress(false);
 
 			transaction.commit();
 		} finally {

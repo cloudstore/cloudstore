@@ -156,9 +156,7 @@ public class RepoToRepoSync {
 	private void syncDirectory(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
-			// TODO maybe only one request?!
-			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath());
-			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), directoryDTO.getLastModified());
+			toRepoTransport.makeDirectory(repoFileDTOTreeNode.getPath(), directoryDTO.getLastModified());
 		} finally {
 			monitor.done();
 		}
@@ -198,10 +196,10 @@ public class RepoToRepoSync {
 				fromFileChunksDirty.add(fromFileChunk);
 			}
 
-			toRepoTransport.createFile(repoFileDTOTreeNode.getPath());
+			toRepoTransport.beginFile(repoFileDTOTreeNode.getPath());
 			monitor.worked(1);
 
-			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 78);
+			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
 			subMonitor.beginTask("Synchronising remotely...", fromFileChunksDirty.size());
 			for (FileChunk fileChunk : fromFileChunksDirty) {
 				byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileChunk.getLength());
@@ -219,8 +217,8 @@ public class RepoToRepoSync {
 			}
 			subMonitor.done();
 
-			toRepoTransport.setLastModified(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified());
-			monitor.worked(1);
+			toRepoTransport.endFile(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
+			monitor.worked(6);
 		} finally {
 			monitor.done();
 		}
