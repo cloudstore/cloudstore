@@ -23,7 +23,46 @@
 
 	<build>
 		<plugins>
+<!--
+	*** BEGIN Package special (already filtered) javadoc-jar and site-jar ***
+-->
 			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>javadoc-jar</id>
+						<phase>site</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classesDirectory>${project.build.directory}/apidocs</classesDirectory>
+							<finalName>${project.artifactId}-javadoc.jar</finalName>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+						</configuration>
+					</execution>
+					
+					<execution>
+						<id>site-jar</id>
+						<phase>site</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classesDirectory>${project.build.directory}/site</classesDirectory>
+							<finalName>${project.artifactId}-site.jar</finalName>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+<!--
+	*** END Package special (already filtered) javadoc-jar and site-jar ***
+-->
+		
+		
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<dependencies>
 					<dependency>
@@ -35,7 +74,7 @@
 				Unfortunately, neither twiki nor confluence are usable (at least the newest versions currently available [1.2]).
 				With twiki anchors cannot be used (and it has quite a few other annoying bugs, too). And confluence doesn't
 				support images :-( Marco.
-
+				
 					<dependency>
 						<groupId>org.apache.maven.doxia</groupId>
 						<artifactId>doxia-module-twiki</artifactId>
@@ -48,9 +87,129 @@
 					</dependency>
 				-->
 				</dependencies>
-				<!-- Configuration is in parent-POM! -->
 				<configuration>
-					<skip>false</skip>
+					<locales>en,de</locales>
+					<inputencoding>UTF-8</inputencoding>
+					<outputencoding>UTF-8</outputencoding>
+					<reportPlugins>
+						<plugin>
+							<artifactId>maven-project-info-reports-plugin</artifactId>
+							<configuration>
+								<dependencyDetailsEnabled>true</dependencyDetailsEnabled>
+								<dependencyLocationsEnabled>true</dependencyLocationsEnabled>
+							</configuration>
+							<!--
+							We configure the reportSets (instead of simply omitting this and using the default), because
+							we want all reports BUT the ones commented out below.
+							
+							See http://maven.apache.org/plugins/maven-project-info-reports-plugin/ for all available ones
+							(this configuration should be updated, if new reports come into existence). Marco :-)
+							-->
+							<reportSets>
+								<reportSet>
+									<reports>
+										<report>cim</report>
+										<report>dependencies</report>
+										<report>dependency-convergence</report>
+										<report>dependency-management</report>
+										<report>distribution-management</report>
+										<report>help</report>
+										<!-- <report>index</report> -->
+										<report>issue-tracking</report>
+										<report>license</report>
+										<report>mailing-list</report>
+										<report>modules</report>
+										<report>plugin-management</report>
+										<report>plugins</report>
+										<report>project-team</report>
+										<report>scm</report>
+										<report>summary</report>
+									</reports>
+								</reportSet>
+							</reportSets>
+						</plugin>
+<!--
+The Javadoc is deployed on the web-site, even if this is missing. The only difference is that
+it generates links to the Javadoc in the report section (called "Project Documentation"). Since
+we don't need the link twice and I prefer it in our manually managed "Documentation" section, I commented
+this out.
+Marco :-)
+						<plugin>
+							<artifactId>maven-javadoc-plugin</artifactId>
+						</plugin>
+-->
+
+						<plugin>
+							<artifactId>maven-surefire-report-plugin</artifactId>
+							<configuration>
+								<reportsDirectories>
+									<reportsDirectory>${basedir}/target/surefire-reports</reportsDirectory>
+									<reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
+								</reportsDirectories>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-pmd-plugin</artifactId>
+							<version>2.5</version>
+							<configuration>
+								<linkXref>true</linkXref>
+								<sourceEncoding>utf-8</sourceEncoding>
+								<minimumTokens>100</minimumTokens>
+								<targetJdk>1.6</targetJdk>
+								<excludes>
+									<!--
+									ID classes in tests are usually auto-generated (by the NightLabs SDK) and contain heaps
+									of duplicated code (the same in each class).
+									-->
+									<exclude>**/test/**/id/*ID.java</exclude>
+								</excludes>
+<!--
+								<excludeRoots>
+									<excludeRoot>target/generated-sources/stubs</excludeRoot>
+								</excludeRoots>
+-->
+							</configuration>
+						</plugin>
+
+<!--
+Neither findbugs nor cobertura support aggregating. First of all, we probably have to move this whole maven-site-plugin stuff
+from here to the parent pom, as these plugins have to somehow be executed individually per module. And then we maybe have to
+find some manual aggregate solution. For now, we simply deactivate this plugin.
+						<plugin>
+							<groupId>org.codehaus.mojo</groupId>
+							<artifactId>findbugs-maven-plugin</artifactId>
+							<version>2.3.2</version>
+							<configuration>
+								<xmlOutput>true</xmlOutput>
+								<xmlOutputDirectory>target/findbugs</xmlOutputDirectory>
+								<effort>Max</effort>
+								<threshold>Low</threshold>
+							</configuration>
+						</plugin>
+-->						
+
+<!--
+This does not work due to a bug in Jenkins:
+
+	http://jenkins.361315.n4.nabble.com/JIRA-Created-JENKINS-9058-Problem-with-cobertura-plugin-td3356550.html
+
+We'll enable this after it is fixed and we updated to a new Jenkins version.
+
+Marco :-)
+
+						<plugin>
+							<groupId>org.codehaus.mojo</groupId>
+							<artifactId>cobertura-maven-plugin</artifactId>
+							<configuration>
+								<formats>
+									<format>xml</format>
+									<format>html</format>
+								</formats>
+							</configuration>
+						</plugin>
+-->
+					</reportPlugins>
 				</configuration>
 			</plugin>
 		</plugins>
