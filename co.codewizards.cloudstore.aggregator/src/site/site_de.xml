@@ -24,21 +24,36 @@
 
 		<links>
 			<item name="Hauptseite" href="./index.html" />
-			<item name="Dienstleistung" href="./service/index.html" />
-			<item name="Kontakt" href="./about/contact.html" />
+			<item name="Dokumentation" href="./documentation/index.html" />
+			<item name="Forum" href="." />
+			<item name="Tracker" href="https://github.com/cloudstore/main/issues" />
+			<item name="Herunterladen" href="./download/index.html" />
 		</links>
 
-		<menu name="Dienstleistung">
-			<item name="Übersicht" href="./service/index.html" />
-			<item name="Architektur" href="./service/architecture.html" />
-			<item name="Entwicklung" href="./service/development.html" />
-			<item name="Beratung" href="./service/consulting.html" />
-			<item name="Coaching" href="./service/coaching.html" />
+		<menu name="Dokumentation">
+			<item name="Erste Schritte" href="./documentation/getting-started.html" />
+			<item name="Benutzung" href="./documentation/usage.html" />
+			<item name="Entwicklung" href="./documentation/development.html" />
+			<item name="Javadoc" href="./apidocs/index.html" />
+			<item name="Wiki" href="https://github.com/cloudstore/main/wiki" />
+			<item name="Häufige Fragen (FAQ)" href="./documentation/faq.html" />
+			<item name="Was ist neu?" href="./documentation/whats-new.html" />
 		</menu>
 
 		<menu name="Über">
 			<item name="Kontakt" href="./about/contact.html" />
 			<item name="Impressum" href="./about/imprint.html" />
+			<item name="Lizenz" href="./about/licence.html" />
+		</menu>
+
+		<menu name="Babel">
+			<item name="English" href="../index.html" img="images/en.png" />
+		</menu>
+
+		<menu name="Versionen">
+			<item name="Neuester Entwicklungs-Schnappschuss" href="../../latest-dev/de/" />
+			<item name="Neueste stabile Version" href="../../latest-stable/de/" />
+			<item name="Alle Veröffentlichungen" href="../../latest-stable/de/releases/" />
 		</menu>
 	</body>
 

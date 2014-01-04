@@ -19,26 +19,41 @@
 
 	<body>
 		<head>
-			<link rel="icon" href="/site/current/images/favicon.ico" />
+			<link rel="icon" href="/latest-stable/images/favicon.ico" />
 		</head>
 
 		<links>
 			<item name="Home" href="./index.html" />
-			<item name="Service" href="./service/index.html" />
-			<item name="Contact" href="./about/contact.html" />
+			<item name="Documentation" href="./documentation/index.html" />
+			<item name="Forum" href="." />
+			<item name="Tracker" href="https://github.com/cloudstore/main/issues" />
+			<item name="Download" href="./download/index.html" />
 		</links>
 
-		<menu name="Service">
-			<item name="Overview" href="./service/index.html" />
-			<item name="Architecture" href="./service/architecture.html" />
-			<item name="Development" href="./service/development.html" />
-			<item name="Consulting" href="./service/consulting.html" />
-			<item name="Coaching" href="./service/coaching.html" />
+		<menu name="Documentation">
+			<item name="Getting started" href="./documentation/getting-started.html" />
+			<item name="Usage" href="./documentation/usage.html" />
+			<item name="Development" href="./documentation/development.html" />
+			<item name="Javadoc" href="./apidocs/index.html" />
+			<item name="Wiki" href="https://github.com/cloudstore/main/wiki" />
+			<item name="FAQ" href="./documentation/faq.html" />
+			<item name="What's new?" href="./documentation/whats-new.html" />
 		</menu>
 
 		<menu name="About">
 			<item name="Contact" href="./about/contact.html" />
 			<item name="Imprint" href="./about/imprint.html" />
+			<item name="Licence" href="./about/licence.html" />
+		</menu>
+
+		<menu name="Babel">
+			<item name="Deutsch" href="./de/index.html" img="images/de.png" />
+		</menu>
+
+		<menu name="Releases">
+			<item name="Latest development snapshot" href="../latest-dev/" />
+			<item name="Latest stable version" href="../latest-stable/" />
+			<item name="All releases" href="../latest-stable/releases/" />
 		</menu>
 	</body>
 
