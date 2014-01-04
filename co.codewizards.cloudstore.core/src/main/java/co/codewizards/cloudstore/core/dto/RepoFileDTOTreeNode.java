@@ -15,14 +15,28 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 	/**
 	 * Create a single tree from the given {@code repoFileDTOs}.
 	 * <p>
-	 * The given {@code repoFileDTOs} must contain exactly one root-node (with
-	 * {@link RepoFileDTO#getParentEntityID() RepoFileDTO.parentEntityID} being <code>null</code>) and must resolve
-	 * completely, i.e. there must be a {@code RepoFileDTO} for every every referenced {@code parentEntityID}.
-	 * @param repoFileDTOs the DTOs to be organized in a tree structure.
-	 * @return the tree's root node. Never <code>null</code>.
+	 * The given {@code repoFileDTOs} must meet the following criteria:
+	 * <ul>
+	 * <li>It must not be <code>null</code>.
+	 * <li>It may be empty.
+	 * <li>If it is <i>not</i> empty, it may contain any number of elements, but:
+	 * <ul>
+	 * <li>It must contain exactly one root-node (with
+	 * {@link RepoFileDTO#getParentEntityID() RepoFileDTO.parentEntityID} being <code>null</code>).
+	 * <li>It must resolve completely, i.e. there must be a {@code RepoFileDTO} for every every
+	 * referenced {@code parentEntityID}.
+	 * </ul>
+	 * </ul>
+	 * @param repoFileDTOs the DTOs to be organized in a tree structure. Must not be <code>null</code>. If
+	 * empty, the method result will be <code>null</code>.
+	 * @return the tree's root node. <code>null</code>, if {@code repoFileDTOs} is empty.
+	 * Never <code>null</code>, if {@code repoFileDTOs} contains at least one element.
+	 * @throws IllegalArgumentException if the given {@code repoFileDTOs} does not meet the criteria stated above.
 	 */
-	public static RepoFileDTOTreeNode createTree(Collection<RepoFileDTO> repoFileDTOs) {
+	public static RepoFileDTOTreeNode createTree(Collection<RepoFileDTO> repoFileDTOs) throws IllegalArgumentException {
 		assertNotNull("repoFileDTOs", repoFileDTOs);
+		if (repoFileDTOs.isEmpty())
+			return null;
 
 		Map<EntityID, RepoFileDTOTreeNode> entityID2RepoFileDTOTreeNode = new HashMap<EntityID, RepoFileDTOTreeNode>();
 		for (RepoFileDTO repoFileDTO : repoFileDTOs) {
@@ -41,14 +55,14 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 			else {
 				RepoFileDTOTreeNode parentNode = entityID2RepoFileDTOTreeNode.get(parentEntityID);
 				if (parentNode == null)
-					throw new IllegalStateException("parentEntityID unknown: " + parentEntityID);
+					throw new IllegalArgumentException("parentEntityID unknown: " + parentEntityID);
 
 				parentNode.addChild(node);
 			}
 		}
 
 		if (rootNode == null)
-			throw new IllegalStateException("There is no root node!");
+			throw new IllegalArgumentException("There is no root node!");
 
 		return rootNode;
 	}

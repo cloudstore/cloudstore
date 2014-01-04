@@ -236,7 +236,9 @@ public class FileRepoTransportTest extends AbstractTest {
 	}
 
 	private Set<String> getPaths(Collection<RepoFileDTO> repoFileDTOs) {
+		assertThat(repoFileDTOs).isNotNull().isNotEmpty();
 		RepoFileDTOTreeNode rootNode = RepoFileDTOTreeNode.createTree(repoFileDTOs);
+		assertThat(rootNode).isNotNull();
 		assertThat(rootNode.getRepoFileDTO().getName()).isEqualTo("");
 		List<RepoFileDTOTreeNode> leafs = rootNode.getLeafs();
 		Set<String> paths = new HashSet<String>(leafs.size());

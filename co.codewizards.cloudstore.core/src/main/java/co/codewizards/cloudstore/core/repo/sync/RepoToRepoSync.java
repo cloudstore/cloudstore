@@ -125,14 +125,16 @@ public class RepoToRepoSync {
 			}
 
 			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetResponse.getRepoFileDTOs());
-			for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
-				RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
-				if (repoFileDTO instanceof DirectoryDTO)
-					syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-				else if (repoFileDTO instanceof RepoFileDTO)
-					syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
-				else
-					throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+			if (repoFileDTOTree != null) {
+				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
+					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
+					if (repoFileDTO instanceof DirectoryDTO)
+						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+					else if (repoFileDTO instanceof RepoFileDTO)
+						syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
+					else
+						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+				}
 			}
 		} finally {
 			monitor.done();
