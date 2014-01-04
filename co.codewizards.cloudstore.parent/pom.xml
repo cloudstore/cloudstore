@@ -132,20 +132,6 @@
 				<version>10.10.1.1</version>
 			</dependency>
 
-			<!-- BEGIN JAXB -->
-			<!-- <dependency> <groupId>org.apache.servicemix.bundles</groupId> <artifactId>org.apache.servicemix.bundles.jaxb-impl</artifactId> 
-				<version>2.2.4_2</version> </dependency> <dependency> <groupId>javax.xml.bind</groupId> 
-				<artifactId>jaxb-api</artifactId> <version>2.2.3</version> </dependency> 
-				<dependency> <groupId>org.apache.servicemix.specs</groupId> <artifactId>org.apache.servicemix.specs.stax-api-1.0</artifactId> 
-				<version>1.0.0</version> </dependency> <dependency> <groupId>org.apache.servicemix.specs</groupId> 
-				<artifactId>org.apache.servicemix.specs.jaxb-api-2.2</artifactId> <version>1.6.0</version> 
-				</dependency> <dependency> <groupId>org.apache.geronimo.specs</groupId> <artifactId>geronimo-activation_1.1_spec</artifactId> 
-				<version>1.0.2</version> </dependency> <dependency> <groupId>javax.xml.stream</groupId> 
-				<artifactId>stax-api</artifactId> <version>1.0-2</version> </dependency> 
-				<dependency> <groupId>javax.activation</groupId> <artifactId>activation</artifactId> 
-				<version>1.1</version> </dependency> -->
-			<!-- END JAXB -->
-
 			<dependency>
 				<groupId>javax.jdo</groupId>
 				<artifactId>jdo-api</artifactId>
@@ -313,15 +299,9 @@
 							<pluginExecutions>
 								<pluginExecution>
 									<pluginExecutionFilter>
-										<groupId>
-											org.datanucleus
-										</groupId>
-										<artifactId>
-											maven-datanucleus-plugin
-										</artifactId>
-										<versionRange>
-											[3.0.0-release,)
-										</versionRange>
+										<groupId>org.datanucleus</groupId>
+										<artifactId>maven-datanucleus-plugin</artifactId>
+										<versionRange>[3.0.0-release,)</versionRange>
 										<goals>
 											<goal>enhance</goal>
 										</goals>
@@ -384,6 +364,70 @@
 						</dependency>
 					</dependencies>
 				</plugin>
+
+				<plugin>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>2.5</version>
+					<configuration>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>2.1.2</version>
+<!--
+					<configuration>
+						<includePom>true</includePom>
+					</configuration>
+-->
+				</plugin>
+
+				<plugin>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.7</version>
+					<configuration>
+						<detectLinks>true</detectLinks>
+						<doctitle><![CDATA[<a target="_blank" href="http://cloudstore.codewizards.co/${project.version}/">CloudStore</a> API (version ${project.version})]]></doctitle>
+<!--
+            			<excludePackageNames>org.cumulus4j.store.test*:org.cumulus4j.integrationtest*</excludePackageNames>
+						<groups>
+							<group>
+            					<title><![CDATA[<a target="_blank" href="../org.cumulus4j.annotation/">org.cumulus4j.annotation</a>]]></title>
+            					<packages>org.cumulus4j.annotation:org.cumulus4j.annotation.*</packages>
+            				</group>
+							<group>
+            					<title><![CDATA[<a target="_blank" href="../org.cumulus4j.crypto/">org.cumulus4j.crypto</a>]]></title>
+            					<packages>org.cumulus4j.crypto:org.cumulus4j.crypto.*</packages>
+            				</group>
+            			</groups>
+-->
+            			<header><![CDATA[<b><a target="_blank" href="http://cloudstore.codewizards.co/${project.version}/">CloudStore</a> API</b><br />(${project.version})]]></header>
+            			<links>
+            				<!-- The Legion of the Bouncy Castle -->
+            				<link>http://www.bouncycastle.org/docs/docs1.6</link>
+            				<link>http://www.bouncycastle.org/docs/mdocs1.6</link>
+            				<link>http://www.bouncycastle.org/docs/pgdocs1.6</link>
+            				<link>http://www.bouncycastle.org/docs/tspdocs1.6</link>
+
+            				<!-- DataNucleus -->
+            				<link>http://www.datanucleus.org/javadocs/core/${datanucleus.javadoc.version}</link>
+            				<link>http://www.datanucleus.org/javadocs/api.jdo/${datanucleus.javadoc.version}</link>
+            				<link>http://www.datanucleus.org/javadocs/jpa/${datanucleus.javadoc.version}</link>
+            				<link>http://www.datanucleus.org/javadocs/store.rdbms/${datanucleus.javadoc.version}</link>
+
+            				<!-- JDO (javax.jdo.*) -->
+            				<link>http://db.apache.org/jdo/api30/apidocs</link>
+
+            				<!-- Jersey (REST implementation) -->
+            				<link>http://jersey.java.net/nonav/apidocs/${jersey.version}/jersey</link>
+
+            				<!-- JavaEE (javax.*) -->
+            				<link>http://download.oracle.com/javaee/6/api</link>
+            			</links>
+            			<linksource>true</linksource>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 
@@ -404,6 +448,108 @@
 					<skip>true</skip>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+<!--
+	*** BEGIN Javadoc with filtering ***
+	We want to use variables like ${project.version} in Javadoc. Hence we configure it to generate the Javadoc
+	first in "target/javadoc.unfiltered" and then copy it (while filtering all HTML files) to "target/apidocs"
+	(the ordinary Maven Javadoc directory).
+	
+	As the site needs it in "target/site/apidocs", we copy it again (the filtered version).
+	
+	Finally, we create the javadoc-JAR from the filtered version - but this is not done here - it's only done in
+	project "org.cumulus4j.crypto.all" - see that pom.xml.
+-->
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<configuration>
+							<outputDirectory>${project.build.directory}/javadoc.unfiltered</outputDirectory>
+							<!-- <reportOutputDirectory>${project.reporting.outputDirectory}</reportOutputDirectory> -->
+							<reportOutputDirectory>${project.build.directory}</reportOutputDirectory>
+							<destDir>javadoc.unfiltered</destDir>
+						</configuration>
+
+						<id>javadoc-generate-unfiltered</id>
+						<phase>site</phase>
+						<goals>
+							<goal>javadoc</goal>
+							<!-- <goal>jar</goal> -->
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>javadoc-filter</id>
+						<phase>site</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+
+						<configuration>
+							<outputDirectory>${project.build.directory}/apidocs</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/javadoc.unfiltered</directory>
+									<filtering>true</filtering>
+									<includes>
+										<include>**/*.html</include>
+									</includes>
+								</resource>
+								<resource>
+									<directory>${project.build.directory}/javadoc.unfiltered</directory>
+									<filtering>false</filtering>
+									<excludes>
+										<exclude>**/*.html</exclude>
+									</excludes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>javadoc-copy-to-site</id>
+						<phase>site</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+
+						<configuration>
+							<outputDirectory>${project.reporting.outputDirectory}/apidocs</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/apidocs</directory>
+									<filtering>false</filtering>
+									<includes>
+										<include>**/*</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+<!--
+	*** END Javadoc with filtering ***
+-->
 		</plugins>
 	</build>
 </project>

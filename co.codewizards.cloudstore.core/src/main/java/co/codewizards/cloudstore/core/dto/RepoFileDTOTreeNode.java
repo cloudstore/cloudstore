@@ -23,7 +23,7 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 	 * <ul>
 	 * <li>It must contain exactly one root-node (with
 	 * {@link RepoFileDTO#getParentEntityID() RepoFileDTO.parentEntityID} being <code>null</code>).
-	 * <li>It must resolve completely, i.e. there must be a {@code RepoFileDTO} for every every
+	 * <li>It must resolve completely, i.e. there must be a {@code RepoFileDTO} for every
 	 * referenced {@code parentEntityID}.
 	 * </ul>
 	 * </ul>
