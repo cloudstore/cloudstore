@@ -56,6 +56,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
+	private static final String PROP_VERSION = "repository.version";
+
+	private static final String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
 	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
@@ -85,7 +88,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
-
 		LocalRepoRegistry.getInstance().registerRepository(repositoryID, localRoot);
 	}
 
@@ -125,26 +127,69 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initMetaDir(boolean createRepository) throws LocalRepoManagerException {
-		File metaDirectory = getMetaDir();
+		File metaDir = getMetaDir();
 		if (createRepository) {
-			if (metaDirectory.exists()) {
+			if (metaDir.exists()) {
 				throw new FileAlreadyRepositoryException(localRoot);
 			}
 
 			deleteMetaDir = true;
-			metaDirectory.mkdir();
+			metaDir.mkdir();
 
+			createRepositoryPropertiesFile();
 			try {
-				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME));
+				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		else {
-			if (!metaDirectory.exists()) {
+			if (!metaDir.exists())
 				throw new FileNoRepositoryException(localRoot);
-			}
+
+			checkRepositoryPropertiesFile();
 		}
+	}
+
+	private void createRepositoryPropertiesFile() {
+		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		try {
+			Properties repositoryProperties = new Properties();
+			repositoryProperties.put(PROP_VERSION, Integer.valueOf(1).toString());
+			PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void checkRepositoryPropertiesFile() throws LocalRepoManagerException {
+		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		if (!repositoryPropertiesFile.exists())
+			throw new RepositoryCorruptException(localRoot,
+					String.format("Meta-directory does not contain '%s'!", REPOSITORY_PROPERTIES_FILE_NAME));
+
+		Properties repositoryProperties;
+		try {
+			repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		String version = repositoryProperties.getProperty(PROP_VERSION);
+		if (version == null || version.isEmpty())
+			throw new RepositoryCorruptException(localRoot,
+					String.format("Meta-file '%s' does not contain property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
+
+		version = version.trim();
+		int ver;
+		try {
+			ver = Integer.parseInt(version);
+		} catch (NumberFormatException x) {
+			throw new RepositoryCorruptException(localRoot,
+					String.format("Meta-file '%s' contains an illegal value (not a number) for property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
+		}
+
+		if (ver != 1) // There is only one single version, right now. This is just a sanity check for allowing automatic upgrades, later.
+			throw new RepositoryCorruptException(localRoot, "Repository is not version 1!");
 	}
 
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
