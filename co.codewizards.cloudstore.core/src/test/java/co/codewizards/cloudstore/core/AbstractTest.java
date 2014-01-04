@@ -18,6 +18,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.repo.local.FilenameFilterSkipMetaDir;
@@ -27,6 +28,10 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class AbstractTest {
+
+	static {
+		System.setProperty(ConfigDir.SYSTEM_PROPERTY, "target/.cloudstore");
+	}
 
 	protected static final Random random = new Random();
 	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
