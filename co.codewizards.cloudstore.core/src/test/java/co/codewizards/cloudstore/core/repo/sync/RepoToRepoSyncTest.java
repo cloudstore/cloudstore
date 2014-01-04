@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.net.URL;
 
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.AbstractTest;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class RepoToRepoSyncTest extends AbstractTest {
 	private static Logger logger = LoggerFactory.getLogger(RepoToRepoSyncTest.class);
@@ -117,7 +119,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithModifiedFile() throws Exception {
+	public void syncRemoteRootToLocalRootWithModifiedFiles() throws Exception {
 		syncRemoteRootToLocalRootInitially();
 
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
@@ -132,6 +134,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		File child_2_1_a = new File(child_2_1, "a");
 		assertThat(child_2_1_a).isFile();
 
+		File child_2_1_b = new File(child_2_1, "b");
+		assertThat(child_2_1_b).isFile();
+
 		RandomAccessFile raf = new RandomAccessFile(child_2_1_a, "rw");
 		try {
 			raf.seek(random.nextInt((int)child_2_1_a.length()));
@@ -143,6 +148,17 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		} finally {
 			raf.close();
 		}
+
+		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
+
+		FileOutputStream out = new FileOutputStream(child_2_1_b);
+		out.write(random.nextInt());
+		out.close();
+
+		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
+
+		byte[] child_2_1_a_expected = IOUtil.getBytesFromFile(child_2_1_a);
+		byte[] child_2_1_b_expected = IOUtil.getBytesFromFile(child_2_1_b);
 
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
@@ -157,6 +173,12 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		localRepoManagerRemote.close();
 
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+
+		// ensure that nothing was synced backwards into the wrong direction ;-)
+		byte[] child_2_1_a_actual = IOUtil.getBytesFromFile(child_2_1_a);
+		byte[] child_2_1_b_actual = IOUtil.getBytesFromFile(child_2_1_b);
+		assertThat(child_2_1_a_actual).isEqualTo(child_2_1_a_expected);
+		assertThat(child_2_1_b_actual).isEqualTo(child_2_1_b_expected);
 	}
 
 	@Test
