@@ -4,8 +4,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.client.CloudStoreRESTClient;
-import co.codewizards.cloudstore.client.RemoteException;
+import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
+import co.codewizards.cloudstore.rest.client.RemoteException;
 
 public class TestServiceIT {
 	private static final Logger logger = LoggerFactory.getLogger(TestServiceIT.class);

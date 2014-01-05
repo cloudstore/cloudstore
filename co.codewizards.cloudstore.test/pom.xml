@@ -19,7 +19,7 @@
 		</dependency>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.client</artifactId>
+			<artifactId>co.codewizards.cloudstore.rest.client</artifactId>
 		</dependency>
 	</dependencies>
 
