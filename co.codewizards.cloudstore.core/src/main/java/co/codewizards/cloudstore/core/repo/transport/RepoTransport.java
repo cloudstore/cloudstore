@@ -4,10 +4,9 @@ import java.io.File;
 import java.net.URL;
 import java.util.Date;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
-import co.codewizards.cloudstore.core.dto.FileChunkSetRequest;
-import co.codewizards.cloudstore.core.dto.FileChunkSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.dto.FileChunkSet;
 
 public interface RepoTransport {
 
@@ -17,9 +16,15 @@ public interface RepoTransport {
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 
+	/**
+	 * Get the repository's unique ID.
+	 * @return the repository's unique ID.
+	 */
+	EntityID getRepositoryID();
+
 	void close();
 
-	ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest);
+	ChangeSet getChangeSet(EntityID toRepositoryID);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).
@@ -50,7 +55,7 @@ public interface RepoTransport {
 	 */
 	void delete(String path);
 
-	FileChunkSetResponse getFileChunkSet(FileChunkSetRequest fileChunkSetRequest);
+	FileChunkSet getFileChunkSet(String path);
 
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.
@@ -94,5 +99,7 @@ public interface RepoTransport {
 	void putFileData(String path, long offset, byte[] fileData);
 
 	void endFile(String path, Date lastModified, long length);
+
+	void endSync(EntityID toRepositoryID);
 
 }

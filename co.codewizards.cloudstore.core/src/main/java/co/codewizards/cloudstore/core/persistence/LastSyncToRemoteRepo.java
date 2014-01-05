@@ -13,7 +13,8 @@ public class LastSyncToRemoteRepo extends Entity {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RemoteRepository remoteRepository;
-	private long localRepositoryRevision;
+	private long localRepositoryRevisionSynced = -1;
+	private long localRepositoryRevisionInProgress = -1;
 
 	public RemoteRepository getRemoteRepository() {
 		return remoteRepository;
@@ -31,10 +32,17 @@ public class LastSyncToRemoteRepo extends Entity {
 	 * @return the {@link LocalRepository#getRevision() LocalRepository.revision} that
 	 * was synced to the remote repository.
 	 */
-	public long getLocalRepositoryRevision() {
-		return localRepositoryRevision;
+	public long getLocalRepositoryRevisionSynced() {
+		return localRepositoryRevisionSynced;
 	}
-	public void setLocalRepositoryRevision(long localRepositoryRevision) {
-		this.localRepositoryRevision = localRepositoryRevision;
+	public void setLocalRepositoryRevisionSynced(long localRepositoryRevision) {
+		this.localRepositoryRevisionSynced = localRepositoryRevision;
+	}
+
+	public long getLocalRepositoryRevisionInProgress() {
+		return localRepositoryRevisionInProgress;
+	}
+	public void setLocalRepositoryRevisionInProgress(long localRepositoryRevisionInProgress) {
+		this.localRepositoryRevisionInProgress = localRepositoryRevisionInProgress;
 	}
 }

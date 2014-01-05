@@ -3,13 +3,14 @@ package co.codewizards.cloudstore.core.dto.jaxb;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
+import co.codewizards.cloudstore.core.dto.FileChunk;
+import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -23,13 +24,14 @@ public class CloudStoreJaxbContext {
 		static {
 			try {
 				jaxbContext = JAXBContext.newInstance(
-						ChangeSetRequest.class,
-						ChangeSetResponse.class,
+						ChangeSet.class,
 						DeleteModificationDTO.class,
 						DirectoryDTO.class,
 						EntityID.class,
 						Error.class,
 						ErrorStackTraceElement.class,
+						FileChunkSet.class,
+						FileChunk.class,
 						ModificationDTO.class,
 						NormalFileDTO.class,
 						RepoFileDTO.class,

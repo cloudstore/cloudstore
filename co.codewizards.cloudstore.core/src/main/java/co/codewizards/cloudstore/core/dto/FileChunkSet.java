@@ -7,7 +7,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class FileChunkSetResponse {
+public class FileChunkSet {
 
 	private String path;
 	private boolean fileExists = true;

@@ -17,12 +17,10 @@
 
 	<!-- BEGIN DataNucleus http://www.datanucleus.org/products/datanucleus/logging.html -->
 	<logger name="DataNucleus" level="INFO" />
-	<!--
 	<logger name="DataNucleus.Datastore" level="INFO" />
-	<logger name="DataNucleus.Datastore.Schema" level="ALL" />
+	<logger name="DataNucleus.Datastore.Schema" level="INFO" />
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	<logger name="DataNucleus.Query" level="INFO" />
-	-->
 	<!-- END DataNucleus -->
 
 	<!-- The level of the root logger is set to DEBUG by default. But we want to be able to change it here. -->

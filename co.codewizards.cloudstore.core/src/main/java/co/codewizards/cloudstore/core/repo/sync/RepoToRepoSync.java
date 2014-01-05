@@ -12,20 +12,15 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunk;
-import co.codewizards.cloudstore.core.dto.FileChunkSetRequest;
-import co.codewizards.cloudstore.core.dto.FileChunkSetResponse;
+import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
-import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
-import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
@@ -54,8 +49,12 @@ public class RepoToRepoSync {
 	public RepoToRepoSync(File localRoot, URL remoteRoot) {
 		this.remoteRoot = assertNotNull("remoteRoot", remoteRoot);
 		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(assertNotNull("localRoot", localRoot));
-		localRepositoryID = localRepoManager.getLocalRepositoryID();
 		localRepoTransport = createRepoTransport(localRoot);
+
+		localRepositoryID = localRepoTransport.getRepositoryID();
+		if (localRepositoryID == null)
+			throw new IllegalStateException("localRepoTransport.getRepositoryID() returned null!");
+
 		remoteRepoTransport = createRepoTransport(remoteRoot);
 	}
 
@@ -78,10 +77,28 @@ public class RepoToRepoSync {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
 			remoteRepositoryID = remoteRepository.getEntityID();
 
+			EntityID repositoryID = remoteRepoTransport.getRepositoryID();
+			if (repositoryID == null)
+				throw new IllegalStateException("remoteRepoTransport.getRepositoryID() returned null!");
+
+			if (!repositoryID.equals(remoteRepositoryID))
+				throw new IllegalStateException(
+						String.format("remoteRepoTransport.getRepositoryID() does not match repositoryID in local DB! %s != %s", repositoryID, remoteRepositoryID));
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
 		}
+	}
+
+	private EntityID getRepositoryID(RepoTransport repoTransport) {
+		if (localRepoTransport == repoTransport)
+			return localRepositoryID;
+
+		if (remoteRepoTransport == repoTransport)
+			return remoteRepositoryID;
+
+		throw new IllegalArgumentException("repoTransport is neither local nor remote!");
 	}
 
 	private RepoTransport createRepoTransport(File rootFile) {
@@ -102,29 +119,27 @@ public class RepoToRepoSync {
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
-			ChangeSetRequest changeSetRequest = createChangeSetRequest(fromRepoTransport, toRepoTransport);
-			monitor.worked(1);
-
-			ChangeSetResponse changeSetResponse = fromRepoTransport.getChangeSet(changeSetRequest);
+			EntityID toRepositoryID = getRepositoryID(toRepoTransport);
+			ChangeSet changeSet = fromRepoTransport.getChangeSet(toRepositoryID);
 			monitor.worked(8);
 
-			sync(fromRepoTransport, toRepoTransport, changeSetResponse, new SubProgressMonitor(monitor, 90));
+			sync(fromRepoTransport, toRepoTransport, changeSet, new SubProgressMonitor(monitor, 90));
 
-			storeRepositoryDTOFromChangeSetResponse(changeSetResponse.getRepositoryDTO());
-			monitor.worked(1);
+			fromRepoTransport.endSync(toRepositoryID);
+			monitor.worked(2);
 		} finally {
 			monitor.done();
 		}
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetResponse changeSetResponse, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", changeSetResponse.getModificationDTOs().size() + changeSetResponse.getRepoFileDTOs().size());
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSet changeSet, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising remotely...", changeSet.getModificationDTOs().size() + changeSet.getRepoFileDTOs().size());
 		try {
-			for (ModificationDTO modificationDTO : changeSetResponse.getModificationDTOs()) {
+			for (ModificationDTO modificationDTO : changeSet.getModificationDTOs()) {
 				syncModification(fromRepoTransport, toRepoTransport, modificationDTO, new SubProgressMonitor(monitor, 1));
 			}
 
-			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetResponse.getRepoFileDTOs());
+			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSet.getRepoFileDTOs());
 			if (repoFileDTOTree != null) {
 				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
 					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
@@ -168,7 +183,7 @@ public class RepoToRepoSync {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
 			// TODO the check-sums should be obtained simultaneously with 2 threads.
-			FileChunkSetResponse fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(createFileChunkSetRequest(repoFileDTOTreeNode));
+			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(repoFileDTOTreeNode.getPath());
 			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
 				logger.warn("File was deleted during sync on source side: {}", repoFileDTOTreeNode.getPath());
 				return;
@@ -176,7 +191,7 @@ public class RepoToRepoSync {
 			assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
 			monitor.worked(10);
 
-			FileChunkSetResponse toFileChunkSetResponse = toRepoTransport.getFileChunkSet(createFileChunkSetRequest(repoFileDTOTreeNode));
+			FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(repoFileDTOTreeNode.getPath());
 			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
 				logger.info("File is already equal on destination side: {}", repoFileDTOTreeNode.getPath());
 				return;
@@ -226,81 +241,12 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private boolean areFilesExistingAndEqual(FileChunkSetResponse fromFileChunkSetResponse, FileChunkSetResponse toFileChunkSetResponse) {
+	private boolean areFilesExistingAndEqual(FileChunkSet fromFileChunkSetResponse, FileChunkSet toFileChunkSetResponse) {
 		return (fromFileChunkSetResponse.isFileExists()
 				&& toFileChunkSetResponse.isFileExists()
 				&& equal(fromFileChunkSetResponse.getLength(), toFileChunkSetResponse.getLength())
 				&& equal(fromFileChunkSetResponse.getLastModified(), toFileChunkSetResponse.getLastModified())
 				&& equal(fromFileChunkSetResponse.getSha1(), toFileChunkSetResponse.getSha1()));
-	}
-
-	private FileChunkSetRequest createFileChunkSetRequest(RepoFileDTOTreeNode repoFileDTOTreeNode) {
-		FileChunkSetRequest request = new FileChunkSetRequest();
-		request.setPath(repoFileDTOTreeNode.getPath());
-		return request;
-	}
-
-	private ChangeSetRequest createChangeSetRequest(RepoTransport fromRepoTransport, RepoTransport toRepoTransport) {
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
-		try {
-			ChangeSetRequest changeSetRequest = new ChangeSetRequest();
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
-
-			if (localRepoTransport == fromRepoTransport && remoteRepoTransport == toRepoTransport) {
-				// UPloading (changeSetRequest is sent to the *local* repo)
-				changeSetRequest.setClientRepositoryID(remoteRepositoryID);
-
-				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
-				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
-
-				if (lastSyncToRemoteRepo == null)
-					changeSetRequest.setServerRevision(-1);
-				else
-					changeSetRequest.setServerRevision(lastSyncToRemoteRepo.getLocalRepositoryRevision());
-
-			} else if (localRepoTransport == toRepoTransport && remoteRepoTransport == fromRepoTransport) {
-				// DOWNloading (changeSetRequest is sent to the *remote* repo)
-				changeSetRequest.setClientRepositoryID(localRepositoryID);
-				changeSetRequest.setServerRevision(remoteRepository.getRevision());
-			}
-			else
-				throw new IllegalStateException("fromRepoTransport and toRepoTransport do not match localRepoTransport and remoteRepoTransport!");
-
-			transaction.commit();
-			return changeSetRequest;
-		} finally {
-			transaction.rollbackIfActive();
-		}
-	}
-
-	private void storeRepositoryDTOFromChangeSetResponse(RepositoryDTO repositoryDTO) {
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
-		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(remoteRepositoryID);
-
-			if (localRepositoryID.equals(repositoryDTO.getEntityID())) {
-				// UPloading (changeSetResponse came from the *local* repo)
-				LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
-				LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
-
-				if (lastSyncToRemoteRepo == null) {
-					lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
-					lastSyncToRemoteRepo.setRemoteRepository(remoteRepository);
-				}
-				lastSyncToRemoteRepo.setLocalRepositoryRevision(repositoryDTO.getRevision());
-
-				lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo); // doesn't do anything, if it was already persistent ;-)
-			} else if (remoteRepositoryID.equals(repositoryDTO.getEntityID())) {
-				// DOWNloading (changeSetResponse came from the *remote* repo)
-				remoteRepository.setRevision(repositoryDTO.getRevision());
-			}
-			else
-				throw new IllegalStateException("fromRepoTransport and toRepoTransport do not match localRepoTransport and remoteRepoTransport!");
-
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
 	}
 
 	public void close() {

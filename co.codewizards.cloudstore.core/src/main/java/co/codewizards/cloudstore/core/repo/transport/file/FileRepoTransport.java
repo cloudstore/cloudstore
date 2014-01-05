@@ -17,23 +17,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jdo.PersistenceManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunk;
-import co.codewizards.cloudstore.core.dto.FileChunkSetRequest;
-import co.codewizards.cloudstore.core.dto.FileChunkSetResponse;
+import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
+import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
+import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
 import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.Modification;
@@ -63,32 +65,48 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSetResponse getChangeSet(ChangeSetRequest changeSetRequest) {
-		assertNotNull("changeSetRequest", changeSetRequest);
-		assertNotNull("changeSetRequest.clientRepositoryID", changeSetRequest.getClientRepositoryID());
-		ChangeSetResponse changeSetResponse = new ChangeSetResponse();
+	public EntityID getRepositoryID() {
+		return getLocalRepoManager().getLocalRepositoryID();
+	}
+
+	@Override
+	public ChangeSet getChangeSet(EntityID toRepositoryID) {
+		assertNotNull("toRepositoryID", toRepositoryID);
+		ChangeSet changeSet = new ChangeSet();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 
 			// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
 			// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the
 			// next run.
-			changeSetResponse.setRepositoryDTO(toRepositoryDTO(localRepositoryDAO.getLocalRepositoryOrFail()));
+			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
+			changeSet.setRepositoryDTO(toRepositoryDTO(localRepository));
 
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(changeSetRequest.getClientRepositoryID());
-			Collection<Modification> modifications = modificationDAO.getModificationsAfter(remoteRepository, changeSetRequest.getServerRevision());
-			changeSetResponse.setModificationDTOs(toModificationDTOs(modifications));
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(toRepositoryID);
 
-			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(changeSetRequest.getServerRevision());
-			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO, changeSetRequest.getServerRevision());
-			changeSetResponse.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
+			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(toRemoteRepository);
+			if (lastSyncToRemoteRepo == null) {
+				lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
+				lastSyncToRemoteRepo.setRemoteRepository(toRemoteRepository);
+				lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
+			}
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
+			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
+
+			Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+			changeSet.setModificationDTOs(toModificationDTOs(modifications));
+
+			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO);
+			changeSet.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
 
 			transaction.commit();
-			return changeSetResponse;
+			return changeSet;
 		} finally {
 			transaction.rollbackIfActive();
 		}
@@ -127,14 +145,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public FileChunkSetResponse getFileChunkSet(FileChunkSetRequest fileChunkSetRequest) {
-		assertNotNull("fileChunkSetRequest", fileChunkSetRequest);
-		assertNotNull("fileChunkSetRequest.path", fileChunkSetRequest.getPath());
-		FileChunkSetResponse response = new FileChunkSetResponse();
-		response.setPath(fileChunkSetRequest.getPath());
+	public FileChunkSet getFileChunkSet(String path) {
+		assertNotNull("path", path);
+		FileChunkSet response = new FileChunkSet();
+		response.setPath(path);
 		final int bufLength = 32 * 1024;
 		final int chunkLength = 32 * bufLength; // 1 MiB chunk size
-		File file = getFile(fileChunkSetRequest.getPath());
+		File file = getFile(path);
 		try {
 			if (!file.isFile())
 				response.setFileExists(false);
@@ -236,7 +253,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repositoryDTO;
 	}
 
-	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO, long localRevision) {
+	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFiles", repoFiles);
 		Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = new HashMap<EntityID, RepoFileDTO>();
@@ -251,7 +268,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			while (rf != null) {
 				if (!entityID2RepoFileDTO.containsKey(rf.getEntityID())) {
-					entityID2RepoFileDTO.put(rf.getEntityID(), toRepoFileDTO(rf, repoFileDAO, localRevision));
+					entityID2RepoFileDTO.put(rf.getEntityID(), toRepoFileDTO(rf, repoFileDAO));
 				}
 				rf = rf.getParent();
 			}
@@ -259,7 +276,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return entityID2RepoFileDTO;
 	}
 
-	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO, long localRevision) {
+	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFile", repoFile);
 		RepoFileDTO repoFileDTO;
@@ -487,6 +504,37 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			file.setLastModified(lastModified.getTime());
 			localRepoSync.updateRepoFile(normalFile, file);
 			normalFile.setInProgress(false);
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
+	public void endSync(EntityID toRepositoryID) {
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		try {
+			PersistenceManager pm = transaction.getPersistenceManager();
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
+			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
+
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(toRepositoryID);
+
+			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
+			if (lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress() < 0)
+				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", toRepositoryID));
+
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
+
+			pm.flush(); // prevent problems caused by batching, deletion and foreign keys
+			for (Modification modification : modificationDAO.getObjects()) {
+				if (modification.getLocalRevision() <= lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced())
+					modificationDAO.deletePersistent(modification);
+			}
+			pm.flush();
 
 			transaction.commit();
 		} finally {

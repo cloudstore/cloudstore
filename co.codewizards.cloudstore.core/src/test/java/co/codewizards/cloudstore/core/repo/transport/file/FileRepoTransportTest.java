@@ -15,15 +15,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.AbstractTest;
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
+import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
+import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
+import co.codewizards.cloudstore.core.persistence.LocalRepository;
+import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.RemoteRepository;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -35,7 +41,7 @@ public class FileRepoTransportTest extends AbstractTest {
 	private EntityID remoteRepositoryID;
 	private File localRoot;
 	private EntityID localRepositoryID;
-	private ChangeSetResponse changeSetResponse1;
+	private ChangeSet changeSetResponse1;
 
 	@Test
 	public void getChangeSetForEntireRepository() throws Exception {
@@ -86,11 +92,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSetRequest changeSetRequest1 = new ChangeSetRequest();
-		changeSetRequest1.setClientRepositoryID(localRepositoryID);
-		changeSetRequest1.setServerRevision(-1);
-
-		changeSetResponse1 = repoTransport.getChangeSet(changeSetRequest1);
+		changeSetResponse1 = repoTransport.getChangeSet(localRepositoryID);
 		assertThat(changeSetResponse1).isNotNull();
 		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();
@@ -102,6 +104,22 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDTOs());
 		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
+
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		try {
+			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
+			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(localRepositoryID);
+			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
+			lastSyncToRemoteRepo.setRemoteRepository(toRemoteRepository);
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(localRepository.getRevision());
+			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
 
 		localRepoManager.close();
 	}
@@ -124,11 +142,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSetRequest changeSetRequest2 = new ChangeSetRequest();
-		changeSetRequest2.setClientRepositoryID(localRepositoryID);
-		changeSetRequest2.setServerRevision(changeSetResponse1.getRepositoryDTO().getRevision());
-
-		ChangeSetResponse changeSetResponse2 = repoTransport.getChangeSet(changeSetRequest2);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -167,11 +181,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSetRequest changeSetRequest2 = new ChangeSetRequest();
-		changeSetRequest2.setClientRepositoryID(localRepositoryID);
-		changeSetRequest2.setServerRevision(changeSetResponse1.getRepositoryDTO().getRevision());
-
-		ChangeSetResponse changeSetResponse2 = repoTransport.getChangeSet(changeSetRequest2);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -214,11 +224,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSetRequest changeSetRequest2 = new ChangeSetRequest();
-		changeSetRequest2.setClientRepositoryID(localRepositoryID);
-		changeSetRequest2.setServerRevision(changeSetResponse1.getRepositoryDTO().getRevision());
-
-		ChangeSetResponse changeSetResponse2 = repoTransport.getChangeSet(changeSetRequest2);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();

@@ -12,8 +12,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetRequest;
-import co.codewizards.cloudstore.core.dto.ChangeSetResponse;
+import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
@@ -33,14 +32,14 @@ public class ChangeSetService
 	}
 
 	@POST
-	@Path("{repositoryID}")
-	public ChangeSetResponse getChangeSet(@PathParam("repositoryID") EntityID repositoryID, ChangeSetRequest request)
+	@Path("{repositoryID}/{toRepositoryID}")
+	public ChangeSet getChangeSet(@PathParam("repositoryID") EntityID repositoryID, @PathParam("toRepositoryID") EntityID toRepositoryID)
 	{
 		URL repoURL = getRepositoryURL(repositoryID);
 		RepoTransportFactoryRegistry repoTransportRegistry = RepoTransportFactoryRegistry.getInstance();
 		RepoTransportFactory repoTransportFactory = repoTransportRegistry.getRepoTransportFactory(repoURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(repoURL);
-		ChangeSetResponse response = repoTransport.getChangeSet(request);
+		ChangeSet response = repoTransport.getChangeSet(toRepositoryID);
 		return response;
 	}
 

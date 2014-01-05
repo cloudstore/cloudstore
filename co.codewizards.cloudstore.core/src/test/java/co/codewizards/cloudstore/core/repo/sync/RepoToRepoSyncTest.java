@@ -237,7 +237,6 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		deleteFile(child_2);
 
-
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);

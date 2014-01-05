@@ -21,7 +21,12 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	public URL getRemoteRoot() {
 		return remoteRoot;
 	}
+	@Override
 	public void setRemoteRoot(URL remoteRoot) {
+		final URL rr = this.remoteRoot;
+		if (rr != null && !rr.equals(remoteRoot))
+			throw new IllegalStateException("Cannot re-assign remoteRoot!");
+
 		this.remoteRoot = remoteRoot;
 	}
 }

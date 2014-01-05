@@ -6,7 +6,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class ChangeSetResponse {
+public class ChangeSet {
 	private RepositoryDTO repositoryDTO;
 	private List<ModificationDTO> modificationDTOs;
 	private List<RepoFileDTO> repoFileDTOs;
