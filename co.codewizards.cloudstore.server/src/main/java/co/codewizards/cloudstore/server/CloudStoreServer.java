@@ -55,12 +55,12 @@ public class CloudStoreServer implements Runnable {
 	public static void main(String[] args) {
 		new CloudStoreServer().run();
 	}
-
+	
 	public CloudStoreServer() {
 		Provider provider = Security.getProvider("BC");
 		if (provider == null)
 			Security.addProvider(new BouncyCastleProvider());
-
+		
 		provider = Security.getProvider("BC");
 		if (provider == null)
 			throw new IllegalStateException("Registration of BouncyCastleProvider failed!");
