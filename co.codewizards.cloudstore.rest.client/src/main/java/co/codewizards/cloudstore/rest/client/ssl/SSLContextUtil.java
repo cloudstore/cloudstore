@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.client.ssl;
+package co.codewizards.cloudstore.rest.client.ssl;
 
 import java.io.File;
 

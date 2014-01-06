@@ -62,6 +62,7 @@ public class CloudStoreServer implements Runnable {
 	private SecureRandom random = new SecureRandom();
 	private int securePort;
 	private final AtomicBoolean running = new AtomicBoolean();
+	private Server server;
 
 	public static void main(String[] args) {
 		new CloudStoreServer().run();
@@ -84,15 +85,32 @@ public class CloudStoreServer implements Runnable {
 
 		try {
 			initKeyStore();
-			Server server = createServer();
-			server.start();
+			synchronized (this) {
+				server = createServer();
+				server.start();
+			}
+
 			server.join();
+
+			synchronized (this) {
+				server = null;
+			}
 		} catch (RuntimeException x) {
 			throw x;
 		} catch (Exception x) {
 			throw new RuntimeException(x);
 		} finally {
 			running.set(false);
+		}
+	}
+
+	public synchronized void stop() {
+		if (server != null) {
+			try {
+				server.stop();
+			} catch (Exception e) {
+				throw new RuntimeException();
+			}
 		}
 	}
 

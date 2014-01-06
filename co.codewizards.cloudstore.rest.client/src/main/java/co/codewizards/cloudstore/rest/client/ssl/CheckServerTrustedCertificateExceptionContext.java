@@ -1,18 +1,17 @@
-package co.codewizards.cloudstore.client.ssl;
+package co.codewizards.cloudstore.rest.client.ssl;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class CheckServerTrustedCertificateExceptionContext {
 
 	private X509Certificate[] certificateChain;
-	private CertificateException certificateException;
+	private Throwable error;
 
-	protected CheckServerTrustedCertificateExceptionContext(X509Certificate[] certificateChain, CertificateException certificateException) {
+	protected CheckServerTrustedCertificateExceptionContext(X509Certificate[] certificateChain, Throwable certificateException) {
 		this.certificateChain = assertNotNull("certificateChain", certificateChain);
-		this.certificateException = assertNotNull("certificateException", certificateException);
+		this.error = assertNotNull("error", certificateException);
 
 		if (certificateChain.length < 1)
 			throw new IllegalArgumentException("certificateChain is empty!");
@@ -22,7 +21,7 @@ public class CheckServerTrustedCertificateExceptionContext {
 		return certificateChain;
 	}
 
-	public CertificateException getCertificateException() {
-		return certificateException;
+	public Throwable getError() {
+		return error;
 	}
 }

@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.client.ssl;
+package co.codewizards.cloudstore.rest.client.ssl;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -22,6 +22,7 @@ import javax.net.ssl.X509TrustManager;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
 class DynamicX509TrustManager implements X509TrustManager {
+	private static final char[] TRUST_STORE_PASSWORD_CHAR_ARRAY = "CloudStore".toCharArray();
 	private final File trustStoreFile;
 	private final DynamicX509TrustManagerCallback callback;
 	private X509TrustManager trustManager;
@@ -46,14 +47,22 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 		try {
 			trustManager.checkServerTrusted(chain, authType);
-		} catch (CertificateException cx) {
+//		} catch (CertificateException cx) {
+		} catch (Exception cx) {
 			CheckServerTrustedCertificateExceptionResult result = callback.handleCheckServerTrustedCertificateException(
 					new CheckServerTrustedCertificateExceptionContext(chain, cx));
 			if (result == null)
 				throw new IllegalStateException("Implementation error: callback.handleCheckServerTrustedCertificateException(...) returned null! callback.class=" + callback.getClass().getName());
 
-			if (!result.isTrusted())
-				throw cx;
+			if (!result.isTrusted()) {
+				if (cx instanceof RuntimeException)
+					throw (RuntimeException)cx;
+
+				if (cx instanceof CertificateException)
+					throw (CertificateException)cx;
+
+				throw new RuntimeException(cx);
+			}
 
 			addServerCertAndReload(chain[0], result.isPermanent());
 			trustManager.checkServerTrusted(chain, authType);
@@ -131,7 +140,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 		try {
 			FileOutputStream out = new FileOutputStream(trustStoreFile);
 			try {
-				trustStore.store(out, null);
+				trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
 				out.close();
 			}

@@ -14,15 +14,15 @@
 	<dependencies>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.webapp</artifactId>
-			<type>war</type>
+			<artifactId>co.codewizards.cloudstore.client</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.rest.client</artifactId>
+			<artifactId>co.codewizards.cloudstore.server</artifactId>
 		</dependency>
 	</dependencies>
 
+<!--
 	<profiles>
 		<profile>
 			<id>test</id>
@@ -37,7 +37,6 @@
 					<plugin>
 						<groupId>org.mortbay.jetty</groupId>
 						<artifactId>jetty-maven-plugin</artifactId>
-						<!-- <version>8.1.0.RC2</version> -->
 						<configuration>
 							<war>${project.build.directory}/../../co.codewizards.cloudstore.webapp/target/co.codewizards.cloudstore.webapp-${cloudstore.version}.war</war>
 							<webAppConfig>
@@ -93,6 +92,7 @@
 			</build>
 		</profile>
 	</profiles>
+-->
 
 	<build>
 		<plugins>
