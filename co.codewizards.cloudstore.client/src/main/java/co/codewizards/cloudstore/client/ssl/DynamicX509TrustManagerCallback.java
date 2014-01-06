@@ -1,0 +1,7 @@
+package co.codewizards.cloudstore.client.ssl;
+
+public interface DynamicX509TrustManagerCallback {
+
+	CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(CheckServerTrustedCertificateExceptionContext context);
+
+}
