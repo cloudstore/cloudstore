@@ -182,8 +182,11 @@ public class CloudStoreServer implements Runnable {
 		ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
 
 		FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
-		ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
-		fos.close();
+		try {
+			ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
+		} finally {
+			fos.close();
+		}
 	}
 
 	private Server createServer() {

@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.rest.client;
 
 import java.util.LinkedList;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 
@@ -19,6 +21,7 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 public class CloudStoreRESTClient {
 
@@ -30,6 +33,10 @@ public class CloudStoreRESTClient {
 	private String baseURL;
 
 	private LinkedList<Client> clientCache = new LinkedList<Client>();
+
+	private boolean configFrozen;
+	private HostnameVerifier hostnameVerifier;
+	private SSLContext sslContext;
 
 	public CloudStoreRESTClient(String protocol, String host, int port)
 	{
@@ -72,6 +79,26 @@ public class CloudStoreRESTClient {
 		} finally {
 			releaseClient(client);
 		}
+	}
+
+	public synchronized HostnameVerifier getHostnameVerifier() {
+		return hostnameVerifier;
+	}
+	public synchronized void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+		if (configFrozen)
+			throw new IllegalStateException("Config already frozen! Cannot change hostnameVerifier anymore!");
+
+		this.hostnameVerifier = hostnameVerifier;
+	}
+
+	public synchronized SSLContext getSslContext() {
+		return sslContext;
+	}
+	public synchronized void setSslContext(SSLContext sslContext) {
+		if (configFrozen)
+			throw new IllegalStateException("Config already frozen! Cannot change sslContext anymore!");
+
+		this.sslContext = sslContext;
 	}
 
 	protected WebResource.Builder getResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
@@ -119,7 +146,18 @@ public class CloudStoreRESTClient {
 			ClientConfig clientConfig = new DefaultClientConfig(CloudStoreJaxbContextResolver.class);
 			clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_CONNECT_MS)); // must be a java.lang.Integer
 			clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_READ_MS)); // must be a java.lang.Integer
+
+			SSLContext sslContext = this.sslContext;
+			HostnameVerifier hostnameVerifier = this.hostnameVerifier;
+			if (sslContext != null) {
+				HTTPSProperties httpsProperties = new HTTPSProperties(hostnameVerifier, sslContext); // hostnameVerifier is optional
+				clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, httpsProperties);
+			}
+			else if (hostnameVerifier != null)
+				throw new IllegalStateException("sslContext must not be null, if hostnameVerifier is set!");
+
 			client = Client.create(clientConfig);
+			configFrozen = true;
 		}
 		return client;
 	}
