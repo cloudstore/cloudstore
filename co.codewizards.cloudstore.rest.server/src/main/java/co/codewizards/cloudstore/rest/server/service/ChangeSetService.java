@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -20,7 +22,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
-@Path("ChangeSet")
+@Path("{repositoryID}/ChangeSet")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
 public class ChangeSetService
@@ -31,11 +33,13 @@ public class ChangeSetService
 		logger.debug("<init>: created new instance");
 	}
 
-	@POST
-	@Path("{repositoryID}/{toRepositoryID}")
-	public ChangeSet getChangeSet(@PathParam("repositoryID") EntityID repositoryID, @PathParam("toRepositoryID") EntityID toRepositoryID)
+	private @PathParam("repositoryID") EntityID repositoryID;
+
+	@GET
+	@Path("{toRepositoryID}")
+	public ChangeSet getChangeSet(@PathParam("toRepositoryID") EntityID toRepositoryID)
 	{
-		URL repoURL = getRepositoryURL(repositoryID);
+		URL repoURL = getLocalRepositoryURL(repositoryID);
 		RepoTransportFactoryRegistry repoTransportRegistry = RepoTransportFactoryRegistry.getInstance();
 		RepoTransportFactory repoTransportFactory = repoTransportRegistry.getRepoTransportFactory(repoURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(repoURL);
@@ -43,8 +47,13 @@ public class ChangeSetService
 		return response;
 	}
 
-	private URL getRepositoryURL(EntityID repositoryID) {
+	private URL getLocalRepositoryURL(EntityID repositoryID) {
 		LocalRepoRegistry registry = LocalRepoRegistry.getInstance();
-		throw new UnsupportedOperationException("NYI");
+		File localRoot = registry.getLocalRootOrFail(repositoryID);
+		try {
+			return localRoot.toURI().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

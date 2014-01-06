@@ -104,6 +104,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private File assertValidLocalRoot(File localRoot) {
 		assertNotNull("localRoot", localRoot);
+		
+		if (!localRoot.isAbsolute()) 
+			throw new IllegalArgumentException("localRoot is not absolute.");
 
 		if (!localRoot.exists())
 			throw new FileNotFoundException(localRoot);

@@ -40,7 +40,7 @@ public class LocalRepoRegistryTest extends AbstractTest
 		assertThat(localRepoManager).isNotNull();
 		newEntityID2FileMap.put(localRepoManager2.getLocalRepositoryID(), localRoot2.getAbsoluteFile());
 		
-		Map<EntityID, File> existingRepositoryRegistryMap = LocalRepoRegistry.getInstance().getRepositoryID2FileMap();
+		Map<EntityID, File> existingRepositoryRegistryMap = LocalRepoRegistry.getInstance().getRepositoryID2LocalRootMap();
 		
 		Set<Entry<EntityID, File>> newEntrySet = newEntityID2FileMap.entrySet();
 		for (Entry<EntityID, File> newEntry : newEntrySet) {

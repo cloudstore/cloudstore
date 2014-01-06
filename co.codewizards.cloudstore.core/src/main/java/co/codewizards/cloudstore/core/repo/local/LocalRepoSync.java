@@ -55,7 +55,7 @@ public class LocalRepoSync {
 		// If the type changed - e.g. from normal file to directory - we must delete
 		// the old instance.
 		if (repoFile != null && !isRepoFileTypeCorrect(repoFile, file)) {
-			deleteRepoFile(repoFile);
+			deleteRepoFile(repoFile, false);
 			repoFile = null;
 		}
 
@@ -162,6 +162,10 @@ public class LocalRepoSync {
 	}
 
 	public void deleteRepoFile(RepoFile repoFile) {
+		deleteRepoFile(repoFile, true);
+	}
+	
+	private void deleteRepoFile(RepoFile repoFile, boolean createDeleteModifications) {
 		RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");
@@ -171,7 +175,8 @@ public class LocalRepoSync {
 		// We make sure, nothing interferes with our deletions (see comment below).
 		pm.flush();
 
-		createDeleteModifications(repoFile);
+		if (createDeleteModifications)
+			createDeleteModifications(repoFile);
 
 		deleteRepoFileWithAllChildrenRecursively(repoFile);
 

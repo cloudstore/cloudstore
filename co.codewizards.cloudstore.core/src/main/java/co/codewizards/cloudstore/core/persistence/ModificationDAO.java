@@ -27,4 +27,16 @@ public class ModificationDAO extends DAO<Modification, ModificationDAO> {
 			query.closeAll();
 		}
 	}
+	
+	public Collection<Modification> getModificationsBeforeOrEqual(RemoteRepository remoteRepository, long localRevision) {
+		assertNotNull("remoteRepository", remoteRepository);
+		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
+		try {
+			@SuppressWarnings("unchecked")
+			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
+			return new ArrayList<Modification>(modifications);
+		} finally {
+			query.closeAll();
+		}
+	}
 }

@@ -1,16 +1,21 @@
 package co.codewizards.cloudstore.rest.client;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
+import java.net.URL;
 import java.util.LinkedList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.rest.client.internal.PathSegment;
 import co.codewizards.cloudstore.rest.client.internal.QueryParameter;
 import co.codewizards.cloudstore.rest.client.internal.RelativePathPart;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
@@ -30,7 +35,7 @@ public class CloudStoreRESTClient {
 	private static final int TIMEOUT_SOCKET_CONNECT_MS = 10 * 1000; // TODO make timeout configurable
 	private static final int TIMEOUT_SOCKET_READ_MS = 90 * 1000; // TODO make timeout configurable
 
-	private String baseURL;
+	private final String baseURL;
 
 	private LinkedList<Client> clientCache = new LinkedList<Client>();
 
@@ -38,19 +43,18 @@ public class CloudStoreRESTClient {
 	private HostnameVerifier hostnameVerifier;
 	private SSLContext sslContext;
 
-	public CloudStoreRESTClient(String protocol, String host, int port)
+	public CloudStoreRESTClient(URL baseURL)
 	{
-		this(protocol, host, "co.codewizards.cloudstore.webapp", port);
+		this(assertNotNull("baseURL", baseURL).toExternalForm());
 	}
 
-	private CloudStoreRESTClient(String protocol, String host, String webAppName, int port)
+	public CloudStoreRESTClient(String baseURL)
 	{
-		this.baseURL = protocol + "://" + host + ":" + port + '/';
+		this.baseURL = appendFinalSlashIfNeeded(assertNotNull("baseURL", baseURL));
+	}
 
-		if (webAppName != null && !webAppName.isEmpty())
-			this.baseURL += webAppName + '/';
-
-//		this.baseURL += "CloudStoreREST/"; // Using the root of the web-app directly (no suffix).
+	private static String appendFinalSlashIfNeeded(String url) {
+		return url.endsWith("/") ? url : url + "/";
 	}
 
 	public void testSuccess() {
@@ -73,6 +77,20 @@ public class CloudStoreRESTClient {
 		try {
 			String response = getResource(client, "test?exception=true").accept(MediaType.TEXT_PLAIN).get(String.class);
 			throw new IllegalStateException("Server sent response instead of exception: " + response);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public ChangeSet getChangeSet(EntityID repositoryID, EntityID toRepositoryID) {
+		Client client = acquireClient();
+		try {
+			ChangeSet changeSet = getResourceBuilder(client, ChangeSet.class,
+					new PathSegment(repositoryID), new PathSegment(toRepositoryID)).get(ChangeSet.class);
+			return changeSet;
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
 			throw x; // we do not expect null

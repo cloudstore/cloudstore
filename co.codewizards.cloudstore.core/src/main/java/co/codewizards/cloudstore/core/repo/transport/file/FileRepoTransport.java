@@ -530,10 +530,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
 
 			pm.flush(); // prevent problems caused by batching, deletion and foreign keys
-			for (Modification modification : modificationDAO.getObjects()) {
-				if (modification.getLocalRevision() <= lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced())
-					modificationDAO.deletePersistent(modification);
-			}
+			Collection<Modification> modifications = modificationDAO.getModificationsBeforeOrEqual(
+					toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+			modificationDAO.deletePersistentAll(modifications);
 			pm.flush();
 
 			transaction.commit();

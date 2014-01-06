@@ -164,13 +164,26 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 
 	public <P extends E> P makePersistent(P entity)
 	{
+		assertNotNull("entity", entity);
 		logger.debug("makePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		return pm().makePersistent(entity);
 	}
 
 	public void deletePersistent(E entity)
 	{
+		assertNotNull("entity", entity);
 		logger.debug("deletePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		pm().deletePersistent(entity);
+	}
+	
+	public void deletePersistentAll(Collection<? extends E> entities)
+	{
+		assertNotNull("entities", entities);
+		if (logger.isDebugEnabled()) {
+			for (E entity : entities) {
+				logger.debug("deletePersistentAll: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
+			}
+		}
+		pm().deletePersistentAll(entities);
 	}
 }

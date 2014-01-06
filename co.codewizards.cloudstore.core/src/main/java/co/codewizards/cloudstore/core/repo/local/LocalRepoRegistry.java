@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -33,46 +35,76 @@ public class LocalRepoRegistry
 		return new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
 	}
 
-	private Map<EntityID, File> repositoryID2FileMap;
+	private Map<EntityID, File> repositoryID2LocalRootMap;
+	private Map<EntityID, File> repositoryID2LocalRootReadOnlyMap;
 
-	public synchronized Map<EntityID, File> getRepositoryID2FileMap() {
-		if (repositoryID2FileMap == null) {
-			repositoryID2FileMap = new HashMap<EntityID, File>();
-		}
+	public synchronized Map<EntityID, File> getRepositoryID2LocalRootMap() {
+		// TODO check that the properties file was not modified by another process!
+		Map<EntityID, File> repositoryID2LocalRootMap = this.repositoryID2LocalRootMap;
+		if (repositoryID2LocalRootMap == null) {
+			repositoryID2LocalRootMap = new HashMap<EntityID, File>();
 
-		try {
-		 	Properties props = PropertiesUtil.load(getRegistryFile());
-			Set<Entry<Object, Object>> entrySet = props.entrySet();
-			for (Entry<Object, Object> entry : entrySet) {
-				EntityID entityID = new EntityID(entry.getKey().toString());
-				File file = new File(entry.getValue().toString());
-				repositoryID2FileMap.put(entityID, file);
+			try {
+				Properties props = PropertiesUtil.load(getRegistryFile());
+				Set<Entry<Object, Object>> entrySet = props.entrySet();
+				for (Entry<Object, Object> entry : entrySet) {
+					EntityID entityID = new EntityID(entry.getKey().toString());
+					File file = new File(entry.getValue().toString());
+					repositoryID2LocalRootMap.put(entityID, file);
+				}
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
 			}
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
+
+			this.repositoryID2LocalRootMap = repositoryID2LocalRootMap;
 		}
-		return Collections.unmodifiableMap(repositoryID2FileMap);
+
+		Map<EntityID, File> result = this.repositoryID2LocalRootReadOnlyMap;
+		if (result == null) {
+			result = Collections.unmodifiableMap(new HashMap<EntityID, File>(repositoryID2LocalRootMap));
+			this.repositoryID2LocalRootReadOnlyMap = result;
+		}
+
+		return result;
 	}
 
-	public synchronized void registerRepository(EntityID repositoryID, File file) {
+	public File getLocalRoot(EntityID repositoryID) {
+		assertNotNull("repositoryID", repositoryID);
+		File localRoot = getRepositoryID2LocalRootMap().get(repositoryID);
+		return localRoot;
+	}
+
+	public File getLocalRootOrFail(EntityID repositoryID) {
+		File localRoot = getLocalRoot(repositoryID);
+		if (localRoot == null)
+			throw new IllegalArgumentException("Unknown repositoryID: " + repositoryID);
+
+		return localRoot;
+	}
+
+	public synchronized void registerRepository(EntityID repositoryID, File localRoot) {
+		assertNotNull("repositoryID", repositoryID);
+		assertNotNull("localRoot", localRoot);
+
+		if (!localRoot.isAbsolute())
+			throw new IllegalArgumentException("localRoot is not absolute.");
+
 		File registryFile = getRegistryFile();
 
+		// TODO prevent multiple processes from modifying the properties file simultaneously by employing a lock-file!
 		Properties props = new Properties();
 		try {
 			if (registryFile.exists())
 				props = PropertiesUtil.load(registryFile);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
 
-		props.put(repositoryID.toString(), file.getAbsolutePath());
-		
-		if (repositoryID2FileMap != null) {
-			repositoryID2FileMap.put(repositoryID, file);
-		}
-		
-		try {
-			PropertiesUtil.store(registryFile, props, "Repository List");
+			props.setProperty(repositoryID.toString(), localRoot.getPath());
+
+			if (repositoryID2LocalRootMap != null) {
+				repositoryID2LocalRootMap.put(repositoryID, localRoot);
+			}
+			repositoryID2LocalRootReadOnlyMap = null;
+
+			PropertiesUtil.store(registryFile, props, null);
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}

@@ -20,6 +20,7 @@ import javax.jdo.annotations.Query;
 })
 @Queries({
 	@Query(name="getModificationsAfter_remoteRepository_localRevision", value="SELECT WHERE this.remoteRepository == :remoteRepository && this.localRevision > :localRevision"),
+	@Query(name="getModificationsBeforeOrEqual_remoteRepository_localRevision", value="SELECT WHERE this.remoteRepository == :remoteRepository && this.localRevision <= :localRevision")
 })
 public abstract class Modification extends Entity implements AutoTrackLocalRevision {
 

@@ -10,7 +10,7 @@ import co.codewizards.cloudstore.rest.client.RemoteException;
 public class TestServiceIT {
 	private static final Logger logger = LoggerFactory.getLogger(TestServiceIT.class);
 
-	private CloudStoreRESTClient cloudStoreRESTClient = new CloudStoreRESTClient("http", "localhost", 4000);
+	private CloudStoreRESTClient cloudStoreRESTClient = new CloudStoreRESTClient("http://localhost:4000");
 
 	@Test
 	public void testSuccess() {
