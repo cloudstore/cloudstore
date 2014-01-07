@@ -134,6 +134,9 @@ public class LocalRepoRegistry
 		if (repositoryAlias.startsWith("_"))
 			throw new IllegalArgumentException("repositoryAlias must not start with '_': " + repositoryAlias);
 
+		if (repositoryAlias.indexOf('/') >= 0)
+			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
+
 		loadRepoRegistryIfNeeded();
 		getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
 		repoRegistryProperties.setProperty(getPropertyKey(repositoryAlias), repositoryID.toString());

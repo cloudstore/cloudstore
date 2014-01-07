@@ -14,7 +14,7 @@ import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolve
 import co.codewizards.cloudstore.rest.server.jersey.CloudStoreRESTProvider;
 import co.codewizards.cloudstore.rest.server.jersey.DAOProvider;
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
-import co.codewizards.cloudstore.rest.server.service.BrowseService;
+import co.codewizards.cloudstore.rest.server.service.WebDavService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
@@ -46,7 +46,7 @@ extends DefaultResourceConfig
 
 	private static final Set<Class<?>> classes = Collections.unmodifiableSet(new HashSet<Class<?>>(Arrays.asList(new Class<?>[] {
 			// BEGIN services
-			BrowseService.class,
+			WebDavService.class,
 			ChangeSetService.class,
 			RepositoryDTOService.class,
 			TestService.class,

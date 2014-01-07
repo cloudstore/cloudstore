@@ -179,13 +179,21 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void deleteFile(String repositoryName, String path) {
+	public void delete(String repositoryName, String path) {
 		Client client = acquireClient();
 		try {
-			getResourceBuilder(client, ChangeSet.class, new PathSegment(repositoryName), new PathSegment(path));
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 1);
+			relativePath.append(repositoryName);
+
+			if (!path.startsWith("/"))
+				relativePath.append('/');
+
+			relativePath.append(path);
+
+			getResource(client, relativePath.toString()).delete();
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
-			throw x; // we do not expect null
+			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
 		}

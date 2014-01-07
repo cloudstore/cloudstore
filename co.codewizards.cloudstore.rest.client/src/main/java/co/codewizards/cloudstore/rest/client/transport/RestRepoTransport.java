@@ -19,17 +19,10 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	private EntityID repositoryID;
 	private String repositoryName;
 	private CloudStoreRESTClient client;
-	private static volatile Class<? extends DynamicX509TrustManagerCallback> dynamicX509TrustManagerCallbackClass;
 
-	public static Class<? extends DynamicX509TrustManagerCallback> getDynamicX509TrustManagerCallbackClass() {
-		return dynamicX509TrustManagerCallbackClass;
-	}
-	public static void setDynamicX509TrustManagerCallbackClass(Class<? extends DynamicX509TrustManagerCallback> dynamicX509TrustManagerCallbackClass) {
-		RestRepoTransport.dynamicX509TrustManagerCallbackClass = dynamicX509TrustManagerCallbackClass;
-	}
-
-	protected static DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
-		Class<? extends DynamicX509TrustManagerCallback> klass = dynamicX509TrustManagerCallbackClass;
+	protected DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
+		RestRepoTransportFactory repoTransportFactory = (RestRepoTransportFactory) getRepoTransportFactory();
+		Class<? extends DynamicX509TrustManagerCallback> klass = repoTransportFactory.getDynamicX509TrustManagerCallbackClass();
 		if (klass == null)
 			throw new IllegalStateException("dynamicX509TrustManagerCallbackClass is not set!");
 
@@ -57,6 +50,12 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
+	public void requestConnection(EntityID remoteRepositoryID) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
 	public void close() {
 		client = null;
 	}
@@ -73,7 +72,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void delete(String path) {
-		getClient().deleteFile(getRepositoryID().toString(), path);
+		getClient().delete(getRepositoryID().toString(), path);
 	}
 
 	@Override

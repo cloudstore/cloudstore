@@ -34,6 +34,8 @@ import co.codewizards.cloudstore.core.persistence.Modification;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.Repository;
 import co.codewizards.cloudstore.core.persistence.Symlink;
@@ -104,8 +106,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private File assertValidLocalRoot(File localRoot) {
 		assertNotNull("localRoot", localRoot);
-		
-		if (!localRoot.isAbsolute()) 
+
+		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
 		if (!localRoot.exists())
@@ -228,6 +230,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		pm.getExtent(Modification.class);
 		pm.getExtent(NormalFile.class);
 		pm.getExtent(RemoteRepository.class);
+		pm.getExtent(RemoteRepositoryRequest.class);
 		pm.getExtent(Repository.class);
 		pm.getExtent(RepoFile.class);
 		pm.getExtent(Symlink.class);
@@ -423,6 +426,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			remoteRepository.setRemoteRoot(remoteRoot);
 
 			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
+
+			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getObjectByIdOrNull(repositoryID);
+			if (remoteRepositoryRequest != null)
+				remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
 
 			transaction.commit();
 		} finally {

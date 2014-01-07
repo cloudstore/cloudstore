@@ -19,6 +19,7 @@ import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateEx
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.transport.RestRepoTransport;
+import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
 
 public class RestRepoTransportIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransportIT.class);
@@ -32,14 +33,17 @@ public class RestRepoTransportIT extends AbstractIT {
 		}
 	}
 
+	private static RestRepoTransportFactory restRepoTransportFactory;
+
 	@BeforeClass
 	public static void beforeClass() {
-		RestRepoTransport.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
+		restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
 	}
 
 	@AfterClass
 	public static void afterClass() {
-		RestRepoTransport.setDynamicX509TrustManagerCallbackClass(null);
+		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
 	}
 
 	@Test

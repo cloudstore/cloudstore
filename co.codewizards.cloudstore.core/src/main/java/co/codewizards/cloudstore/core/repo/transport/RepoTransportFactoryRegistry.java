@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,5 +86,24 @@ public class RepoTransportFactoryRegistry {
 				return o1.getClass().getName().compareTo(o2.getClass().getName());
 			}
 		});
+	}
+
+	public <F extends RepoTransportFactory> F getRepoTransportFactoryOrFail(Class<F> factoryClass) {
+		F repoTransportFactory = getRepoTransportFactory(factoryClass);
+		if (repoTransportFactory == null)
+			throw new IllegalArgumentException("There is no factory registered implementing this interface or extending this class: " + factoryClass.getName());
+
+		return repoTransportFactory;
+	}
+
+	public <F extends RepoTransportFactory> F getRepoTransportFactory(Class<F> factoryClass) {
+		assertNotNull("factoryClass", factoryClass);
+		List<RepoTransportFactory> repoTransportFactories = getRepoTransportFactories();
+		for (RepoTransportFactory repoTransportFactory : repoTransportFactories) {
+			if (factoryClass.isInstance(repoTransportFactory)) {
+				return factoryClass.cast(repoTransportFactory);
+			}
+		}
+		return null;
 	}
 }

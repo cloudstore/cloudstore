@@ -43,6 +43,8 @@ import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -70,12 +72,39 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
+	public void requestConnection(EntityID remoteRepositoryID) {
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		try {
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(remoteRepositoryID);
+			if (remoteRepository != null)
+				throw new IllegalArgumentException("RemoteRepository already connected! remoteRepositoryID=" + remoteRepositoryID);
+
+			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getObjectByIdOrNull(remoteRepositoryID);
+			if (remoteRepositoryRequest != null) {
+				logger.info("RemoteRepository already requested to be connected. remoteRepositoryID={}", remoteRepositoryID);
+				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
+			}
+			else {
+				remoteRepositoryRequest = new RemoteRepositoryRequest(remoteRepositoryID);
+				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
+			}
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
 	public RepositoryDTO getRepositoryDTO() {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
 			RepositoryDTO repositoryDTO = toRepositoryDTO(localRepository);
+			transaction.commit();
 			return repositoryDTO;
 		} finally {
 			transaction.rollbackIfActive();
