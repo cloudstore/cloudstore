@@ -68,14 +68,12 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void makeDirectory(String path, Date lastModified) {
-		// TODO Auto-generated method stub
-
+		getClient().testSuccess();
 	}
 
 	@Override
 	public void delete(String path) {
-		// TODO Auto-generated method stub
-
+		getClient().deleteFile(getRepositoryID().toString(), path);
 	}
 
 	@Override

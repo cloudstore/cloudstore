@@ -179,6 +179,19 @@ public class CloudStoreRESTClient {
 		}
 	}
 
+	public void deleteFile(String repositoryName, String path) {
+		Client client = acquireClient();
+		try {
+			getResourceBuilder(client, ChangeSet.class, new PathSegment(repositoryName), new PathSegment(path));
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+
 	public synchronized HostnameVerifier getHostnameVerifier() {
 		return hostnameVerifier;
 	}
