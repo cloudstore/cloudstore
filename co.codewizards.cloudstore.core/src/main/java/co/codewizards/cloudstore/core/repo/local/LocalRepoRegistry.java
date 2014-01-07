@@ -131,6 +131,9 @@ public class LocalRepoRegistry
 		assertNotNull("repositoryAlias", repositoryAlias);
 		assertNotNull("repositoryID", repositoryID);
 
+		if (repositoryAlias.startsWith("_"))
+			throw new IllegalArgumentException("repositoryAlias must not start with '_': " + repositoryAlias);
+
 		loadRepoRegistryIfNeeded();
 		getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
 		repoRegistryProperties.setProperty(getPropertyKey(repositoryAlias), repositoryID.toString());

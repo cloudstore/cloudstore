@@ -28,7 +28,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 		RestRepoTransport.dynamicX509TrustManagerCallbackClass = dynamicX509TrustManagerCallbackClass;
 	}
 
-	protected DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
+	protected static DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
 		Class<? extends DynamicX509TrustManagerCallback> klass = dynamicX509TrustManagerCallbackClass;
 		if (klass == null)
 			throw new IllegalStateException("dynamicX509TrustManagerCallbackClass is not set!");
