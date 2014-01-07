@@ -125,7 +125,8 @@ public class RepoToRepoSync {
 
 			sync(fromRepoTransport, toRepoTransport, changeSet, new SubProgressMonitor(monitor, 90));
 
-			fromRepoTransport.endSync(toRepositoryID);
+			fromRepoTransport.endSyncFromRepository(toRepositoryID);
+			toRepoTransport.endSyncToRepository(changeSet.getRepositoryDTO().getEntityID(), changeSet.getRepositoryDTO().getRevision());
 			monitor.worked(2);
 		} finally {
 			monitor.done();
@@ -213,7 +214,7 @@ public class RepoToRepoSync {
 				fromFileChunksDirty.add(fromFileChunk);
 			}
 
-			toRepoTransport.beginFile(repoFileDTOTreeNode.getPath());
+			toRepoTransport.beginPutFile(repoFileDTOTreeNode.getPath());
 			monitor.worked(1);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
@@ -234,7 +235,7 @@ public class RepoToRepoSync {
 			}
 			subMonitor.done();
 
-			toRepoTransport.endFile(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
+			toRepoTransport.endPutFile(repoFileDTOTreeNode.getPath(), fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
 			monitor.worked(6);
 		} finally {
 			monitor.done();

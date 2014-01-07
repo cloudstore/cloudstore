@@ -91,7 +91,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void beginFile(String path) {
+	public void beginPutFile(String path) {
 		// TODO Auto-generated method stub
 
 	}
@@ -103,15 +103,20 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endFile(String path, Date lastModified, long length) {
+	public void endPutFile(String path, Date lastModified, long length) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void endSync(EntityID toRepositoryID) {
+	public void endSyncFromRepository(EntityID toRepositoryID) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision) {
+		// TODO Auto-generated method stub
 	}
 
 	protected CloudStoreRESTClient getClient() {

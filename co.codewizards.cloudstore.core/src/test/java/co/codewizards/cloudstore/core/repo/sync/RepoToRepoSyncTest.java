@@ -69,6 +69,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
+		logger.info("local repo: {}", localRepoManagerLocal.getLocalRepositoryID());
+		logger.info("remote repo: {}", localRepoManagerRemote.getLocalRepositoryID());
+
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();

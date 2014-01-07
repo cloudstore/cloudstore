@@ -74,35 +74,37 @@ public interface RepoTransport {
 	 * Begins a file transfer to this {@code RepoTransport}.
 	 * <p>
 	 * Usually, this method creates the specified file in the file system (if necessary with parent-directories)
-	 * and in the database. But this operation may be deferred until {@link #endFile(String, Date, long)}.
+	 * and in the database. But this operation may be deferred until {@link #endPutFile(String, Date, long)}.
 	 * <p>
 	 * If the file is immediately created, it should not be synchronised to any other repository, yet! It should
-	 * be ignored, until {@link #endFile(String, Date, long)} was called for it.
+	 * be ignored, until {@link #endPutFile(String, Date, long)} was called for it.
 	 * <p>
 	 * In normal operation, zero or more invocations of {@link #putFileData(String, long, byte[])} and
-	 * finally one invocation of {@link #endFile(String, Date, long)} follow this method. However, this is not
+	 * finally one invocation of {@link #endPutFile(String, Date, long)} follow this method. However, this is not
 	 * guaranteed and the file transfer may be interrupted. If it is resumed, later this method is called again,
-	 * without {@link #endFile(String, Date, long)} ever having been called inbetween.
+	 * without {@link #endPutFile(String, Date, long)} ever having been called inbetween.
 	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
 	 * @see #putFileData(String, long, byte[])
-	 * @see #endFile(String, Date, long)
+	 * @see #endPutFile(String, Date, long)
 	 */
-	void beginFile(String path);
+	void beginPutFile(String path);
 
 	/**
 	 * Write a block of binary data into the file.
 	 * <p>
-	 * This method may only be called after {@link #beginFile(String)} and before {@link #endFile(String, Date, long)}.
+	 * This method may only be called after {@link #beginPutFile(String)} and before {@link #endPutFile(String, Date, long)}.
 	 * @param offset the 0-based position in the file at which the block should be written.
-	 * @see #beginFile(String)
-	 * @see #endFile(String, Date, long)
+	 * @see #beginPutFile(String)
+	 * @see #endPutFile(String, Date, long)
 	 */
 	void putFileData(String path, long offset, byte[] fileData);
 
-	void endFile(String path, Date lastModified, long length);
+	void endPutFile(String path, Date lastModified, long length);
 
-	void endSync(EntityID toRepositoryID);
+	void endSyncFromRepository(EntityID toRepositoryID);
+
+	void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision);
 
 }

@@ -405,7 +405,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void beginFile(String path) {
+	public void beginPutFile(String path) {
 		File file = getFile(path);
 		File parentFile = file.getParentFile();
 		if (file.exists() && !file.isFile())
@@ -486,7 +486,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endFile(String path, Date lastModified, long length) {
+	public void endPutFile(String path, Date lastModified, long length) {
 		File file = getFile(assertNotNull("path", path));
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
@@ -525,7 +525,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endSync(EntityID toRepositoryID) {
+	public void endSyncFromRepository(EntityID toRepositoryID) {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			PersistenceManager pm = transaction.getPersistenceManager();
@@ -547,6 +547,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			modificationDAO.deletePersistentAll(modifications);
 			pm.flush();
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
+	public void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision) {
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		try {
+			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(fromRepositoryID);
+			remoteRepository.setRevision(fromLocalRevision);
 
 			transaction.commit();
 		} finally {
