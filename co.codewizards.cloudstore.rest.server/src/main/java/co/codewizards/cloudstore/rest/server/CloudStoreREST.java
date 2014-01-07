@@ -16,6 +16,7 @@ import co.codewizards.cloudstore.rest.server.jersey.DAOProvider;
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
 import co.codewizards.cloudstore.rest.server.service.BrowseService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetService;
+import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
@@ -47,6 +48,7 @@ extends DefaultResourceConfig
 			// BEGIN services
 			BrowseService.class,
 			ChangeSetService.class,
+			RepositoryDTOService.class,
 			TestService.class,
 			// END services
 

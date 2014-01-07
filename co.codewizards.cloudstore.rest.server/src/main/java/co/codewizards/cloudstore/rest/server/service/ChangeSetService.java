@@ -22,7 +22,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
-@Path("{repositoryID}/ChangeSet")
+@Path("_ChangeSet/{repositoryID}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
 public class ChangeSetService

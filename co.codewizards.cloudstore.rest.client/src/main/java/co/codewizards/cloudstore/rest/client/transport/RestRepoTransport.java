@@ -1,25 +1,59 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.Date;
 
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
+import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
+import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
+import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
 
 public class RestRepoTransport extends AbstractRepoTransport {
 
 	private EntityID repositoryID;
-	private URL baseURL;
+	private String repositoryName;
 	private CloudStoreRESTClient client;
+	private static volatile Class<? extends DynamicX509TrustManagerCallback> dynamicX509TrustManagerCallbackClass;
+
+	public static Class<? extends DynamicX509TrustManagerCallback> getDynamicX509TrustManagerCallbackClass() {
+		return dynamicX509TrustManagerCallbackClass;
+	}
+	public static void setDynamicX509TrustManagerCallbackClass(Class<? extends DynamicX509TrustManagerCallback> dynamicX509TrustManagerCallbackClass) {
+		RestRepoTransport.dynamicX509TrustManagerCallbackClass = dynamicX509TrustManagerCallbackClass;
+	}
+
+	protected DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
+		Class<? extends DynamicX509TrustManagerCallback> klass = dynamicX509TrustManagerCallbackClass;
+		if (klass == null)
+			throw new IllegalStateException("dynamicX509TrustManagerCallbackClass is not set!");
+
+		try {
+			DynamicX509TrustManagerCallback instance = klass.newInstance();
+			return instance;
+		} catch (Exception e) {
+			throw new RuntimeException(String.format("Could not instantiate class %s: %s", klass.getName(), e.toString()), e);
+		}
+	}
+
+	public RestRepoTransport() { }
 
 	@Override
 	public EntityID getRepositoryID() {
-		// TODO support repository-aliases! Do not expect the repositoryID to be in the remoteRoot! Ask the server instead!
+		if (repositoryID == null) {
+			repositoryID = getRepositoryDTO().getEntityID();
+		}
 		return repositoryID;
+	}
+
+	@Override
+	public RepositoryDTO getRepositoryDTO() {
+		return getClient().getRepositoryDTO(getRepositoryName());
 	}
 
 	@Override
@@ -29,7 +63,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public ChangeSet getChangeSet(EntityID toRepositoryID) {
-		return getClient().getChangeSet(getRepositoryID(), toRepositoryID);
+		return getClient().getChangeSet(getRepositoryID().toString(), toRepositoryID);
 	}
 
 	@Override
@@ -80,44 +114,45 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	}
 
-	public CloudStoreRESTClient getClient() {
-		if (client == null)
-			client = new CloudStoreRESTClient(getBaseURL());
-
+	protected CloudStoreRESTClient getClient() {
+		if (client == null) {
+			CloudStoreRESTClient c = new CloudStoreRESTClient(getRemoteRoot());
+			c.setHostnameVerifier(new HostnameVerifierAllowingAll());
+			try {
+				c.setSslContext(SSLContextUtil.getSSLContext(getRemoteRoot(), getDynamicX509TrustManagerCallback()));
+			} catch (GeneralSecurityException e) {
+				throw new RuntimeException(e);
+			}
+			client = c;
+		}
 		return client;
 	}
 
-	@Override
-	public void setRemoteRoot(URL remoteRoot) {
-		super.setRemoteRoot(remoteRoot);
-		baseURL = null;
-		repositoryID = null;
-		if (remoteRoot != null) {
-			String remoteRootString = remoteRoot.toString();
-			if (remoteRootString.indexOf('?') >= 0)
-				throw new IllegalStateException("remoteRoot must not contain query part (no '?')!");
+	protected String getRepositoryName() {
+		if (repositoryName == null) {
+			URL remoteRoot = getRemoteRoot();
+			if (remoteRoot == null)
+				throw new IllegalStateException("remoteRoot not yet assigned!");
 
-			if (remoteRootString.endsWith("/"))
-				remoteRootString = remoteRootString.substring(0, remoteRootString.length() - 1);
+			String baseURL = getClient().getBaseURL();
+			if (!baseURL.endsWith("/"))
+				throw new IllegalStateException(String.format("baseURL does not end with a '/'! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
 
-			int lastSlashIndex = remoteRootString.lastIndexOf('/');
-			if (lastSlashIndex < 0)
-				throw new IllegalStateException("remoteRoot does not contain a '/' before the repositoryName!");
+			String remoteRootString = remoteRoot.toExternalForm();
+			if (!remoteRootString.startsWith(baseURL))
+				throw new IllegalStateException(String.format("remoteRoot does not start with baseURL! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
 
-			// TODO support repository-aliases! Do not expect the repositoryID to be in the remoteRoot! Ask the server instead!
-			String repositoryIDString = remoteRootString.substring(lastSlashIndex + 1);
-			repositoryID = new EntityID(repositoryIDString);
-
-			String baseURLString = remoteRootString.substring(0, lastSlashIndex);
-			try {
-				baseURL = new URL(baseURLString);
-			} catch (MalformedURLException e) {
-				throw new RuntimeException(e);
+			String pathAfterBaseURL = remoteRootString.substring(baseURL.length());
+			int indexOfFirstSlash = pathAfterBaseURL.indexOf('/');
+			if (indexOfFirstSlash < 0) {
+				repositoryName = pathAfterBaseURL;
 			}
+			else {
+				repositoryName = pathAfterBaseURL.substring(indexOfFirstSlash);
+			}
+			if (repositoryName.isEmpty())
+				throw new IllegalStateException("repositoryName is empty!");
 		}
-	}
-
-	private URL getBaseURL() {
-		return baseURL;
+		return repositoryName;
 	}
 }

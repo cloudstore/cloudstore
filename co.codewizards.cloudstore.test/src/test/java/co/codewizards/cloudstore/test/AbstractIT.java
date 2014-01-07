@@ -1,5 +1,8 @@
 package co.codewizards.cloudstore.test;
 
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Timer;
@@ -9,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.server.CloudStoreServer;
 
@@ -31,7 +35,7 @@ public abstract class AbstractIT {
 	}
 
 	@BeforeClass
-	public static void beforeClass() {
+	public static void abstractIT_beforeClass() {
 		synchronized (cloudStoreServerMutex) {
 			if (cloudStoreServerStopTimerTask != null) {
 				cloudStoreServerStopTimerTask.cancel();
@@ -41,8 +45,8 @@ public abstract class AbstractIT {
 			if (cloudStoreServer == null) {
 				IOUtil.deleteDirectoryRecursively(ConfigDir.getInstance().getFile());
 
-				cloudStoreServer = new CloudStoreServer();
 				securePort = 1024 + 1 + random.nextInt(10240);
+				cloudStoreServer = new CloudStoreServer();
 				cloudStoreServer.setSecurePort(securePort);
 				cloudStoreServerThread = new Thread(cloudStoreServer);
 				cloudStoreServerThread.setName("cloudStoreServerThread");
@@ -71,7 +75,7 @@ public abstract class AbstractIT {
 	}
 
 	@AfterClass
-	public static void afterClass() {
+	public static void abstractIT_afterClass() {
 		synchronized (cloudStoreServerMutex) {
 			if (cloudStoreServerStopTimerTask == null) {
 				cloudStoreServerStopTimerTask = new TimerTask() {
@@ -89,6 +93,24 @@ public abstract class AbstractIT {
 				cloudStoreServerStopTimer.schedule(cloudStoreServerStopTimerTask, 60000L);
 			}
 		}
+	}
+
+	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
+//	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
+
+	protected File newTestRepositoryLocalRoot() throws IOException {
+		long timestamp = System.currentTimeMillis();
+		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
+		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36);
+		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+//		addToFilesInRepo(localRoot, localRoot);
+		return localRoot;
+	}
+
+	protected File getTestRepositoryBaseDir() {
+		File dir = new File(new File("target"), "repo");
+		dir.mkdirs();
+		return dir;
 	}
 
 }

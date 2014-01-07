@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.internal.PathSegment;
 import co.codewizards.cloudstore.rest.client.internal.QueryParameter;
 import co.codewizards.cloudstore.rest.client.internal.RelativePathPart;
@@ -35,7 +37,8 @@ public class CloudStoreRESTClient {
 	private static final int TIMEOUT_SOCKET_CONNECT_MS = 10 * 1000; // TODO make timeout configurable
 	private static final int TIMEOUT_SOCKET_READ_MS = 90 * 1000; // TODO make timeout configurable
 
-	private final String baseURL;
+	private final String url;
+	private String baseURL;
 
 	private LinkedList<Client> clientCache = new LinkedList<Client>();
 
@@ -43,24 +46,87 @@ public class CloudStoreRESTClient {
 	private HostnameVerifier hostnameVerifier;
 	private SSLContext sslContext;
 
-	public CloudStoreRESTClient(URL baseURL)
-	{
-		this(assertNotNull("baseURL", baseURL).toExternalForm());
+	/**
+	 * Get the server's base-URL.
+	 * <p>
+	 * This base-URL is the base of the <code>CloudStoreREST</code> application. Hence all URLs
+	 * beneath this base-URL are processed by the <code>CloudStoreREST</code> application.
+	 * <p>
+	 * In other words: All repository-names are located directly beneath this base-URL. The special services, too,
+	 * are located directly beneath this base-URL.
+	 * <p>
+	 * For example, if the server's base-URL is "https://host.domain:8443/", then the test-service is
+	 * available via "https://host.domain:8443/_test" and the repository with the alias "myrepo" is
+	 * "https://host.domain:8443/myrepo".
+	 * @return
+	 */
+	public synchronized String getBaseURL() {
+		if (baseURL == null) {
+			determineBaseURL();
+		}
+		return baseURL;
 	}
 
-	public CloudStoreRESTClient(String baseURL)
+	/**
+	 * Create a new client.
+	 * @param url any URL to the server. Must not be <code>null</code>.
+	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
+	 * The base-URL is automatically determined by cutting sub-paths, step by step.
+	 */
+	public CloudStoreRESTClient(URL url)
 	{
-		this.baseURL = appendFinalSlashIfNeeded(assertNotNull("baseURL", baseURL));
+		this(assertNotNull("url", url).toExternalForm());
+	}
+
+	/**
+	 * Create a new client.
+	 * @param url any URL to the server. Must not be <code>null</code>.
+	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
+	 * The base-URL is automatically determined by cutting sub-paths, step by step.
+	 */
+	public CloudStoreRESTClient(String url)
+	{
+		this.url = assertNotNull("url", url);
 	}
 
 	private static String appendFinalSlashIfNeeded(String url) {
 		return url.endsWith("/") ? url : url + "/";
 	}
 
+	private void determineBaseURL() {
+		Client client = acquireClient();
+		try {
+			String url = appendFinalSlashIfNeeded(this.url);
+			while (true) {
+				String testUrl = url + "_test";
+				try {
+					String response = client.resource(testUrl).accept(MediaType.TEXT_PLAIN).get(String.class);
+					if ("SUCCESS".equals(response)) {
+						baseURL = url;
+						break;
+					}
+				} catch (UniformInterfaceException x) { doNothing(); }
+
+				if (!url.endsWith("/"))
+					throw new IllegalStateException("url does not end with '/'!");
+
+				int secondLastSlashIndex = url.lastIndexOf('/', url.length() - 2);
+				url = url.substring(0, secondLastSlashIndex + 1);
+
+				if (StringUtil.getIndexesOf(url, '/').size() < 3)
+					throw new IllegalStateException("baseURL not found!");
+			}
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	private static final void doNothing() { }
+
 	public void testSuccess() {
 		Client client = acquireClient();
 		try {
-			String response = getResource(client, "test").accept(MediaType.TEXT_PLAIN).get(String.class);
+			String response = getResource(client, "_test").accept(MediaType.TEXT_PLAIN).get(String.class);
 			if (!"SUCCESS".equals(response)) {
 				throw new IllegalStateException("Server response invalid: " + response);
 			}
@@ -75,7 +141,7 @@ public class CloudStoreRESTClient {
 	public void testException() {
 		Client client = acquireClient();
 		try {
-			String response = getResource(client, "test?exception=true").accept(MediaType.TEXT_PLAIN).get(String.class);
+			String response = getResource(client, "_test?exception=true").accept(MediaType.TEXT_PLAIN).get(String.class);
 			throw new IllegalStateException("Server sent response instead of exception: " + response);
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
@@ -85,11 +151,25 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public ChangeSet getChangeSet(EntityID repositoryID, EntityID toRepositoryID) {
+	public RepositoryDTO getRepositoryDTO(String repositoryName) {
+		assertNotNull("repositoryName", repositoryName);
+		Client client = acquireClient();
+		try {
+			RepositoryDTO repositoryDTO = getResourceBuilder(client, RepositoryDTO.class, new PathSegment(repositoryName)).get(RepositoryDTO.class);
+			return repositoryDTO;
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public ChangeSet getChangeSet(String repositoryName, EntityID toRepositoryID) {
 		Client client = acquireClient();
 		try {
 			ChangeSet changeSet = getResourceBuilder(client, ChangeSet.class,
-					new PathSegment(repositoryID), new PathSegment(toRepositoryID)).get(ChangeSet.class);
+					new PathSegment(repositoryName), new PathSegment(toRepositoryID)).get(ChangeSet.class);
 			return changeSet;
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
@@ -127,7 +207,7 @@ public class CloudStoreRESTClient {
 	protected WebResource getResource(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
 	{
 		StringBuilder relativePath = new StringBuilder();
-		relativePath.append(dtoClass.getSimpleName());
+		relativePath.append('_').append(dtoClass.getSimpleName());
 		if (relativePathParts != null && relativePathParts.length > 0) {
 			boolean isFirstQueryParam = true;
 			for (RelativePathPart relativePathPart : relativePathParts) {
@@ -154,7 +234,7 @@ public class CloudStoreRESTClient {
 
 	protected WebResource getResource(Client client, String relativePath)
 	{
-		return client.resource(baseURL + relativePath);
+		return client.resource(getBaseURL() + relativePath);
 	}
 
 	private synchronized Client acquireClient()
@@ -209,4 +289,5 @@ public class CloudStoreRESTClient {
 
 		throw x;
 	}
+
 }

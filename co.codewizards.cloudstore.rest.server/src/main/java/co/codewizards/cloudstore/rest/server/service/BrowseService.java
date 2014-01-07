@@ -11,9 +11,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
-
-@Path("{repositoryID}/browse")
+@Path("{repositoryName:[^_/][^/]*}")
 public class BrowseService {
 	private static final Logger logger = LoggerFactory.getLogger(BrowseService.class);
 
@@ -21,7 +19,7 @@ public class BrowseService {
 		logger.debug("<init>: created new instance");
 	}
 
-	private @PathParam("repositoryID") EntityID repositoryID;
+	private @PathParam("repositoryName") String repositoryName;
 
 	@GET
 	@Produces(MediaType.WILDCARD)
@@ -36,7 +34,7 @@ public class BrowseService {
 		if (!assertNotNull("path", path).startsWith("/"))
 			path = "/" + path;
 
-		return String.format("RepositoryID: '%s'<br/>Path: '%s'", repositoryID, path);
+		return String.format("RepositoryName: '%s'<br/>Path: '%s'", repositoryName, path);
 	}
 
 }

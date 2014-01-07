@@ -7,6 +7,7 @@ import java.util.Date;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 
 public interface RepoTransport {
 
@@ -15,6 +16,8 @@ public interface RepoTransport {
 
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
+
+	RepositoryDTO getRepositoryDTO();
 
 	/**
 	 * Get the repository's unique ID.

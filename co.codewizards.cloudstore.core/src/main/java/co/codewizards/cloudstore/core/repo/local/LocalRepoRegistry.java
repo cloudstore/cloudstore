@@ -4,12 +4,9 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
-import java.util.Set;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -19,6 +16,8 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 public class LocalRepoRegistry
 {
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repositoryList.properties";
+	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryID:";
+	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
 
 
 	private static class LocalRepoRegistryHolder {
@@ -35,42 +34,88 @@ public class LocalRepoRegistry
 		return new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
 	}
 
-	private Map<EntityID, File> repositoryID2LocalRootMap;
-	private Map<EntityID, File> repositoryID2LocalRootReadOnlyMap;
+	private long repoRegistryFileLastModified;
+	private Properties repoRegistryProperties;
 
-	public synchronized Map<EntityID, File> getRepositoryID2LocalRootMap() {
-		// TODO check that the properties file was not modified by another process!
-		Map<EntityID, File> repositoryID2LocalRootMap = this.repositoryID2LocalRootMap;
-		if (repositoryID2LocalRootMap == null) {
-			repositoryID2LocalRootMap = new HashMap<EntityID, File>();
+	public synchronized EntityID getRepositoryID(String repositoryAlias) {
+		assertNotNull("repositoryAlias", repositoryAlias);
+		loadRepoRegistryIfNeeded();
+		String entityIDString = repoRegistryProperties.getProperty(getPropertyKey(repositoryAlias));
+		if (entityIDString == null)
+			return null;
 
-			try {
-				Properties props = PropertiesUtil.load(getRegistryFile());
-				Set<Entry<Object, Object>> entrySet = props.entrySet();
-				for (Entry<Object, Object> entry : entrySet) {
-					EntityID entityID = new EntityID(entry.getKey().toString());
-					File file = new File(entry.getValue().toString());
-					repositoryID2LocalRootMap.put(entityID, file);
-				}
-			} catch (Exception e) {
-				throw new IllegalStateException(e);
-			}
-
-			this.repositoryID2LocalRootMap = repositoryID2LocalRootMap;
-		}
-
-		Map<EntityID, File> result = this.repositoryID2LocalRootReadOnlyMap;
-		if (result == null) {
-			result = Collections.unmodifiableMap(new HashMap<EntityID, File>(repositoryID2LocalRootMap));
-			this.repositoryID2LocalRootReadOnlyMap = result;
-		}
-
-		return result;
+		EntityID entityID = new EntityID(entityIDString);
+		return entityID;
 	}
 
-	public File getLocalRoot(EntityID repositoryID) {
+	public EntityID getRepositoryIDOrFail(String repositoryAlias) {
+		EntityID repositoryID = getRepositoryID(repositoryAlias);
+		if (repositoryID == null)
+			throw new IllegalArgumentException("Unknown repositoryAlias: " + repositoryAlias);
+
+		return repositoryID;
+	}
+
+	public URL getLocalRootURLForRepositoryNameOrFail(String repositoryName) {
+		try {
+			return getLocalRootForRepositoryNameOrFail(repositoryName).toURI().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public synchronized URL getLocalRootURLForRepositoryName(String repositoryName) {
+		File localRoot = getLocalRootForRepositoryName(repositoryName);
+		if (localRoot == null)
+			return null;
+
+		try {
+			return localRoot.toURI().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public File getLocalRootForRepositoryNameOrFail(String repositoryName) {
+		File localRoot = getLocalRootForRepositoryName(repositoryName);
+		if (localRoot == null)
+			throw new IllegalArgumentException("Unknown repositoryName (neither a known repositoryAlias, nor a known repositoryID): " + repositoryName);
+
+		return localRoot;
+	}
+
+	/**
+	 * Get the local root for the given {@code repositoryName}.
+	 * @param repositoryName the String-representation of the repositoryID or
+	 * a repositoryAlias. Must not be <code>null</code>.
+	 * @return the repository's local root or <code>null</code>, if the given {@code repositoryName} is neither
+	 * a repositoryID nor a repositoryAlias known to this registry.
+	 */
+	public synchronized File getLocalRootForRepositoryName(String repositoryName) {
+		assertNotNull("repositoryName", repositoryName);
+
+		// If the repositoryName is an alias, this should find the corresponding repositoryID.
+		EntityID repositoryID = getRepositoryID(repositoryName);
+		if (repositoryID == null) {
+			// If it is not an alias, we try to parse it into an EntityID.
+			try {
+				repositoryID = new EntityID(repositoryName);
+			} catch (IllegalArgumentException x) {
+				// If it cannot be parsed into an entityID, it is an unknown alias.
+				return null;
+			}
+		}
+		return getLocalRoot(repositoryID);
+	}
+
+	public synchronized File getLocalRoot(EntityID repositoryID) {
 		assertNotNull("repositoryID", repositoryID);
-		File localRoot = getRepositoryID2LocalRootMap().get(repositoryID);
+		loadRepoRegistryIfNeeded();
+		String localRootString = repoRegistryProperties.getProperty(getPropertyKey(repositoryID));
+		if (localRootString == null)
+			return null;
+
+		File localRoot = new File(localRootString);
 		return localRoot;
 	}
 
@@ -82,6 +127,16 @@ public class LocalRepoRegistry
 		return localRoot;
 	}
 
+	public synchronized void registerRepositoryAlias(String repositoryAlias, EntityID repositoryID) {
+		assertNotNull("repositoryAlias", repositoryAlias);
+		assertNotNull("repositoryID", repositoryID);
+
+		loadRepoRegistryIfNeeded();
+		getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
+		repoRegistryProperties.setProperty(getPropertyKey(repositoryAlias), repositoryID.toString());
+		storeRepoRegistry();
+	}
+
 	public synchronized void registerRepository(EntityID repositoryID, File localRoot) {
 		assertNotNull("repositoryID", repositoryID);
 		assertNotNull("localRoot", localRoot);
@@ -89,22 +144,47 @@ public class LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
-		File registryFile = getRegistryFile();
-
 		// TODO prevent multiple processes from modifying the properties file simultaneously by employing a lock-file!
-		Properties props = new Properties();
+		loadRepoRegistryIfNeeded();
+		repoRegistryProperties.setProperty(getPropertyKey(repositoryID), localRoot.getPath());
+		storeRepoRegistry();
+	}
+
+	private String getPropertyKey(String repositoryAlias) {
+		return PROP_KEY_PREFIX_REPOSITORY_ALIAS + assertNotNull("repositoryAlias", repositoryAlias);
+	}
+
+	private String getPropertyKey(EntityID repositoryID) {
+		return PROP_KEY_PREFIX_REPOSITORY_ID + assertNotNull("repositoryID", repositoryID).toString();
+	}
+
+	private synchronized void loadRepoRegistryIfNeeded() {
+		if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
+			loadRepoRegistry();
+	}
+
+	private synchronized void loadRepoRegistry() {
 		try {
+			File registryFile = getRegistryFile();
 			if (registryFile.exists())
-				props = PropertiesUtil.load(registryFile);
+				repoRegistryProperties = PropertiesUtil.load(registryFile);
+			else
+				repoRegistryProperties = new Properties();
 
-			props.setProperty(repositoryID.toString(), localRoot.getPath());
+			repoRegistryFileLastModified = registryFile.lastModified();
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
-			if (repositoryID2LocalRootMap != null) {
-				repositoryID2LocalRootMap.put(repositoryID, localRoot);
-			}
-			repositoryID2LocalRootReadOnlyMap = null;
+	private synchronized void storeRepoRegistry() {
+		if (repoRegistryProperties == null)
+			throw new IllegalStateException("repoRegistryProperties not loaded, yet!");
 
-			PropertiesUtil.store(registryFile, props, null);
+		try {
+			File registryFile = getRegistryFile();
+			PropertiesUtil.store(registryFile, repoRegistryProperties, null);
+			repoRegistryFileLastModified = registryFile.lastModified();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}

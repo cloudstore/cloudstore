@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Path("test")
+@Path("_test")
 @Consumes(MediaType.WILDCARD)
 public class TestService
 {

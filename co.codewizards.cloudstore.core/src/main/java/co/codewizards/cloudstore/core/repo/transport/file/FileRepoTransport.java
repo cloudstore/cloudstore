@@ -70,6 +70,19 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
+	public RepositoryDTO getRepositoryDTO() {
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		try {
+			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
+			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
+			RepositoryDTO repositoryDTO = toRepositoryDTO(localRepository);
+			return repositoryDTO;
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
 	public ChangeSet getChangeSet(EntityID toRepositoryID) {
 		assertNotNull("toRepositoryID", toRepositoryID);
 		ChangeSet changeSet = new ChangeSet();
