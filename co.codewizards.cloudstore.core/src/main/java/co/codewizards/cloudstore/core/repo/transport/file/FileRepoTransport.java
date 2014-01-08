@@ -413,6 +413,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			RandomAccessFile raf = new RandomAccessFile(file, "r");
 			try {
 				raf.seek(offset);
+				if (length < 0) {
+					long l = raf.length() - offset;
+					if (l > Integer.MAX_VALUE)
+						throw new IllegalArgumentException(
+								String.format("The data to be read from file '%s' is too large (offset=%s length=%s limit=%s). You must specify a length (and optionally an offset) to read it partially.",
+										path, offset, length, Integer.MAX_VALUE));
+
+					length = (int) l;
+				}
 
 				byte[] bytes = new byte[length];
 				int off = 0;
@@ -517,6 +526,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void endPutFile(String path, Date lastModified, long length) {
 		File file = getFile(assertNotNull("path", path));
+		assertNotNull("lastModified", lastModified);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 

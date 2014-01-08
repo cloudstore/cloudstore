@@ -14,10 +14,15 @@ import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolve
 import co.codewizards.cloudstore.rest.server.jersey.CloudStoreRESTProvider;
 import co.codewizards.cloudstore.rest.server.jersey.DAOProvider;
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
-import co.codewizards.cloudstore.rest.server.service.WebDavService;
+import co.codewizards.cloudstore.rest.server.service.BeginPutFileService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetService;
+import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
+import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
+import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
+import co.codewizards.cloudstore.rest.server.service.FileChunkSetService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
+import co.codewizards.cloudstore.rest.server.service.WebDavService;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
 
@@ -46,10 +51,15 @@ extends DefaultResourceConfig
 
 	private static final Set<Class<?>> classes = Collections.unmodifiableSet(new HashSet<Class<?>>(Arrays.asList(new Class<?>[] {
 			// BEGIN services
-			WebDavService.class,
+			BeginPutFileService.class,
 			ChangeSetService.class,
+			EndPutFileService.class,
+			EndSyncFromRepositoryService.class,
+			EndSyncToRepositoryService.class,
+			FileChunkSetService.class,
 			RepositoryDTOService.class,
 			TestService.class,
+			WebDavService.class,
 			// END services
 
 			// BEGIN providers

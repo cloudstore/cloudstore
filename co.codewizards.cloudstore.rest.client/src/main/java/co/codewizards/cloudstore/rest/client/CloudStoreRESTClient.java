@@ -13,8 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.internal.PathSegment;
@@ -174,6 +176,140 @@ public class CloudStoreRESTClient {
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
 			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public FileChunkSet getFileChunkSet(String repositoryName, String path) {
+		Client client = acquireClient();
+		try {
+			FileChunkSet fileChunkSet = getResourceBuilder(client, FileChunkSet.class,
+					new PathSegment(repositoryName), new PathSegment(path)).get(FileChunkSet.class);
+			return fileChunkSet;
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // we do not expect null
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void beginPutFile(String repositoryName, String path) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
+			relativePath.append("_beginPutFile/");
+			relativePath.append(repositoryName);
+
+			if (!path.startsWith("/"))
+				relativePath.append('/');
+
+			relativePath.append(path);
+
+			getResource(client, relativePath.toString()).put(path);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void endSyncFromRepository(String repositoryName, EntityID fromRepositoryID) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
+			relativePath.append("_endSyncFromRepository/");
+			relativePath.append(repositoryName);
+
+			getResource(client, relativePath.toString()).put(fromRepositoryID);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void endSyncToRepository(String repositoryName, EntityID fromRepositoryID, long fromLocalRevision) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
+			relativePath.append("_endSyncToRepository/");
+			relativePath.append(repositoryName);
+			relativePath.append("?fromLocalRevision=").append(fromLocalRevision);
+
+			getResource(client, relativePath.toString()).put(fromRepositoryID);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
+			relativePath.append("_endPutFile/");
+			relativePath.append(repositoryName);
+
+			if (!path.startsWith("/"))
+				relativePath.append('/');
+
+			relativePath.append(path);
+			relativePath.append("?lastModified=").append(lastModified.toString());
+			relativePath.append("&length=").append(length);
+
+			getResource(client, relativePath.toString()).put(path);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public byte[] getFileData(String repositoryName, String path, long offset, int length) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 100);
+			relativePath.append(repositoryName);
+
+			if (!path.startsWith("/"))
+				relativePath.append('/');
+
+			relativePath.append(path);
+			relativePath.append("?offset=").append(offset);
+			relativePath.append("&length=").append(length);
+
+			return getResource(client, relativePath.toString()).get(byte[].class);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void putFileData(String repositoryName, String path, long offset, byte[] fileData) {
+		Client client = acquireClient();
+		try {
+			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
+			relativePath.append(repositoryName);
+
+			if (!path.startsWith("/"))
+				relativePath.append('/');
+
+			relativePath.append(path);
+			relativePath.append("?offset=").append(offset);
+
+			getResource(client, relativePath.toString()).put(fileData);
+		} catch (UniformInterfaceException x) {
+			handleUniformInterfaceException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
 		}

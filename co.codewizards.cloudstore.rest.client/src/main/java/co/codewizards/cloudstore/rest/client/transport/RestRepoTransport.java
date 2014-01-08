@@ -5,6 +5,7 @@ import java.security.GeneralSecurityException;
 import java.util.Date;
 
 import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
@@ -77,43 +78,37 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public FileChunkSet getFileChunkSet(String path) {
-		// TODO Auto-generated method stub
-		return null;
+		return getClient().getFileChunkSet(getRepositoryID().toString(), path);
 	}
 
 	@Override
 	public byte[] getFileData(String path, long offset, int length) {
-		// TODO Auto-generated method stub
-		return null;
+		return getClient().getFileData(getRepositoryID().toString(), path, offset, length);
 	}
 
 	@Override
 	public void beginPutFile(String path) {
-		// TODO Auto-generated method stub
-
+		getClient().beginPutFile(getRepositoryID().toString(), path);
 	}
 
 	@Override
 	public void putFileData(String path, long offset, byte[] fileData) {
-		// TODO Auto-generated method stub
-
+		getClient().putFileData(getRepositoryID().toString(), path, offset, fileData);
 	}
 
 	@Override
 	public void endPutFile(String path, Date lastModified, long length) {
-		// TODO Auto-generated method stub
-
+		getClient().endPutFile(getRepositoryID().toString(), path,new DateTime(lastModified), length);
 	}
 
 	@Override
-	public void endSyncFromRepository(EntityID toRepositoryID) {
-		// TODO Auto-generated method stub
-
+	public void endSyncFromRepository(EntityID fromRepositoryID) {
+		getClient().endSyncFromRepository(getRepositoryID().toString(), fromRepositoryID);
 	}
 
 	@Override
 	public void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision) {
-		// TODO Auto-generated method stub
+		getClient().endSyncToRepository(getRepositoryID().toString(), fromRepositoryID, fromLocalRevision);
 	}
 
 	protected CloudStoreRESTClient getClient() {

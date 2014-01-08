@@ -71,8 +71,11 @@ public interface RepoTransport {
 	 * <p>
 	 * If the file was modified/deleted, this method should not fail, but simply return <code>null</code>
 	 * or a result being shorter than the {@code length} specified.
-	 * @param length the length of the data to be read.
+	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
+	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
+	 * It is always relative to the repository's root directory.
 	 * @param offset the offset of the first byte to be read (0-based).
+	 * @param length the length of the data to be read. -1 to read from {@code offset} to the end of the file.
 	 */
 	byte[] getFileData(String path, long offset, int length);
 
