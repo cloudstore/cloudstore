@@ -33,7 +33,7 @@ public class EndSyncFromRepositoryService
 	private @PathParam("repositoryName") String repositoryName;
 
 	@PUT
-	@Path("{path:.*}")
+	@Path("{fromRepositoryID}")
 	public void endSyncFromRepository(@PathParam("fromRepositoryID") EntityID fromRepositoryID)
 	{
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);

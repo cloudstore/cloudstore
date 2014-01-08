@@ -222,8 +222,9 @@ public class CloudStoreRESTClient {
 			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
 			relativePath.append("_endSyncFromRepository/");
 			relativePath.append(repositoryName);
+			relativePath.append('/').append(fromRepositoryID);
 
-			getResource(client, relativePath.toString()).put(fromRepositoryID);
+			getResource(client, relativePath.toString()).put();
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
@@ -238,9 +239,10 @@ public class CloudStoreRESTClient {
 			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
 			relativePath.append("_endSyncToRepository/");
 			relativePath.append(repositoryName);
+			relativePath.append('/').append(fromRepositoryID);
 			relativePath.append("?fromLocalRevision=").append(fromLocalRevision);
 
-			getResource(client, relativePath.toString()).put(fromRepositoryID);
+			getResource(client, relativePath.toString()).put();
 		} catch (UniformInterfaceException x) {
 			handleUniformInterfaceException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
