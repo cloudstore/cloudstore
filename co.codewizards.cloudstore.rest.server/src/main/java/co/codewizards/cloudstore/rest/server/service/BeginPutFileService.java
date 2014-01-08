@@ -5,7 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-//import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -33,7 +32,7 @@ public class BeginPutFileService
 
 	private @PathParam("repositoryName") String repositoryName;
 
-	@PUT
+	@POST
 	@Path("{path:.*}")
 	public void beginPutFile(@PathParam("path") String path)
 	{

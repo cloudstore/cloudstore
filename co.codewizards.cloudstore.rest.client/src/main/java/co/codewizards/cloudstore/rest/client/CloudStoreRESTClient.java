@@ -3,12 +3,22 @@ package co.codewizards.cloudstore.rest.client;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.LinkedList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.ResponseProcessingException;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
+import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,18 +29,7 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.util.StringUtil;
-import co.codewizards.cloudstore.rest.client.internal.PathSegment;
-import co.codewizards.cloudstore.rest.client.internal.QueryParameter;
-import co.codewizards.cloudstore.rest.client.internal.RelativePathPart;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
-
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 public class CloudStoreRESTClient {
 
@@ -45,6 +44,7 @@ public class CloudStoreRESTClient {
 	private LinkedList<Client> clientCache = new LinkedList<Client>();
 
 	private boolean configFrozen;
+
 	private HostnameVerifier hostnameVerifier;
 	private SSLContext sslContext;
 
@@ -102,12 +102,12 @@ public class CloudStoreRESTClient {
 			while (true) {
 				String testUrl = url + "_test";
 				try {
-					String response = client.resource(testUrl).accept(MediaType.TEXT_PLAIN).get(String.class);
+					String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
 					if ("SUCCESS".equals(response)) {
 						baseURL = url;
 						break;
 					}
-				} catch (UniformInterfaceException x) { doNothing(); }
+				} catch (WebApplicationException x) { doNothing(); }
 
 				if (!url.endsWith("/"))
 					throw new IllegalStateException("url does not end with '/'!");
@@ -128,12 +128,12 @@ public class CloudStoreRESTClient {
 	public void testSuccess() {
 		Client client = acquireClient();
 		try {
-			String response = getResource(client, "_test").accept(MediaType.TEXT_PLAIN).get(String.class);
+			String response = client.target(getBaseURL()).path("_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			if (!"SUCCESS".equals(response)) {
 				throw new IllegalStateException("Server response invalid: " + response);
 			}
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
@@ -143,13 +143,31 @@ public class CloudStoreRESTClient {
 	public void testException() {
 		Client client = acquireClient();
 		try {
-			String response = getResource(client, "_test?exception=true").accept(MediaType.TEXT_PLAIN).get(String.class);
+			Response response = client.target(getBaseURL()).path("_test").queryParam("exception", true).request().get();
+			assertResponseIndicatesSuccess(response);
 			throw new IllegalStateException("Server sent response instead of exception: " + response);
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
+		}
+	}
+
+	private void assertResponseIndicatesSuccess(Response response) {
+		if (400 <= response.getStatus() && response.getStatus() <= 599) {
+			response.bufferEntity();
+			if (response.hasEntity()) {
+				Error error = null;
+				try {
+					error = response.readEntity(Error.class);
+				} catch (Exception y) {
+					logger.error("handleException: " + y, y);
+				}
+				if (error != null)
+					throw new RemoteException(error);
+			}
+			throw new WebApplicationException(response);
 		}
 	}
 
@@ -157,24 +175,35 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			RepositoryDTO repositoryDTO = getResourceBuilder(client, RepositoryDTO.class, new PathSegment(repositoryName)).get(RepositoryDTO.class);
+			RepositoryDTO repositoryDTO = client.target(getBaseURL())
+					.path(getPath(RepositoryDTO.class))
+					.path(repositoryName)
+					.request().get(RepositoryDTO.class);
 			return repositoryDTO;
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
 		}
 	}
 
+	private String getPath(Class<?> dtoClass) {
+		return "_" + dtoClass.getSimpleName();
+	}
+
 	public ChangeSet getChangeSet(String repositoryName, EntityID toRepositoryID) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			ChangeSet changeSet = getResourceBuilder(client, ChangeSet.class,
-					new PathSegment(repositoryName), new PathSegment(toRepositoryID)).get(ChangeSet.class);
+			ChangeSet changeSet = client.target(getBaseURL())
+					.path(getPath(ChangeSet.class))
+					.path(repositoryName)
+					.path(toRepositoryID.toString())
+					.request(MediaType.APPLICATION_XML).get(ChangeSet.class);
 			return changeSet;
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
@@ -182,13 +211,17 @@ public class CloudStoreRESTClient {
 	}
 
 	public FileChunkSet getFileChunkSet(String repositoryName, String path) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			FileChunkSet fileChunkSet = getResourceBuilder(client, FileChunkSet.class,
-					new PathSegment(repositoryName), new PathSegment(path)).get(FileChunkSet.class);
+			FileChunkSet fileChunkSet = client.target(getBaseURL())
+					.path(getPath(FileChunkSet.class))
+					.path(repositoryName)
+					.path(removeLeadingAndTrailingSlashes(path))
+					.request(MediaType.APPLICATION_XML).get(FileChunkSet.class);
 			return fileChunkSet;
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // we do not expect null
 		} finally {
 			releaseClient(client);
@@ -196,20 +229,17 @@ public class CloudStoreRESTClient {
 	}
 
 	public void beginPutFile(String repositoryName, String path) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
-			relativePath.append("_beginPutFile/");
-			relativePath.append(repositoryName);
-
-			if (!path.startsWith("/"))
-				relativePath.append('/');
-
-			relativePath.append(path);
-
-			getResource(client, relativePath.toString()).put(path);
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = client.target(getBaseURL())
+			.path("_beginPutFile")
+			.path(repositoryName)
+			.path(removeLeadingAndTrailingSlashes(path))
+			.request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -217,16 +247,17 @@ public class CloudStoreRESTClient {
 	}
 
 	public void endSyncFromRepository(String repositoryName, EntityID fromRepositoryID) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
-			relativePath.append("_endSyncFromRepository/");
-			relativePath.append(repositoryName);
-			relativePath.append('/').append(fromRepositoryID);
-
-			getResource(client, relativePath.toString()).put();
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = client.target(getBaseURL())
+			.path("_endSyncFromRepository")
+			.path(repositoryName)
+			.path(fromRepositoryID.toString())
+			.request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -234,17 +265,21 @@ public class CloudStoreRESTClient {
 	}
 
 	public void endSyncToRepository(String repositoryName, EntityID fromRepositoryID, long fromLocalRevision) {
+		assertNotNull("repositoryName", repositoryName);
+		if (fromLocalRevision < 0)
+			throw new IllegalArgumentException("fromLocalRevision < 0");
+
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + 80);
-			relativePath.append("_endSyncToRepository/");
-			relativePath.append(repositoryName);
-			relativePath.append('/').append(fromRepositoryID);
-			relativePath.append("?fromLocalRevision=").append(fromLocalRevision);
-
-			getResource(client, relativePath.toString()).put();
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = client.target(getBaseURL())
+			.path("_endSyncToRepository")
+			.path(repositoryName)
+			.path(fromRepositoryID.toString())
+			.queryParam("fromLocalRevision", fromLocalRevision)
+			.request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -252,22 +287,19 @@ public class CloudStoreRESTClient {
 	}
 
 	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
-			relativePath.append("_endPutFile/");
-			relativePath.append(repositoryName);
-
-			if (!path.startsWith("/"))
-				relativePath.append('/');
-
-			relativePath.append(path);
-			relativePath.append("?lastModified=").append(lastModified.toString());
-			relativePath.append("&length=").append(length);
-
-			getResource(client, relativePath.toString()).put(path);
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = client.target(getBaseURL())
+			.path("_endPutFile")
+			.path(repositoryName)
+			.path(removeLeadingAndTrailingSlashes(path))
+			.queryParam("lastModified", lastModified.toString())
+			.queryParam("length",length)
+			.request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -275,21 +307,20 @@ public class CloudStoreRESTClient {
 	}
 
 	public byte[] getFileData(String repositoryName, String path, long offset, int length) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 100);
-			relativePath.append(repositoryName);
+			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
 
-			if (!path.startsWith("/"))
-				relativePath.append('/');
+			if (offset > 0) // defaults to 0
+				webTarget = webTarget.queryParam("offset", offset);
 
-			relativePath.append(path);
-			relativePath.append("?offset=").append(offset);
-			relativePath.append("&length=").append(length);
+			if (length >= 0) // defaults to -1 meaning "all"
+				webTarget = webTarget.queryParam("length", length);
 
-			return getResource(client, relativePath.toString()).get(byte[].class);
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			return webTarget.request(MediaType.APPLICATION_OCTET_STREAM).get(byte[].class);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -297,20 +328,20 @@ public class CloudStoreRESTClient {
 	}
 
 	public void putFileData(String repositoryName, String path, long offset, byte[] fileData) {
+		assertNotNull("repositoryName", repositoryName);
+		assertNotNull("path", path);
+		assertNotNull("fileData", fileData);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 80);
-			relativePath.append(repositoryName);
+			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
 
-			if (!path.startsWith("/"))
-				relativePath.append('/');
+			if (offset > 0)
+				webTarget = webTarget.queryParam("offset", offset);
 
-			relativePath.append(path);
-			relativePath.append("?offset=").append(offset);
-
-			getResource(client, relativePath.toString()).put(fileData);
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = webTarget.request().put(Entity.entity(fileData, MediaType.APPLICATION_OCTET_STREAM));
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
@@ -318,25 +349,82 @@ public class CloudStoreRESTClient {
 	}
 
 	public void delete(String repositoryName, String path) {
+		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			StringBuilder relativePath = new StringBuilder(repositoryName.length() + path.length() + 1);
-			relativePath.append(repositoryName);
-
-			if (!path.startsWith("/"))
-				relativePath.append('/');
-
-			relativePath.append(path);
-
-			getResource(client, relativePath.toString()).delete();
-		} catch (UniformInterfaceException x) {
-			handleUniformInterfaceException(x);
+			Response response = client.target(getBaseURL())
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
+					.request().delete();
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
 			releaseClient(client);
 		}
 	}
 
+	public void localSync(String repositoryName) {
+		assertNotNull("repositoryName", repositoryName);
+		Client client = acquireClient();
+		try {
+			Response response = client.target(getBaseURL()).path("_localSync").path(repositoryName).request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void makeDirectory(String repositoryName, String path, Date lastModified) {
+		assertNotNull("repositoryName", repositoryName);
+		assertNotNull("path", path);
+		Client client = acquireClient();
+		try {
+//			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlash(path));
+//
+//			if (lastModified != null)
+//				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
+//
+//			Response response = webTarget.request().method("MKCOL");
+//			assertResponseIndicatesSuccess(response);
+
+			// The HTTP verb "MKCOL" is not yet supported by Jersey (and not even the unterlying HTTP client)
+			// by default. We first have to add this. This will be done later (for the WebDAV support). For
+			// now, we'll use the alternative MakeDirectoryService.
+
+			WebTarget webTarget = client.target(getBaseURL())
+					.path("_makeDirectory")
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
+
+			if (lastModified != null)
+				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
+
+			Response response = webTarget.request().post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	private String removeLeadingAndTrailingSlashes(String path) {
+		if (path == null)
+			return null;
+
+		String result = path;
+		while (result.startsWith("/"))
+			result = result.substring(1);
+
+		while (result.endsWith("/"))
+			result = result.substring(0, result.length() - 1);
+
+		return result;
+	}
 
 	public synchronized HostnameVerifier getHostnameVerifier() {
 		return hostnameVerifier;
@@ -358,62 +446,57 @@ public class CloudStoreRESTClient {
 		this.sslContext = sslContext;
 	}
 
-	protected WebResource.Builder getResourceBuilder(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
-	{
-		return getResource(client, dtoClass, relativePathParts).accept(MediaType.APPLICATION_XML_TYPE);
-	}
-
-	protected WebResource getResource(Client client, Class<?> dtoClass, RelativePathPart ... relativePathParts)
-	{
-		StringBuilder relativePath = new StringBuilder();
-		relativePath.append('_').append(dtoClass.getSimpleName());
-		if (relativePathParts != null && relativePathParts.length > 0) {
-			boolean isFirstQueryParam = true;
-			for (RelativePathPart relativePathPart : relativePathParts) {
-				if (relativePathPart == null)
-					continue;
-
-				if (relativePathPart instanceof PathSegment) {
-					relativePath.append('/');
-				}
-				else if (relativePathPart instanceof QueryParameter) {
-					if (isFirstQueryParam) {
-						isFirstQueryParam = false;
-						relativePath.append('?');
-					}
-					else
-						relativePath.append('&');
-				}
-
-				relativePath.append(relativePathPart.toString());
-			}
-		}
-		return getResource(client, relativePath.toString());
-	}
-
-	protected WebResource getResource(Client client, String relativePath)
-	{
-		return client.resource(getBaseURL() + relativePath);
-	}
-
 	private synchronized Client acquireClient()
 	{
 		Client client = clientCache.poll();
 		if (client == null) {
-			ClientConfig clientConfig = new DefaultClientConfig(CloudStoreJaxbContextResolver.class);
-			clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_CONNECT_MS)); // must be a java.lang.Integer
-			clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_READ_MS)); // must be a java.lang.Integer
-
 			SSLContext sslContext = this.sslContext;
 			HostnameVerifier hostnameVerifier = this.hostnameVerifier;
-			if (sslContext != null) {
-				HTTPSProperties httpsProperties = new HTTPSProperties(hostnameVerifier, sslContext); // hostnameVerifier is optional
-				clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, httpsProperties);
-			}
-			else if (hostnameVerifier != null)
-				throw new IllegalStateException("sslContext must not be null, if hostnameVerifier is set!");
+//			X509HostnameVerifier x509HostnameVerifier = this.x509HostnameVerifier;
 
-			client = Client.create(clientConfig);
+
+//			ClientConfig clientConfig = new DefaultClientConfig(CloudStoreJaxbContextResolver.class);
+//			clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_CONNECT_MS)); // must be a java.lang.Integer
+//			clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_READ_MS)); // must be a java.lang.Integer
+//
+//			if (sslContext != null) {
+//				HTTPSProperties httpsProperties = new HTTPSProperties(hostnameVerifier, sslContext); // hostnameVerifier is optional
+//				clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, httpsProperties);
+//			}
+//			else if (hostnameVerifier != null)
+//				throw new IllegalStateException("sslContext must not be null, if hostnameVerifier is set!");
+//
+//			client = Client.create(clientConfig);
+
+//			RequestConfig defaultRequestConfig = RequestConfig.custom()
+//				    .setSocketTimeout(TIMEOUT_SOCKET_READ_MS)
+//				    .setConnectTimeout(TIMEOUT_SOCKET_CONNECT_MS)
+//				    .setConnectionRequestTimeout(TIMEOUT_SOCKET_READ_MS)
+//				    .setStaleConnectionCheckEnabled(true)
+//				    .build();
+//
+//			HttpClientBuilder httpClientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(defaultRequestConfig);
+//
+//			if (sslContext != null)
+//				httpClientBuilder.setSslcontext(sslContext);
+//
+//			if (x509HostnameVerifier != null)
+//				httpClientBuilder.setHostnameVerifier(x509HostnameVerifier);
+//
+//			HttpClient apacheClient = httpClientBuilder.build();
+//			client = new Client(new ApacheConnectorProvider(apacheClient, new BasicCookieStore(), true));
+
+			Configuration clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
+			ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
+
+			if (sslContext != null)
+				clientBuilder.sslContext(sslContext);
+
+			if (hostnameVerifier != null)
+				clientBuilder.hostnameVerifier(hostnameVerifier);
+
+			client = clientBuilder.build();
+
 			configFrozen = true;
 		}
 		return client;
@@ -424,23 +507,30 @@ public class CloudStoreRESTClient {
 		clientCache.add(client);
 	}
 
-	private void handleUniformInterfaceException(UniformInterfaceException x)
+	private void handleException(RuntimeException x)
 	{
+		Response response = null;
+		if (x instanceof WebApplicationException)
+			response = ((WebApplicationException)x).getResponse();
+		else if (x instanceof ResponseProcessingException)
+			response = ((WebApplicationException)x).getResponse();
+
+		if (response == null)
+			throw x;
+
 		// Instead of returning null, jersey throws a com.sun.jersey.api.client.UniformInterfaceException
 		// when the server does not send a result. We therefore check for the result code 204 here.
-		if (ClientResponse.Status.NO_CONTENT == x.getResponse().getClientResponseStatus())
+		if (Response.Status.NO_CONTENT.getStatusCode() == response.getStatus())
 			return;
 
-		logger.error("handleUniformInterfaceException: " + x, x);
+		logger.error("handleException: " + x, x);
 		Error error = null;
 		try {
-			ClientResponse clientResponse = x.getResponse();
-
-			clientResponse.bufferEntity();
-			if (clientResponse.hasEntity())
-				error = clientResponse.getEntity(Error.class);
+			response.bufferEntity();
+			if (response.hasEntity())
+				error = response.readEntity(Error.class);
 		} catch (Exception y) {
-			logger.error("handleUniformInterfaceException: " + y, y);
+			logger.error("handleException: " + y, y);
 		}
 
 		if (error != null)

@@ -59,7 +59,16 @@
 
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.rest.client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.rest.server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-servlet</artifactId>
 		</dependency>
 
 		<!-- BEGIN datanucleus -->

@@ -12,21 +12,11 @@
 
 	<servlet>
 		<servlet-name>co.codewizards.cloudstore.rest.server.CloudStoreREST</servlet-name>
-		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
 		<init-param>
 			<param-name>javax.ws.rs.Application</param-name>
 			<param-value>co.codewizards.cloudstore.rest.server.CloudStoreREST</param-value>
 		</init-param>
-<!--
-		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-			<param-value>org.nightlabs.licence.webapp.jersey.JDOTransactionRequestFilter</param-value>
-		</init-param>
-		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-			<param-value>org.nightlabs.licence.webapp.jersey.JDOTransactionResponseFilter</param-value>
-		</init-param>
--->
 		<load-on-startup>100</load-on-startup>
 	</servlet>
 	<servlet-mapping>
@@ -34,12 +24,4 @@
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 
-<!--
-	<resource-ref>
-		<description>Licence DataSource Reference</description>
-		<res-ref-name>jdbc/licenceDS</res-ref-name>
-		<res-type>javax.sql.DataSource</res-type>
-		<res-auth>Container</res-auth>
-	</resource-ref>
--->
 </web-app>

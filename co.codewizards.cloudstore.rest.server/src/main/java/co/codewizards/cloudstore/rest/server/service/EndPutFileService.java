@@ -5,7 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -35,7 +35,7 @@ public class EndPutFileService
 
 	private @PathParam("repositoryName") String repositoryName;
 
-	@PUT
+	@POST
 	@Path("{path:.*}")
 	public void endPutFile(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified, @QueryParam("length") long length)
 	{
@@ -46,7 +46,7 @@ public class EndPutFileService
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.endPutFile(path, lastModified.getDate(), length);
+			repoTransport.endPutFile(path, lastModified.toDate(), length);
 		} finally {
 			repoTransport.close();
 		}

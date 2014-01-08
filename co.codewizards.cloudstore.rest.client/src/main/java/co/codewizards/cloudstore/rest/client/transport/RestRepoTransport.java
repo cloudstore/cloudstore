@@ -68,7 +68,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void makeDirectory(String path, Date lastModified) {
-		getClient().testSuccess();
+		getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
 	}
 
 	@Override

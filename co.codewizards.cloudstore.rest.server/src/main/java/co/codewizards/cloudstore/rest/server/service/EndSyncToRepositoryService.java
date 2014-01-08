@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.rest.server.service;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,7 +33,7 @@ public class EndSyncToRepositoryService
 
 	private @PathParam("repositoryName") String repositoryName;
 
-	@PUT
+	@POST
 	@Path("{fromRepositoryID}")
 	public void endSyncToRepository(@PathParam("fromRepositoryID") EntityID fromRepositoryID, @QueryParam("fromLocalRevision") long fromLocalRevision)
 	{

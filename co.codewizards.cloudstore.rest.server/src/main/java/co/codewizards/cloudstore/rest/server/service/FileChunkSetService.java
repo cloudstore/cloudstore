@@ -33,7 +33,13 @@ public class FileChunkSetService
 	private @PathParam("repositoryName") String repositoryName;
 
 	@GET
-	@Path("{path}")
+	public FileChunkSet getFileChunkSet()
+	{
+		return getFileChunkSet("");
+	}
+
+	@GET
+	@Path("{path:.*}")
 	public FileChunkSet getFileChunkSet(@PathParam("path") String path)
 	{
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);

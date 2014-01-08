@@ -2,10 +2,7 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -22,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -57,14 +55,28 @@ public class WebDavService {
 			@QueryParam("offset") long offset,
 			@QueryParam("length") @DefaultValue("-1") int length)
 	{
-		if (!assertNotNull("path", path).startsWith("/"))
-			path = "/" + path;
+		assertNotNull("path", path);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
 			return repoTransport.getFileData(path, offset, length);
+		} finally {
+			repoTransport.close();
+		}
+	}
+
+	@MKCOL
+	@Path("{path:.*}")
+	public void mkcol(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
+		assertNotNull("path", path);
+
+		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
+		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		try {
+			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());
 		} finally {
 			repoTransport.close();
 		}
@@ -102,14 +114,17 @@ public class WebDavService {
 	}
 
 	@GET
-	@Path("_test/{path:.*}")
 	@Produces(MediaType.TEXT_HTML)
-	public Collection<File> browseFile(@PathParam("path") String path) {
-		if (!assertNotNull("path", path).startsWith("/"))
-			path = "/" + path;
+	public String browse() {
+		return browse("");
+	}
 
-		//TODO return the list of files
-		return Collections.EMPTY_SET;
+	@GET
+	@Path("{path:.*}")
+	@Produces(MediaType.TEXT_HTML)
+	public String browse(@PathParam("path") String path) {
+		assertNotNull("path", path);
+		return "<html><body>" + path + "</body></html>";
 	}
 
 	@COPY
@@ -133,21 +148,6 @@ public class WebDavService {
 		assertNotNull("path", path);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-//		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-//		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
-//		try {
-//			repoTransport.delete(path);
-//		} finally {
-//			repoTransport.close();
-//		}
-	}
-
-	@MKCOL
-	@Path("{path:.*}")
-	public void mkcol(@PathParam("path") String path, @HeaderParam("CONTENT_LENGTH") final long contentLength) {
-//		assertNotNull("path", path);
-//
-//		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 //		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 //		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 //		try {

@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.test;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
@@ -42,37 +41,6 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		return trustStoreFile;
 	}
 
-	private static class DynamicX509TrustManagerCallbackTrustingPermanently implements DynamicX509TrustManagerCallback {
-		private final long[] invocationCounter;
-		public DynamicX509TrustManagerCallbackTrustingPermanently(long[] invocationCounter) {
-			this.invocationCounter = assertNotNull("invocationCounter", invocationCounter);
-			if (invocationCounter.length != 1)
-				throw new IllegalArgumentException("invocationCounter.length != 1");
-		}
-
-		@Override
-		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(CheckServerTrustedCertificateExceptionContext context) {
-			++invocationCounter[0];
-			CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
-			result.setTrusted(true);
-//			result.setPermanent(true); // default is true ;-)
-			return result;
-		}
-	}
-
-	private static class DynamicX509TrustManagerCallbackTrustingTemporarily extends DynamicX509TrustManagerCallbackTrustingPermanently {
-		public DynamicX509TrustManagerCallbackTrustingTemporarily(long[] invocationCounter) {
-			super(invocationCounter);
-		}
-
-		@Override
-		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(CheckServerTrustedCertificateExceptionContext context) {
-			CheckServerTrustedCertificateExceptionResult result = super.handleCheckServerTrustedCertificateException(context);
-			result.setPermanent(false);
-			return result;
-		}
-	}
-
 	@Test
 	public void testSuccessWithPermanentTrust() throws Exception {
 		File trustStoreFile = getRandomTrustStoreFile();
@@ -98,7 +66,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		cloudStoreRESTClient.testSuccess();
 	}
 
-	@Test(expected=RemoteException.class)
+	@Test
 	public void testException() throws Exception {
 		File trustStoreFile = getRandomTrustStoreFile();
 		final long[] handleCertificateExceptionCounter = new long[1];
@@ -109,12 +77,20 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 
 		try {
 			cloudStoreRESTClient.testException();
+			Assert.fail("cloudStoreRESTClient.testException() should have thrown a RemoteException, but it did not!");
 		} catch (Exception x) {
 			logger.info(x.toString(), x);
-			throw x;
-		}
+			assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
+			assertThat(x).isInstanceOf(RemoteException.class);
 
-		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
+			RemoteException rx = (RemoteException) x;
+			assertThat(rx.getErrorClassName()).isEqualTo(RuntimeException.class.getName());
+			assertThat(rx.getMessage()).isEqualTo("Test");
+			assertThat(rx.getStackTrace()).isNotNull();
+			assertThat(rx.getStackTrace().length).isGreaterThan(0);
+			assertThat(rx.getStackTrace()[0]).isNotNull();
+			assertThat(rx.getStackTrace()[0].getClassName()).isEqualTo("co.codewizards.cloudstore.rest.server.service.TestService");
+		}
 	}
 
 	@Test

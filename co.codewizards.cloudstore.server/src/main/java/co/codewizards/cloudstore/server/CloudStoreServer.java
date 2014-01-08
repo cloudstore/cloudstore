@@ -36,6 +36,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,7 +254,8 @@ public class CloudStoreServer implements Runnable {
 	private ServletContextHandler createServletContextHandler() {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		com.sun.jersey.spi.container.servlet.ServletContainer servletContainer = new com.sun.jersey.spi.container.servlet.ServletContainer(CloudStoreREST.class);
+		ServletContainer servletContainer = new ServletContainer(new CloudStoreREST());
+//		com.sun.jersey.spi.container.servlet.ServletContainer servletContainer = new com.sun.jersey.spi.container.servlet.ServletContainer(CloudStoreREST.class);
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 		return context;
 	}

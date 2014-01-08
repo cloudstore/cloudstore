@@ -13,7 +13,7 @@
 		<cloudstore.version>${project.version}</cloudstore.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<logback.version>1.0.13</logback.version>
-		<jersey.version>1.9</jersey.version>
+		<jersey.version>2.5.1</jersey.version>
 
 		<!-- Always aggregate. -->
 		<aggregate>true</aggregate>
@@ -110,21 +110,25 @@
 	    	</dependency>
 			
 			<dependency>
-				<groupId>com.sun.jersey</groupId>
+				<groupId>org.glassfish.jersey.core</groupId>
 				<artifactId>jersey-client</artifactId>
 				<version>${jersey.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.sun.jersey</groupId>
-				<artifactId>jersey-core</artifactId>
-				<version>${jersey.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sun.jersey</groupId>
+				<groupId>org.glassfish.jersey.core</groupId>
 				<artifactId>jersey-server</artifactId>
 				<version>${jersey.version}</version>
 			</dependency>
-
+			<dependency>
+				<groupId>org.glassfish.jersey.connectors</groupId>
+				<artifactId>jersey-apache-connector</artifactId>
+				<version>${jersey.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.containers</groupId>
+				<artifactId>jersey-container-servlet</artifactId>
+				<version>${jersey.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>javax.servlet</groupId>
 				<artifactId>servlet-api</artifactId>
@@ -156,6 +160,12 @@
 				<groupId>javax.jdo</groupId>
 				<artifactId>jdo-api</artifactId>
 				<version>3.1-rc1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>4.3.1</version>
 			</dependency>
 
 			<!-- BEGIN logging -->

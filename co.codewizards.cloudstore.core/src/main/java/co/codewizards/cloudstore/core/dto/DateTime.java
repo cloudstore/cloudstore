@@ -16,12 +16,11 @@ public class DateTime {
 	}
 
 	public DateTime(Date date) {
-		this.date = assertNotNull("date", date);
+		this.date = (Date) assertNotNull("date", date).clone();
 	}
 
-	@Override
-	public String toString() {
-		return ISO8601.formatDate(date);
+	public long getMillis() {
+		return date.getTime();
 	}
 
 	@Override
@@ -44,11 +43,12 @@ public class DateTime {
 		return Util.equal(this.date, other.date);
 	}
 
-	public Date getDate() {
-		return (Date) date.clone();
+	@Override
+	public String toString() {
+		return ISO8601.formatDate(date);
 	}
 
-	public long getMillis() {
-		return date.getTime();
+	public Date toDate() {
+		return (Date) date.clone();
 	}
 }

@@ -2,9 +2,12 @@ package co.codewizards.cloudstore.core.repo.sync;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -19,6 +22,7 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunk;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
+import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
@@ -31,6 +35,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.HashUtil;
 
 /**
  * Logic for synchronising a local with a remote repository.
@@ -146,7 +151,7 @@ public class RepoToRepoSync {
 					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
 					if (repoFileDTO instanceof DirectoryDTO)
 						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-					else if (repoFileDTO instanceof RepoFileDTO)
+					else if (repoFileDTO instanceof NormalFileDTO)
 						syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
 					else
 						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
@@ -222,7 +227,7 @@ public class RepoToRepoSync {
 			for (FileChunk fileChunk : fromFileChunksDirty) {
 				byte[] fileData = fromRepoTransport.getFileData(repoFileDTOTreeNode.getPath(), fileChunk.getOffset(), fileChunk.getLength());
 
-				if (fileData == null || fileData.length != fileChunk.getLength()) {
+				if (fileData == null || fileData.length != fileChunk.getLength() || !sha1(fileData).equals(fileChunk.getSha1())) {
 					logger.warn("Source file was modified or deleted during sync: {}", repoFileDTOTreeNode.getPath());
 					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
 					// direction. The file should be synced again in the correct direction in the next run (after the source
@@ -239,6 +244,18 @@ public class RepoToRepoSync {
 			monitor.worked(6);
 		} finally {
 			monitor.done();
+		}
+	}
+
+	private String sha1(byte[] data) {
+		assertNotNull("data", data);
+		try {
+			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
+			return HashUtil.encodeHexStr(hash);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
