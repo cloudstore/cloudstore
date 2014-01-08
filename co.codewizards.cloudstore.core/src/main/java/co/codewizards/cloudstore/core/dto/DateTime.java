@@ -2,11 +2,9 @@ package co.codewizards.cloudstore.core.dto;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import co.codewizards.cloudstore.core.util.ISO8601;
 import co.codewizards.cloudstore.core.util.Util;
 
 public class DateTime {
@@ -14,15 +12,7 @@ public class DateTime {
 	private final Date date;
 
 	public DateTime(String dateString) {
-		try {
-			date = createDateFormat().parse(assertNotNull("dateString", dateString));
-		} catch (ParseException e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
-
-	private static DateFormat createDateFormat() {
-		return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+		date = ISO8601.parseDate(assertNotNull("dateString", dateString));
 	}
 
 	public DateTime(Date date) {
@@ -31,7 +21,7 @@ public class DateTime {
 
 	@Override
 	public String toString() {
-		return createDateFormat().format(date);
+		return ISO8601.formatDate(date);
 	}
 
 	@Override
