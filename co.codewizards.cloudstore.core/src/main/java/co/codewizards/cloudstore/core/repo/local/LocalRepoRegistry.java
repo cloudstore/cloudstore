@@ -19,7 +19,6 @@ public class LocalRepoRegistry
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repositoryList.properties";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryID:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
-	private static final String LOCK_FILE_NAME = LOCAL_REPO_REGISTRY_FILE + ".lock";
 	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
 
 	private static class LocalRepoRegistryHolder {
@@ -34,10 +33,6 @@ public class LocalRepoRegistry
 
 	private File getRegistryFile() {
 		return new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
-	}
-
-	private File getLockFile() {
-		return new File(ConfigDir.getInstance().getFile(), LOCK_FILE_NAME);
 	}
 
 	private long repoRegistryFileLastModified;
@@ -143,7 +138,7 @@ public class LocalRepoRegistry
 		if (repositoryAlias.indexOf('/') >= 0)
 			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
 
-		LockFile lockFile = LockFileRegistry.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = LockFileRegistry.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
 			getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
@@ -166,7 +161,7 @@ public class LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
-		LockFile lockFile = LockFileRegistry.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = LockFileRegistry.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKey(repositoryID);
@@ -197,7 +192,7 @@ public class LocalRepoRegistry
 	private void loadRepoRegistry() {
 		try {
 			File registryFile = getRegistryFile();
-			if (registryFile.exists())
+			if (registryFile.exists() && registryFile.length() > 0)
 				repoRegistryProperties = PropertiesUtil.load(registryFile);
 			else
 				repoRegistryProperties = new Properties();
