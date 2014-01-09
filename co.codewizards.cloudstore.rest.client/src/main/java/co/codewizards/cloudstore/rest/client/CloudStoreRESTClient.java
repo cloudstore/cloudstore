@@ -504,6 +504,7 @@ public class CloudStoreRESTClient {
 //			HttpClient apacheClient = httpClientBuilder.build();
 //			client = new Client(new ApacheConnectorProvider(apacheClient, new BasicCookieStore(), true));
 
+			// TODO Timeouts!
 			Configuration clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
 			ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
 
@@ -531,7 +532,7 @@ public class CloudStoreRESTClient {
 		if (x instanceof WebApplicationException)
 			response = ((WebApplicationException)x).getResponse();
 		else if (x instanceof ResponseProcessingException)
-			response = ((WebApplicationException)x).getResponse();
+			response = ((ResponseProcessingException)x).getResponse();
 
 		if (response == null)
 			throw x;

@@ -12,9 +12,7 @@ import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Provider;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -23,7 +21,6 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bouncycastle.jce.X509Principal;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -40,6 +37,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
@@ -70,13 +68,7 @@ public class CloudStoreServer implements Runnable {
 	}
 
 	public CloudStoreServer() {
-		Provider provider = Security.getProvider("BC");
-		if (provider == null)
-			Security.addProvider(new BouncyCastleProvider());
-
-		provider = Security.getProvider("BC");
-		if (provider == null)
-			throw new IllegalStateException("Registration of BouncyCastleProvider failed!");
+		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 	}
 
 	@Override

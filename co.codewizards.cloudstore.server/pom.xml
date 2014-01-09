@@ -42,12 +42,6 @@
 			<version>9.1.0.v20131115</version> <!-- TODO put into parent POM! -->
 		</dependency>
 
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-ext-jdk16</artifactId>
-			<version>1.46</version>
-		</dependency>
-
 		<!-- BEGIN logging -->
 		<dependency>
 			<groupId>org.slf4j</groupId>

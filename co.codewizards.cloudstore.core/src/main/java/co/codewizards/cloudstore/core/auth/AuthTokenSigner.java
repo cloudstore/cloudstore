@@ -14,6 +14,7 @@ public class AuthTokenSigner {
 
 	public AuthTokenSigner(byte[] privateKeyData) {
 		assertNotNull("privateKeyData", privateKeyData);
+		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyData);

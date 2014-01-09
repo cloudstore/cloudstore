@@ -10,15 +10,17 @@ import java.util.Properties;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.io.LockFile;
+import co.codewizards.cloudstore.core.io.LockFileRegistry;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
-
 
 public class LocalRepoRegistry
 {
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repositoryList.properties";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryID:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
-
+	private static final String LOCK_FILE_NAME = LOCAL_REPO_REGISTRY_FILE + ".lock";
+	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
 
 	private static class LocalRepoRegistryHolder {
 		public static final LocalRepoRegistry INSTANCE = new LocalRepoRegistry();
@@ -32,6 +34,10 @@ public class LocalRepoRegistry
 
 	private File getRegistryFile() {
 		return new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
+	}
+
+	private File getLockFile() {
+		return new File(ConfigDir.getInstance().getFile(), LOCK_FILE_NAME);
 	}
 
 	private long repoRegistryFileLastModified;
@@ -137,10 +143,20 @@ public class LocalRepoRegistry
 		if (repositoryAlias.indexOf('/') >= 0)
 			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
 
-		loadRepoRegistryIfNeeded();
-		getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
-		repoRegistryProperties.setProperty(getPropertyKey(repositoryAlias), repositoryID.toString());
-		storeRepoRegistry();
+		LockFile lockFile = LockFileRegistry.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
+		try {
+			loadRepoRegistryIfNeeded();
+			getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
+			String propertyKey = getPropertyKey(repositoryAlias);
+			String oldRepositoryIDString = repoRegistryProperties.getProperty(propertyKey);
+			String repositoryIDString = repositoryID.toString();
+			if (!repositoryIDString.equals(oldRepositoryIDString)) {
+				repoRegistryProperties.setProperty(propertyKey, repositoryIDString);
+				storeRepoRegistry();
+			}
+		} finally {
+			lockFile.release();
+		}
 	}
 
 	public synchronized void registerRepository(EntityID repositoryID, File localRoot) {
@@ -150,10 +166,19 @@ public class LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
-		// TODO prevent multiple processes from modifying the properties file simultaneously by employing a lock-file!
-		loadRepoRegistryIfNeeded();
-		repoRegistryProperties.setProperty(getPropertyKey(repositoryID), localRoot.getPath());
-		storeRepoRegistry();
+		LockFile lockFile = LockFileRegistry.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
+		try {
+			loadRepoRegistryIfNeeded();
+			String propertyKey = getPropertyKey(repositoryID);
+			String oldLocalRootPath = repoRegistryProperties.getProperty(propertyKey);
+			String localRootPath = localRoot.getPath();
+			if (!localRootPath.equals(oldLocalRootPath)) {
+				repoRegistryProperties.setProperty(propertyKey, localRootPath);
+				storeRepoRegistry();
+			}
+		} finally {
+			lockFile.release();
+		}
 	}
 
 	private String getPropertyKey(String repositoryAlias) {
@@ -164,12 +189,12 @@ public class LocalRepoRegistry
 		return PROP_KEY_PREFIX_REPOSITORY_ID + assertNotNull("repositoryID", repositoryID).toString();
 	}
 
-	private synchronized void loadRepoRegistryIfNeeded() {
+	private void loadRepoRegistryIfNeeded() {
 		if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
 			loadRepoRegistry();
 	}
 
-	private synchronized void loadRepoRegistry() {
+	private void loadRepoRegistry() {
 		try {
 			File registryFile = getRegistryFile();
 			if (registryFile.exists())
@@ -183,7 +208,7 @@ public class LocalRepoRegistry
 		}
 	}
 
-	private synchronized void storeRepoRegistry() {
+	private void storeRepoRegistry() {
 		if (repoRegistryProperties == null)
 			throw new IllegalStateException("repoRegistryProperties not loaded, yet!");
 

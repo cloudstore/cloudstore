@@ -14,6 +14,7 @@ public class AuthTokenVerifier {
 
 	public AuthTokenVerifier(byte[] publicKeyData) {
 		assertNotNull("publicKeyData", publicKeyData);
+		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyData);
