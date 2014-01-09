@@ -25,13 +25,16 @@ public interface RepoTransport {
 	 */
 	EntityID getRepositoryID();
 
+	byte[] getPublicKey();
+
 	void close();
 
 	/**
 	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryID}.
 	 * @param remoteRepositoryID the unique ID of the remote repository to be connected. Must not be <code>null</code>.
+	 * @param publicKey TODO
 	 */
-	void requestConnection(EntityID remoteRepositoryID);
+	void requestConnection(EntityID remoteRepositoryID, byte[] publicKey);
 
 	ChangeSet getChangeSet(EntityID toRepositoryID);
 
@@ -115,5 +118,4 @@ public interface RepoTransport {
 	void endSyncFromRepository(EntityID toRepositoryID);
 
 	void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision);
-
 }

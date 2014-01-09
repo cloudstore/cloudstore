@@ -35,12 +35,12 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
  */
 public class RequestRepoConnectionSubCommand extends SubCommand
 {
-	@Option(name="-local", metaVar="PATH", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory (i.e. not the root), only this sub-directory is connected with the remote repository. NOTE: Sub-dirs are NOT YET SUPPORTED!")
+	@Option(name="-local", metaVar="<path>", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory (i.e. not the root), only this sub-directory is connected with the remote repository. NOTE: Sub-dirs are NOT YET SUPPORTED!")
 	private String local;
 
 	private File localFile;
 
-	@Option(name="-remote", metaVar="URL", required=true, usage="A URL to a remote repository. This may be the remote repository's root or any sub-directory. If a sub-directory is specified here, only this sub-directory is connected with the local repository. NOTE: Sub-dirs are NOT YET SUPPORTED!")
+	@Option(name="-remote", metaVar="<url>", required=true, usage="A URL to a remote repository. This may be the remote repository's root or any sub-directory. If a sub-directory is specified here, only this sub-directory is connected with the local repository. NOTE: Sub-dirs are NOT YET SUPPORTED!")
 	private String remote;
 
 	private URL remoteURL;
@@ -78,8 +78,8 @@ public class RequestRepoConnectionSubCommand extends SubCommand
 			EntityID localRepositoryID = localRepoManager.getLocalRepositoryID();
 			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL);
 			EntityID remoteRepositoryID = repoTransport.getRepositoryID();
-			localRepoManager.putRemoteRepository(remoteRepositoryID, remoteURL);
-			repoTransport.requestConnection(localRepositoryID);
+			localRepoManager.putRemoteRepository(remoteRepositoryID, remoteURL, repoTransport.getPublicKey());
+			repoTransport.requestConnection(localRepositoryID, localRepoManager.getPublicKey());
 		} finally {
 			localRepoManager.close();
 		}

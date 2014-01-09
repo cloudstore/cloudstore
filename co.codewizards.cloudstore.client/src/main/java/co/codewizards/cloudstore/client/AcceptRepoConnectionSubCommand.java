@@ -35,12 +35,12 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
  */
 public class AcceptRepoConnectionSubCommand extends SubCommand
 {
-	@Option(name="-local", metaVar="PATH", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory, the repository's root is automatically determined.")
+	@Option(name="-local", metaVar="<path>", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory, the repository's root is automatically determined.")
 	private String local;
 
 	private File localFile;
 
-	@Option(name="-remoteID", metaVar="UUID", required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
+	@Option(name="-remoteID", metaVar="<uuid>", required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
 	private String remoteID;
 
 	private EntityID remoteRepositoryID;
@@ -75,9 +75,11 @@ public class AcceptRepoConnectionSubCommand extends SubCommand
 		// TODO automatically find the root!
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
+			byte[] publicKey;
 			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 			try {
 				RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
+				RemoteRepositoryRequest request;
 				if (remoteRepositoryID == null) {
 					RemoteRepositoryRequest oldestRequest = null;
 					for (RemoteRepositoryRequest remoteRepositoryRequest : remoteRepositoryRequestDAO.getObjects()) {
@@ -87,16 +89,18 @@ public class AcceptRepoConnectionSubCommand extends SubCommand
 					if (oldestRequest == null)
 						throw new IllegalStateException("There is no connection request pending for this local repository: " + localRoot.getPath());
 
-					remoteRepositoryID = oldestRequest.getRepositoryID();
+					request = oldestRequest;
 				}
 				else {
-					remoteRepositoryRequestDAO.getObjectByIdOrFail(remoteRepositoryID);
+					request = remoteRepositoryRequestDAO.getObjectByIdOrFail(remoteRepositoryID);
 				}
+				remoteRepositoryID = request.getRepositoryID();
+				publicKey = request.getPublicKey();
 				transaction.commit();
 			} finally {
 				transaction.rollbackIfActive();
 			}
-			localRepoManager.putRemoteRepository(remoteRepositoryID, null);
+			localRepoManager.putRemoteRepository(remoteRepositoryID, null, publicKey); // deletes the request.
 		} finally {
 			localRepoManager.close();
 		}

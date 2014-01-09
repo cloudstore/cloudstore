@@ -28,6 +28,8 @@ public interface LocalRepoManager {
 	 */
 	EntityID getLocalRepositoryID();
 
+	byte[] getPublicKey();
+
 	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
 
 	void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
@@ -69,7 +71,7 @@ public interface LocalRepoManager {
 	 * @param remoteRoot the URL of the remote repository. May be <code>null</code> (in the server, a
 	 * {@code RemoteRepository} never has a {@code remoteRoot}).
 	 */
-	void putRemoteRepository(EntityID repositoryID, URL remoteRoot);
+	void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey);
 
 	/**
 	 * Deletes a remote repository from the local database.
@@ -78,5 +80,4 @@ public interface LocalRepoManager {
 	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
 	 */
 	void deleteRemoteRepository(EntityID repositoryID);
-
 }

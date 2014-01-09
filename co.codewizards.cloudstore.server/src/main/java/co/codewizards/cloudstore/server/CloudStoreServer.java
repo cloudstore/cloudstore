@@ -176,7 +176,7 @@ public class CloudStoreServer implements Runnable {
 		}
 
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY); // TODO check if we can omit this password. makes no sense for security, anyway.
+		ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		keyGen.initialize(4096, random); // TODO make configurable

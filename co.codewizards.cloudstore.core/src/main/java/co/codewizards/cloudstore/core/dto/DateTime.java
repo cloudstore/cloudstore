@@ -4,9 +4,13 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Date;
 
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import co.codewizards.cloudstore.core.dto.jaxb.DateTimeXmlAdapter;
 import co.codewizards.cloudstore.core.util.ISO8601;
 import co.codewizards.cloudstore.core.util.Util;
 
+@XmlJavaTypeAdapter(type=DateTime.class, value=DateTimeXmlAdapter.class)
 public class DateTime {
 
 	private final Date date;

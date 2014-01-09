@@ -210,15 +210,15 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void requestConnection(String repositoryName, EntityID remoteRepositoryID) {
-		assertNotNull("repositoryName", repositoryName);
+	public void requestConnection(RepositoryDTO repositoryDTO) {
+		assertNotNull("repositoryDTO", repositoryDTO);
+		assertNotNull("repositoryDTO.entityID", repositoryDTO.getEntityID());
+		assertNotNull("repositoryDTO.publicKey", repositoryDTO.getPublicKey());
 		Client client = acquireClient();
 		try {
 			Response response = client.target(getBaseURL())
 			.path("_requestConnection")
-			.path(repositoryName)
-			.path(remoteRepositoryID.toString())
-			.request().get();
+			.request().post(Entity.entity(repositoryDTO, MediaType.APPLICATION_XML));
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);

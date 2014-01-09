@@ -58,8 +58,8 @@ public class FileRepoTransportTest extends AbstractTest {
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		LocalRepoManager toLocalRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
-		localRepoManager.putRemoteRepository(toLocalRepoManager.getLocalRepositoryID(), null);
-		toLocalRepoManager.putRemoteRepository(localRepoManager.getLocalRepositoryID(), null);
+		localRepoManager.putRemoteRepository(toLocalRepoManager.getLocalRepositoryID(), null, toLocalRepoManager.getPublicKey());
+		toLocalRepoManager.putRemoteRepository(localRepoManager.getLocalRepositoryID(), null, localRepoManager.getPublicKey());
 		localRepositoryID = toLocalRepoManager.getLocalRepositoryID();
 		toLocalRepoManager.close();
 

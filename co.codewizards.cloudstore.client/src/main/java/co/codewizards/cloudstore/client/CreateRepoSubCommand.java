@@ -33,7 +33,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
  */
 public class CreateRepoSubCommand extends SubCommand
 {
-	@Argument(metaVar="LOCAL_ROOT", required=false, usage="The path of the repository's root in the local file system. This must be an existing directory. If it does not exist and the '-createDirectory' option is set, it is automatically created. If it is not specified, the current working directory is used as local root.")
+	@Argument(metaVar="<localRoot>", required=false, usage="The path of the repository's root in the local file system. This must be an existing directory. If it does not exist and the '-createDirectory' option is set, it is automatically created. If it is not specified, the current working directory is used as local root.")
 	private String localRoot;
 
 	private File localRootFile;

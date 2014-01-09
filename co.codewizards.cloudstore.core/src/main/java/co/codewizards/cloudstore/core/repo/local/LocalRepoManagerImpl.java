@@ -6,6 +6,10 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +79,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private boolean deleteMetaDir;
 	private static Timer closeDeferredTimer = new Timer(true);
 	private TimerTask closeDeferredTimerTask;
+
+	private byte[] publicKey;
 
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
@@ -239,7 +245,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
 		try {
 			LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
-			repositoryID = localRepository.getEntityID();
+			readRepositoryMainProperties(localRepository);
 		} catch (IllegalStateException x) {
 			throw new RepositoryCorruptException(localRoot, x.getMessage());
 		}
@@ -251,8 +257,37 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));
 		localRepository.setRoot(root);
+		generatePublicPrivateKey(localRepository);
+
 		localRepository = pm.makePersistent(localRepository);
+		readRepositoryMainProperties(localRepository);
+	}
+
+	private void readRepositoryMainProperties(LocalRepository localRepository) {
 		repositoryID = localRepository.getEntityID();
+		publicKey = localRepository.getPublicKey();
+	}
+
+	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
+	private static final char[] KEY_STORE_PASSWORD_CHAR_ARRAY = KEY_STORE_PASSWORD_STRING.toCharArray();
+	private SecureRandom random = new SecureRandom();
+
+	private void generatePublicPrivateKey(LocalRepository localRepository) {
+		try {
+			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
+
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			keyGen.initialize(4096, random); // TODO make configurable
+			KeyPair pair = keyGen.generateKeyPair();
+
+			localRepository.setPrivateKey(pair.getPrivate().getEncoded());
+			localRepository.setPublicKey(pair.getPublic().getEncoded());
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private File getMetaDir() {
@@ -379,6 +414,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
+	public byte[] getPublicKey() {
+		return publicKey;
+	}
+
+	@Override
 	public synchronized boolean isOpen() {
 		return persistenceManagerFactory != null;
 	}
@@ -406,8 +446,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot) {
+	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey) {
 		assertNotNull("entityID", repositoryID);
+		assertNotNull("publicKey", publicKey);
 		LocalRepoTransaction transaction = beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
@@ -424,6 +465,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				remoteRepository.setRevision(-1);
 			}
 			remoteRepository.setRemoteRoot(remoteRoot);
+			remoteRepository.setPublicKey(publicKey);
 
 			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 

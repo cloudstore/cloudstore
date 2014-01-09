@@ -72,7 +72,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void requestConnection(EntityID remoteRepositoryID) {
+	public byte[] getPublicKey() {
+		return getLocalRepoManager().getPublicKey();
+	}
+
+	@Override
+	public void requestConnection(EntityID remoteRepositoryID, byte[] publicKey) {
+		assertNotNull("remoteRepositoryID", remoteRepositoryID);
+		assertNotNull("publicKey", publicKey);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
@@ -85,9 +92,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (remoteRepositoryRequest != null) {
 				logger.info("RemoteRepository already requested to be connected. remoteRepositoryID={}", remoteRepositoryID);
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
+				remoteRepositoryRequest.setPublicKey(publicKey);
 			}
 			else {
 				remoteRepositoryRequest = new RemoteRepositoryRequest(remoteRepositoryID);
+				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
 			}
 

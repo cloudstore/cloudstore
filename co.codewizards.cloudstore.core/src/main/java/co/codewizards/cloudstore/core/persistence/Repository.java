@@ -2,7 +2,9 @@ package co.codewizards.cloudstore.core.persistence;
 
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
+import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
 
@@ -23,6 +25,9 @@ public abstract class Repository extends Entity
 {
 	private long revision;
 
+	@Persistent(nullValue=NullValue.EXCEPTION)
+	private byte[] publicKey;
+
 	public Repository() { }
 
 	protected Repository(EntityID entityID) {
@@ -34,5 +39,13 @@ public abstract class Repository extends Entity
 	}
 	public void setRevision(long revision) {
 		this.revision = revision;
+	}
+
+	public byte[] getPublicKey() {
+		return publicKey;
+	}
+
+	public void setPublicKey(byte[] publicKey) {
+		this.publicKey = publicKey;
 	}
 }

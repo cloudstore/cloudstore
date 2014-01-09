@@ -18,6 +18,7 @@ import co.codewizards.cloudstore.rest.server.service.FileChunkSetService;
 import co.codewizards.cloudstore.rest.server.service.LocalSyncService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
+import co.codewizards.cloudstore.rest.server.service.RequestConnectionService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 import co.codewizards.cloudstore.rest.server.service.WebDavService;
 
@@ -49,6 +50,7 @@ public class CloudStoreREST extends ResourceConfig {
 				LocalSyncService.class,
 				MakeDirectoryService.class,
 				RepositoryDTOService.class,
+				RequestConnectionService.class,
 				TestService.class,
 				WebDavService.class,
 				// END services

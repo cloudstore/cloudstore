@@ -9,7 +9,7 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 /**
  * @author sschefczyk
  */
-public class EntityIDTypeAdapter extends XmlAdapter<UUID, EntityID> {
+public class EntityIDXmlAdapter extends XmlAdapter<UUID, EntityID> {
 
 	@Override
 	public EntityID unmarshal(final UUID v) throws Exception {

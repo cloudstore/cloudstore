@@ -18,6 +18,7 @@ import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
 public class RestRepoTransport extends AbstractRepoTransport {
 
 	private EntityID repositoryID;
+	private byte[] publicKey;
 	private String repositoryName;
 	private CloudStoreRESTClient client;
 
@@ -40,9 +41,17 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	@Override
 	public EntityID getRepositoryID() {
 		if (repositoryID == null) {
-			repositoryID = getRepositoryDTO().getEntityID();
+			RepositoryDTO repositoryDTO = getRepositoryDTO();
+			repositoryID = repositoryDTO.getEntityID();
+			publicKey = repositoryDTO.getPublicKey();
 		}
 		return repositoryID;
+	}
+
+	@Override
+	public byte[] getPublicKey() {
+		getRepositoryID(); // ensure, the public key is loaded
+		return publicKey;
 	}
 
 	@Override
@@ -51,8 +60,11 @@ public class RestRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void requestConnection(EntityID remoteRepositoryID) {
-		getClient().requestConnection(getRepositoryID().toString(), remoteRepositoryID);
+	public void requestConnection(EntityID remoteRepositoryID, byte[] publicKey) {
+		RepositoryDTO repositoryDTO = new RepositoryDTO();
+		repositoryDTO.setEntityID(remoteRepositoryID);
+		repositoryDTO.setPublicKey(publicKey);
+		getClient().requestConnection(repositoryDTO);
 	}
 
 	@Override

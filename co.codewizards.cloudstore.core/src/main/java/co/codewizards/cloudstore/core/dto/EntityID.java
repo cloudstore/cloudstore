@@ -5,12 +5,12 @@ import java.util.UUID;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import co.codewizards.cloudstore.core.dto.jaxb.EntityIDTypeAdapter;
+import co.codewizards.cloudstore.core.dto.jaxb.EntityIDXmlAdapter;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-@XmlJavaTypeAdapter(type=EntityID.class, value=EntityIDTypeAdapter.class)
+@XmlJavaTypeAdapter(type=EntityID.class, value=EntityIDXmlAdapter.class)
 public class EntityID
 implements Serializable
 {

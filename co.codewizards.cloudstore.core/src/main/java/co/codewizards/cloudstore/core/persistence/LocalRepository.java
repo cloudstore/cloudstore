@@ -22,6 +22,10 @@ public class LocalRepository extends Repository {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RepoFile root;
 
+	private byte[] privateKey;
+
+	public LocalRepository() { }
+
 	/**
 	 * Get the root directory of this repository.
 	 * @return the root directory of this repository. Never <code>null</code> in persistence.
@@ -33,4 +37,11 @@ public class LocalRepository extends Repository {
 		this.root = root;
 	}
 
+	public byte[] getPrivateKey() {
+		return privateKey;
+	}
+
+	public void setPrivateKey(byte[] privateKey) {
+		this.privateKey = privateKey;
+	}
 }
