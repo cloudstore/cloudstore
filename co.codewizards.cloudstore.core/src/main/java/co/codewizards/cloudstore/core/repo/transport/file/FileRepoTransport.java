@@ -178,6 +178,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void delete(String path) {
 		File file = getFile(assertNotNull("path", path));
+		File parentFile = file.getParentFile();
+		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			if (!IOUtil.deleteDirectoryRecursively(file)) {
@@ -192,6 +194,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
+
+			if (parentFileLastModified != Long.MIN_VALUE)
+				parentFile.setLastModified(parentFileLastModified);
 		}
 	}
 
@@ -363,50 +368,56 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 
 		File parentFile = file.getParentFile();
-		RepoFile parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
+		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+		try {
+			RepoFile parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
 
-		if (!localRoot.equals(parentFile) && (!parentFile.isDirectory() || parentRepoFile == null))
-			mkDir(transaction, parentFile, null);
+			if (!localRoot.equals(parentFile) && (!parentFile.isDirectory() || parentRepoFile == null))
+				mkDir(transaction, parentFile, null);
 
-		if (parentRepoFile == null)
-			parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
+			if (parentRepoFile == null)
+				parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
 
-		if (parentRepoFile == null) // now, it should definitely not be null anymore!
-			throw new IllegalStateException("parentRepoFile == null");
+			if (parentRepoFile == null) // now, it should definitely not be null anymore!
+				throw new IllegalStateException("parentRepoFile == null");
 
-		if (file.exists() && !file.isDirectory())
-			file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
+			if (file.exists() && !file.isDirectory())
+				file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
 
-		if (file.exists() && !file.isDirectory())
-			throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
+			if (file.exists() && !file.isDirectory())
+				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
-		if (!file.isDirectory())
-			file.mkdir();
+			if (!file.isDirectory())
+				file.mkdir();
 
-		if (!file.isDirectory())
-			throw new IllegalStateException("Could not create directory (permissions?!): " + file);
+			if (!file.isDirectory())
+				throw new IllegalStateException("Could not create directory (permissions?!): " + file);
 
-		RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
-		if (repoFile != null && !(repoFile instanceof Directory)) {
-			transaction.getPersistenceManager().flush();
-			transaction.getDAO(RepoFileDAO.class).deletePersistent(repoFile);
-			transaction.getPersistenceManager().flush();
-			repoFile = null;
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
+			if (repoFile != null && !(repoFile instanceof Directory)) {
+				transaction.getPersistenceManager().flush();
+				transaction.getDAO(RepoFileDAO.class).deletePersistent(repoFile);
+				transaction.getPersistenceManager().flush();
+				repoFile = null;
+			}
+
+			if (lastModified != null)
+				file.setLastModified(lastModified.getTime());
+
+			if (repoFile == null) {
+				Directory directory;
+				repoFile = directory = new Directory();
+				directory.setName(file.getName());
+				directory.setParent(parentRepoFile);
+				directory.setLastModified(new Date(file.lastModified()));
+				repoFile = directory = transaction.getDAO(RepoFileDAO.class).makePersistent(directory);
+			}
+			else if (repoFile.getLastModified().getTime() != file.lastModified())
+				repoFile.setLastModified(new Date(file.lastModified()));
+		} finally {
+			if (parentFileLastModified != Long.MIN_VALUE)
+				parentFile.setLastModified(parentFileLastModified);
 		}
-
-		if (lastModified != null)
-			file.setLastModified(lastModified.getTime());
-
-		if (repoFile == null) {
-			Directory directory;
-			repoFile = directory = new Directory();
-			directory.setName(file.getName());
-			directory.setParent(parentRepoFile);
-			directory.setLastModified(new Date(file.lastModified()));
-			repoFile = directory = transaction.getDAO(RepoFileDAO.class).makePersistent(directory);
-		}
-		else if (repoFile.getLastModified().getTime() != file.lastModified())
-			repoFile.setLastModified(new Date(file.lastModified()));
 	}
 
 	protected File getFile(String path) {
@@ -455,44 +466,50 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public void beginPutFile(String path) {
 		File file = getFile(path);
 		File parentFile = file.getParentFile();
-		if (file.exists() && !file.isFile())
-			file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
-
-		if (!file.isFile()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		if (!file.isFile())
-			throw new IllegalStateException("Could not create file (permissions?!): " + file);
-
-		File localRoot = getLocalRepoManager().getLocalRoot();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		try {
+			if (file.exists() && !file.isFile())
+				file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
 
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
-			RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, file.getParentFile());
-			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
-			if (repoFile == null) {
-				NormalFile normalFile;
-				repoFile = normalFile = new NormalFile();
-				normalFile.setName(file.getName());
-				normalFile.setParent(parentRepoFile);
-				normalFile.setLastModified(new Date(file.lastModified()));
-				normalFile.setLength(file.length());
-				normalFile.setSha1(sha(file));
-				normalFile.setInProgress(true);
-				repoFile = normalFile = repoFileDAO.makePersistent(normalFile);
+			if (!file.isFile()) {
+				try {
+					file.createNewFile();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
-			else
-				((NormalFile) repoFile).setInProgress(true);
 
-			transaction.commit();
+			if (!file.isFile())
+				throw new IllegalStateException("Could not create file (permissions?!): " + file);
+
+			File localRoot = getLocalRepoManager().getLocalRoot();
+			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+			try {
+
+				RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+				RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, file.getParentFile());
+				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				if (repoFile == null) {
+					NormalFile normalFile;
+					repoFile = normalFile = new NormalFile();
+					normalFile.setName(file.getName());
+					normalFile.setParent(parentRepoFile);
+					normalFile.setLastModified(new Date(file.lastModified()));
+					normalFile.setLength(file.length());
+					normalFile.setSha1(sha(file));
+					normalFile.setInProgress(true);
+					repoFile = normalFile = repoFileDAO.makePersistent(normalFile);
+				}
+				else
+					((NormalFile) repoFile).setInProgress(true);
+
+				transaction.commit();
+			} finally {
+				transaction.rollbackIfActive();
+			}
 		} finally {
-			transaction.rollbackIfActive();
+			if (parentFileLastModified != Long.MIN_VALUE)
+				parentFile.setLastModified(parentFileLastModified);
 		}
 	}
 
