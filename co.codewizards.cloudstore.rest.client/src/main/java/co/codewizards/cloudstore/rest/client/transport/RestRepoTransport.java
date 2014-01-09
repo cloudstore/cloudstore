@@ -52,8 +52,7 @@ public class RestRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void requestConnection(EntityID remoteRepositoryID) {
-		// TODO Auto-generated method stub
-
+		getClient().requestConnection(getRepositoryID().toString(), remoteRepositoryID);
 	}
 
 	@Override
