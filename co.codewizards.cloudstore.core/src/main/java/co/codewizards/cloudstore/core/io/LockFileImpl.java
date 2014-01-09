@@ -35,30 +35,34 @@ class LockFileImpl implements LockFile {
 		return file;
 	}
 
-	private synchronized boolean tryAcquire() {
-		logger.debug("[{}]tryAcquire: entered. lockCounter={}", thisID, lockCounter);
-		try {
-			if (randomAccessFile == null) {
-				randomAccessFile = new RandomAccessFile(file, "rw");
-				try {
-					fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
-				} finally {
+	private boolean tryAcquire() {
+		logger.trace("[{}]tryAcquire: entered. lockCounter={}", thisID, lockCounter);
+		synchronized (this) {
+			logger.trace("[{}]tryAcquire: inside synchronized", thisID);
+			try {
+				if (randomAccessFile == null) {
+					logger.trace("[{}]tryAcquire: acquiring underlying FileLock.", thisID);
+					randomAccessFile = new RandomAccessFile(file, "rw");
+					try {
+						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
+					} finally {
+						if (fileLock == null) {
+							logger.trace("[{}]tryAcquire: fileLock was NOT acquired. Closing randomAccessFile now.", thisID);
+							randomAccessFile.close();
+							randomAccessFile = null;
+						}
+					}
 					if (fileLock == null) {
-						logger.trace("[{}]tryAcquire: fileLock was NOT acquired. Closing randomAccessFile now.", thisID);
-						randomAccessFile.close();
-						randomAccessFile = null;
+						logger.debug("[{}]tryAcquire: returning false. lockCounter={}", thisID, lockCounter);
+						return false;
 					}
 				}
-				if (fileLock == null) {
-					logger.debug("[{}]tryAcquire: returning false. lockCounter={}", thisID, lockCounter);
-					return false;
-				}
+				++lockCounter;
+				logger.debug("[{}]tryAcquire: returning true. lockCounter={}", thisID, lockCounter);
+				return true;
+			} catch (IOException x) {
+				throw new RuntimeException(x);
 			}
-			++lockCounter;
-			logger.debug("[{}]tryAcquire: returning true. lockCounter={}", thisID, lockCounter);
-			return true;
-		} catch (IOException x) {
-			throw new RuntimeException(x);
 		}
 	}
 
@@ -82,14 +86,19 @@ class LockFileImpl implements LockFile {
 
 	@Override
 	public void release() {
+		logger.trace("[{}]release: entered. lockCounter={}", thisID, lockCounter);
 		synchronized (this) {
+			logger.trace("[{}]release: inside synchronized", thisID);
 			int lockCounterValue = --lockCounter;
-			if (lockCounterValue == 0)
+			if (lockCounterValue > 0) {
+				logger.debug("[{}]release: NOT releasing underlying FileLock. lockCounter={}", thisID, lockCounter);
 				return;
+			}
 
 			if (lockCounterValue < 0)
 				throw new IllegalStateException("Trying to release more often than was acquired!!!");
 
+			logger.debug("[{}]release: releasing underlying FileLock. lockCounter={}", thisID, lockCounter);
 			try {
 				if (fileLock != null) {
 					fileLock.release();
