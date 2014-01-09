@@ -27,7 +27,7 @@ public class AuthTokenSignAndVerifyTest {
 	}
 
 	@Test(expected=SignatureException.class)
-	public void signAndVerifyWithDifferencePublicKey() throws Exception {
+	public void signAndVerifyWithDifferentPublicKey() throws Exception {
 		AuthToken authToken = AuthTokenIOTest.createAuthToken();
 		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
 		KeyPair keyPair = createKeyPair();
