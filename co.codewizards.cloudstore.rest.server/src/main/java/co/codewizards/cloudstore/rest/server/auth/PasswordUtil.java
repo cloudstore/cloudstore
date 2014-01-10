@@ -29,12 +29,12 @@ public final class PasswordUtil {
 		for (char c = '0'; c <= '9'; ++c)
 			passwordChars.add(c);
 
-		final char[] specialChars = {
-				'^', '°', '!', '"', '$', '%', '&', '/', '(', ')', '=', '?', '\'', '#', '+', '-', ',', '.', ';', // ':', MUST NOT contain ':' because this is a separator
-				'_', '{', '}', '[', ']', '<', '>', '|', '*', '~'
-				};
-		for (char c : specialChars)
-			passwordChars.add(c);
+//		final char[] specialChars = {
+//				'^', '°', '!', '"', '$', '%', '&', '/', '(', ')', '=', '?', '\'', '#', '+', '-', ',', '.', ';', // ':', MUST NOT contain ':' because this is a separator
+//				'_', '{', '}', '[', ']', '<', '>', '|', '*', '~'
+//				};
+//		for (char c : specialChars)
+//			passwordChars.add(c);
 
 		PASSWORD_CHARS = new char[passwordChars.size()];
 		int i = -1;
