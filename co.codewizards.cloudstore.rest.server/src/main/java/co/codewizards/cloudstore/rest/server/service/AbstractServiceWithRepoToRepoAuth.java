@@ -50,7 +50,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		if (authorizationHeader == null || authorizationHeader.isEmpty()) {
 			logger.debug("getAuth: There is no 'Authorization' header. Replying with a Status.UNAUTHORIZED response asking for 'Basic' authentication.");
 
-			throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"Cumulus4jKeyServer\"").build());
+			throw newUnauthorizedException();
 		}
 
 		logger.debug("getAuth: 'Authorization' header: {}", authorizationHeader);
@@ -121,7 +121,12 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	{
 		EntityID serverRepositoryID = LocalRepoRegistry.getInstance().getRepositoryID(repositoryName);
 		if (serverRepositoryID == null) {
-			serverRepositoryID = new EntityID(repositoryName);
+			try {
+				serverRepositoryID = new EntityID(repositoryName);
+			} catch (IllegalArgumentException x) {
+				throw new WebApplicationException(Response.status(Status.NOT_FOUND).entity(String.format("HTTP 404: repositoryName='%s' is neither a known alias nor a valid UUID!", repositoryName)).build());
+//				throw new WebApplicationException(Response.status(Status.NOT_FOUND).build());
+			}
 		}
 
 		Auth auth = getAuth();
@@ -133,11 +138,15 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryID, clientRepositoryID, auth.getPassword()))
 					return auth.getUserName();
 				else
-					throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).build());
+					throw newUnauthorizedException();
 			}
 		} finally {
 			auth.clear();
 		}
-		throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).build());
+		throw newUnauthorizedException();
+	}
+
+	private WebApplicationException newUnauthorizedException() {
+		return new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
 	}
 }

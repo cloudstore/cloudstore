@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.rest.server.jersey;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -36,6 +37,10 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 		// We need to log the exception here, because it otherwise doesn't occur in any log
 		// in a vanilla tomcat 7.0.25. Marco :-)
 		logger.error(throwable.toString(), throwable);
+
+		if (throwable instanceof WebApplicationException) {
+			return ((WebApplicationException)throwable).getResponse();
+		}
 
 		Error error = new Error(throwable);
 		Error e = error;
