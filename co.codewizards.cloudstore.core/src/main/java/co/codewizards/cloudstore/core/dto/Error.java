@@ -22,6 +22,10 @@ implements Serializable
 
 	public Error() { }
 
+	public Error(String message) {
+		this.message = message;
+	}
+
 	public Error(Throwable throwable) {
 		if (throwable != null) {
 			this.message = throwable.getMessage();

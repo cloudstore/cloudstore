@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
@@ -56,7 +58,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		logger.debug("getAuth: 'Authorization' header: {}", authorizationHeader);
 
 		if (!authorizationHeader.startsWith("Basic"))
-			throw new WebApplicationException(Response.status(Status.FORBIDDEN).entity(new Error("Only 'Basic' authentication is supported!")).build());
+			throw new WebApplicationException(Response.status(Status.FORBIDDEN)
+					.type(MediaType.APPLICATION_XML)
+					.entity(new Error("Only 'Basic' authentication is supported!")).build());
 
 		String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
 		byte[] basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_UTF_8));
@@ -124,8 +128,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			try {
 				serverRepositoryID = new EntityID(repositoryName);
 			} catch (IllegalArgumentException x) {
-				throw new WebApplicationException(Response.status(Status.NOT_FOUND).entity(String.format("HTTP 404: repositoryName='%s' is neither a known alias nor a valid UUID!", repositoryName)).build());
-//				throw new WebApplicationException(Response.status(Status.NOT_FOUND).build());
+				throw new WebApplicationException(Response.status(Status.NOT_FOUND)
+						.type(MediaType.APPLICATION_XML)
+						.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither a known alias nor a valid UUID!", repositoryName))).build());
 			}
 		}
 
