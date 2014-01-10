@@ -228,6 +228,21 @@ public class CloudStoreRESTClient {
 		}
 	}
 
+	public void getAuthToken() {
+		Client client = acquireClient();
+		try {
+			Response response = client.target(getBaseURL())
+			.path("_getAuthToken")
+			.request().get();
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
 	public FileChunkSet getFileChunkSet(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();

@@ -19,7 +19,6 @@ public class AuthTokenEncryptAndDecryptTest {
 
 
 		// On sender's side:
-
 		AuthToken authToken1 = AuthTokenIOTest.createAuthToken();
 		byte[] authTokenData1 = new AuthTokenIO().serialise(authToken1);
 
@@ -55,7 +54,7 @@ public class AuthTokenEncryptAndDecryptTest {
 
 	private KeyPair createKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(4096, random);
+		keyGen.initialize(1024, random); // Productively, we should always use 4096 by default! But for testing, this is fine and much faster.
 		KeyPair pair = keyGen.generateKeyPair();
 		return pair;
 	}
