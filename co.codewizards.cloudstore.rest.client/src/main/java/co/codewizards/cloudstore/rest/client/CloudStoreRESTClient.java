@@ -22,6 +22,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -228,13 +229,13 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void getAuthToken() {
+	public EncryptedSignedAuthToken getAuthToken() {
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
+			EncryptedSignedAuthToken encryptedSignedAuthToken = client.target(getBaseURL())
 			.path("_getAuthToken")
-			.request().get();
-			assertResponseIndicatesSuccess(response);
+			.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
+			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
