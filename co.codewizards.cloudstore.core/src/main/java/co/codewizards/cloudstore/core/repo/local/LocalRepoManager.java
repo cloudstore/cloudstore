@@ -11,6 +11,8 @@ import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 public interface LocalRepoManager {
 
 	public static final String META_DIR_NAME = ".cloudstore-repo";
+	public static final String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
+	public static final int DEFAULT_KEY_SIZE = 4096;
 
 	/**
 	 * Gets the repository's local root directory.

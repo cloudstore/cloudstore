@@ -278,7 +278,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(4096, random); // TODO make configurable
+			keyGen.initialize(getKeySize(), random);
 			KeyPair pair = keyGen.generateKeyPair();
 
 			localRepository.setPrivateKey(pair.getPrivate().getEncoded());
@@ -493,6 +493,24 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
+		}
+	}
+
+	protected int getKeySize() {
+		String keySizeString = System.getProperty(SYSTEM_PROPERTY_KEY_SIZE);
+		if (keySizeString == null) {
+			return DEFAULT_KEY_SIZE;
+		}
+		try {
+			int keySize = Integer.parseInt(keySizeString);
+			if (keySize < 1024) {
+				logger.warn("System property '{}': keySize {} is out of range! Using default {} instead!", SYSTEM_PROPERTY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
+				return DEFAULT_KEY_SIZE;
+			}
+			return keySize;
+		} catch (NumberFormatException x) {
+			logger.warn("System property '{}': keySize '{}' is not a valid number!" + x, SYSTEM_PROPERTY_KEY_SIZE, keySizeString);
+			return DEFAULT_KEY_SIZE;
 		}
 	}
 }
