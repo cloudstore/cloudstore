@@ -187,7 +187,7 @@ public class AuthRepoPasswordManager {
 		Date renewalDate = new Date(System.currentTimeMillis() + getPasswordValidityDurationMinMillis());
 		authToken.setExpiryDateTime(new DateTime(expiryDate));
 		authToken.setRenewalDateTime(new DateTime(renewalDate));
-		authToken.setPassword(new String(PasswordUtil.createRandomPassword(30, 40)));
+		authToken.setPassword(new String(PasswordUtil.createRandomPassword(40, 40)));
 		authToken.makeUnmodifiable();
 		return authToken;
 	}
