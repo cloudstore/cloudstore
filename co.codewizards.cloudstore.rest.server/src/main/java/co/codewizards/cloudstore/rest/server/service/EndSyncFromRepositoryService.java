@@ -22,15 +22,13 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_endSyncFromRepository/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class EndSyncFromRepositoryService
+public class EndSyncFromRepositoryService extends AuthRepositoryService
 {
 	private static final Logger logger = LoggerFactory.getLogger(EndSyncFromRepositoryService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
-
-	private @PathParam("repositoryName") String repositoryName;
 
 	@POST
 	@Path("{fromRepositoryID}")

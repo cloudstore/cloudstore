@@ -25,15 +25,13 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_endPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class EndPutFileService
+public class EndPutFileService extends AuthRepositoryService
 {
 	private static final Logger logger = LoggerFactory.getLogger(EndPutFileService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
-
-	private @PathParam("repositoryName") String repositoryName;
 
 	@POST
 	@Path("{path:.*}")

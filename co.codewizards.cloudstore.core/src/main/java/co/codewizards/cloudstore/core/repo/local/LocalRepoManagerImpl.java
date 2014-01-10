@@ -80,6 +80,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static Timer closeDeferredTimer = new Timer(true);
 	private TimerTask closeDeferredTimerTask;
 
+	private byte[] privateKey;
 	private byte[] publicKey;
 
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
@@ -266,6 +267,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void readRepositoryMainProperties(LocalRepository localRepository) {
 		repositoryID = localRepository.getEntityID();
 		publicKey = localRepository.getPublicKey();
+		privateKey = localRepository.getPrivateKey();
 	}
 
 	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
@@ -416,6 +418,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	@Override
 	public byte[] getPublicKey() {
 		return publicKey;
+	}
+
+	@Override
+	public byte[] getPrivateKey() {
+		return privateKey;
 	}
 
 	@Override

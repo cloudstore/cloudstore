@@ -30,6 +30,8 @@ public interface LocalRepoManager {
 	 */
 	EntityID getLocalRepositoryID();
 
+	byte[] getPrivateKey();
+
 	byte[] getPublicKey();
 
 	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);

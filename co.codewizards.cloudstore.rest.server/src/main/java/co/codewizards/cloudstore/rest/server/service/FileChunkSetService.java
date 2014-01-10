@@ -22,15 +22,13 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_FileChunkSet/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class FileChunkSetService
+public class FileChunkSetService extends AuthRepositoryService
 {
 	private static final Logger logger = LoggerFactory.getLogger(FileChunkSetService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
-
-	private @PathParam("repositoryName") String repositoryName;
 
 	@GET
 	public FileChunkSet getFileChunkSet()

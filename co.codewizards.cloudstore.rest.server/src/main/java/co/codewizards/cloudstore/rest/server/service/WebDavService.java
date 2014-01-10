@@ -32,14 +32,12 @@ import co.codewizards.cloudstore.rest.server.webdav.PROPFIND;
 // TODO We should implement WebDAV: http://tools.ietf.org/html/rfc2518 + http://en.wikipedia.org/wiki/WebDAV
 // TODO We should *additionally* provide browsing via HTML replies (=> @Produces(MediaType.HTML))
 @Path("{repositoryName:[^_/][^/]*}")
-public class WebDavService {
+public class WebDavService extends AuthRepositoryService {
 	private static final Logger logger = LoggerFactory.getLogger(WebDavService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
-
-	private @PathParam("repositoryName") String repositoryName;
 
 //	@GET
 //	@Produces(MediaType.WILDCARD)

@@ -23,15 +23,13 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_ChangeSet/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class ChangeSetService
+public class ChangeSetService extends AuthRepositoryService
 {
 	private static final Logger logger = LoggerFactory.getLogger(ChangeSetService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
-
-	private @PathParam("repositoryName") String repositoryName;
 
 	@GET
 	@Path("{toRepositoryID}")

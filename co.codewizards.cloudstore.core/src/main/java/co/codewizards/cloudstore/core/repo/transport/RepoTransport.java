@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.Date;
 
-import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
@@ -119,6 +118,4 @@ public interface RepoTransport {
 	void endSyncFromRepository(EntityID toRepositoryID);
 
 	void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision);
-
-	EncryptedSignedAuthToken getAuthToken();
 }

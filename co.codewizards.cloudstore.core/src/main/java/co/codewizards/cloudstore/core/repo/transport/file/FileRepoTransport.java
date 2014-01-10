@@ -8,11 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -25,14 +22,7 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.auth.AuthToken;
-import co.codewizards.cloudstore.core.auth.AuthTokenIO;
-import co.codewizards.cloudstore.core.auth.AuthTokenSigner;
-import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
-import co.codewizards.cloudstore.core.auth.SignedAuthToken;
-import co.codewizards.cloudstore.core.auth.SignedAuthTokenEncrypter;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
-import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -658,44 +648,5 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public EncryptedSignedAuthToken getAuthToken() {
-		try {
-			KeyPair keyPair = createKeyPair();
-
-			AuthToken authToken = new AuthToken();
-			Date expiryDate = new Date(System.currentTimeMillis() + (60 * 1000 * 5));
-			authToken.setExpiryDateTime(new DateTime(expiryDate));
-			authToken.setPassword(randomString(40));
-
-			byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-			SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
-
-			EncryptedSignedAuthToken encryptedSignedAuthToken =
-					new SignedAuthTokenEncrypter(keyPair.getPublic().getEncoded()).encrypt(signedAuthToken.getAuthTokenData());
-
-			return encryptedSignedAuthToken;
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
-	private static SecureRandom random = new SecureRandom();
-	private KeyPair createKeyPair() throws NoSuchAlgorithmException {
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(1024, random); // Productively, we should always use 4096 by default! But for testing, this is fine and much faster.
-		KeyPair pair = keyGen.generateKeyPair();
-		return pair;
-	}
-
-	private String randomString(final int length) {
-	    StringBuilder sb = new StringBuilder();
-	    for(int i = 0; i < length; i++) {
-	        char c = (char)(random.nextInt((Character.MAX_VALUE)));
-	        sb.append(c);
-	    }
-	    return sb.toString();
 	}
 }

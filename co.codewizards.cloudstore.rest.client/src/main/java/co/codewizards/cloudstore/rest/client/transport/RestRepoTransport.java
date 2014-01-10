@@ -4,7 +4,6 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Date;
 
-import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -164,10 +163,4 @@ public class RestRepoTransport extends AbstractRepoTransport {
 		}
 		return repositoryName;
 	}
-
-	@Override
-	public EncryptedSignedAuthToken getAuthToken() {
-		return getClient().getAuthToken();
-	}
-
 }
