@@ -31,7 +31,6 @@ public abstract class AbstractTest {
 
 	static {
 		System.setProperty(ConfigDir.SYSTEM_PROPERTY, "target/.cloudstore");
-
 		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_KEY_SIZE, "1024");
 	}
 
