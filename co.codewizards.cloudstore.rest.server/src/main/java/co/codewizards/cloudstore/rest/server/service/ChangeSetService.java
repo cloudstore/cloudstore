@@ -23,7 +23,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_ChangeSet/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class ChangeSetService extends AuthRepositoryService
+public class ChangeSetService extends AbstractServiceWithRepoToRepoAuth
 {
 	private static final Logger logger = LoggerFactory.getLogger(ChangeSetService.class);
 
@@ -33,8 +33,8 @@ public class ChangeSetService extends AuthRepositoryService
 
 	@GET
 	@Path("{toRepositoryID}")
-	public ChangeSet getChangeSet(@PathParam("toRepositoryID") EntityID toRepositoryID)
-	{
+	public ChangeSet getChangeSet(@PathParam("toRepositoryID") EntityID toRepositoryID) {
+		authenticateAndReturnUserName();
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);

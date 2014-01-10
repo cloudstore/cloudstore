@@ -24,7 +24,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_makeDirectory/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class MakeDirectoryService extends AuthRepositoryService
+public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 {
 	private static final Logger logger = LoggerFactory.getLogger(MakeDirectoryService.class);
 
@@ -45,6 +45,7 @@ public class MakeDirectoryService extends AuthRepositoryService
 	public void makeDirectory(@PathParam("path") String path)
 	{
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);

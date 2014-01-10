@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -22,7 +24,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_endSyncFromRepository/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class EndSyncFromRepositoryService extends AuthRepositoryService
+public class EndSyncFromRepositoryService extends AbstractServiceWithRepoToRepoAuth
 {
 	private static final Logger logger = LoggerFactory.getLogger(EndSyncFromRepositoryService.class);
 
@@ -31,14 +33,17 @@ public class EndSyncFromRepositoryService extends AuthRepositoryService
 	}
 
 	@POST
-	@Path("{fromRepositoryID}")
-	public void endSyncFromRepository(@PathParam("fromRepositoryID") EntityID fromRepositoryID)
+	@Path("{toRepositoryID}")
+	public void endSyncFromRepository(@PathParam("toRepositoryID") EntityID toRepositoryID)
 	{
+		assertNotNull("toRepositoryID", toRepositoryID);
+		authenticateAndReturnUserName();
+
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.endSyncFromRepository(fromRepositoryID);
+			repoTransport.endSyncFromRepository(toRepositoryID);
 		} finally {
 			repoTransport.close();
 		}

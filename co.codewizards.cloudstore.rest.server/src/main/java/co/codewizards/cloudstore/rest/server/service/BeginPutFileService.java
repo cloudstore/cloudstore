@@ -22,7 +22,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_beginPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class BeginPutFileService extends AuthRepositoryService
+public class BeginPutFileService extends AbstractServiceWithRepoToRepoAuth
 {
 	private static final Logger logger = LoggerFactory.getLogger(BeginPutFileService.class);
 
@@ -35,6 +35,7 @@ public class BeginPutFileService extends AuthRepositoryService
 	public void beginPutFile(@PathParam("path") String path)
 	{
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);

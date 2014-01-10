@@ -27,6 +27,7 @@ public class AuthTokenIOTest {
 	public static AuthToken createAuthToken() {
 		AuthToken authToken = new AuthToken();
 		authToken.setExpiryDateTime(new DateTime(new Date()));
+		authToken.setRenewalDateTime(new DateTime(new Date()));
 		authToken.setPassword("fadgfsdagasd");
 		return authToken;
 	}

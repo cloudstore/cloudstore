@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 class LockFileImpl implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileImpl.class);
 
-	private final LockFileRegistry lockFileRegistry;
+	private final LockFileFactory lockFileFactory;
 	private final File file;
 	private final String thisID = Integer.toHexString(System.identityHashCode(this));
 
@@ -24,8 +24,8 @@ class LockFileImpl implements LockFile {
 	private RandomAccessFile randomAccessFile;
 	private FileLock fileLock;
 
-	protected LockFileImpl(LockFileRegistry lockFileRegistry, File file) {
-		this.lockFileRegistry = assertNotNull("lockFileRegistry", lockFileRegistry);
+	protected LockFileImpl(LockFileFactory lockFileFactory, File file) {
+		this.lockFileFactory = assertNotNull("lockFileFactory", lockFileFactory);
 		this.file = assertNotNull("file", file);
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}
@@ -113,7 +113,7 @@ class LockFileImpl implements LockFile {
 				throw new RuntimeException(x);
 			}
 		}
-		lockFileRegistry.postRelease(this);
+		lockFileFactory.postRelease(this);
 	}
 
 	protected int getLockCounter() {

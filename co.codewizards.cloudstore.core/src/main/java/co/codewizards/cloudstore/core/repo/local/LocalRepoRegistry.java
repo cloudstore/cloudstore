@@ -11,7 +11,7 @@ import java.util.Properties;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.io.LockFile;
-import co.codewizards.cloudstore.core.io.LockFileRegistry;
+import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class LocalRepoRegistry
@@ -138,7 +138,7 @@ public class LocalRepoRegistry
 		if (repositoryAlias.indexOf('/') >= 0)
 			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
 
-		LockFile lockFile = LockFileRegistry.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
 			getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
@@ -161,7 +161,7 @@ public class LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
-		LockFile lockFile = LockFileRegistry.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKey(repositoryID);

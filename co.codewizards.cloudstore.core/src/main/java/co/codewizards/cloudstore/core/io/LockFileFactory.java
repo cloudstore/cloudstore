@@ -8,18 +8,18 @@ import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LockFileRegistry {
+public class LockFileFactory {
 
-	private static class LockFileRegistryHolder {
-		public static final LockFileRegistry instance = new LockFileRegistry();
+	private static class LockFileFactoryHolder {
+		public static final LockFileFactory instance = new LockFileFactory();
 	}
 
 	protected final Object mutex = new Object();
 
-	protected LockFileRegistry() { }
+	protected LockFileFactory() { }
 
-	public static LockFileRegistry getInstance() {
-		return LockFileRegistryHolder.instance;
+	public static LockFileFactory getInstance() {
+		return LockFileFactoryHolder.instance;
 	}
 
 	private Map<File, LockFileImpl> file2LockFileImpl = new HashMap<File, LockFileImpl>();

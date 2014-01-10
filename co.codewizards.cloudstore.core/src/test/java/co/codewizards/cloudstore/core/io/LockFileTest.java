@@ -11,8 +11,8 @@ public class LockFileTest {
 	@Test
 	public void acquireAndReleaseMultipleInstances() {
 		File file = new File(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36));
-		LockFile lockFile1 = LockFileRegistry.getInstance().acquire(file, 10000);
-		LockFile lockFile2 = LockFileRegistry.getInstance().acquire(file, 10000);
+		LockFile lockFile1 = LockFileFactory.getInstance().acquire(file, 10000);
+		LockFile lockFile2 = LockFileFactory.getInstance().acquire(file, 10000);
 		try {
 			try {
 				System.out.println("Test");

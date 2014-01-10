@@ -18,12 +18,16 @@ import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.auth.AuthConstants;
+import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
+import co.codewizards.cloudstore.rest.server.auth.AuthRepoPasswordManager;
 
-public abstract class AuthRepositoryService {
+public abstract class AbstractServiceWithRepoToRepoAuth {
 
-	private static final Logger logger = LoggerFactory.getLogger(AuthRepositoryService.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractServiceWithRepoToRepoAuth.class);
 
 	protected @Context HttpServletRequest request;
 
@@ -62,7 +66,7 @@ public abstract class AuthRepositoryService {
 		ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
 		CharBuffer cb = CharBuffer.allocate(basicAuthDecodedBA.length + 1);
 		try {
-			Reader r = new InputStreamReader(in, "UTF-8");
+			Reader r = new InputStreamReader(in, IOUtil.CHARSET_UTF_8);
 			int charsReadTotal = 0;
 			int charsRead;
 			do {
@@ -112,24 +116,28 @@ public abstract class AuthRepositoryService {
 	 * with {@link Status#FORBIDDEN}, if there is an 'Authorization' header, but no 'Basic' authentication header (other authentication modes, like e.g. 'Digest'
 	 * are not supported); with {@link Status#INTERNAL_SERVER_ERROR}, if there was an {@link IOException}.
 	 */
-	protected Auth authenticate()
+	protected String authenticateAndReturnUserName()
 	throws WebApplicationException
 	{
+		EntityID serverRepositoryID = LocalRepoRegistry.getInstance().getRepositoryID(repositoryName);
+		if (serverRepositoryID == null) {
+			serverRepositoryID = new EntityID(repositoryName);
+		}
+
 		Auth auth = getAuth();
-//		try {
-//
-//
-//		} catch (IOException e) {
-//			throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e)).build());
-////		} catch (AuthenticationException e) {
-////			throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).entity(new Error(e)).build());
-////		} catch (KeyNotFoundException e) {
-////			// ignore this - it's expected
-////			doNothing(); // Remove warning from PMD report
-//		}
-		return auth;
+		try {
+			if (auth.getUserName().startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
+				String repositoryIDString = auth.getUserName().substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
+				EntityID clientRepositoryID = new EntityID(repositoryIDString);
+
+				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryID, clientRepositoryID, auth.getPassword()))
+					return auth.getUserName();
+				else
+					throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).build());
+			}
+		} finally {
+			auth.clear();
+		}
+		throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).build());
 	}
-
-	private static final void doNothing() { }
-
 }

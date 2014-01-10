@@ -11,6 +11,7 @@ import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolve
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
 import co.codewizards.cloudstore.rest.server.service.BeginPutFileService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetService;
+import co.codewizards.cloudstore.rest.server.service.EncryptedSignedAuthTokenService;
 import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
@@ -43,6 +44,7 @@ public class CloudStoreREST extends ResourceConfig {
 				// BEGIN services
 				BeginPutFileService.class,
 				ChangeSetService.class,
+				EncryptedSignedAuthTokenService.class,
 				EndPutFileService.class,
 				EndSyncFromRepositoryService.class,
 				EndSyncToRepositoryService.class,

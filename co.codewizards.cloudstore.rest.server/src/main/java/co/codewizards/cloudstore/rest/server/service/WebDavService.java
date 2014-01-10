@@ -32,7 +32,7 @@ import co.codewizards.cloudstore.rest.server.webdav.PROPFIND;
 // TODO We should implement WebDAV: http://tools.ietf.org/html/rfc2518 + http://en.wikipedia.org/wiki/WebDAV
 // TODO We should *additionally* provide browsing via HTML replies (=> @Produces(MediaType.HTML))
 @Path("{repositoryName:[^_/][^/]*}")
-public class WebDavService extends AuthRepositoryService {
+public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	private static final Logger logger = LoggerFactory.getLogger(WebDavService.class);
 
 	{
@@ -54,6 +54,7 @@ public class WebDavService extends AuthRepositoryService {
 			@QueryParam("length") @DefaultValue("-1") int length)
 	{
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
@@ -69,6 +70,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Path("{path:.*}")
 	public void mkcol(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
@@ -84,6 +86,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Path("{path:.*}")
 	public void delete(@PathParam("path") String path) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
@@ -100,6 +103,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public void putFileData(@PathParam("path") String path, @QueryParam("offset") long offset, byte[] fileData) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
@@ -122,6 +126,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Produces(MediaType.TEXT_HTML)
 	public String browse(@PathParam("path") String path) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 		return "<html><body>" + path + "</body></html>";
 	}
 
@@ -129,6 +134,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Path("{path:.*}")
 	public void copy(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 //		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
@@ -144,6 +150,7 @@ public class WebDavService extends AuthRepositoryService {
 	@Path("{path:.*}")
 	public void move(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
 		assertNotNull("path", path);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 //		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);

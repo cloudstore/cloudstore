@@ -12,6 +12,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Configuration;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,8 @@ public class CloudStoreRESTClient {
 
 	private HostnameVerifier hostnameVerifier;
 	private SSLContext sslContext;
+
+	private CredentialsProvider credentialsProvider;
 
 	/**
 	 * Get the server's base-URL.
@@ -197,11 +201,11 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			ChangeSet changeSet = client.target(getBaseURL())
+			ChangeSet changeSet = assignCredentials(client.target(getBaseURL())
 					.path(getPath(ChangeSet.class))
 					.path(repositoryName)
 					.path(toRepositoryID.toString())
-					.request(MediaType.APPLICATION_XML).get(ChangeSet.class);
+					.request(MediaType.APPLICATION_XML)).get(ChangeSet.class);
 			return changeSet;
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -229,11 +233,11 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public EncryptedSignedAuthToken getAuthToken() {
+	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(String repositoryName, EntityID clientRepositoryID) {
 		Client client = acquireClient();
 		try {
 			EncryptedSignedAuthToken encryptedSignedAuthToken = client.target(getBaseURL())
-			.path("_getAuthToken")
+			.path("_EncryptedSignedAuthToken").path(repositoryName).path(clientRepositoryID.toString())
 			.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
 			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {
@@ -248,11 +252,11 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			FileChunkSet fileChunkSet = client.target(getBaseURL())
+			FileChunkSet fileChunkSet = assignCredentials(client.target(getBaseURL())
 					.path(getPath(FileChunkSet.class))
 					.path(repositoryName)
 					.path(removeLeadingAndTrailingSlashes(path))
-					.request(MediaType.APPLICATION_XML).get(FileChunkSet.class);
+					.request(MediaType.APPLICATION_XML)).get(FileChunkSet.class);
 			return fileChunkSet;
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -266,11 +270,11 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
+			Response response = assignCredentials(client.target(getBaseURL())
 			.path("_beginPutFile")
 			.path(repositoryName)
 			.path(removeLeadingAndTrailingSlashes(path))
-			.request().post(null);
+			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -284,11 +288,11 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
+			Response response = assignCredentials(client.target(getBaseURL())
 			.path("_endSyncFromRepository")
 			.path(repositoryName)
 			.path(fromRepositoryID.toString())
-			.request().post(null);
+			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -305,12 +309,12 @@ public class CloudStoreRESTClient {
 
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
+			Response response = assignCredentials(client.target(getBaseURL())
 			.path("_endSyncToRepository")
 			.path(repositoryName)
 			.path(fromRepositoryID.toString())
 			.queryParam("fromLocalRevision", fromLocalRevision)
-			.request().post(null);
+			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -324,13 +328,13 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
-			.path("_endPutFile")
-			.path(repositoryName)
-			.path(removeLeadingAndTrailingSlashes(path))
-			.queryParam("lastModified", lastModified.toString())
-			.queryParam("length",length)
-			.request().post(null);
+			Response response = assignCredentials(client.target(getBaseURL())
+					.path("_endPutFile")
+					.path(repositoryName)
+					.path(removeLeadingAndTrailingSlashes(path))
+					.queryParam("lastModified", lastModified.toString())
+					.queryParam("length",length)
+					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -338,6 +342,13 @@ public class CloudStoreRESTClient {
 		} finally {
 			releaseClient(client);
 		}
+	}
+
+	private Invocation.Builder assignCredentials(Invocation.Builder builder) {
+		CredentialsProvider credentialsProvider = getCredentialsProviderOrFail();
+		builder.property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_USERNAME, credentialsProvider.getUserName());
+		builder.property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_PASSWORD, credentialsProvider.getPassword());
+		return builder;
 	}
 
 	public byte[] getFileData(String repositoryName, String path, long offset, int length) {
@@ -352,7 +363,7 @@ public class CloudStoreRESTClient {
 			if (length >= 0) // defaults to -1 meaning "all"
 				webTarget = webTarget.queryParam("length", length);
 
-			return webTarget.request(MediaType.APPLICATION_OCTET_STREAM).get(byte[].class);
+			return assignCredentials(webTarget.request(MediaType.APPLICATION_OCTET_STREAM)).get(byte[].class);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
@@ -372,7 +383,7 @@ public class CloudStoreRESTClient {
 			if (offset > 0)
 				webTarget = webTarget.queryParam("offset", offset);
 
-			Response response = webTarget.request().put(Entity.entity(fileData, MediaType.APPLICATION_OCTET_STREAM));
+			Response response = assignCredentials(webTarget.request()).put(Entity.entity(fileData, MediaType.APPLICATION_OCTET_STREAM));
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -386,9 +397,9 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
+			Response response = assignCredentials(client.target(getBaseURL())
 					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
-					.request().delete();
+					.request()).delete();
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -436,7 +447,7 @@ public class CloudStoreRESTClient {
 			if (lastModified != null)
 				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
 
-			Response response = webTarget.request().post(null);
+			Response response = assignCredentials(webTarget.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -522,6 +533,7 @@ public class CloudStoreRESTClient {
 
 			// TODO Timeouts!
 			Configuration clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
+
 			ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
 
 			if (sslContext != null)
@@ -531,6 +543,10 @@ public class CloudStoreRESTClient {
 				clientBuilder.hostnameVerifier(hostnameVerifier);
 
 			client = clientBuilder.build();
+
+			HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("anonymous", "");
+//			HttpAuthenticationFeature feature = HttpAuthenticationFeature.basicBuilder().build();
+			client.register(feature);
 
 			configFrozen = true;
 		}
@@ -574,4 +590,16 @@ public class CloudStoreRESTClient {
 		throw x;
 	}
 
+	public CredentialsProvider getCredentialsProvider() {
+		return credentialsProvider;
+	}
+	private CredentialsProvider getCredentialsProviderOrFail() {
+		CredentialsProvider credentialsProvider = getCredentialsProvider();
+		if (credentialsProvider == null)
+			throw new IllegalStateException("credentialsProvider == null");
+		return credentialsProvider;
+	}
+	public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
+		this.credentialsProvider = credentialsProvider;
+	}
 }

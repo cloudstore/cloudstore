@@ -25,7 +25,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 @Path("_endPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class EndPutFileService extends AuthRepositoryService
+public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 {
 	private static final Logger logger = LoggerFactory.getLogger(EndPutFileService.class);
 
@@ -39,6 +39,7 @@ public class EndPutFileService extends AuthRepositoryService
 	{
 		assertNotNull("path", path);
 		assertNotNull("lastModified", lastModified);
+		authenticateAndReturnUserName();
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);

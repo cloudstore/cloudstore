@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.dto.jaxb;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
@@ -27,6 +28,7 @@ public class CloudStoreJaxbContext {
 						ChangeSet.class,
 						DeleteModificationDTO.class,
 						DirectoryDTO.class,
+						EncryptedSignedAuthToken.class,
 						EntityID.class,
 						Error.class,
 						ErrorStackTraceElement.class,
