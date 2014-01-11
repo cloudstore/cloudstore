@@ -68,7 +68,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public EntityID getRepositoryID() {
-		return getLocalRepoManager().getLocalRepositoryID();
+		return getLocalRepoManager().getRepositoryID();
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void requestConnection(EntityID remoteRepositoryID, byte[] publicKey) {
+	public void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey) {
 		assertNotNull("remoteRepositoryID", remoteRepositoryID);
 		assertNotNull("publicKey", publicKey);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
@@ -88,14 +88,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				throw new IllegalArgumentException("RemoteRepository already connected! remoteRepositoryID=" + remoteRepositoryID);
 
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getObjectByIdOrNull(remoteRepositoryID);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryID);
 			if (remoteRepositoryRequest != null) {
 				logger.info("RemoteRepository already requested to be connected. remoteRepositoryID={}", remoteRepositoryID);
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
 				remoteRepositoryRequest.setPublicKey(publicKey);
 			}
 			else {
-				remoteRepositoryRequest = new RemoteRepositoryRequest(remoteRepositoryID);
+				remoteRepositoryRequest = new RemoteRepositoryRequest();
+				remoteRepositoryRequest.setRepositoryID(remoteRepositoryID);
 				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
 			}
@@ -306,6 +307,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
 		repositoryDTO.setEntityID(localRepository.getEntityID());
 		repositoryDTO.setRevision(localRepository.getRevision());
+		repositoryDTO.setPublicKey(localRepository.getPublicKey());
 		return repositoryDTO;
 	}
 

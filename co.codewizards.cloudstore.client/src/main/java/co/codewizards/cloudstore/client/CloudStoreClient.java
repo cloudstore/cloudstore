@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.Console;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +13,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -24,6 +27,7 @@ public class CloudStoreClient {
 
 		l.add(AcceptRepoConnectionSubCommand.class);
 		l.add(CreateRepoSubCommand.class);
+		l.add(RepoInfoSubCommand.class);
 		l.add(HelpSubCommand.class);
 		l.add(RequestRepoConnectionSubCommand.class);
 
@@ -68,7 +72,38 @@ public class CloudStoreClient {
 	public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override
 		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(CheckServerTrustedCertificateExceptionContext context) {
-			throw new UnsupportedOperationException("NYI"); // TODO implement! Ask the user via the console! Show the certificate's SHA1 fingerprint!
+			CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+			String certificateSha1 = null;
+			try {
+				byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(context.getCertificateChain()[0].getEncoded()));
+				certificateSha1 = HashUtil.encodeHexStr(hash);
+			} catch (Exception e) {
+				// we're in the console client, hence this odd behaviour is fine
+				e.printStackTrace();
+				System.exit(66);
+			}
+			while (true) {
+				String trustedString = prompt("You are connecting to this server for the first time. The connection to this server is not yet trusted. The server presented a certificate with the SHA1 '%s'. Please verify that this is really your server and not a man in the middle! Your server shows its SHA1 during startup. Do you want to register this certificate and trust this connection?", certificateSha1);
+				if ("y".equals(trustedString)) {
+					result.setTrusted(true);
+					break;
+				}
+				else if ("n".equals(trustedString)) {
+					result.setTrusted(false);
+					break;
+				}
+				System.err.println("Invalid input! Please enter 'y' for yes and 'n' for no!");
+			}
+			return result;
+		}
+
+		protected String prompt(String fmt, Object ... args) {
+			Console console = System.console();
+			if (console == null)
+				throw new IllegalStateException("There is no system console! Cannot prompt \"" + String.format(fmt, args) + "\"!!!");
+
+			String result = console.readLine(fmt, args);
+			return result;
 		}
 	}
 

@@ -22,6 +22,7 @@ public class LocalRepository extends Repository {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RepoFile root;
 
+	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] privateKey;
 
 	public LocalRepository() { }

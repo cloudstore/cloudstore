@@ -82,11 +82,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void requestConnection(EntityID remoteRepositoryID, byte[] publicKey) {
+	public void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey) {
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
 		repositoryDTO.setEntityID(remoteRepositoryID);
 		repositoryDTO.setPublicKey(publicKey);
-		getClient().requestConnection(repositoryDTO);
+		getClient().requestRepoConnection(getRepositoryName(), repositoryDTO);
 	}
 
 	@Override
@@ -181,7 +181,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 				try {
 					RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(getRepositoryID());
 
-					EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getLocalRepositoryID());
+					EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryID());
 
 					byte[] signedAuthTokenData = new SignedAuthTokenDecrypter(localRepoManager.getPrivateKey()).decrypt(encryptedSignedAuthToken);
 

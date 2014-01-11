@@ -29,7 +29,7 @@ public class LocalRepoRegistryTest extends AbstractTest
 		assertThat(localRoot1).isDirectory();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot1);
 		assertThat(localRepoManager).isNotNull();
-		newEntityID2FileMap.put(localRepoManager.getLocalRepositoryID(), localRoot1.getAbsoluteFile());
+		newEntityID2FileMap.put(localRepoManager.getRepositoryID(), localRoot1.getAbsoluteFile());
 
 		File localRoot2 = newTestRepositoryLocalRoot();
 		assertThat(localRoot2).doesNotExist();
@@ -37,7 +37,7 @@ public class LocalRepoRegistryTest extends AbstractTest
 		assertThat(localRoot2).isDirectory();
 		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
 		assertThat(localRepoManager).isNotNull();
-		newEntityID2FileMap.put(localRepoManager2.getLocalRepositoryID(), localRoot2.getAbsoluteFile());
+		newEntityID2FileMap.put(localRepoManager2.getRepositoryID(), localRoot2.getAbsoluteFile());
 
 
 		Set<Entry<EntityID, File>> newEntrySet = newEntityID2FileMap.entrySet();

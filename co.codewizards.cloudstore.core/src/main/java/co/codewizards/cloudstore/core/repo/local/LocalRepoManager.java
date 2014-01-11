@@ -28,10 +28,22 @@ public interface LocalRepoManager {
 	 * This is {@link LocalRepository#getEntityID() LocalRepository.entityID} in the local repository database.
 	 * @return the local repository's unique ID. Never <code>null</code>.
 	 */
-	EntityID getLocalRepositoryID();
+	EntityID getRepositoryID();
 
+	/**
+	 * Gets the local repository's private key.
+	 * <p>
+	 * This is always an RSA key - other key types are not (yet) supported.
+	 * @return the local repository's private key. Never <code>null</code>.
+	 */
 	byte[] getPrivateKey();
 
+	/**
+	 * Gets the local repository's public key.
+	 * <p>
+	 * This is always an RSA key - other key types are not (yet) supported.
+	 * @return the local repository's public key. Never <code>null</code>.
+	 */
 	byte[] getPublicKey();
 
 	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
@@ -57,6 +69,10 @@ public interface LocalRepoManager {
 	 */
 	void close();
 
+	/**
+	 * Begin a JDO transaction in the underlying database.
+	 * @return the transaction handle. Never <code>null</code>.
+	 */
 	LocalRepoTransaction beginTransaction();
 
 	/**

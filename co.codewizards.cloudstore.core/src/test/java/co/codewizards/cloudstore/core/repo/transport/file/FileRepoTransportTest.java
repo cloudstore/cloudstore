@@ -52,15 +52,15 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		remoteRepositoryID = localRepoManager.getLocalRepositoryID();
+		remoteRepositoryID = localRepoManager.getRepositoryID();
 
 		localRoot = newTestRepositoryLocalRoot();
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		LocalRepoManager toLocalRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
-		localRepoManager.putRemoteRepository(toLocalRepoManager.getLocalRepositoryID(), null, toLocalRepoManager.getPublicKey());
-		toLocalRepoManager.putRemoteRepository(localRepoManager.getLocalRepositoryID(), null, localRepoManager.getPublicKey());
-		localRepositoryID = toLocalRepoManager.getLocalRepositoryID();
+		localRepoManager.putRemoteRepository(toLocalRepoManager.getRepositoryID(), null, toLocalRepoManager.getPublicKey());
+		toLocalRepoManager.putRemoteRepository(localRepoManager.getRepositoryID(), null, localRepoManager.getPublicKey());
+		localRepositoryID = toLocalRepoManager.getRepositoryID();
 		toLocalRepoManager.close();
 
 		File child_1 = createDirectory(remoteRoot, "1");

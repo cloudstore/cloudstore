@@ -215,15 +215,15 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void requestConnection(RepositoryDTO repositoryDTO) {
-		assertNotNull("repositoryDTO", repositoryDTO);
-		assertNotNull("repositoryDTO.entityID", repositoryDTO.getEntityID());
-		assertNotNull("repositoryDTO.publicKey", repositoryDTO.getPublicKey());
+	public void requestRepoConnection(String repositoryName, RepositoryDTO clientRepositoryDTO) {
+		assertNotNull("repositoryDTO", clientRepositoryDTO);
+		assertNotNull("repositoryDTO.entityID", clientRepositoryDTO.getEntityID());
+		assertNotNull("repositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
 		Client client = acquireClient();
 		try {
 			Response response = client.target(getBaseURL())
-			.path("_requestConnection")
-			.request().post(Entity.entity(repositoryDTO, MediaType.APPLICATION_XML));
+			.path("_requestRepoConnection").path(repositoryName)
+			.request().post(Entity.entity(clientRepositoryDTO, MediaType.APPLICATION_XML));
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -237,7 +237,7 @@ public class CloudStoreRESTClient {
 		Client client = acquireClient();
 		try {
 			EncryptedSignedAuthToken encryptedSignedAuthToken = client.target(getBaseURL())
-			.path("_EncryptedSignedAuthToken").path(repositoryName).path(clientRepositoryID.toString())
+			.path(getPath(EncryptedSignedAuthToken.class)).path(repositoryName).path(clientRepositoryID.toString())
 			.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
 			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {

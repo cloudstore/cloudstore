@@ -34,7 +34,7 @@ public interface RepoTransport {
 	 * @param remoteRepositoryID the unique ID of the remote repository to be connected. Must not be <code>null</code>.
 	 * @param publicKey TODO
 	 */
-	void requestConnection(EntityID remoteRepositoryID, byte[] publicKey);
+	void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey);
 
 	ChangeSet getChangeSet(EntityID toRepositoryID);
 

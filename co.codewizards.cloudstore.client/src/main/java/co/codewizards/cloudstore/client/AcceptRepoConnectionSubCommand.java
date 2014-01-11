@@ -92,7 +92,7 @@ public class AcceptRepoConnectionSubCommand extends SubCommand
 					request = oldestRequest;
 				}
 				else {
-					request = remoteRepositoryRequestDAO.getObjectByIdOrFail(remoteRepositoryID);
+					request = remoteRepositoryRequestDAO.getRemoteRepositoryRequestOrFail(remoteRepositoryID);
 				}
 				remoteRepositoryID = request.getRepositoryID();
 				publicKey = request.getPublicKey();

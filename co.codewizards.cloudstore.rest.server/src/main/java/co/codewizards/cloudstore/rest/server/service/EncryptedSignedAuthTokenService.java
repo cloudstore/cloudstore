@@ -59,7 +59,7 @@ public class EncryptedSignedAuthTokenService
 				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 				RemoteRepository clientRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
 				EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
-						localRepoManager.getLocalRepositoryID(), clientRepositoryID,
+						localRepoManager.getRepositoryID(), clientRepositoryID,
 						localRepoManager.getPrivateKey(), clientRemoteRepository.getPublicKey());
 				transaction.commit();
 				return result;

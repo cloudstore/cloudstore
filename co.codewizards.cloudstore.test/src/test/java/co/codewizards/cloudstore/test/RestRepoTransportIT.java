@@ -55,7 +55,7 @@ public class RestRepoTransportIT extends AbstractIT {
 
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		EntityID remoteRepositoryID = localRepoManager.getLocalRepositoryID();
+		EntityID remoteRepositoryID = localRepoManager.getRepositoryID();
 
 		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID);
 

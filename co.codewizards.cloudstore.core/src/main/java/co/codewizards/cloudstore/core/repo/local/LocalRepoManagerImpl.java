@@ -59,6 +59,8 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerImpl.class);
 
+	protected static volatile long closeDeferredMillis = 60 * 1000L; // TODO make properly configurable!
+
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
@@ -265,9 +267,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void readRepositoryMainProperties(LocalRepository localRepository) {
-		repositoryID = localRepository.getEntityID();
-		publicKey = localRepository.getPublicKey();
-		privateKey = localRepository.getPrivateKey();
+		assertNotNull("localRepository", localRepository);
+		repositoryID = assertNotNull("localRepository.entityID", localRepository.getEntityID());
+		publicKey = assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
+		privateKey = assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
 	}
 
 	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
@@ -379,8 +382,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			_close();
 	}
 
-	protected static volatile long closeDeferredMillis = 60 * 1000L; // TODO make properly configurable!
-
 	private void _close() {
 		synchronized(this) {
 			if (closeDeferredTimerTask != null) {
@@ -411,7 +412,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public EntityID getLocalRepositoryID() {
+	public EntityID getRepositoryID() {
 		return repositoryID;
 	}
 
@@ -477,7 +478,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getObjectByIdOrNull(repositoryID);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(repositoryID);
 			if (remoteRepositoryRequest != null)
 				remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
 

@@ -19,10 +19,10 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
-@Path("_requestConnection/{repositoryName}")
-public class RequestConnectionService
+@Path("_requestRepoConnection/{repositoryName}")
+public class RequestRepoConnectionService
 {
-	private static final Logger logger = LoggerFactory.getLogger(RequestConnectionService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RequestRepoConnectionService.class);
 
 	{
 		logger.debug("<init>: created new instance");
@@ -32,15 +32,15 @@ public class RequestConnectionService
 
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(RepositoryDTO repositoryDTO)
+	public void requestConnection(RepositoryDTO clientRepositoryDTO)
 	{
-		assertNotNull("repositoryDTO", repositoryDTO);
+		assertNotNull("repositoryDTO", clientRepositoryDTO);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.requestConnection(repositoryDTO.getEntityID(), repositoryDTO.getPublicKey());
+			repoTransport.requestRepoConnection(clientRepositoryDTO.getEntityID(), clientRepositoryDTO.getPublicKey());
 		} finally {
 			repoTransport.close();
 		}
