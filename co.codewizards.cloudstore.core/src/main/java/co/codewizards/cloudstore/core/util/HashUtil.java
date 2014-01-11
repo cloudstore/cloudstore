@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.core.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 public final class HashUtil {
 
@@ -82,4 +84,39 @@ public final class HashUtil {
 		}
 		return md.digest();
 	}
+
+	public static String formatEncodedHexStrForHuman(String hex) {
+		if (hex.length() % 2 != 0)
+			throw new IllegalArgumentException("The hex string must have an even number of characters!");
+
+		hex = hex.toUpperCase(Locale.UK);
+
+		StringBuilder sb = new StringBuilder(hex.length() * 3 / 2);
+		for (int i = 0; i < hex.length(); i += 2) {
+			if (sb.length() > 0)
+				sb.append(':');
+
+			sb.append(hex.substring(i, i + 2));
+		}
+		return sb.toString();
+	}
+
+	public static String sha1ForHuman(byte[] in) {
+		try {
+			return sha1ForHuman(new ByteArrayInputStream(in));
+		} catch (IOException x) {
+			throw new RuntimeException(x);
+		}
+	}
+
+	public static String sha1ForHuman(InputStream in) throws IOException {
+		byte[] hash;
+		try {
+			hash = hash(HASH_ALGORITHM_SHA, in);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		return formatEncodedHexStrForHuman(encodeHexStr(hash));
+	}
+
 }

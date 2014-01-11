@@ -18,6 +18,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
  */
 public class RequestRepoConnectionSubCommand extends SubCommand
 {
+	// TODO support sub-dirs!
 	@Option(name="-local", metaVar="<path>", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory (i.e. not the root), only this sub-directory is connected with the remote repository. NOTE: Sub-dirs are NOT YET SUPPORTED!")
 	private String local;
 

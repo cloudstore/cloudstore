@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -14,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -39,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
 public class CloudStoreServer implements Runnable {
@@ -162,42 +165,62 @@ public class CloudStoreServer implements Runnable {
 			throw new IllegalStateException("Server is already running.");
 	}
 
-	private void initKeyStore() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, SecurityException, SignatureException, NoSuchProviderException {
-		if (getKeyStoreFile().exists()) {
-			return;
+	private void initKeyStore() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, SecurityException, SignatureException, NoSuchProviderException, UnrecoverableEntryException {
+		if (!getKeyStoreFile().exists()) {
+			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
+
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			keyGen.initialize(4096, random); // TODO make configurable
+			KeyPair pair = keyGen.generateKeyPair();
+
+			X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
+
+			long serial = new SecureRandom().nextLong();
+
+			v3CertGen.setSerialNumber(BigInteger.valueOf(serial).abs());
+			v3CertGen.setIssuerDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
+			v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - (1000L * 60 * 60 * 24 * 3)));
+			v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + (1000L * 60 * 60 * 24 * 365 * 10)));
+			v3CertGen.setSubjectDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
+
+			v3CertGen.setPublicKey(pair.getPublic());
+			v3CertGen.setSignatureAlgorithm("SHA1WithRSAEncryption");
+
+			X509Certificate pkCertificate = v3CertGen.generateX509Certificate(pair.getPrivate());
+
+			PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
+			ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
+
+			FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
+			try {
+				ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
+			} finally {
+				fos.close();
+			}
 		}
 
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
-
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(4096, random); // TODO make configurable
-		KeyPair pair = keyGen.generateKeyPair();
-
-		X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
-
-		long serial = new SecureRandom().nextLong();
-
-		v3CertGen.setSerialNumber(BigInteger.valueOf(serial).abs());
-		v3CertGen.setIssuerDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
-		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - (1000L * 60 * 60 * 24 * 3)));
-		v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + (1000L * 60 * 60 * 24 * 365 * 10)));
-		v3CertGen.setSubjectDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
-
-		v3CertGen.setPublicKey(pair.getPublic());
-		v3CertGen.setSignatureAlgorithm("SHA1WithRSAEncryption");
-
-		X509Certificate pkCertificate = v3CertGen.generateX509Certificate(pair.getPrivate());
-
-		PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
-		ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
-
-		FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
+		FileInputStream fis = new FileInputStream(getKeyStoreFile());
 		try {
-			ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
+			ks.load(fis, KEY_STORE_PASSWORD_CHAR_ARRAY);
 		} finally {
-			fos.close();
+			fis.close();
 		}
+		X509Certificate certificate = (X509Certificate) ks.getCertificate(CERTIFICATE_ALIAS);
+		String certificateSha1 = HashUtil.sha1ForHuman(certificate.getEncoded());
+		System.out.println("**********************************************************************");
+		System.out.println("Server certificate SHA1:");
+		System.out.println();
+		System.out.println("    " + certificateSha1);
+		System.out.println();
+		System.out.println("Use this value to verify on the client-side, whether you're really");
+		System.out.println("talking to this server. If the client shows you a different value,");
+		System.out.println("someone is tampering with your connection!");
+		System.out.println();
+		System.out.println("Please keep this SHA1 value at a safe place. You'll need it whenever");
+		System.out.println("one of your clients connects to this server for the firs time.");
+		System.out.println("**********************************************************************");
 	}
 
 	private Server createServer() {

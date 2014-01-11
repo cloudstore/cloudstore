@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.ByteArrayInputStream;
 import java.io.Console;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -23,15 +23,17 @@ public class CloudStoreClient {
 
 	public static final List<Class<? extends SubCommand>> subCommandClasses;
 	static {
-		ArrayList<Class<? extends SubCommand>> l = new ArrayList<Class<? extends SubCommand>>();
+		@SuppressWarnings("unchecked")
+		List<Class<? extends SubCommand>> l = Arrays.asList(
+				AcceptRepoConnectionSubCommand.class,
+				CreateRepoSubCommand.class,
+				LocalSyncSubCommand.class,
+				RemoteSyncSubCommand.class,
+				RepoInfoSubCommand.class,
+				HelpSubCommand.class,
+				RequestRepoConnectionSubCommand.class
+				);
 
-		l.add(AcceptRepoConnectionSubCommand.class);
-		l.add(CreateRepoSubCommand.class);
-		l.add(RepoInfoSubCommand.class);
-		l.add(HelpSubCommand.class);
-		l.add(RequestRepoConnectionSubCommand.class);
-
-		l.trimToSize();
 		subCommandClasses = Collections.unmodifiableList(l);
 	};
 
@@ -75,15 +77,24 @@ public class CloudStoreClient {
 			CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
 			String certificateSha1 = null;
 			try {
-				byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(context.getCertificateChain()[0].getEncoded()));
-				certificateSha1 = HashUtil.encodeHexStr(hash);
+				certificateSha1 = HashUtil.sha1ForHuman(context.getCertificateChain()[0].getEncoded());
 			} catch (Exception e) {
-				// we're in the console client, hence this odd behaviour is fine
+				// we're in the console client, hence we can and should print the exception here and then exit.
 				e.printStackTrace();
 				System.exit(66);
 			}
 			while (true) {
-				String trustedString = prompt("You are connecting to this server for the first time. The connection to this server is not yet trusted. The server presented a certificate with the SHA1 '%s'. Please verify that this is really your server and not a man in the middle! Your server shows its SHA1 during startup. Do you want to register this certificate and trust this connection?", certificateSha1);
+				System.out.println("You are connecting to this server for the first time or someone is tampering with your");
+				System.out.println("connection to this server!");
+				System.out.println();
+				System.out.println("The server presented a certificate with the following SHA1:");
+				System.out.println();
+				System.out.println("    " + certificateSha1);
+				System.out.println();
+				System.out.println("Please verify that this is really your server's certificate and not a man in the middle!");
+				System.out.println("Your server shows its certificate's SHA1 during startup.");
+				System.out.println();
+				String trustedString = prompt("Do you want to register this certificate and trust this connection? (y/n) ");
 				if ("y".equals(trustedString)) {
 					result.setTrusted(true);
 					break;
