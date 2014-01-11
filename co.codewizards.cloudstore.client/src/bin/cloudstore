@@ -3,4 +3,4 @@
 BIN_DIR=`dirname $0`
 LIB_DIR="$BIN_DIR/../lib"
 
-java -jar $LIB_DIR/${project.artifactId}-${project.version}.jar
+java -jar $LIB_DIR/${project.artifactId}-${project.version}.jar "$@"
