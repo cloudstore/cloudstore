@@ -21,5 +21,11 @@
       <source>${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
       <outputDirectory>/lib</outputDirectory>
     </file>
+    <file>
+    	<source>${basedir}/src/bin/cloudstore</source>
+    	<outputDirectory>/bin</outputDirectory>
+    	<filtered>true</filtered>
+    	<fileMode>0777</fileMode>
+    </file>
   </files>
 </assembly>
