@@ -200,6 +200,10 @@ public class RepoToRepoSync {
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
+			// TODO first check whether the file was already synced in a previous *interrupted* sync.
+			// In this case, we already have a RepoFile with the correct SHA1 on the destination side.
+			// Generating a FileChunkSet is not necessary in this situation (it is very expensive for big files).
+
 			// TODO the check-sums should be obtained simultaneously with 2 threads.
 			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path);
 			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
