@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
+import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
 public class LocalRepoSync {
@@ -45,43 +46,52 @@ public class LocalRepoSync {
 		modificationDAO = this.transaction.getDAO(ModificationDAO.class);
 	}
 
-	public void sync(ProgressMonitor monitor) { // TODO use this monitor!!!
-		sync(null, localRoot);
+	public void sync(ProgressMonitor monitor) {
+		sync(null, localRoot, monitor);
 	}
 
-	private void sync(RepoFile parentRepoFile, File file) {
-		RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+	private void sync(RepoFile parentRepoFile, File file, ProgressMonitor monitor) {
+		monitor.beginTask("Local sync...", 100);
+		try {
+			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 
-		// If the type changed - e.g. from normal file to directory - we must delete
-		// the old instance.
-		if (repoFile != null && !isRepoFileTypeCorrect(repoFile, file)) {
-			deleteRepoFile(repoFile, false);
-			repoFile = null;
-		}
-
-		if (repoFile == null) {
-			repoFile = createRepoFile(parentRepoFile, file);
-			if (repoFile == null) { // ignoring non-normal files.
-				return;
+			// If the type changed - e.g. from normal file to directory - we must delete
+			// the old instance.
+			if (repoFile != null && !isRepoFileTypeCorrect(repoFile, file)) {
+				deleteRepoFile(repoFile, false);
+				repoFile = null;
 			}
-		} else if (isModified(repoFile, file)) {
-			updateRepoFile(repoFile, file);
-		}
 
-		Set<String> childNames = new HashSet<String>();
-		File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
-		if (children != null) {
-			for (File child : children) {
-				childNames.add(child.getName());
-				sync(repoFile, child);
-			}
-		}
+			if (repoFile == null) {
+				repoFile = createRepoFile(parentRepoFile, file, new SubProgressMonitor(monitor, 50));
+				if (repoFile == null) { // ignoring non-normal files.
+					return;
+				}
+			} else if (isModified(repoFile, file))
+				updateRepoFile(repoFile, file, new SubProgressMonitor(monitor, 50));
+			else
+				monitor.worked(50);
 
-		Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
-		for (RepoFile childRepoFile : childRepoFiles) {
-			if (!childNames.contains(childRepoFile.getName())) {
-				deleteRepoFile(childRepoFile);
+			SubProgressMonitor childSubProgressMonitor = new SubProgressMonitor(monitor, 50);
+			Set<String> childNames = new HashSet<String>();
+			File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
+			if (children != null && children.length > 0) {
+				childSubProgressMonitor.beginTask("Local sync...", children.length);
+				for (File child : children) {
+					childNames.add(child.getName());
+					sync(repoFile, child, new SubProgressMonitor(childSubProgressMonitor, 1));
+				}
 			}
+			childSubProgressMonitor.done();
+
+			Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
+			for (RepoFile childRepoFile : childRepoFiles) {
+				if (!childNames.contains(childRepoFile.getName())) {
+					deleteRepoFile(childRepoFile);
+				}
+			}
+		} finally {
+			monitor.done();
 		}
 	}
 
@@ -122,49 +132,59 @@ public class LocalRepoSync {
 		return false;
 	}
 
-	private RepoFile createRepoFile(RepoFile parentRepoFile, File file) {
+	private RepoFile createRepoFile(RepoFile parentRepoFile, File file, ProgressMonitor monitor) {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
 
-		// TODO support symlinks!
+		monitor.beginTask("Local sync...", 100);
+		try {
+			// TODO support symlinks!
 
-		RepoFile repoFile;
+			RepoFile repoFile;
 
-		if (file.isDirectory()) {
-			repoFile = new Directory();
-		} else if (file.isFile()) {
-			NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
-			normalFile.setLength(file.length());
-			normalFile.setSha1(sha(file));
-		} else {
-			logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
-			return null;
+			if (file.isDirectory()) {
+				repoFile = new Directory();
+			} else if (file.isFile()) {
+				NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
+				normalFile.setLength(file.length());
+				normalFile.setSha1(sha(file, new SubProgressMonitor(monitor, 99)));
+			} else {
+				logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
+				return null;
+			}
+
+			repoFile.setParent(parentRepoFile);
+			repoFile.setName(file.getName());
+			repoFile.setLastModified(new Date(file.lastModified()));
+
+			return repoFileDAO.makePersistent(repoFile);
+		} finally {
+			monitor.done();
 		}
-
-		repoFile.setParent(parentRepoFile);
-		repoFile.setName(file.getName());
-		repoFile.setLastModified(new Date(file.lastModified()));
-
-		return repoFileDAO.makePersistent(repoFile);
 	}
 
-	public void updateRepoFile(RepoFile repoFile, File file) {
+	public void updateRepoFile(RepoFile repoFile, File file, ProgressMonitor monitor) {
 		logger.debug("updateRepoFile: entityID={} idHigh={} idLow={} file={}", repoFile.getEntityID(), repoFile.getIdHigh(), repoFile.getIdLow(), file);
-		if (file.isFile()) {
-			if (!(repoFile instanceof NormalFile))
-				throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
+		monitor.beginTask("Local sync...", 100);
+		try {
+			if (file.isFile()) {
+				if (!(repoFile instanceof NormalFile))
+					throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
 
-			NormalFile normalFile = (NormalFile) repoFile;
-			normalFile.setLength(file.length());
-			normalFile.setSha1(sha(file));
+				NormalFile normalFile = (NormalFile) repoFile;
+				normalFile.setLength(file.length());
+				normalFile.setSha1(sha(file, new SubProgressMonitor(monitor, 100)));
+			}
+			repoFile.setLastModified(new Date(file.lastModified()));
+		} finally {
+			monitor.done();
 		}
-		repoFile.setLastModified(new Date(file.lastModified()));
 	}
 
 	public void deleteRepoFile(RepoFile repoFile) {
 		deleteRepoFile(repoFile, true);
 	}
-	
+
 	private void deleteRepoFile(RepoFile repoFile, boolean createDeleteModifications) {
 		RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
 		if (parentRepoFile == null)
@@ -207,14 +227,14 @@ public class LocalRepoSync {
 		repoFileDAO.getPersistenceManager().flush(); // We run *sometimes* into foreign key violations if we don't delete immediately :-(
 	}
 
-	private String sha(File file) {
+	private String sha(File file, ProgressMonitor monitor) {
 		assertNotNull("file", file);
 		if (!file.isFile()) {
 			return null;
 		}
 		try {
 			FileInputStream in = new FileInputStream(file);
-			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in);
+			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in, monitor);
 			in.close();
 			return HashUtil.encodeHexStr(hash);
 		} catch (NoSuchAlgorithmException e) {

@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.client;
 
 import java.io.Console;
+import java.io.File;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,9 +13,16 @@ import java.util.Map;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -87,12 +96,12 @@ public class CloudStoreClient {
 				System.out.println("You are connecting to this server for the first time or someone is tampering with your");
 				System.out.println("connection to this server!");
 				System.out.println();
-				System.out.println("The server presented a certificate with the following SHA1:");
+				System.out.println("The server presented a certificate with the following fingerprint (SHA1):");
 				System.out.println();
 				System.out.println("    " + certificateSha1);
 				System.out.println();
 				System.out.println("Please verify that this is really your server's certificate and not a man in the middle!");
-				System.out.println("Your server shows its certificate's SHA1 during startup.");
+				System.out.println("Your server shows its certificate's fingerprint during startup.");
 				System.out.println();
 				String trustedString = prompt("Do you want to register this certificate and trust this connection? (y/n) ");
 				if ("y".equals(trustedString)) {
@@ -132,8 +141,9 @@ public class CloudStoreClient {
 	 *
 	 * @param args the program arguments.
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
+		initLogging();
 		int programExitStatus = 1;
 		boolean displayHelp = true;
 		String subCommandName = null;
@@ -209,4 +219,26 @@ public class CloudStoreClient {
 		System.exit(programExitStatus);
 	}
 
+	private static void initLogging() throws IOException, JoranException {
+		String logbackXmlName = "logback.client.xml";
+		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		if (!logbackXmlFile.exists())
+			IOUtil.copyResource(CloudStoreClient.class, logbackXmlName, logbackXmlFile);
+
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+	    try {
+	      JoranConfigurator configurator = new JoranConfigurator();
+	      configurator.setContext(context);
+	      // Call context.reset() to clear any previous configuration, e.g. default
+	      // configuration. For multi-step configuration, omit calling context.reset().
+	      context.reset();
+	      configurator.doConfigure(logbackXmlFile);
+	    } catch (JoranException je) {
+	    	// StatusPrinter will handle this
+	    	doNothing();
+	    }
+	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+	}
+
+	private static void doNothing() { }
 }

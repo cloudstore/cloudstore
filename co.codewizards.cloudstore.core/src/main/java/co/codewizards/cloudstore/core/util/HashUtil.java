@@ -7,6 +7,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
+import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
+import co.codewizards.cloudstore.core.progress.ProgressMonitor;
+
 public final class HashUtil {
 
 	/**
@@ -72,17 +75,28 @@ public final class HashUtil {
 	}
 
 	public static byte[] hash(String algorithm, InputStream in) throws NoSuchAlgorithmException, IOException {
-		MessageDigest md = MessageDigest.getInstance(algorithm);
-		byte[] data = new byte[10240];
-		while (true) {
-			int bytesRead = in.read(data, 0, data.length);
-			if (bytesRead < 0) {
-				break;
+		return hash(algorithm, in, new NullProgressMonitor());
+	}
+
+	public static byte[] hash(String algorithm, InputStream in, ProgressMonitor monitor) throws NoSuchAlgorithmException, IOException {
+		monitor.beginTask("SHA1", Math.max(1, in.available()));
+		try {
+			MessageDigest md = MessageDigest.getInstance(algorithm);
+			byte[] data = new byte[10240];
+			while (true) {
+				int bytesRead = in.read(data, 0, data.length);
+				if (bytesRead < 0) {
+					break;
+				}
+				if (bytesRead > 0) {
+					md.update(data, 0, bytesRead);
+					monitor.worked(bytesRead);
+				}
 			}
-			if (bytesRead > 0)
-				md.update(data, 0, bytesRead);
+			return md.digest();
+		} finally {
+			monitor.done();
 		}
-		return md.digest();
 	}
 
 	public static String formatEncodedHexStrForHuman(String hex) {

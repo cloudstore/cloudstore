@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +47,7 @@ import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoSync;
@@ -582,7 +583,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			file.setLastModified(lastModified.getTime());
-			localRepoSync.updateRepoFile(normalFile, file);
+			localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
 			normalFile.setInProgress(false);
 
 			transaction.commit();

@@ -39,9 +39,14 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
 public class CloudStoreServer implements Runnable {
@@ -66,7 +71,8 @@ public class CloudStoreServer implements Runnable {
 	private final AtomicBoolean running = new AtomicBoolean();
 	private Server server;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		initLogging();
 		new CloudStoreServer().run();
 	}
 
@@ -210,16 +216,16 @@ public class CloudStoreServer implements Runnable {
 		X509Certificate certificate = (X509Certificate) ks.getCertificate(CERTIFICATE_ALIAS);
 		String certificateSha1 = HashUtil.sha1ForHuman(certificate.getEncoded());
 		System.out.println("**********************************************************************");
-		System.out.println("Server certificate SHA1:");
+		System.out.println("Server certificate fingerprint (SHA1):");
 		System.out.println();
 		System.out.println("    " + certificateSha1);
 		System.out.println();
-		System.out.println("Use this value to verify on the client-side, whether you're really");
-		System.out.println("talking to this server. If the client shows you a different value,");
-		System.out.println("someone is tampering with your connection!");
+		System.out.println("Use this fingerprint to verify on the client-side, whether you're");
+		System.out.println("really talking to this server. If the client shows you a different");
+		System.out.println("value, someone is tampering with your connection!");
 		System.out.println();
-		System.out.println("Please keep this SHA1 value at a safe place. You'll need it whenever");
-		System.out.println("one of your clients connects to this server for the firs time.");
+		System.out.println("Please keep this fingerprint at a safe place. You'll need it whenever");
+		System.out.println("one of your clients connects to this server for the first time.");
 		System.out.println("**********************************************************************");
 	}
 
@@ -289,4 +295,27 @@ public class CloudStoreServer implements Runnable {
 		sslConnector.setPort(getSecurePort());
 		return sslConnector;
 	}
+
+	private static void initLogging() throws IOException, JoranException {
+		String logbackXmlName = "logback.server.xml";
+		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		if (!logbackXmlFile.exists())
+			IOUtil.copyResource(CloudStoreServer.class, logbackXmlName, logbackXmlFile);
+
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+	    try {
+	      JoranConfigurator configurator = new JoranConfigurator();
+	      configurator.setContext(context);
+	      // Call context.reset() to clear any previous configuration, e.g. default
+	      // configuration. For multi-step configuration, omit calling context.reset().
+	      context.reset();
+	      configurator.doConfigure(logbackXmlFile);
+	    } catch (JoranException je) {
+	    	// StatusPrinter will handle this
+	    	doNothing();
+	    }
+	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+	}
+
+	private static void doNothing() { }
 }

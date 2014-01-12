@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.io.LockFile;
+import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.Entity;
@@ -44,6 +47,7 @@ import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.Repository;
 import co.codewizards.cloudstore.core.persistence.Symlink;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
+import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
@@ -59,7 +63,8 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerImpl.class);
 
-	protected static volatile long closeDeferredMillis = 60 * 1000L; // TODO make properly configurable!
+	protected static volatile long closeDeferredMillis = 20 * 1000L; // TODO make properly configurable!
+	private final long lockTimeoutMillis = 30000; // TODO make configurable!
 
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
@@ -72,6 +77,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
 
 	private final File localRoot;
+	private LockFile lockFile;
 	private EntityID repositoryID;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private final AtomicInteger openReferenceCounter = new AtomicInteger();
@@ -87,6 +93,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
+		boolean releaseLockFile = true;
 		deleteMetaDir = false; // only delete, if it is created in initMetaDirectory(...)
 		try {
 			// TODO Make this more robust: If we have a power-outage between directory creation and the finally block,
@@ -94,8 +101,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			// file later (somehow making this really transactional).
 			initMetaDir(createRepository);
 			initPersistenceManagerFactory(createRepository);
+			releaseLockFile = false;
 			deleteMetaDir = false; // if we come here, creation is successful => NO deletion
 		} finally {
+			if (releaseLockFile && lockFile != null)
+				lockFile.release();
+
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
@@ -150,6 +161,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			deleteMetaDir = true;
 			metaDir.mkdir();
 
+			initLockFile();
 			createRepositoryPropertiesFile();
 			try {
 				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
@@ -161,8 +173,22 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (!metaDir.exists())
 				throw new FileNoRepositoryException(localRoot);
 
+			initLockFile();
 			checkRepositoryPropertiesFile();
 		}
+	}
+
+	private void initLockFile() {
+		File lock = new File(getMetaDir(), "cloudstore-repository.lock");
+		try {
+			lockFile = LockFileFactory.getInstance().acquire(lock, 100);
+		} catch (TimeoutException x) {
+			logger.warn("Repository '{}' is currently locked by another process. Will wait {} ms for it...", localRoot, lockTimeoutMillis);
+		}
+		if (lockFile == null) {
+			lockFile = LockFileFactory.getInstance().acquire(lock, lockTimeoutMillis);
+		}
+		logger.info("Repository '{}' locked successfully. Opening it now...", localRoot);
 	}
 
 	private void createRepositoryPropertiesFile() {
@@ -404,6 +430,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				persistenceManagerFactory = null;
 				shutdownDerbyDatabase(connectionURL);
 			}
+			if (lockFile != null) {
+				lockFile.release();
+				lockFile = null;
+			}
 		}
 
 		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
@@ -443,13 +473,20 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void localSync(ProgressMonitor monitor) { // TODO use this monitor properly (commit might take a bit)
-		LocalRepoTransaction transaction = beginTransaction();
+	public void localSync(ProgressMonitor monitor) {
+		monitor.beginTask("Local sync...", 100);
 		try {
-			new LocalRepoSync(transaction).sync(monitor);
-			transaction.commit();
+			LocalRepoTransaction transaction = beginTransaction();
+			try {
+				monitor.worked(1);
+				new LocalRepoSync(transaction).sync(new SubProgressMonitor(monitor, 98));
+				transaction.commit();
+				monitor.worked(1);
+			} finally {
+				transaction.rollbackIfActive();
+			}
 		} finally {
-			transaction.rollbackIfActive();
+			monitor.done();
 		}
 	}
 
