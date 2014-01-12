@@ -85,7 +85,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
-	private static Timer closeDeferredTimer = new Timer(true);
+	private Timer closeDeferredTimer = new Timer(true);
 	private TimerTask closeDeferredTimerTask;
 
 	private byte[] privateKey;
@@ -400,7 +400,20 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 							_close();
 						}
 					};
-					closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
+
+					try {
+						closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
+					} catch (IllegalStateException x) {
+						logger.warn("closeDeferredTimer.schedule(...) failed: " + x, x);
+						// WORKAROUND: Creating a new timer.
+//						Caused by: java.lang.IllegalStateException: Timer already cancelled.
+//				        at java.util.Timer.sched(Timer.java:397) ~[na:1.7.0_45]
+//				        at java.util.Timer.schedule(Timer.java:193) ~[na:1.7.0_45]
+//				        at co.codewizards.cloudstore.core.repo.local.LocalRepoManagerImpl.close(LocalRepoManagerImpl.java:403) ~[co.codewizards.cloudstore.core-1.0.0-SNAPSHOT.jar:na]
+						closeDeferredTimer.cancel();
+						closeDeferredTimer = new Timer(true);
+						closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
+					}
 				}
 			}
 		}
