@@ -29,6 +29,7 @@ public class LocalRepoManagerFactory
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerFactory.class);
 
 	private Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();
+	private Set<LocalRepoManagerImpl> nonReOpenableLocalRepoManagerImpls = new HashSet<LocalRepoManagerImpl>();
 
 	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
 
@@ -45,7 +46,7 @@ public class LocalRepoManagerFactory
 			if (!event.isBackend())
 				throw new IllegalStateException("Why are we notified by the proxy?!?");
 
-			postLocalRepoManagerBackendClose(event.getLocalRepoManager());
+			postLocalRepoManagerBackendClose((LocalRepoManagerImpl) event.getLocalRepoManager());
 		}
 	};
 
@@ -92,6 +93,8 @@ public class LocalRepoManagerFactory
 
 		LocalRepoManagerImpl localRepoManagerImpl = localRoot2LocalRepoManagerImpl.get(localRoot);
 		if (localRepoManagerImpl != null && !localRepoManagerImpl.open()) {
+			localRoot2LocalRepoManagerImpl.remove(localRoot);
+			nonReOpenableLocalRepoManagerImpls.add(localRepoManagerImpl);
 			while (localRepoManagerImpl.isOpen()) {
 				logger.info("createLocalRepoManagerForExistingRepository: Existing LocalRepoManagerImpl is currently closing and could not be re-opened. Waiting for it to be completely closed.");
 				try { Thread.sleep(100); } catch (InterruptedException x) { doNothing(); }
@@ -189,12 +192,17 @@ public class LocalRepoManagerFactory
 		}
 	}
 
-	private void postLocalRepoManagerBackendClose(LocalRepoManager localRepoManager) {
+	private void postLocalRepoManagerBackendClose(LocalRepoManagerImpl localRepoManager) {
 		assertNotNull("localRepoManager", localRepoManager);
 		synchronized (this) {
-			LocalRepoManager localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
+			LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
 			if (localRepoManager != localRepoManager2) {
-				throw new IllegalArgumentException("localRepoManager is unknown!");
+				if (nonReOpenableLocalRepoManagerImpls.remove(localRepoManager))
+					logger.info("localRepoManager[{}] could not be re-opened and was unlisted before.", localRepoManager.id);
+				else
+					throw new IllegalStateException(String.format("localRepoManager[%s] is unknown!", localRepoManager.id));
+
+				localRoot2LocalRepoManagerImpl.put(localRepoManager2.getLocalRoot(), localRepoManager2); // re-add!
 			}
 		}
 		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);

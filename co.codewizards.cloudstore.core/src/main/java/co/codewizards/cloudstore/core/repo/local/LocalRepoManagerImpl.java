@@ -63,6 +63,8 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerImpl.class);
 
+	protected final String id = Integer.toHexString(System.identityHashCode(this));
+
 	protected static volatile long closeDeferredMillis = 20 * 1000L; // TODO make properly configurable!
 	private final long lockTimeoutMillis = 30000; // TODO make configurable!
 
@@ -95,6 +97,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private boolean closeAbortable = true;
 
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
+		logger.info("[{}]<init>: localRoot='{}'", id, localRoot);
 		this.localRoot = assertValidLocalRoot(localRoot);
 		boolean releaseLockFile = true;
 		deleteMetaDir = false; // only delete, if it is created in initMetaDirectory(...)
@@ -119,6 +122,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	protected boolean open() {
 		boolean result;
 		synchronized(this) {
+			logger.debug("[{}]open: closing={} closeAbortable={}", id, closing, closeAbortable);
 			result = !closing || closeAbortable;
 			if (result) {
 				closing = false;
@@ -192,12 +196,14 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		try {
 			lockFile = LockFileFactory.getInstance().acquire(lock, 100);
 		} catch (TimeoutException x) {
-			logger.warn("Repository '{}' is currently locked by another process. Will wait {} ms for it...", localRoot, lockTimeoutMillis);
+			logger.warn("[{}]initLockFile: Repository '{}' is currently locked by another process. Will wait {} ms for it...",
+					id, localRoot, lockTimeoutMillis);
 		}
 		if (lockFile == null) {
 			lockFile = LockFileFactory.getInstance().acquire(lock, lockTimeoutMillis);
 		}
-		logger.info("Repository '{}' locked successfully. Opening it now...", localRoot);
+		logger.info("[{}]initLockFile: Repository '{}' locked successfully.",
+				id, localRoot);
 	}
 
 	private void createRepositoryPropertiesFile() {
@@ -242,6 +248,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
+		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
+		long beginTimestamp = System.currentTimeMillis();
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
 		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties );
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
@@ -255,6 +263,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			} else {
 				assertSinglePersistentLocalRepository(pm);
 			}
+			logger.info("[{}]initPersistenceManagerFactory: repositoryID={}", id, repositoryID);
 
 			pm.currentTransaction().commit();
 		} finally {
@@ -263,6 +272,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			pm.close();
 		}
+		logger.info("[{}]initPersistenceManagerFactory: Started up PersistenceManagerFactory successfully in {} ms.", id, System.currentTimeMillis() - beginTimestamp);
 	}
 
 	private void initPersistenceCapableClasses(PersistenceManager pm) {
@@ -387,6 +397,25 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		localRepoManagerCloseListeners.remove(listener);
 	}
 
+	private class CloseTimerTask extends TimerTask {
+		private volatile boolean cancelled;
+
+		@Override
+		public void run() {
+			if (cancelled)
+				return;
+
+			_close();
+		}
+
+		@Override
+		public boolean cancel() {
+			cancelled = true;
+			boolean result = super.cancel();
+			return result;
+		}
+	};
+
 	@Override
 	public void close() {
 		synchronized(this) {
@@ -395,7 +424,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 		int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
 		if (openReferenceCounterValue > 0) {
-			logger.debug("[{}]close: leaving with openReferenceCounterValue={}", repositoryID, openReferenceCounterValue);
+			logger.debug("[{}]close: leaving with openReferenceCounterValue={}", id, openReferenceCounterValue);
 			return;
 		}
 		if (openReferenceCounterValue < 0) {
@@ -404,15 +433,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 		long closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
 		if (closeDeferredMillis > 0) {
-			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", repositoryID, closeDeferredMillis);
+			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
 			synchronized(this) {
 				if (closeDeferredTimerTask == null) {
-					closeDeferredTimerTask = new TimerTask() {
-						@Override
-						public void run() {
-							_close();
-						}
-					};
+					closeDeferredTimerTask = new CloseTimerTask();
 
 					try {
 						closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
@@ -437,7 +461,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void _close() {
 		synchronized(this) {
 			if (!closing) { // closing was aborted
-				logger.info("[{}]_close: Closing was aborted. Returning immediately.");
+				logger.info("[{}]_close: Closing was aborted. Returning immediately.", id);
 				return;
 			}
 			closeAbortable = false;
@@ -448,7 +472,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			}
 		}
 
-		logger.info("[{}]_close: Shutting down real LocalRepoManager.", repositoryID);
+		logger.info("[{}]_close: Shutting down real LocalRepoManager.", id);
 		// TODO defer this (don't immediately close)
 		// TODO the timeout should be configurable
 		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);

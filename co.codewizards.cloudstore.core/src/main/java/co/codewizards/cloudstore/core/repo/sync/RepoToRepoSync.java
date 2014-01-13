@@ -78,6 +78,11 @@ public class RepoToRepoSync {
 
 			logger.info("sync: from='{}' to='{}'", localRoot, remoteRoot);
 			sync(localRepoTransport, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+
+			// Immediately sync back to make sure the changes we caused don't cause problems later
+			// (right now there's very likely no collision and this should be very fast).
+			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
+			sync(remoteRepoTransport, localRepoTransport, new SubProgressMonitor(monitor, 50));
 		} finally {
 			monitor.done();
 		}
