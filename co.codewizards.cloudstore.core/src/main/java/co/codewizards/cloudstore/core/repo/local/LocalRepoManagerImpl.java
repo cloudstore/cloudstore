@@ -91,6 +91,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private byte[] privateKey;
 	private byte[] publicKey;
 
+	private boolean closing;
+	private boolean closeAbortable = true;
+
 	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
 		this.localRoot = assertValidLocalRoot(localRoot);
 		boolean releaseLockFile = true;
@@ -113,15 +116,21 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		LocalRepoRegistry.getInstance().registerRepository(repositoryID, localRoot);
 	}
 
-	protected void open() {
+	protected boolean open() {
+		boolean result;
 		synchronized(this) {
+			result = !closing || closeAbortable;
+			if (result) {
+				closing = false;
+				closeAbortable = true;
+			}
 			if (closeDeferredTimerTask != null) {
 				closeDeferredTimerTask.cancel();
 				closeDeferredTimerTask = null;
 			}
 		}
-
 		openReferenceCounter.incrementAndGet();
+		return result;
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -380,6 +389,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void close() {
+		synchronized(this) {
+			closing = true;
+		}
+
 		int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
 		if (openReferenceCounterValue > 0) {
 			logger.debug("[{}]close: leaving with openReferenceCounterValue={}", repositoryID, openReferenceCounterValue);
@@ -423,13 +436,19 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void _close() {
 		synchronized(this) {
+			if (!closing) { // closing was aborted
+				logger.info("[{}]_close: Closing was aborted. Returning immediately.");
+				return;
+			}
+			closeAbortable = false;
+
 			if (closeDeferredTimerTask != null) {
 				closeDeferredTimerTask.cancel();
 				closeDeferredTimerTask = null;
 			}
 		}
 
-		logger.info("[{}]close: Shutting down real LocalRepoManager.", repositoryID);
+		logger.info("[{}]_close: Shutting down real LocalRepoManager.", repositoryID);
 		// TODO defer this (don't immediately close)
 		// TODO the timeout should be configurable
 		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);
@@ -439,12 +458,24 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 		synchronized (this) {
 			if (persistenceManagerFactory != null) {
-				persistenceManagerFactory.close();
+				try {
+					persistenceManagerFactory.close();
+				} catch (Exception x) {
+					logger.warn("Closing PersistenceManagerFactory failed: " + x, x);
+				}
 				persistenceManagerFactory = null;
-				shutdownDerbyDatabase(connectionURL);
+				try {
+					shutdownDerbyDatabase(connectionURL);
+				} catch (Exception x) {
+					logger.warn("Shutting down Derby database failed: " + x, x);
+				}
 			}
 			if (lockFile != null) {
-				lockFile.release();
+				try {
+					lockFile.release();
+				} catch (Exception x) {
+					logger.warn("Releasing LockFile failed: " + x, x);
+				}
 				lockFile = null;
 			}
 		}

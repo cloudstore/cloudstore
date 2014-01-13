@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Registry of {@link LocalRepoManager}s.
  * <p>
@@ -23,6 +26,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class LocalRepoManagerFactory
 {
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerFactory.class);
+
 	private Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();
 
 	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
@@ -86,8 +91,19 @@ public class LocalRepoManagerFactory
 		localRoot = canonicalize(localRoot);
 
 		LocalRepoManagerImpl localRepoManagerImpl = localRoot2LocalRepoManagerImpl.get(localRoot);
+		if (localRepoManagerImpl != null && !localRepoManagerImpl.open()) {
+			while (localRepoManagerImpl.isOpen()) {
+				logger.info("createLocalRepoManagerForExistingRepository: Existing LocalRepoManagerImpl is currently closing and could not be re-opened. Waiting for it to be completely closed.");
+				try { Thread.sleep(100); } catch (InterruptedException x) { doNothing(); }
+			}
+			localRepoManagerImpl = null;
+		}
+
 		if (localRepoManagerImpl == null) {
 			localRepoManagerImpl = new LocalRepoManagerImpl(localRoot, false);
+			if (!localRepoManagerImpl.open())
+				throw new IllegalStateException("localRepoManagerImpl.open() of *new* instance returned false!");
+
 			enlist(localRepoManagerImpl);
 		}
 		return createProxy(localRepoManagerImpl);
@@ -123,12 +139,14 @@ public class LocalRepoManagerFactory
 		}
 
 		localRepoManagerImpl = new LocalRepoManagerImpl(localRoot, true);
+		if (!localRepoManagerImpl.open())
+			throw new IllegalStateException("localRepoManagerImpl.open() of *new* instance returned false!");
+
 		enlist(localRepoManagerImpl);
 		return createProxy(localRepoManagerImpl);
 	}
 
 	private LocalRepoManager createProxy(LocalRepoManagerImpl localRepoManagerImpl) {
-		localRepoManagerImpl.open(); // The proxy will delegate the close() exactly once (even if called multiple times).
 		return (LocalRepoManager) Proxy.newProxyInstance(
 				this.getClass().getClassLoader(),
 				new Class<?>[] { LocalRepoManager.class },
@@ -184,4 +202,6 @@ public class LocalRepoManagerFactory
 			listener.postClose(event);
 		}
 	}
+
+	private static final void doNothing() { }
 }
