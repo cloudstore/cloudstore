@@ -17,9 +17,7 @@
  */
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
-
-import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.Argument;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
@@ -33,15 +31,10 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-public class AcceptRepoConnectionSubCommand extends SubCommand
+public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
 {
-	@Option(name="-local", metaVar="<path>", required=false, usage="A path inside a repository in the local file system. This may be the local repository's root or any directory inside it. If it is not specified, it defaults to the current working directory. If this is a sub-directory, the repository's root is automatically determined.")
-	private String local;
-
-	private File localFile;
-
-	@Option(name="-remoteID", metaVar="<uuid>", required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
-	private String remoteID;
+	@Argument(metaVar="<remote>", required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
+	private String remote;
 
 	private EntityID remoteRepositoryID;
 
@@ -58,21 +51,11 @@ public class AcceptRepoConnectionSubCommand extends SubCommand
 	@Override
 	public void prepare() throws Exception {
 		super.prepare();
-
-		if (local == null)
-			localFile = new File("").getAbsoluteFile();
-		else
-			localFile = new File(local).getAbsoluteFile();
-
-		local = localFile.getPath();
-
-		remoteRepositoryID = remoteID == null ? null : new EntityID(remoteID);
+		remoteRepositoryID = remote == null ? null : new EntityID(remote);
 	}
 
 	@Override
 	public void run() throws Exception {
-		File localRoot = localFile;
-		// TODO automatically find the root!
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			byte[] publicKey;

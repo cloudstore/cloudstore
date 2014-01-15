@@ -1,0 +1,27 @@
+<head><title>Documentation</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed.jpg")}
+#set( $H = '#' )
+
+Documentation
+-------
+
+$H$H$H Getting started
+
+Please read the [Getting started](./getting-started.html) page first. It shows you how easy it is to use CloudStore
+and gives a basic understanding about how things work.
+
+
+$H$H$H Security
+
+The [Security](./security.html) documentation explains how CloudStore secures your data. 
+
+
+$H$H$H Advanced
+
+The [Advanced](./advanced.html) docs are for the advanced users interested in tweaking CloudStore.
+
+
+$H$H$H Development
+
+Are you a developer? Do you want to contribute to this project? Or do you want to verify the source codes?
+Then please read the [Development](./development.html) infos here.

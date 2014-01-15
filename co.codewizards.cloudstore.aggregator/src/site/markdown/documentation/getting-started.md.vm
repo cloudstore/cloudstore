@@ -1,0 +1,158 @@
+<head><title>Getting started</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+Getting started
+-------
+
+Using CloudStore is very easy. You simply have to follow a few steps to get synchronization functional.
+
+
+$H$H$H Introduction
+
+Before we start with the actual guide, a few things should be clarified:
+
+
+$H$H$H$H Repositories
+
+A directory which is synchronised by CloudStore is called a *repository*. CloudStore synchronises all files and sub-directories
+of such a repository. This means: If you for example add or modify a file, then this file is automatically copied to the other
+repositories.
+
+Only files and directories within a repository are replicated. Other files/directories on your computer are - of course - ignored.
+
+
+$H$H$H$H Client and server
+
+CloudStore consists of a client and a server component. The client alone can synchronise between local repositories
+(e.g. backup from your hard drive to your USB stick). To synchronise from/to a remote repository requires the CloudStore server
+to be online there.
+
+The client establishes the connection to one or more remote servers as needed.
+
+The most common use-case is you running a server at home (using a dynamic-DNS-provider) and wanting to synchronise your
+files on your workstations, your notebooks etc. Of course, you might run CloudStore on a rented server in a data center
+or within your LAN only, too.
+
+
+$H$H$H Step by step
+
+In the following we set up synchronization between your local workstation and a remote server. We assume that your server
+is accessible via the host-name *myserver.mydomain.tld*. If this is a rented host in a data center or your machine at home
+does not matter.
+
+We assume that you have shell access to the server (using SSH).
+
+
+$H$H$H$H Download
+
+Please [download](../download/index.html) the CloudStore client and server to your local machine. It is recommended that
+you download the PGP signatures, too, and verify the authenticity of the binaries.
+
+If you prefer to build directly from the sources, please consult the [Development](./development.html) page.
+
+In the following, we assume that you downloaded the files into your *~/Downloads/* directory.
+
+
+$H$H$H$H Copy the CloudStore archives to your server machine
+
+The CloudStore server needs to be running on your server *myserver.mydomain.tld*. Therefore, you have to copy it to this
+machine. Additionally, you\'ll need the CloudStore client to perform administrative tasks like creating repositories.
+
+We recommend using *rsync* or *scp* to copy the files:
+
+<div><pre>rsync -avP ~/Downloads/co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+rsync -avP ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+</pre></div>
+
+or
+
+<div><pre>scp -p ~/Downloads/co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+scp -p ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+</pre></div>
+
+
+$H$H$H$H Extract the CloudStore archives on the server
+
+Now, two *tar.gz* files are located in the */tmp/* folder on your server. In order to extract them (and later on start the server),
+you open a shell to the server machine:
+
+<div><pre>ssh user@myserver.mydomain.tld</pre></div>
+
+We uploaded the files to */tmp/*, hence we go into this directory, extract the tarballs there and then move the extracted directories
+into the user\'s home:
+
+<div><pre>cd /tmp
+tar xzf co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz
+tar xzf co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz
+mv cloudstore-client ~/
+mv cloudstore-server ~/</pre></div>
+
+
+$H$H$H$H Create a repository on the server
+
+There is the directory named *cloudstore-client* in your user\'s home containing the client with its CLI (command line interface).
+We use it to create a new directory and make it a CloudStore repository:
+
+<div><pre>cd ~
+~/cloudstore-client/bin/cloudstore createRepo cloudstore-repos/myDocuments -createDir</pre></div>
+
+Note, that this creates all parent-directories as needed. Hence the folder *~/cloudstore-repos*, which likely didn\'t exist yet,
+is created together with the actual repository "myDocuments".
+
+Additionally, this command automatically creates an alias named \"myDocuments\" (case-sensitive!).
+
+
+$H$H$H$H Start the CloudStore server
+
+There is the directory named *cloudstore-server* in your user\'s home containing the server. Inside this directory,
+there\'s a shell script which can be used to start the server:
+
+<div><pre>~/cloudstore-server/bin/cloudstore-server</pre></div>
+
+By default, the server listens on port 8443. Please make sure, this port is accessible. You may need to modify your firewall\'s rules. 
+
+
+$H$H$H$H Extract the CloudStore client archive on the workstation
+
+Locally, on your workstation, you have to extract the client just as you did on the server:
+
+<div><pre>cd ~/Downloads
+tar xzf co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz
+mv cloudstore-client ~/</pre></div>
+
+
+$H$H$H$H Create a repository on the client
+
+Let\'s assume you want to synchronise your existing *~/Documents* folder with the repository *myDocuments* you just
+created on the server. You have to convert the existing directory into a CloudStore repository:
+
+<div><pre>cd ~
+~/cloudstore-client/bin/cloudstore createRepo Documents</pre></div>
+
+Since the directory already exists, the *-createDir* option is not needed (it would not do any harm, though).
+
+Note, that the repository-alias \"Documents\" is automatically created, this way. If you do not want this or you want another alias,
+you can add either \"-noAlias\" or \"-alias \<myAlias\>\".
+
+
+$H$H$H$H Connect the repositories - step 1 of 2
+
+The repositories do not know each other, yet. We have to connect them in order to be able to synchronise them. A connection
+is established in two steps: First the client requests the connection on the server side:
+
+<div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection Documents https://myserver.mydomain.tld:8443/myDocuments</pre></div>
+
+Instead of the alias \"myDocuments\", you could use the repository\'s unique ID (so-called *repositoryID*), which was shown when
+you created the repository before.
+
+The same applies to the local side: Instead of \"Documents\" you could specify the local repository\'s ID. Or alternatively, you could
+pass the local repository\'s file-system-path as well.
+
+Here an alternative example (assuming that the *repositoryID* on your server is 2cb46e10-c076-466b-a944-2c1914076fe1):
+
+<div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection /home/user/Documents https://myserver.mydomain.tld:8443/2cb46e10-c076-466b-a944-2c1914076fe1</pre></div>
+
+**Important:** You are asked to verify the server\'s SSL certificate, because this is the first time that your client connects
+to this server. The server\'s certificate can be verified via its SHA1 fingerprint. This
+ 

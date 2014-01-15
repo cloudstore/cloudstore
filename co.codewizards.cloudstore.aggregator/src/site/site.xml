@@ -32,7 +32,7 @@
 
 		<menu name="Documentation">
 			<item name="Getting started" href="./documentation/getting-started.html" />
-			<item name="Usage" href="./documentation/usage.html" />
+			<item name="Security" href="./documentation/security.html" />
 			<item name="Development" href="./documentation/development.html" />
 			<item name="Javadoc" href="./apidocs/index.html" />
 			<item name="Wiki" href="https://github.com/cloudstore/main/wiki" />
@@ -56,5 +56,9 @@
 			<item name="All releases" href="../latest-stable/releases/" />
 		</menu>
 	</body>
+
+	<poweredBy>
+		<logo img="images/powered-by/fibutton5.gif" href="http://www.freeimages.co.uk" alt="More than 13,500 Free hi-res stock photo images for Web, Design and Printed use. Design, Image Editing and Webmaster tips."/>
+	</poweredBy>
 
 </project>

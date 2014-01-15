@@ -19,179 +19,58 @@
 
 					<li>
 						<div class="slider">
-							<div style="position: relative; background: url('images/teaser/teaser_motiv_java-archives.png'); height:426px;	width: 940px;">
+							<div style="position: relative; background: url('images/teaser/airport_walkway_568x426.png'); height:426px; width: 568px;">
 							</div>
 							<div class="slider_header">
-								<h1>Experts in Java</h1> 
+								<h1>Easy</h1> 
 							</div> 
 							<div class="slider_text">
-								<span class="arrows headerfont">We are experts in the Java language and various related technologies.</span>
+								<span class="arrows headerfont">Synchronize your data easily between multiple devices.</span>
 							</div>
 						</div>					
 					</li>
 
 					<li>
 						<div class="slider">
-							<div style="position: relative; background: url('images/teaser/stock-photo-14186302-hands-in.png'); height:426px;	width: 640px;">
+							<div style="position: relative; background: url('images/teaser/neonhand1271_568x426.png'); height:426px; width: 568px;">
 							</div>
 							<div class="slider_header">
-								<h1>Together</h1> 
+								<h1>In your hand</h1> 
 							</div> 
 							<div class="slider_text">
-								<span class="arrows headerfont">We are team players.</span>
+								<span class="arrows headerfont">Keep the control over your data in your hand! Do not confide your data to companies spying on you. CloudStore is free software. You can verify the source codes yourself to ensure that the software does what it claims to do.</span>
 							</div>
-<!--
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
--->
 						</div>					
 					</li>
 
-<!--
 					<li>
 						<div class="slider">
-							<div style="position: relative; background: url('images/teaser/stock-photo-1867945-the-book-of-spells.jpg'); height:254px;	width: 380px;">
+							<div style="position: relative; background: url('images/teaser/multicolours_fractal_shell_638x426.png'); height:426px; width: 638px;">
 							</div>
 							<div class="slider_header">
-								<h1>Magic</h1> 
+								<h1>Fast &amp; elegant</h1> 
 							</div> 
 							<div class="slider_text">
-								<span class="arrows headerfont">You won't believe your eyes.</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
+								<span class="arrows headerfont">Synchronize your data in a fast and elegant way.</span>
 							</div>
 						</div>					
 					</li>
--->
-<!--
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_java-archives.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Support for common<br/>Java application setups</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Webapps</span>
-								<span class="arrows headerfont">Java EE applications</span>
-								<span class="arrows headerfont">OSGi bundles</span>
-								<span class="arrows headerfont">Google app engine</span>
-								<span class="arrows headerfont">and more...</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_implementations.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Support for all JPA/JDO implementations</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Vestigo is not limited to certain implementations, you plug the implementation in yourself, just like in your application</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_tree_browser.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Object tree browser</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">View the complete object graph of your query results</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_query_management.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Connection management</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Easily setup and manage connection profiles to connect to your different environments (development, testing or production)</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_query_management.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Query management</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Store your queries along with their parameters for your convenient reuse</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_query_parameters.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Query parameters</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Scripted parameters give you full flexibility in creating really useful queries</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
-					
-					<li>
-						<div class="slider">
-							<div style="position: relative; background: url('images/teaser_motiv_cumulus4j.png'); height:427px;	width: 940px;">
-							</div>
-							<div class="slider_header">
-								<h1>Cumulus4j support</h1> 
-							</div> 
-							<div class="slider_text">
-								<span class="arrows headerfont">Query and browse data encrypted with Cumulus4j</span>
-							</div>
-							<div class="slider_button">
-								<a class="download_link" href="download/index.html">Download vestigo</a>
-							</div>
-						</div>					
-					</li>
--->
 				</ul>
 			</div>
 
 		</div>
 		<div class="vestigo-box">
 			<div class="vestigo-box-header">
-				<h1>Welcome to the CodeWizards!</h1>
+				<h1>Welcome to CloudStore!</h1>
 			</div>
 			<div class="vestigo-box-content"> 
-				Find out how you can increase the efficiency of your IT infrastructure economically
-				and in the long term with the help of CodeWizards and state-of-the-art Java-based
-				open-source software.
+				CloudStore is free software synchronizing your files between multiple devices.
 				<p>
-				Our architects and developers can not only help you make your software dreams come true,
-				but also transfer knowledge into your own development team.
+				Its primary focus is on reliability and security. We try our best to make sure you never encounter data
+				loss and nobody but you can access your data.
+				</p>
+				<p>
+				At the same time, it is very easy to use. <a href="documentation/getting-started.html">Get started now!</a>
 				</p>
 			</div>
 		</div>
@@ -199,36 +78,30 @@
 		<table class="homepagecolumns" border="0"><tbody>
 		<tr class="a">
 				<th align="left" colspan="2">
-					<h1>Experts (not only) in Java development</h1>
+					<h1>CloudStore synchronizes your data</h1>
 				</th>
 			</tr>
 			<tr class="b">
-				<td colspan="2">Here a short excerpt of our expertise:</td>
+				<td colspan="2">CloudStore follows the Unix principle "Do one thing and do it well." Therefore the feature list
+				is pretty short: Synchronize files and directories between computers.</td>
+			</tr>
+			<tr class="b">
+				<td colspan="2">However, even this one single task involves many details: Cloudstore is...</td>
 			</tr>
 			<tr class="b">
 			
 				<td valign="top" width="50%">
 					<ul>
-						<li>Android</li>
-						<li>JavaEE</li>
-						<li>JDO, JPA</li>
-						<li>DataNucleus, EclipseLink, Hibernate</li>
-						<li>MySQL, PostgreSQL, Oracle</li>
-						<li>NoSQL (Google BigTable, HBase)</li>
-						<li>LDAP</li>
-						<li>GWT, Apache Wicket</li>
+						<li>... fast</li>
+						<li>... secure</li>
+						<li>... easy to use</li>
 					</ul>
 				</td>
 				<td valign="top" width="50%">
 					<ul>
-						<li>Eclipse RCP</li>
-						<li>OSGi</li>
-						<li>Ant, Maven, Gradle, Tycho</li>
-						<li>HTML, CSS, JavaScript</li>
-						<li>JUnit, Mockito, EasyMock, PowerMock</li>
-						<li>Jenkins, Subversion, Git</li>
-						<li>Unix, GNU/Linux</li>
-						<li>Agile, Scrum, Kanban</li>
+						<li>... robust</li>
+						<li>... flexible</li>
+						<li>... clean code.</li>
 					</ul>
 				</td>
 			</tr>

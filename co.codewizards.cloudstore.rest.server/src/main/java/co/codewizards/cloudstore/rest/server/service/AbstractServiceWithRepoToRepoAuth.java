@@ -125,13 +125,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	{
 		EntityID serverRepositoryID = LocalRepoRegistry.getInstance().getRepositoryID(repositoryName);
 		if (serverRepositoryID == null) {
-			try {
-				serverRepositoryID = new EntityID(repositoryName);
-			} catch (IllegalArgumentException x) {
-				throw new WebApplicationException(Response.status(Status.NOT_FOUND)
-						.type(MediaType.APPLICATION_XML)
-						.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither a known alias nor a valid UUID!", repositoryName))).build());
-			}
+			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
+					.type(MediaType.APPLICATION_XML)
+					.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither an alias nor an ID of a known repository!", repositoryName))).build());
 		}
 
 		Auth auth = getAuth();

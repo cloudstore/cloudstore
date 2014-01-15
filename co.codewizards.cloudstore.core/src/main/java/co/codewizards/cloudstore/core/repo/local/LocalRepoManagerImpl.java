@@ -116,7 +116,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
-		LocalRepoRegistry.getInstance().registerRepository(repositoryID, localRoot);
+		LocalRepoRegistry.getInstance().putRepository(repositoryID, localRoot);
 	}
 
 	protected boolean open() {
