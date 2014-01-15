@@ -95,9 +95,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSet getChangeSet(EntityID toRepositoryID) {
+	public ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync) {
 		prepareAuth(toRepositoryID);
-		return getClient().getChangeSet(getRepositoryID().toString(), toRepositoryID);
+		return getClient().getChangeSet(getRepositoryID().toString(), localSync, toRepositoryID);
 	}
 
 	@Override

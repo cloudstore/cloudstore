@@ -6,6 +6,7 @@ import java.io.File;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
@@ -53,7 +54,25 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 		else {
 			localFile = new File(local).getAbsoluteFile();
 			local = localFile.getPath();
+			localRoot = getLocalRoot(localFile);
 		}
+		assertLocalRootNotNull();
+	}
+
+	protected void assertLocalRootNotNull() {
+		assertNotNull("localRoot", localRoot);
+	}
+
+	private File getLocalRoot(File directory) {
+		File metaDir = new File(directory, LocalRepoManager.META_DIR_NAME);
+		if (metaDir.isDirectory())
+			return directory;
+
+		File parentDir = directory.getParentFile();
+		if (parentDir == null)
+			return null;
+
+		return getLocalRoot(parentDir);
 	}
 
 }

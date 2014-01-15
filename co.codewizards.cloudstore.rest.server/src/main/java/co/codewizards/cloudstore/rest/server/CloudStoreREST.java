@@ -16,7 +16,6 @@ import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.FileChunkSetService;
-import co.codewizards.cloudstore.rest.server.service.LocalSyncService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
@@ -49,7 +48,7 @@ public class CloudStoreREST extends ResourceConfig {
 				EndSyncFromRepositoryService.class,
 				EndSyncToRepositoryService.class,
 				FileChunkSetService.class,
-				LocalSyncService.class,
+//				LocalSyncService.class,
 				MakeDirectoryService.class,
 				RepositoryDTOService.class,
 				RequestRepoConnectionService.class,

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +47,7 @@ import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -123,8 +124,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSet getChangeSet(EntityID toRepositoryID) {
+	public ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync) {
 		assertNotNull("toRepositoryID", toRepositoryID);
+
+		if (localSync)
+			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
+
 		ChangeSet changeSet = new ChangeSet();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {

@@ -197,15 +197,19 @@ public class CloudStoreRESTClient {
 		return "_" + dtoClass.getSimpleName();
 	}
 
-	public ChangeSet getChangeSet(String repositoryName, EntityID toRepositoryID) {
+	public ChangeSet getChangeSet(String repositoryName, boolean localSync, EntityID toRepositoryID) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			ChangeSet changeSet = assignCredentials(client.target(getBaseURL())
+			WebTarget webTarget = client.target(getBaseURL())
 					.path(getPath(ChangeSet.class))
 					.path(repositoryName)
-					.path(toRepositoryID.toString())
-					.request(MediaType.APPLICATION_XML)).get(ChangeSet.class);
+					.path(toRepositoryID.toString());
+
+			if (localSync)
+				webTarget = webTarget.queryParam("localSync", Boolean.TRUE);
+
+			ChangeSet changeSet = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSet.class);
 			return changeSet;
 		} catch (RuntimeException x) {
 			handleException(x);
@@ -409,19 +413,19 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void localSync(String repositoryName) {
-		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
-		try {
-			Response response = client.target(getBaseURL()).path("_localSync").path(repositoryName).request().post(null);
-			assertResponseIndicatesSuccess(response);
-		} catch (RuntimeException x) {
-			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
-		} finally {
-			releaseClient(client);
-		}
-	}
+//	public void localSync(String repositoryName) {
+//		assertNotNull("repositoryName", repositoryName);
+//		Client client = acquireClient();
+//		try {
+//			Response response = client.target(getBaseURL()).path("_localSync").path(repositoryName).request().post(null);
+//			assertResponseIndicatesSuccess(response);
+//		} catch (RuntimeException x) {
+//			handleException(x);
+//			throw x; // delete should never throw an exception, if it didn't have a real problem
+//		} finally {
+//			releaseClient(client);
+//		}
+//	}
 
 	public void makeDirectory(String repositoryName, String path, Date lastModified) {
 		assertNotNull("repositoryName", repositoryName);

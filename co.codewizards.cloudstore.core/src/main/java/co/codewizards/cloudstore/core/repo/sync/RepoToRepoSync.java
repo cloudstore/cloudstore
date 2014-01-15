@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.equal;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -74,15 +73,15 @@ public class RepoToRepoSync {
 			monitor.worked(1);
 
 			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
-			sync(remoteRepoTransport, localRepoTransport, new SubProgressMonitor(monitor, 50));
+			sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
 			logger.info("sync: from='{}' to='{}'", localRoot, remoteRoot);
-			sync(localRepoTransport, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+			sync(localRepoTransport, true, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
 			// Immediately sync back to make sure the changes we caused don't cause problems later
 			// (right now there's very likely no collision and this should be very fast).
 			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
-			sync(remoteRepoTransport, localRepoTransport, new SubProgressMonitor(monitor, 50));
+			sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
 		} finally {
 			monitor.done();
 		}
@@ -133,11 +132,11 @@ public class RepoToRepoSync {
 		return repoTransportFactory.createRepoTransport(remoteRoot);
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ProgressMonitor monitor) {
+	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising remotely...", 100);
 		try {
 			EntityID toRepositoryID = getRepositoryID(toRepoTransport);
-			ChangeSet changeSet = fromRepoTransport.getChangeSet(toRepositoryID);
+			ChangeSet changeSet = fromRepoTransport.getChangeSet(toRepositoryID, fromRepoLocalSync);
 			monitor.worked(8);
 
 			sync(fromRepoTransport, toRepoTransport, changeSet, new SubProgressMonitor(monitor, 90));

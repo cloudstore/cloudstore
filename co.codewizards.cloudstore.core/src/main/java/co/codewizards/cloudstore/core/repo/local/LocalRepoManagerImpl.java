@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -251,10 +251,17 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
 		long beginTimestamp = System.currentTimeMillis();
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
-		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties );
+		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
-			initPersistenceCapableClasses(pm);
+			try {
+				initPersistenceCapableClasses(pm);
+			} catch (Exception x) {
+				logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
+				pm.close();
+				pm = persistenceManagerFactory.getPersistenceManager();
+				initPersistenceCapableClasses(pm);
+			}
 
 			pm.currentTransaction().begin();
 

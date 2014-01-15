@@ -36,7 +36,7 @@ public interface RepoTransport {
 	 */
 	void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey);
 
-	ChangeSet getChangeSet(EntityID toRepositoryID);
+	ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).

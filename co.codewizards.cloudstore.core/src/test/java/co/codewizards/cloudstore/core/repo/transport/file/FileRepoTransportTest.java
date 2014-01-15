@@ -92,7 +92,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		changeSetResponse1 = repoTransport.getChangeSet(localRepositoryID);
+		changeSetResponse1 = repoTransport.getChangeSet(localRepositoryID, false);
 		assertThat(changeSetResponse1).isNotNull();
 		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();
@@ -142,7 +142,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -181,7 +181,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -224,7 +224,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();

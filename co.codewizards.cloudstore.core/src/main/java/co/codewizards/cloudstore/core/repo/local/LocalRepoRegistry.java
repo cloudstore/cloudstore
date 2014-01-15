@@ -43,6 +43,19 @@ public class LocalRepoRegistry
 	private long repoRegistryFileLastModified;
 	private Properties repoRegistryProperties;
 
+	public synchronized Collection<EntityID> getRepositoryIDs() {
+		loadRepoRegistryIfNeeded();
+		List<EntityID> result = new ArrayList<EntityID>();
+		for (Entry<Object, Object> me : repoRegistryProperties.entrySet()) {
+			String key = String.valueOf(me.getKey());
+			if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ID)) {
+				EntityID repositoryID = new EntityID(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
+				result.add(repositoryID);
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
+
 	public synchronized EntityID getRepositoryID(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
 		loadRepoRegistryIfNeeded();
@@ -145,6 +158,9 @@ public class LocalRepoRegistry
 
 		if (repositoryAlias.isEmpty())
 			throw new IllegalArgumentException("repositoryAlias must not be empty!");
+
+		if ("ALL".equals(repositoryAlias))
+			throw new IllegalArgumentException("repositoryAlias cannot be named 'ALL'! This is a reserved key word.");
 
 		if (repositoryAlias.startsWith("_"))
 			throw new IllegalArgumentException("repositoryAlias must not start with '_': " + repositoryAlias);

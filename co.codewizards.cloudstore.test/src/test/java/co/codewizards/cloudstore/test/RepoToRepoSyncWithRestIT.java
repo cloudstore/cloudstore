@@ -16,13 +16,9 @@ import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
-import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
-import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
-import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
 import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
 
 public class RepoToRepoSyncWithRestIT extends AbstractIT
@@ -99,13 +95,13 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		createFileWithRandomContent(child_3, "c");
 		createFileWithRandomContent(child_3, "d");
 
-		CloudStoreRESTClient cloudStoreRESTClient = new CloudStoreRESTClient(remoteRootURL);
-		DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingTemporarily();
-		cloudStoreRESTClient.setSslContext(SSLContextUtil.getSSLContext(new File(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36)), callback));
-		cloudStoreRESTClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
-		cloudStoreRESTClient.localSync(remoteRepositoryID.toString());
-
-		assertThatFilesInRepoAreCorrect(remoteRoot);
+//		CloudStoreRESTClient cloudStoreRESTClient = new CloudStoreRESTClient(remoteRootURL);
+//		DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingTemporarily();
+//		cloudStoreRESTClient.setSslContext(SSLContextUtil.getSSLContext(new File(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36)), callback));
+//		cloudStoreRESTClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+//		cloudStoreRESTClient.localSync(remoteRepositoryID.toString());
+//
+//		assertThatFilesInRepoAreCorrect(remoteRoot);
 
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));

@@ -14,6 +14,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.util.HashUtil;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.
@@ -63,9 +64,11 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	private void showMainProperties(LocalRepoTransaction transaction) {
 		LocalRepoManager localRepoManager = transaction.getLocalRepoManager();
 		Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryID().toString());
-		System.out.println("repository.repositoryID = " + localRepoManager.getRepositoryID());
-		System.out.println("repository.localRoot = " + localRepoManager.getLocalRoot());
-		System.out.println("repository.aliases = " + repositoryAliases);
+		System.out.println("Local repository:");
+		System.out.println("  repository.repositoryID = " + localRepoManager.getRepositoryID());
+		System.out.println("  repository.localRoot = " + localRepoManager.getLocalRoot());
+		System.out.println("  repository.aliases = " + repositoryAliases);
+		System.out.println("  repository.publicKeySha1 = " + HashUtil.sha1ForHuman(localRepoManager.getPublicKey()));
 		System.out.println();
 	}
 

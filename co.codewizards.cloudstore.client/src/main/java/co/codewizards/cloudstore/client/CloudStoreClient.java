@@ -35,12 +35,13 @@ public class CloudStoreClient {
 		@SuppressWarnings("unchecked")
 		List<Class<? extends SubCommand>> l = Arrays.asList(
 				AcceptRepoConnectionSubCommand.class,
+				CancelRepoConnectionSubCommand.class,
 				CreateRepoSubCommand.class,
-				LocalSyncSubCommand.class,
+				HelpSubCommand.class,
 				RemoteSyncSubCommand.class,
 				RepoInfoSubCommand.class,
-				HelpSubCommand.class,
-				RequestRepoConnectionSubCommand.class
+				RequestRepoConnectionSubCommand.class,
+				SyncSubCommand.class
 				);
 
 		subCommandClasses = Collections.unmodifiableList(l);

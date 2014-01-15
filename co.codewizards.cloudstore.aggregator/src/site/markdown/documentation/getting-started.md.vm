@@ -139,7 +139,7 @@ you can add either \"-noAlias\" or \"-alias \<myAlias\>\".
 $H$H$H$H Connect the repositories - step 1 of 2
 
 The repositories do not know each other, yet. We have to connect them in order to be able to synchronise them. A connection
-is established in two steps: First the client requests the connection on the server side:
+is established in two steps: First, the client requests the connection:
 
 <div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection Documents https://myserver.mydomain.tld:8443/myDocuments</pre></div>
 
@@ -154,6 +154,32 @@ Here an alternative example (assuming that the *repositoryID* on your server is 
 <div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection /home/user/Documents https://myserver.mydomain.tld:8443/2cb46e10-c076-466b-a944-2c1914076fe1</pre></div>
 
 **Important:** You are asked to verify the server\'s SSL certificate, because this is the first time that your client connects
-to this server. The server\'s certificate can be verified via its SHA1 fingerprint. This fingerprint is shown whenever you start your
-server. If your SSH connection to the server is trustworthy, the value shown there is trustworthy, too. If 
- 
+to this server. The server\'s certificate is verified by comparing the SHA1 fingerprint which is printed to the console whenever
+the server starts with the fingerprint displayed by the client.
+
+**If the fingerprint shown by the server does not exactly match the fingerprint shown by the client, someone is tampering with your connection and you must not continue!** 
+
+You can read more about this on the [Security](./security.hmtl) page.
+
+
+$H$H$H$H Connect the repositories - step 2 of 2
+
+In the previous step, a connection was requested by the client and the server stored this request. Only after this request is accepted,
+access to the repository is granted.
+
+You can accept this request via the following command, executed on the server-side (via SSH):
+
+<div><pre>~/cloudstore-client/bin/cloudstore acceptRepoConnection myDocuments</pre></div>
+
+
+$H$H$H$H Synchronise
+
+All is set up. You can synchronise now. Execute the following command on the client-side:
+
+<div><pre>~/cloudstore-client/bin/cloudstore sync Documents</pre></div>
+
+This synchronises the local repository with the alias \"Documents\".
+
+To synchronise all known local repositories, use \"ALL\" instead:
+
+<div><pre>~/cloudstore-client/bin/cloudstore sync ALL</pre></div>
