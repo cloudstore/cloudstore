@@ -74,8 +74,7 @@ scp -p ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz
 
 $H$H$H$H Extract the CloudStore archives on the server
 
-Now, two *tar.gz* files are located in the */tmp/* folder on your server. In order to extract them (and later on start the server),
-you open a shell to the server machine:
+Now, two *tar.gz* files are located in the */tmp/* folder on your server. To continue, you open a shell to the server machine:
 
 <div><pre>ssh user@myserver.mydomain.tld</pre></div>
 

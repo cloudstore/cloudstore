@@ -1,0 +1,13 @@
+<head><title>Security</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed.jpg")}
+#set( $H = '#' )
+
+Security
+-------
+
+$H$H$H Encryption
+
+
+$H$H$H Authentication
+
+

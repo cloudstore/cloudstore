@@ -1,0 +1,36 @@
+<head><title>FAQ</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+Frequently asked questions (FAQ)
+-------
+
+$H$H$H Why is there no user name / password?
+
+Because this is neither secure nor convenient. Users tend to use weak passwords, which renders the most secure
+encryption algorithms useless. Additionally, handling passwords is cumbersome.
+
+CloudStore uses a far more secure and much easier authentication scheme based on every repository having
+its own public/private key pair. Before repositories synchronise data, they are introduced to each other,
+establishing a trust relationship between them.
+
+We will later add ordinary user+password-based authentication *additionally*, but this will never be used for
+the actual synchronisation. It will only be used for other ways of accessing a repository (e.g. via a browser)
+where this classic approach is needed. And since it\'s optional you might keep it disabled for security reasons.
+
+Please consult the [Security](./security.html) page for further details.
+
+
+$H$H$H Why are my system\'s certificate authorities (CAs) ignored?
+
+Because the CA system is [broken](http://nwrickert.wordpress.com/2011/03/23/pki-is-broken/) by design: You do not
+know any of the companies/persons acting as CAs and therefore you have no reason to trust them.
+
+The NSA can easily make one of these CAs generate a certificate for *yourhost.yourdomain.tld*. If CloudStore
+trusted the CAs blindly, you wouldn\'t notice that your client talks to a different server (in the middle)
+instead of having a direct connection to *yourhost.yourdomain.tld*. This server in the middle could spy on you
+or even modify all the data traversing it.
+
+Therefore, CloudStore trusts only those certificates that you *personally* chose to trust. Trust cannot be blindly delegated.
+
+Please consult the [Security](./security.html) page for further details.

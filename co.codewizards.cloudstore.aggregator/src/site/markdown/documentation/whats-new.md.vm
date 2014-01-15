@@ -1,0 +1,8 @@
+<head><title>What\'s new</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed.jpg")}
+#set( $H = '#' )
+
+What\'s new
+-------
+
+There\'s nothing new, yet. We\'re still working on the very first release.

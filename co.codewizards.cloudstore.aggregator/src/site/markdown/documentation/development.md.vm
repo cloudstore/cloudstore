@@ -1,0 +1,49 @@
+<head><title>Development</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+Development
+-------
+
+$H$H$H Free Software
+
+CloudStore is [Free Software](http://en.wikipedia.org/wiki/Free_Software) released under the [LGPL](../about/licence.html).
+Its source codes are hosted [here on GitHub](https://github.com/cloudstore).
+
+Please feel free to check out the source codes and study them. It\'s a very good idea, anyway, to download the sources
+and build the binaries yourself. This is probably the most secure way of using this software, making it extremely
+difficult for an attacker to provide malicious code to you.
+
+Furthermore, you are - of course - very welcome to contribute. Please [contact us](../about/contact.html), if you want
+to lend us a hand.
+
+
+$H$H$H Setting up a workspace
+
+$H$H$H$H Step 1: Eclipse
+
+Download and start [Eclipse](http://www.eclipse.org). The \"Eclipse IDE for Java Developers\" is recommended.
+
+
+$H$H$H$H Step 2: Git
+
+Open the \"Git Repository Exploring\" perspective. If you do not have it, you\'re likely still missing [EGit](http://www.eclipse.org/egit/).
+
+Then clone this Git repository: https://github.com/cloudstore/main.git
+
+
+$H$H$H$H Step 3: Import projects
+
+Open the \"Java\" perspective and click in the main menu on \"File\" => \"Import...\". Select \"Maven\" / \"Existing Maven Projects\".
+Search for the projects in your Git working copy and import \"co.codewizards.cloudstore.*\".
+
+If you do not find \"Maven\" here, you might still need to install [m2e](http://www.eclipse.org/m2e/).
+
+
+$H$H$H$H Step 4: DataNucleus Eclipse Plug-in
+
+Install the [DataNucleus](http://www.datanucleus.org) Eclipse Plug-in, open the \"Java\" perspective, right-click the project
+\"co.codewizards.cloudstore.core\" in the \"Package Explorer\" view.
+
+Then select \"DataNucleus\" => \"Add DataNucleus Support\". Finally, repeat the double-click on the same project and check
+\"DataNucleus\" => \"Enable Auto-Enhancement\".

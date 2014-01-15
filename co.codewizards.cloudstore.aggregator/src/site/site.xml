@@ -46,10 +46,6 @@
 			<item name="Licence" href="./about/licence.html" />
 		</menu>
 
-		<menu name="Babel">
-			<item name="Deutsch" href="./de/index.html" img="images/de.png" />
-		</menu>
-
 		<menu name="Releases">
 			<item name="Latest development snapshot" href="../latest-dev/" />
 			<item name="Latest stable version" href="../latest-stable/" />

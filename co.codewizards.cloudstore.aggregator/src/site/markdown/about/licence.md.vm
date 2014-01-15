@@ -1,0 +1,20 @@
+<head><title>Licence</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-jump.jpg")}
+#set( $H = '#' )
+
+Licence
+-------
+
+$H$H$H GNU Lesser General Public License (LGPL)
+
+CloudStore is [Free Software](http://en.wikipedia.org/wiki/Free_Software) licenced under the conditions of the [LGPL](../license.html).
+
+In short, this means:
+
+* You can use CloudStore for every purpose.
+* You\'re free to study how CloudStore works, and to change it to make it do what you wish. This implies access to the source codes.
+* You can freely (re)distribute CloudStore.
+* You have the freedom to improve CloudStore, and release your improvements (and modified versions in general) to the public,
+so that the whole community benefits. This, too, implies access to the source codes. If you modify CloudStore, you must
+make your modifications publicly available. However, if you just use CloudStore in your own application, you\'re not required
+to publish your own (separate) application (using CloudStore as a library) as free software.

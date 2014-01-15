@@ -294,7 +294,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
 					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
 					shutdownDerbyDatabase(connectionURL);
-					try { Thread.sleep(3000); } catch (InterruptedException ie) { doNothing(); }
+
+// java.sql.SQLNonTransientConnectionException: No current connection.
+// http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
+// Forcing garbage collection.
+					System.gc();
+					for (int i = 0; i < 3; ++i) {
+						try { Thread.sleep(1000); } catch (InterruptedException ie) { doNothing(); }
+						System.gc();
+					}
 				}
 			} finally {
 				if (pm != null)
