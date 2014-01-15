@@ -24,7 +24,7 @@ import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	private static final Logger logger = LoggerFactory.getLogger(SyncSubCommand.class);
 
-	@Argument(metaVar="<remote>", required=false, usage="An ID or URL of a remote repository. If none is specified, all remote repositories are synced.")
+	@Argument(metaVar="<remote>", index=1, required=false, usage="An ID or URL of a remote repository. If none is specified, all remote repositories are synced.")
 	private String remote;
 
 	private EntityID remoteRepositoryID;

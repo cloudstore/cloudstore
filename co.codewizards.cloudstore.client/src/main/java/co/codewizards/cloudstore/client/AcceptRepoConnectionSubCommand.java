@@ -33,7 +33,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
  */
 public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
 {
-	@Argument(metaVar="<remote>", required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
+	@Argument(metaVar="<remote>", index=1, required=false, usage="The unique ID of a remote repository currently requesting to be connected. If none is specified, the oldest request is accepted.")
 	private String remote;
 
 	private EntityID remoteRepositoryID;

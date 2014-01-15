@@ -21,7 +21,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
  */
 public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
 {
-	@Argument(metaVar="<remote>", required=true, usage="An ID or URL of a remote repository.")
+	@Argument(metaVar="<remote>", index=1, required=true, usage="An ID or URL of a remote repository.")
 	private String remote;
 
 //	@Option(name="-localOnly", required=false, usage="Do not attempt to unregister the repo-connection on the server-side.")
