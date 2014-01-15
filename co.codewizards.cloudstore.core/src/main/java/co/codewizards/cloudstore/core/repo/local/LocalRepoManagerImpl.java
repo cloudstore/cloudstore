@@ -297,12 +297,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					try { Thread.sleep(3000); } catch (InterruptedException ie) { doNothing(); }
 				}
 			} finally {
-				if (pm != null) {
-					if (pm.currentTransaction().isActive())
-						pm.currentTransaction().rollback();
-
+				if (pm != null)
 					pm.close();
-				}
 			}
 		} while (persistenceManagerFactory == null);
 	}
