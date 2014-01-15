@@ -530,6 +530,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			try {
 				RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
+				transaction.getPersistenceManager().flush();
 
 				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 				if (repoFile == null)
