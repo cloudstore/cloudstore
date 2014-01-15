@@ -208,65 +208,100 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public FileChunkSet getFileChunkSet(String path) {
+	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
 		assertNotNull("path", path);
 		FileChunkSet response = new FileChunkSet();
 		response.setPath(path);
 		final int bufLength = 32 * 1024;
 		final int chunkLength = 32 * bufLength; // 1 MiB chunk size
 		File file = getFile(path);
+		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			if (!file.isFile())
 				response.setFileExists(false);
 			else {
-				response.setLastModified(new Date(file.lastModified()));
+				LocalRepoSync localRepoSync = null;
+				boolean hollow = allowHollow;
+				if (hollow) {
+					RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+					if (repoFile == null || !(repoFile instanceof NormalFile))
+						hollow = false;
+					else {
+						NormalFile normalFile = (NormalFile) repoFile;
+						if (localRepoSync == null)
+							localRepoSync = new LocalRepoSync(transaction);
 
-				MessageDigest mdAll = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
-				MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
+						hollow = !localRepoSync.isModified(repoFile, file);
 
-				long offset = 0;
-				InputStream in = new FileInputStream(file);
-				try {
-					FileChunk fileChunk = null;
-
-					byte[] buf = new byte[bufLength];
-					while (true) {
-						if (fileChunk == null) {
-							fileChunk = new FileChunk();
-							fileChunk.setOffset(offset);
-							fileChunk.setLength(0);
-							mdChunk.reset();
-						}
-
-						int bytesRead = in.read(buf, 0, buf.length);
-
-						if (bytesRead > 0) {
-							mdAll.update(buf, 0, bytesRead);
-							mdChunk.update(buf, 0, bytesRead);
-							offset += bytesRead;
-							fileChunk.setLength(fileChunk.getLength() + bytesRead);
-						}
-
-						if (bytesRead < 0 || fileChunk.getLength() >= chunkLength) {
-							fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
-							response.getFileChunks().add(fileChunk);
-							fileChunk = null;
-
-							if (bytesRead < 0) {
-								break;
-							}
+						if (hollow) {
+							response.setFileChunksLoaded(false);
+							response.setLastModified(normalFile.getLastModified());
+							response.setLength(normalFile.getLength());
+							response.setSha1(normalFile.getSha1());
 						}
 					}
-				} finally {
-					in.close();
 				}
-				response.setSha1(HashUtil.encodeHexStr(mdAll.digest()));
-				response.setLength(offset);
+
+				if (!hollow) {
+					response.setLastModified(new Date(file.lastModified()));
+
+					MessageDigest mdAll = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
+					MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
+
+					long offset = 0;
+					InputStream in = new FileInputStream(file);
+					try {
+						FileChunk fileChunk = null;
+
+						byte[] buf = new byte[bufLength];
+						while (true) {
+							if (fileChunk == null) {
+								fileChunk = new FileChunk();
+								fileChunk.setOffset(offset);
+								fileChunk.setLength(0);
+								mdChunk.reset();
+							}
+
+							int bytesRead = in.read(buf, 0, buf.length);
+
+							if (bytesRead > 0) {
+								mdAll.update(buf, 0, bytesRead);
+								mdChunk.update(buf, 0, bytesRead);
+								offset += bytesRead;
+								fileChunk.setLength(fileChunk.getLength() + bytesRead);
+							}
+
+							if (bytesRead < 0 || fileChunk.getLength() >= chunkLength) {
+								fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
+								response.getFileChunks().add(fileChunk);
+								fileChunk = null;
+
+								if (bytesRead < 0) {
+									break;
+								}
+							}
+						}
+					} finally {
+						in.close();
+					}
+					response.setSha1(HashUtil.encodeHexStr(mdAll.digest()));
+					response.setLength(offset);
+
+					if (localRepoSync == null)
+						localRepoSync = new LocalRepoSync(transaction);
+
+					localRepoSync.putSha1(file, response.getSha1());
+
+					localRepoSync.sync(file, new NullProgressMonitor());
+				}
 			}
+			transaction.commit();
 		} catch (RuntimeException x) {
 			throw x;
 		} catch (Exception x) {
 			throw new RuntimeException(x);
+		} finally {
+			transaction.rollbackIfActive();
 		}
 		return response;
 	}
@@ -493,23 +528,17 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			File localRoot = getLocalRepoManager().getLocalRoot();
 			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 			try {
-
 				RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
-				RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, file.getParentFile());
+				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
+
 				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
-				if (repoFile == null) {
-					NormalFile normalFile;
-					repoFile = normalFile = new NormalFile();
-					normalFile.setName(file.getName());
-					normalFile.setParent(parentRepoFile);
-					normalFile.setLastModified(new Date(file.lastModified()));
-					normalFile.setLength(file.length());
-					normalFile.setSha1(sha(file));
-					normalFile.setInProgress(true);
-					repoFile = normalFile = repoFileDAO.makePersistent(normalFile);
-				}
-				else
-					((NormalFile) repoFile).setInProgress(true);
+				if (repoFile == null)
+					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
+
+				if (!(repoFile instanceof NormalFile))
+					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a NormalFile for file: " + file);
+
+				((NormalFile) repoFile).setInProgress(true);
 
 				transaction.commit();
 			} finally {

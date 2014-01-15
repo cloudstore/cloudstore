@@ -59,14 +59,18 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 
 	@Override
 	public void run() throws Exception {
+		boolean foundSomethingToCancel = false;
+		EntityID localRepositoryID;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
+			localRepositoryID = localRepoManager.getRepositoryID();
 			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 			try {
 				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 				if (remoteRepositoryID != null) {
 					RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(remoteRepositoryID);
 					if (remoteRepository != null) {
+						foundSomethingToCancel = true;
 						remoteRoot = remoteRepository.getRemoteRoot();
 						remoteRepositoryDAO.deletePersistent(remoteRepository);
 						remoteRepositoryDAO.getPersistenceManager().flush();
@@ -75,6 +79,7 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 					RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
 					RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryID);
 					if (remoteRepositoryRequest != null) {
+						foundSomethingToCancel = true;
 						remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
 						remoteRepositoryRequestDAO.getPersistenceManager().flush();
 					}
@@ -83,10 +88,12 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 				if (remoteRoot != null) {
 					RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
 					if (remoteRepository != null) {
+						foundSomethingToCancel = true;
+						remoteRepositoryID = remoteRepository.getEntityID();
 						remoteRepositoryDAO.deletePersistent(remoteRepository);
 						remoteRepositoryDAO.getPersistenceManager().flush();
 					}
-					// TODO cancel on the remote side, too.
+					// TODO automatically cancel on the remote side, too.
 				}
 
 				transaction.commit();
@@ -95,6 +102,26 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 			}
 		} finally {
 			localRepoManager.close();
+		}
+
+		if (foundSomethingToCancel) {
+			System.out.println("Successfully cancelled the connection from the local repository to the remote repository:");
+			System.out.println();
+			System.out.println("  localRepository.repositoryID = " + localRepositoryID);
+			System.out.println("  localRepository.localRoot = " + localRoot);
+			System.out.println();
+			System.out.println("  remoteRepository.repositoryID = " + remoteRepositoryID);
+			System.out.println("  remoteRepository.remoteRoot = " + remoteRoot);
+			System.out.println();
+			System.out.println("Important: This only cancelled the local side of the connection and you should cancel it on the other side, too, using this command (if you didn't do this yet):");
+			System.out.println();
+			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryID, localRepositoryID));
+		}
+		else {
+			System.out.println("There was nothing to be cancelled here. Maybe it was cancelled already before?!");
+			System.out.println("Or maybe you want to instead run the following command on the other side (i.e. on the other computer - cancelling currently works only on one side):");
+			System.out.println();
+			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryID, localRepositoryID));
 		}
 	}
 }

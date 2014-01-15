@@ -29,7 +29,7 @@ public class CreateRepoSubCommand extends SubCommand
 	@Option(name="-noAlias", required=false, usage="Whether to suppress the automatic creation of a repository-alias with the local root's name.")
 	private boolean noAlias;
 
-	@Option(name="-alias", required=false, usage="Specify a different alias. By default, the root directory's name is used. For example, if the repository's root is '/home/user/Documents', the alias 'Documents' is chosen. If this option is present, the specified alias is used instead.")
+	@Option(name="-alias", metaVar="<alias>", required=false, usage="Specify a different alias. By default, the root directory's name is used. For example, if the repository's root is '/home/user/Documents', the alias 'Documents' is chosen. If this option is present, the specified <alias> is used instead.")
 	private String alias;
 
 	@Override

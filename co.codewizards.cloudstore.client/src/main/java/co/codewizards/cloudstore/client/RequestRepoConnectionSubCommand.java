@@ -43,11 +43,14 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 	@Override
 	public void run() throws Exception {
 		// TODO support sub-dir-connections to "check-out" only a branch of a repo! Bidirectionally (only upload a sub-branch to a certain server, too)!
+		EntityID localRepositoryID;
 		EntityID remoteRepositoryID;
+		byte[] localPublicKey;
 		byte[] remotePublicKey;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			EntityID localRepositoryID = localRepoManager.getRepositoryID();
+			localRepositoryID = localRepoManager.getRepositoryID();
+			localPublicKey = localRepoManager.getPublicKey();
 			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL);
 			remoteRepositoryID = repoTransport.getRepositoryID();
 			remotePublicKey = repoTransport.getPublicKey();
@@ -57,11 +60,18 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 			localRepoManager.close();
 		}
 
-		System.out.println("Successfully requested to connect the following remote repository:");
+		System.out.println("Successfully requested to connect the following local and remote repositories:");
+		System.out.println();
+		System.out.println("  localRepository.repositoryID = " + localRepositoryID);
+		System.out.println("  localRepository.localRoot = " + localRoot);
+		System.out.println("  localRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(localPublicKey));
+		System.out.println();
 		System.out.println("  remoteRepository.repositoryID = " + remoteRepositoryID);
-		System.out.println("  remoteRepository.remoteURL = " + remoteURL);
-		System.out.println("  remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(localRepoManager.getPublicKey()));
-		System.out.println("");
-		System.out.println("Please verify the 'publicKeySha1' fingerprint! If it does not match the repository's fingerprint as shown locally on the server, you must cancel this request immediately using 'cloudstore cancelRepoConnection <remote>'!");
+		System.out.println("  remoteRepository.remoteRoot = " + remoteURL);
+		System.out.println("  remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(remotePublicKey));
+		System.out.println();
+		System.out.println("Please verify the 'publicKeySha1' fingerprints! If they do not match the fingerprints shown on the server, someone is attacking you and you must cancel this request immediately! To cancel the request, use this command:");
+		System.out.println();
+		System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", localRepositoryID, remoteRepositoryID));
 	}
 }

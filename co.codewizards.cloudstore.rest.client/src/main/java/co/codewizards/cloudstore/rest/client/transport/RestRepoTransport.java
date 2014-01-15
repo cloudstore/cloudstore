@@ -111,8 +111,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public FileChunkSet getFileChunkSet(String path) {
-		return getClient().getFileChunkSet(getRepositoryID().toString(), path);
+	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
+		return getClient().getFileChunkSet(getRepositoryID().toString(), path, allowHollow);
 	}
 
 	@Override

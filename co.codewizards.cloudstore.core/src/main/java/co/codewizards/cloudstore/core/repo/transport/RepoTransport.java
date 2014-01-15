@@ -67,7 +67,7 @@ public interface RepoTransport {
 	 */
 	void delete(String path);
 
-	FileChunkSet getFileChunkSet(String path);
+	FileChunkSet getFileChunkSet(String path, boolean allowHollow);
 
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.

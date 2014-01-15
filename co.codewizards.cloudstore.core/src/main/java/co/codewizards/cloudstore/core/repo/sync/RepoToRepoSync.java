@@ -204,23 +204,34 @@ public class RepoToRepoSync {
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
-			// TODO first check whether the file was already synced in a previous *interrupted* sync.
-			// In this case, we already have a RepoFile with the correct SHA1 on the destination side.
-			// Generating a FileChunkSet is not necessary in this situation (it is very expensive for big files).
-
-			// TODO the check-sums should be obtained simultaneously with 2 threads.
-			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path);
+			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, true);
 			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
-				logger.warn("File was deleted during sync on source side: {}", path);
+				logger.warn("Hollow check revealed: File was deleted during sync on source side: {}", path);
 				return;
 			}
-			assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
+			FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, true);
+			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+				logger.info("Hollow check revealed: File is already equal on destination side: {}", path);
+				return;
+			}
+
+			// TODO the check-sums should be obtained simultaneously with 2 threads.
+			if (fromFileChunkSetResponse.isHollow()) {
+				fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, false);
+				if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
+					logger.warn("File was deleted during sync on source side: {}", path);
+					return;
+				}
+				assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
+			}
 			monitor.worked(10);
 
-			FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path);
-			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
-				logger.info("File is already equal on destination side: {}", path);
-				return;
+			if (toFileChunkSetResponse.isHollow()) {
+				toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, false);
+				if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+					logger.info("File is already equal on destination side: {}", path);
+					return;
+				}
 			}
 			monitor.worked(10);
 

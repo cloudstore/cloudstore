@@ -38,7 +38,6 @@ public class CloudStoreClient {
 				CancelRepoConnectionSubCommand.class,
 				CreateRepoSubCommand.class,
 				HelpSubCommand.class,
-				RemoteSyncSubCommand.class,
 				RepoInfoSubCommand.class,
 				RequestRepoConnectionSubCommand.class,
 				SyncSubCommand.class

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -37,6 +39,7 @@ public class LocalRepoSync {
 	private final RepoFileDAO repoFileDAO;
 	private final RemoteRepositoryDAO remoteRepositoryDAO;
 	private final ModificationDAO modificationDAO;
+	private final Map<File, String> file2Sha1 = new HashMap<File, String>();
 
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -48,6 +51,24 @@ public class LocalRepoSync {
 
 	public void sync(ProgressMonitor monitor) {
 		sync(null, localRoot, monitor);
+	}
+
+	public void sync(File file, ProgressMonitor monitor) {
+		if (!(assertNotNull("file", file).isAbsolute()))
+			throw new IllegalArgumentException("file is not absolute: " + file);
+
+		monitor.beginTask("Local sync...", 100);
+		try {
+			RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, file.getParentFile());
+			if (parentRepoFile == null)
+				throw new IllegalStateException("There is no parentRepoFile for the parent of this file: " + file);
+
+			monitor.worked(1);
+
+			sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99));
+		} finally {
+			monitor.done();
+		}
 	}
 
 	private void sync(RepoFile parentRepoFile, File file, ProgressMonitor monitor) {
@@ -106,7 +127,7 @@ public class LocalRepoSync {
 		return false;
 	}
 
-	private boolean isModified(RepoFile repoFile, File file) {
+	public boolean isModified(RepoFile repoFile, File file) {
 		if (repoFile.getLastModified().getTime() != file.lastModified()) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("isModified: repoFile.lastModified != file.lastModified: repoFile.lastModified={} file.lastModified={} file={}",
@@ -228,19 +249,36 @@ public class LocalRepoSync {
 	}
 
 	private String sha(File file, ProgressMonitor monitor) {
-		assertNotNull("file", file);
+		if (!(assertNotNull("file", file).isAbsolute()))
+			throw new IllegalArgumentException("file is not absolute: " + file);
+
 		if (!file.isFile()) {
 			return null;
 		}
+
+		monitor.beginTask("Local sync...", 100);
 		try {
+			String sha1 = file2Sha1.get(file);
+			if (sha1 != null)
+				return sha1;
+
 			FileInputStream in = new FileInputStream(file);
-			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in, monitor);
+			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in, new SubProgressMonitor(monitor, 100));
 			in.close();
 			return HashUtil.encodeHexStr(hash);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			monitor.done();
 		}
+	}
+
+	public void putSha1(File file, String sha1) {
+		if (!(assertNotNull("file", file).isAbsolute()))
+			throw new IllegalArgumentException("file is not absolute: " + file);
+
+		file2Sha1.put(file, sha1);
 	}
 }

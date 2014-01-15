@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.util.HashUtil;
 
 /**
  * {@link SubCommand} implementation for requesting a connection at a remote repository.
@@ -56,9 +57,13 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 
 	@Override
 	public void run() throws Exception {
+		EntityID localRepositoryID;
+		byte[] localPublicKey;
+		byte[] remotePublicKey;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			byte[] publicKey;
+			localRepositoryID = localRepoManager.getRepositoryID();
+			localPublicKey = localRepoManager.getPublicKey();
 			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
 			try {
 				RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
@@ -78,14 +83,27 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 					request = remoteRepositoryRequestDAO.getRemoteRepositoryRequestOrFail(remoteRepositoryID);
 				}
 				remoteRepositoryID = request.getRepositoryID();
-				publicKey = request.getPublicKey();
+				remotePublicKey = request.getPublicKey();
 				transaction.commit();
 			} finally {
 				transaction.rollbackIfActive();
 			}
-			localRepoManager.putRemoteRepository(remoteRepositoryID, null, publicKey); // deletes the request.
+			localRepoManager.putRemoteRepository(remoteRepositoryID, null, remotePublicKey); // deletes the request.
 		} finally {
 			localRepoManager.close();
 		}
+
+		System.out.println("Successfully accepted the connection request for the following local and remote repositories:");
+		System.out.println();
+		System.out.println("  localRepository.repositoryID = " + localRepositoryID);
+		System.out.println("  localRepository.localRoot = " + localRoot);
+		System.out.println("  localRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(localPublicKey));
+		System.out.println();
+		System.out.println("  remoteRepository.repositoryID = " + remoteRepositoryID);
+		System.out.println("  remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(remotePublicKey));
+		System.out.println();
+		System.out.println("Please verify the 'publicKeySha1' fingerprints! If they do not match the fingerprints shown on the client, someone is attacking you and you must cancel this request immediately! To cancel the request, use this command:");
+		System.out.println();
+		System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", localRepositoryID, remoteRepositoryID));
 	}
 }

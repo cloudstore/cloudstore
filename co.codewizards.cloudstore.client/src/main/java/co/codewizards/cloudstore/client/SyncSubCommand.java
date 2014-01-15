@@ -5,7 +5,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.kohsuke.args4j.Argument;
 import org.slf4j.Logger;
@@ -81,7 +83,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 
 	private void sync(File localRoot) {
 		List<URL> remoteRoots = new ArrayList<URL>();
-		List<URL> filteredRemoteRoots = new ArrayList<URL>();
+		Map<EntityID, URL> filteredRemoteRepositoryID2RemoteRoot = new HashMap<EntityID, URL>();
 		EntityID repositoryID;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
@@ -91,11 +93,14 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 			try {
 				Collection<RemoteRepository> remoteRepositories = transaction.getDAO(RemoteRepositoryDAO.class).getObjects();
 				for (RemoteRepository remoteRepository : remoteRepositories) {
+					if (remoteRepository.getRemoteRoot() == null)
+						continue;
+
 					remoteRoots.add(remoteRepository.getRemoteRoot());
 					if ((remoteRepositoryID == null && remoteRoot == null)
 							|| (remoteRepositoryID != null && remoteRepositoryID.equals(remoteRepository.getEntityID()))
 							|| (remoteRoot != null && remoteRoot.equals(remoteRepository.getRemoteRoot())))
-						filteredRemoteRoots.add(remoteRepository.getRemoteRoot());
+						filteredRemoteRepositoryID2RemoteRoot.put(remoteRepository.getEntityID(), remoteRepository.getRemoteRoot());
 				}
 
 				transaction.commit();
@@ -107,11 +112,16 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 		}
 
 		if (remoteRoots.isEmpty())
-			System.err.println(String.format("WARNING: The repository %s ('%s') is not connected to any remote repository!", repositoryID, localRoot));
-		else if (filteredRemoteRoots.isEmpty())
+			System.err.println(String.format("WARNING: The repository %s ('%s') is not connected to any remote repository as client!", repositoryID, localRoot));
+		else if (filteredRemoteRepositoryID2RemoteRoot.isEmpty())
 			System.err.println(String.format("WARNING: The repository %s ('%s') is not connected to the specified remote repository ('%s')!", repositoryID, localRoot, remote));
 		else {
-			for (URL remoteRoot : filteredRemoteRoots) {
+			for (Map.Entry<EntityID, URL> me : filteredRemoteRepositoryID2RemoteRoot.entrySet()) {
+				EntityID remoteRepositoryID = me.getKey();
+				URL remoteRoot = me.getValue();
+				System.out.println("********************************************************************************");
+				System.out.println(String.format("Syncing %s ('%s') with %s ('%s').", repositoryID, localRoot, remoteRepositoryID, remoteRoot));
+				System.out.println("********************************************************************************");
 				RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot);
 				repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			}

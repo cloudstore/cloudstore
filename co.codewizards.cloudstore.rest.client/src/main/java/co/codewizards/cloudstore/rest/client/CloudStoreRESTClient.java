@@ -207,7 +207,7 @@ public class CloudStoreRESTClient {
 					.path(toRepositoryID.toString());
 
 			if (localSync)
-				webTarget = webTarget.queryParam("localSync", Boolean.TRUE);
+				webTarget = webTarget.queryParam("localSync", localSync);
 
 			ChangeSet changeSet = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSet.class);
 			return changeSet;
@@ -252,15 +252,19 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public FileChunkSet getFileChunkSet(String repositoryName, String path) {
+	public FileChunkSet getFileChunkSet(String repositoryName, String path, boolean allowHollow) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
-			FileChunkSet fileChunkSet = assignCredentials(client.target(getBaseURL())
+			WebTarget webTarget = client.target(getBaseURL())
 					.path(getPath(FileChunkSet.class))
 					.path(repositoryName)
-					.path(removeLeadingAndTrailingSlashes(path))
-					.request(MediaType.APPLICATION_XML)).get(FileChunkSet.class);
+					.path(removeLeadingAndTrailingSlashes(path));
+
+			if (allowHollow)
+				webTarget = webTarget.queryParam("allowHollow", allowHollow);
+
+			FileChunkSet fileChunkSet = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(FileChunkSet.class);
 			return fileChunkSet;
 		} catch (RuntimeException x) {
 			handleException(x);

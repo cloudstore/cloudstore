@@ -53,7 +53,6 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			localFile = path.isEmpty() ? localRoot : new File(localRoot, path);
 		else {
 			localFile = new File(local).getAbsoluteFile();
-			local = localFile.getPath();
 			localRoot = getLocalRoot(localFile);
 		}
 		assertLocalRootNotNull();

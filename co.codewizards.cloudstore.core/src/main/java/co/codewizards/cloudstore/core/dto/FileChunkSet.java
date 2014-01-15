@@ -15,6 +15,9 @@ public class FileChunkSet {
 	private Date lastModified;
 	private long length;
 
+	private boolean fileChunksLoaded = true;
+	private List<FileChunk> fileChunks;
+
 	public String getPath() {
 		return path;
 	}
@@ -43,8 +46,6 @@ public class FileChunkSet {
 		this.lastModified = lastModified;
 	}
 
-	private List<FileChunk> fileChunks;
-
 	public List<FileChunk> getFileChunks() {
 		if (fileChunks == null)
 			fileChunks = new ArrayList<FileChunk>();
@@ -60,5 +61,16 @@ public class FileChunkSet {
 	}
 	public void setFileExists(boolean fileExists) {
 		this.fileExists = fileExists;
+	}
+
+	public boolean isFileChunksLoaded() {
+		return fileChunksLoaded;
+	}
+	public void setFileChunksLoaded(boolean fileChunksLoaded) {
+		this.fileChunksLoaded = fileChunksLoaded;
+	}
+
+	public boolean isHollow() {
+		return !isFileChunksLoaded();
 	}
 }
