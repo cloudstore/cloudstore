@@ -231,10 +231,24 @@ public class LocalRepoSync {
 
 	private void createDeleteModifications(RepoFile repoFile) {
 		assertNotNull("repoFile", repoFile);
+		NormalFile normalFile = null;
+		if (repoFile instanceof NormalFile)
+			normalFile = (NormalFile) repoFile;
+
+		// TODO check, if the deleted file exists somewhere else. If so, move it (instead of deleting it).
+		// Maybe we need a CopyModification instead of a MoveModification, because it can occur in multiple
+		// locations and whether to move or to copy should better be decided by the client.
+		// TODO Note that there are two possible scenarios: Either the new file is first created and then the old
+		// file deleted or the old file is first deleted and then the new file is created. We must handle both
+		// cases (here is just one of them).
+		// And we should test both cases - somehow.
+
 		for (RemoteRepository remoteRepository : remoteRepositoryDAO.getObjects()) {
 			DeleteModification deleteModification = new DeleteModification();
 			deleteModification.setRemoteRepository(remoteRepository);
 			deleteModification.setPath(repoFile.getPath());
+			deleteModification.setLength(normalFile == null ? -1 : normalFile.getLength());
+			deleteModification.setSha1(normalFile == null ? null : normalFile.getSha1());
 			modificationDAO.makePersistent(deleteModification);
 		}
 	}
