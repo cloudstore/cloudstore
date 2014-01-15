@@ -258,7 +258,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				initPersistenceCapableClasses(pm);
 			} catch (Exception x) {
 				logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
-				pm.close();
+				pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
+				shutdownDerbyDatabase(connectionURL);
+				persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
 				pm = persistenceManagerFactory.getPersistenceManager();
 				initPersistenceCapableClasses(pm);
 			}
