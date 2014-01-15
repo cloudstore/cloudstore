@@ -250,21 +250,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
 		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
 		long beginTimestamp = System.currentTimeMillis();
-		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
-		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
+		initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(createRepository);
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
-			try {
-				initPersistenceCapableClasses(pm);
-			} catch (Exception x) {
-				logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
-				pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
-				shutdownDerbyDatabase(connectionURL);
-				persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
-				pm = persistenceManagerFactory.getPersistenceManager();
-				initPersistenceCapableClasses(pm);
-			}
-
 			pm.currentTransaction().begin();
 
 			if (createRepository) {
@@ -283,6 +271,43 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 		logger.info("[{}]initPersistenceManagerFactory: Started up PersistenceManagerFactory successfully in {} ms.", id, System.currentTimeMillis() - beginTimestamp);
 	}
+
+	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(boolean createRepository) {
+		final int maxRetryCount = 5;
+		int tryCount = 0;
+		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
+		do {
+			++tryCount;
+			persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
+			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+			try {
+				try {
+					initPersistenceCapableClasses(pm);
+				} catch (Exception x) {
+					if (tryCount > maxRetryCount) {
+						if (x instanceof RuntimeException)
+							throw (RuntimeException)x;
+						else
+							throw new RuntimeException(x);
+					}
+
+					logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
+					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
+					shutdownDerbyDatabase(connectionURL);
+					try { Thread.sleep(3000); } catch (InterruptedException ie) { doNothing(); }
+				}
+			} finally {
+				if (pm != null) {
+					if (pm.currentTransaction().isActive())
+						pm.currentTransaction().rollback();
+
+					pm.close();
+				}
+			}
+		} while (persistenceManagerFactory == null);
+	}
+
+	private static final void doNothing() { }
 
 	private void initPersistenceCapableClasses(PersistenceManager pm) {
 		pm.getExtent(DeleteModification.class);
