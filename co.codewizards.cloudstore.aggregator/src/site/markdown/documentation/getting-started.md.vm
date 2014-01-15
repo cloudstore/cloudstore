@@ -158,7 +158,7 @@ the server starts with the fingerprint displayed by the client.
 
 **If the fingerprint shown by the server does not exactly match the fingerprint shown by the client, someone is tampering with your connection and you must not continue!** 
 
-You can read more about this on the [Security](./security.hmtl) page.
+You can read more about this on the [Security](./security.html) page.
 
 
 $H$H$H$H Connect the repositories - step 2 of 2
