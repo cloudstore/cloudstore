@@ -67,16 +67,19 @@ public class RepoToRepoSync {
 
 	public void sync(ProgressMonitor monitor) {
 		assertNotNull("monitor", monitor);
-		monitor.beginTask("Synchronising remotely...", 101);
+		monitor.beginTask("Synchronising...", 201);
 		try {
 			readRemoteRepositoryID();
 			monitor.worked(1);
+
+			logger.info("sync: locally syncing '{}'", localRoot);
+			localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
 
 			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
 			sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
 			logger.info("sync: from='{}' to='{}'", localRoot, remoteRoot);
-			sync(localRepoTransport, true, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+			sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
 			// Immediately sync back to make sure the changes we caused don't cause problems later
 			// (right now there's very likely no collision and this should be very fast).
@@ -133,7 +136,7 @@ public class RepoToRepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", 100);
+		monitor.beginTask("Synchronising...", 100);
 		try {
 			EntityID toRepositoryID = getRepositoryID(toRepoTransport);
 			ChangeSet changeSet = fromRepoTransport.getChangeSet(toRepositoryID, fromRepoLocalSync);
@@ -150,7 +153,7 @@ public class RepoToRepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSet changeSet, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", changeSet.getModificationDTOs().size() + changeSet.getRepoFileDTOs().size());
+		monitor.beginTask("Synchronising...", changeSet.getModificationDTOs().size() + changeSet.getRepoFileDTOs().size());
 		try {
 			for (ModificationDTO modificationDTO : changeSet.getModificationDTOs()) {
 				syncModification(fromRepoTransport, toRepoTransport, modificationDTO, new SubProgressMonitor(monitor, 1));
@@ -174,7 +177,7 @@ public class RepoToRepoSync {
 	}
 
 	private void syncModification(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ModificationDTO modificationDTO, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", 100);
+		monitor.beginTask("Synchronising...", 100);
 		try {
 			if (modificationDTO instanceof DeleteModificationDTO) {
 				DeleteModificationDTO deleteModificationDTO = (DeleteModificationDTO) modificationDTO;
@@ -189,7 +192,7 @@ public class RepoToRepoSync {
 	}
 
 	private void syncDirectory(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", 100);
+		monitor.beginTask("Synchronising...", 100);
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncDirectory: path='{}'", path);
@@ -200,7 +203,7 @@ public class RepoToRepoSync {
 	}
 
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising remotely...", 100);
+		monitor.beginTask("Synchronising...", 100);
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
@@ -254,7 +257,7 @@ public class RepoToRepoSync {
 			monitor.worked(1);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
-			subMonitor.beginTask("Synchronising remotely...", fromFileChunksDirty.size());
+			subMonitor.beginTask("Synchronising...", fromFileChunksDirty.size());
 			for (FileChunk fileChunk : fromFileChunksDirty) {
 				byte[] fileData = fromRepoTransport.getFileData(path, fileChunk.getOffset(), fileChunk.getLength());
 
