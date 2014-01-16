@@ -536,13 +536,13 @@
 		</div>
 		<div id="nl_menu">
 			#links( $decoration.body.links )
-			<div style="float:right; margin-top: 11px; margin-right: 11px;">
-				#if ($locale == "en")
-					<a href="$relativePath/de/$currentFileName" title="Deutsch"><img src="$relativePath/images/nl/de.png"/></a>
-				#else
-					<a href="$relativePath/../$currentFileName" title="English"><img src="$relativePath/images/nl/en.png"/></a>
-				#end
-			</div>
+##			<div style="float:right; margin-top: 11px; margin-right: 11px;">
+##				#if ($locale == "en")
+##					<a href="$relativePath/de/$currentFileName" title="Deutsch"><img src="$relativePath/images/nl/de.png"/></a>
+##				#else
+##					<a href="$relativePath/../$currentFileName" title="English"><img src="$relativePath/images/nl/en.png"/></a>
+##				#end
+##			</div>
         </div>
 
 		#checkMenuVisible()
@@ -582,7 +582,7 @@
 		#end
 	</div>
 	<div id="nl_footer">
-	    <div style="float:left;">
+		<div id="nl_footer_text">
 	    	Copyright &#169;#copyright()All Rights Reserved &nbsp;|&nbsp;
 			#if ($locale == "en")
 				<a href="$relativePath/about/imprint.html">Imprint</a>
@@ -592,7 +592,7 @@
 	    	<br/>
 	    	#publishDate( "left" $decoration.publishDate $decoration.version )
 	    </div>
-	    <div style="float:right;">
+	    <div id="nl_footer_logo">
 	    	<a href="http://www.codewizards.co"><img src="$relativePath/images/nl/nl-logo-grey.png"/></a>
 	    </div>
 	</div>

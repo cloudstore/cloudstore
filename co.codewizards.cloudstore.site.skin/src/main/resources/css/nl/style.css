@@ -353,13 +353,27 @@ input[type="text"].focus {
     clear: both;
     color: #B1B1B1;
     font-size: 9px;
-    height: 43px;
     margin: auto;
+    /* ...moved to #nl_footer_text below
+    height: 43px;
     padding-left: 25px;
     padding-right: 25px;
     padding-top: 15px;
-    text-align: left;
     width: 890px;
+    */
+    height: 58px;
+    width: 940px;
+    text-align: left;
+}
+
+#nl_footer_text {
+	float:left;
+	padding-left:25px;
+	padding-top:15px;
+}
+
+#nl_footer_logo {
+	float:right;
 }
 
 #nl_footer a{

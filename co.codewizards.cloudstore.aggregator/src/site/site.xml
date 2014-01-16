@@ -25,8 +25,10 @@
 		<links>
 			<item name="Home" href="./index.html" />
 			<item name="Documentation" href="./documentation/index.html" />
-			<item name="Forum" href="." />
-			<item name="Tracker" href="https://github.com/cloudstore/main/issues" />
+			<!--
+			<item name="Forum" href="../forum" />
+			-->
+			<item name="Tracker" href="../tracker" />
 			<item name="Download" href="./download/index.html" />
 		</links>
 

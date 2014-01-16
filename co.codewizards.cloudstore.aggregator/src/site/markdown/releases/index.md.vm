@@ -1,0 +1,17 @@
+<head><title>Releases</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-jump.jpg")}
+#set( $H = '#' )
+
+Releases
+-------
+
+As development continues, CloudStore changes. Hence, we provide the corresponding web-site-version for each release.
+
+Please make sure that you're reading the correct documentation for the version you're using. You
+find the version of the web-site in the footer.
+
+In the following you find a list of all releases:
+
+* [Latest development snapshot](../latest-dev/) (Not stable & not yet released!)
+* [Latest stable version](../latest-stable/)
+* [1.0.0](../1.0.0/) (released 2014-??-??)
