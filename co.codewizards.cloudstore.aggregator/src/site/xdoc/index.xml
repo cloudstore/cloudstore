@@ -20,6 +20,12 @@
 					<li>
 						<div class="slider">
 							<div style="position: relative; background: url('images/teaser/airport_walkway_568x426.png'); height:426px; width: 568px;">
+								<div style="position:relative; top:395px; z-index: 50000;">
+									<a href="http://www.freeimages.co.uk" title="Free Stock Photos">
+										<img src="./images/powered-by/fibutton5.gif"
+											alt="More than 13,500 Free hi-res stock photo images for Web, Design and Printed use. Design, Image Editing and Webmaster tips." />
+									</a>
+								</div>
 							</div>
 							<div class="slider_header">
 								<h1>Easy</h1> 
@@ -33,12 +39,18 @@
 					<li>
 						<div class="slider">
 							<div style="position: relative; background: url('images/teaser/neonhand1271_568x426.png'); height:426px; width: 568px;">
+								<div style="position:relative; top:395px; z-index: 50000;">
+									<a href="http://www.freeimages.co.uk" title="Free Stock Photos">
+										<img src="./images/powered-by/fibutton5.gif"
+											alt="More than 13,500 Free hi-res stock photo images for Web, Design and Printed use. Design, Image Editing and Webmaster tips." />
+									</a>
+								</div>
 							</div>
 							<div class="slider_header">
-								<h1>In your hand</h1> 
+								<h1>In your hands</h1> 
 							</div> 
 							<div class="slider_text">
-								<span class="arrows headerfont">Keep the control over your data in your hand! Do not confide your data to companies spying on you. CloudStore is free software. You can verify the source codes yourself to ensure that the software does what it claims to do.</span>
+								<span class="arrows headerfont">Keep the control over your data in your hands! Do not confide your data to companies spying on you. CloudStore is free software. You can verify the source codes yourself to ensure that the software does what it claims to do.</span>
 							</div>
 						</div>					
 					</li>
@@ -46,6 +58,12 @@
 					<li>
 						<div class="slider">
 							<div style="position: relative; background: url('images/teaser/multicolours_fractal_shell_638x426.png'); height:426px; width: 638px;">
+								<div style="position:relative; top:395px; z-index: 50000;">
+									<a href="http://www.freeimages.co.uk" title="Free Stock Photos">
+										<img src="./images/powered-by/fibutton5.gif"
+											alt="More than 13,500 Free hi-res stock photo images for Web, Design and Printed use. Design, Image Editing and Webmaster tips." />
+									</a>
+								</div>
 							</div>
 							<div class="slider_header">
 								<h1>Fast &amp; elegant</h1> 

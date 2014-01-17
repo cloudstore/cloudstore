@@ -56,7 +56,9 @@
 	</body>
 
 	<poweredBy>
+<!-- We currently use this only on the home page (main index.html) and there we have their logo (with link) located directly on their image.
 		<logo img="images/powered-by/fibutton5.gif" href="http://www.freeimages.co.uk" alt="More than 13,500 Free hi-res stock photo images for Web, Design and Printed use. Design, Image Editing and Webmaster tips."/>
+-->
 	</poweredBy>
 
 </project>
