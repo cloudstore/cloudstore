@@ -273,7 +273,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(boolean createRepository) {
-		final int maxRetryCount = 5;
+		final int maxRetryCount = 10;
 		int tryCount = 0;
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
 		do {
@@ -299,7 +299,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 // http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
 // Forcing garbage collection.
 					System.gc();
-					for (int i = 0; i < 3; ++i) {
+					for (int i = 0; i < 5; ++i) {
 						try { Thread.sleep(1000); } catch (InterruptedException ie) { doNothing(); }
 						System.gc();
 					}
