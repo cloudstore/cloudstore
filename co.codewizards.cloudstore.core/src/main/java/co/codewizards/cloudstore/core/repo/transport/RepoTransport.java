@@ -61,11 +61,12 @@ public interface RepoTransport {
 	 * If there is no such file (or directory), this method is a noop.
 	 * <p>
 	 * If {@code path} denotes a directory, all its children (if there are) are deleted recursively.
+	 * @param fromRepositoryID TODO
 	 * @param path the path of the file (or directory) to be deleted. Must not be <code>null</code>. No matter which
 	 * operating system is used, the separation-character is always '/'. This path may start with a "/", but there is no
 	 * difference, if it does: It is always relative to the repository's root directory.
 	 */
-	void delete(String path);
+	void delete(EntityID fromRepositoryID, String path);
 
 	FileChunkSet getFileChunkSet(String path, boolean allowHollow);
 

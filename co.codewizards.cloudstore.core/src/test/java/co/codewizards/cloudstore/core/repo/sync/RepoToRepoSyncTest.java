@@ -279,7 +279,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncWithModificationCollision() throws Exception {
+	public void syncWithDirectFileModificationCollision() throws Exception {
 		syncRemoteRootToLocalRootInitially();
 
 		File r_child_2 = new File(remoteRoot, "2");
@@ -348,8 +348,15 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		}
 	}
 
+// TODO test this collision:
 //	@Test
-//	public void syncWithDeletionCollision() throws Exception {
+//	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
+//
+//	}
+
+// TODO test this collision:
+//	@Test
+//	public void syncWithDirectFileDeletionCollision() throws Exception {
 //
 //	}
 }

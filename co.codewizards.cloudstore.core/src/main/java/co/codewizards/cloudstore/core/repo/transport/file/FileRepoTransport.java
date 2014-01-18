@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -183,21 +182,30 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void delete(String path) {
+	public void delete(EntityID fromRepositoryID, String path) {
 		File file = getFile(assertNotNull("path", path));
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
+			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			localRepoSync.sync(file, new NullProgressMonitor());
+
+			if (detectFileCollisionRecursively(transaction, fromRepositoryID, file)) {
+				file.renameTo(IOUtil.createCollisionFile(file));
+
+				if (file.exists())
+					throw new IllegalStateException("Renaming file failed: " + file);
+			}
+
 			if (!IOUtil.deleteDirectoryRecursively(file)) {
 				throw new IllegalStateException("Deleting file or directory failed: " + file);
 			}
 
 			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-			if (repoFile != null) {
-				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			if (repoFile != null)
 				localRepoSync.deleteRepoFile(repoFile);
-			}
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -566,7 +574,89 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	/**
+	 * Detect if the file to be copied has been modified locally (or copied from another repository) after the last
+	 * sync from the repository identified by {@code fromRepositoryID}.
+	 * <p>
+	 * If there is a collision - i.e. the destination file has been modified, too - then the destination file is moved
+	 * away by renaming it. The name to which it is renamed is created by {@link IOUtil#createCollisionFile(File)}.
+	 * Afterwards the file is copied back to its original name.
+	 * <p>
+	 * The reason for renaming it first (instead of directly copying it) is that there might be open file handles.
+	 * In GNU/Linux, the open file handles stay open and thus are then connected to the renamed file, thus continuing
+	 * to modify the file which was moved away. In Windows, the renaming likely fails and we abort with an exception.
+	 * In both cases, we do our best to avoid both processes from writing to the same file simultaneously without locking
+	 * it.
+	 * <p>
+	 * In the future (this is NOT YET IMPLEMENTED), we might lock it in {@link #beginPutFile(EntityID, String)} and
+	 * keep the lock until {@link #endPutFile(EntityID, String, Date, long)} or a timeout occurs - and refresh the lock
+	 * (i.e. postpone the timeout) with every {@link #putFileData(String, long, byte[])}. The reason for this
+	 * quite complicated strategy is that we cannot guarantee that the {@link #endPutFile(EntityID, String, Date, long)}
+	 * is ever invoked (the client might crash inbetween). We don't want a locked file to linger forever.
+	 *
+	 * @param transaction the DB transaction. Must not be <code>null</code>.
+	 * @param fromRepositoryID the ID of the source repository from which the file is about to be copied. Must not be <code>null</code>.
+	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>.
+	 * @param normalFile the DB entity corresponding to {@code file}. Must not be <code>null</code>.
+	 */
 	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, File file, NormalFile normalFile) {
+		if (detectFileCollision(transaction, fromRepositoryID, file, normalFile)) {
+			File collisionFile = IOUtil.createCollisionFile(file);
+			file.renameTo(collisionFile);
+			if (file.exists())
+				throw new IllegalStateException("Could not rename file to resolve collision: " + file);
+
+			try {
+				IOUtil.copyFile(collisionFile, file);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private boolean detectFileCollisionRecursively(LocalRepoTransaction transaction, EntityID fromRepositoryID, File fileOrDirectory) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("fromRepositoryID", fromRepositoryID);
+		assertNotNull("fileOrDirectory", fileOrDirectory);
+
+		if (!fileOrDirectory.exists()) { // Is this correct? If it does not exist, then there is no collision? TODO what if it has been deleted locally and modified remotely and local is destination and that's our collision?!
+			return false;
+		}
+
+		if (fileOrDirectory.isFile()) {
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
+			if (!(repoFile instanceof NormalFile))
+				return true; // We had a change after the last local sync (normal file => directory)!
+
+			NormalFile normalFile = (NormalFile) repoFile;
+			if (detectFileCollision(transaction, fromRepositoryID, fileOrDirectory, normalFile))
+				return true;
+			else
+				return false;
+		}
+
+		File[] children = fileOrDirectory.listFiles();
+		if (children == null)
+			throw new IllegalStateException("listFiles() of directory returned null: " + fileOrDirectory);
+
+		for (File child : children) {
+			if (detectFileCollisionRecursively(transaction, fromRepositoryID, child))
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Detect if the file to be copied or deleted has been modified locally (or copied from another repository) after the last
+	 * sync from the repository identified by {@code fromRepositoryID}.
+	 * @param transaction
+	 * @param fromRepositoryID
+	 * @param file
+	 * @param normalFile
+	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
+	 */
+	private boolean detectFileCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, File file, NormalFile normalFile) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("file", file);
@@ -575,27 +665,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(fromRepositoryID);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 		if (normalFile.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
-			return;
+			return false;
 
 		// The file was transferred from the same repository before and was thus not changed locally nor in another repo.
 		// This can only happen, if the sync was interrupted (otherwise the check for the localRevision above
 		// would have already caused this method to abort).
 		if (fromRepositoryID.equals(normalFile.getLastSyncFromRepositoryID()))
-			return;
+			return false;
 
-		// Collision!
-		file.renameTo(IOUtil.createCollisionFile(file));
-		if (file.exists())
-			throw new IllegalStateException("Could not rename file to resolve collision: " + file);
-
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		if (!file.isFile())
-			throw new IllegalStateException("Could not create file (permissions?!): " + file);
+		return true;
 	}
 
 	@Override
@@ -717,23 +795,6 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
-		}
-	}
-
-	private String sha(File file) {
-		assertNotNull("file", file);
-		if (!file.isFile()) {
-			return null;
-		}
-		try {
-			FileInputStream in = new FileInputStream(file);
-			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in);
-			in.close();
-			return HashUtil.encodeHexStr(hash);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 }

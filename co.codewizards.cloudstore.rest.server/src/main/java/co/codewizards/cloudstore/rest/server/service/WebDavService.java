@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -84,7 +85,8 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 
 	@DELETE
 	@Path("{path:.*}")
-	public void delete(@PathParam("path") String path) {
+	public void delete(@QueryParam("fromRepositoryID") EntityID fromRepositoryID, @PathParam("path") String path) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("path", path);
 		authenticateAndReturnUserName();
 
@@ -92,7 +94,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.delete(path);
+			repoTransport.delete(fromRepositoryID, path);
 		} finally {
 			repoTransport.close();
 		}

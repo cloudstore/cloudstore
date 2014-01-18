@@ -405,12 +405,13 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void delete(String repositoryName, String path) {
+	public void delete(EntityID fromRepositoryID, String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			Response response = assignCredentials(client.target(getBaseURL())
 					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
+					.queryParam("fromRepositoryID", fromRepositoryID)
 					.request()).delete();
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {

@@ -182,7 +182,7 @@ public class RepoToRepoSync {
 			if (modificationDTO instanceof DeleteModificationDTO) {
 				DeleteModificationDTO deleteModificationDTO = (DeleteModificationDTO) modificationDTO;
 				logger.info("syncModification: Deleting '{}'", deleteModificationDTO.getPath());
-				toRepoTransport.delete(deleteModificationDTO.getPath());
+				toRepoTransport.delete(fromRepoTransport.getRepositoryID(), deleteModificationDTO.getPath());
 			}
 			else
 				throw new IllegalStateException("Unknown modificationDTO type: " + modificationDTO);
@@ -205,77 +205,89 @@ public class RepoToRepoSync {
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
+			EntityID fromRepositoryID = fromRepoTransport.getRepositoryID();
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
+
 			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, true);
 			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
 				logger.warn("Hollow check revealed: File was deleted during sync on source side: {}", path);
 				return;
 			}
-			FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, true);
-			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
-				logger.info("Hollow check revealed: File is already equal on destination side: {}", path);
-				return;
-			}
 
-			// TODO the check-sums should be obtained simultaneously with 2 threads.
-			if (fromFileChunkSetResponse.isHollow()) {
-				fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, false);
-				if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
-					logger.warn("File was deleted during sync on source side: {}", path);
-					return;
-				}
-				assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
-			}
-			monitor.worked(10);
-
-			if (toFileChunkSetResponse.isHollow()) {
-				toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, false);
-				if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
-					logger.info("File is already equal on destination side: {}", path);
-					return;
-				}
-			}
-			monitor.worked(10);
-
-			List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();
-			Iterator<FileChunk> toFileChunkIterator = toFileChunkSetResponse.getFileChunks().iterator();
-			int fileChunkIndex = -1;
-			for (FileChunk fromFileChunk : fromFileChunkSetResponse.getFileChunks()) {
-				FileChunk toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
-				++fileChunkIndex;
-				if (toFileChunk != null
-						&& equal(fromFileChunk.getLength(), toFileChunk.getLength())
-						&& equal(fromFileChunk.getSha1(), toFileChunk.getSha1())) {
-					logger.debug("Skipping FileChunk {} (already equal on destination side). File: {}", fileChunkIndex, path);
-					continue;
-				}
-				fromFileChunksDirty.add(fromFileChunk);
-			}
-
-			EntityID fromRepositoryID = fromRepoTransport.getRepositoryID();
+			boolean invokeEndPutFile = false;
 			toRepoTransport.beginPutFile(fromRepositoryID, path);
 			monitor.worked(1);
-
-			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
-			subMonitor.beginTask("Synchronising...", fromFileChunksDirty.size());
-			for (FileChunk fileChunk : fromFileChunksDirty) {
-				byte[] fileData = fromRepoTransport.getFileData(path, fileChunk.getOffset(), fileChunk.getLength());
-
-				if (fileData == null || fileData.length != fileChunk.getLength() || !sha1(fileData).equals(fileChunk.getSha1())) {
-					logger.warn("Source file was modified or deleted during sync: {}", path);
-					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
-					// direction. The file should be synced again in the correct direction in the next run (after the source
-					// repo did a local sync, too).
+			try {
+				FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, true);
+				if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+					logger.info("Hollow check revealed: File is already equal on destination side: {}", path);
+					invokeEndPutFile = true;
 					return;
 				}
 
-				toRepoTransport.putFileData(path, fileChunk.getOffset(), fileData);
-				subMonitor.worked(1);
-			}
-			subMonitor.done();
+				// TODO the check-sums should be obtained simultaneously with 2 threads.
+				if (fromFileChunkSetResponse.isHollow()) {
+					fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, false);
+					if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
+						logger.warn("File was deleted during sync on source side: {}", path);
+						invokeEndPutFile = true;
+						return;
+					}
+					assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
+				}
+				monitor.worked(10);
 
-			toRepoTransport.endPutFile(fromRepositoryID, path, fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
+				if (toFileChunkSetResponse.isHollow()) {
+					toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, false);
+					if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+						logger.info("File is already equal on destination side: {}", path);
+						invokeEndPutFile = true;
+						return;
+					}
+				}
+				monitor.worked(10);
+
+				List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();
+				Iterator<FileChunk> toFileChunkIterator = toFileChunkSetResponse.getFileChunks().iterator();
+				int fileChunkIndex = -1;
+				for (FileChunk fromFileChunk : fromFileChunkSetResponse.getFileChunks()) {
+					FileChunk toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
+					++fileChunkIndex;
+					if (toFileChunk != null
+							&& equal(fromFileChunk.getLength(), toFileChunk.getLength())
+							&& equal(fromFileChunk.getSha1(), toFileChunk.getSha1())) {
+						logger.debug("Skipping FileChunk {} (already equal on destination side). File: {}", fileChunkIndex, path);
+						continue;
+					}
+					fromFileChunksDirty.add(fromFileChunk);
+				}
+
+				ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
+				subMonitor.beginTask("Synchronising...", fromFileChunksDirty.size());
+				for (FileChunk fileChunk : fromFileChunksDirty) {
+					byte[] fileData = fromRepoTransport.getFileData(path, fileChunk.getOffset(), fileChunk.getLength());
+
+					if (fileData == null || fileData.length != fileChunk.getLength() || !sha1(fileData).equals(fileChunk.getSha1())) {
+						logger.warn("Source file was modified or deleted during sync: {}", path);
+						// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
+						// direction. The file should be synced again in the correct direction in the next run (after the source
+						// repo did a local sync, too).
+						return;
+					}
+
+					toRepoTransport.putFileData(path, fileChunk.getOffset(), fileData);
+					subMonitor.worked(1);
+				}
+				subMonitor.done();
+
+			} finally {
+				if (invokeEndPutFile) {
+					toRepoTransport.endPutFile(
+							fromRepositoryID, path,
+							fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
+				}
+			}
 			monitor.worked(6);
 		} finally {
 			monitor.done();

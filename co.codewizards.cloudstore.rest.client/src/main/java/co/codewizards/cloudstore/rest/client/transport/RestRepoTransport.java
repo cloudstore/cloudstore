@@ -106,8 +106,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void delete(String path) {
-		getClient().delete(getRepositoryID().toString(), path);
+	public void delete(EntityID fromRepositoryID, String path) {
+		getClient().delete(fromRepositoryID, getRepositoryID().toString(), path);
 	}
 
 	@Override

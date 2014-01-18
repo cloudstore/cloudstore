@@ -1028,20 +1028,6 @@ public final class IOUtil {
 	}
 
 	/**
-	 * Copy a file.
-	 * <p>
-	 * This is a convenience method for <code>copyFile(new File(sourceFilename), new File(destinationFilename))</code>
-	 * @param sourceFilename The source file to copy
-	 * @param destinationFilename To which file to copy the source
-	 * @throws IOException in case of an error
-	 */
-	public static void copyFile(String sourceFilename, String destinationFilename)
-	throws IOException
-	{
-		copyFile(new File(sourceFilename), new File(destinationFilename));
-	}
-
-	/**
 	 * Copy a resource loaded by the class loader of a given class to a file.
 	 * <p>
 	 * This is a convenience method for <code>copyResource(sourceResClass, sourceResName, new File(destinationFilename))</code>.
