@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
@@ -35,8 +36,13 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 
 	@POST
 	@Path("{path:.*}")
-	public void endPutFile(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified, @QueryParam("length") long length)
+	public void endPutFile(
+			@QueryParam("fromRepositoryID") EntityID fromRepositoryID,
+			@PathParam("path") String path,
+			@QueryParam("lastModified") DateTime lastModified,
+			@QueryParam("length") long length)
 	{
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("path", path);
 		assertNotNull("lastModified", lastModified);
 		authenticateAndReturnUserName();
@@ -45,7 +51,7 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.endPutFile(path, lastModified.toDate(), length);
+			repoTransport.endPutFile(fromRepositoryID, path, lastModified.toDate(), length);
 		} finally {
 			repoTransport.close();
 		}

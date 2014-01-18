@@ -44,6 +44,8 @@ public final class IOUtil {
 	 */
 	public static final long GIGABYTE = 1 * 1024 * 1024 * 1024;
 
+	public static final String COLLISION_FILE_NAME_INFIX = ".collision";
+
 	private static File tempDir = null;
 
 	private static final Logger logger = LoggerFactory.getLogger(IOUtil.class);
@@ -1474,4 +1476,26 @@ public final class IOUtil {
 		}
 		return bytes;
     }
+
+	public static File createCollisionFile(File file) {
+		File parentFile = file.getParentFile();
+		String fileName = file.getName();
+
+//		String fileNameWithoutExtension = nullToEmptyString(getFileNameWithoutExtension(fileName));
+		String fileExtension = nullToEmptyString(getFileExtension(fileName));
+		if (!fileExtension.isEmpty())
+			fileExtension = '.' + fileExtension;
+
+		File result = new File(parentFile,
+				String.format("%s.%s%s%s",
+						fileName,
+						Long.toString(System.currentTimeMillis(), 36),
+						COLLISION_FILE_NAME_INFIX,
+						fileExtension));
+		return result;
+	}
+
+	private static String nullToEmptyString(String s) {
+		return s == null ? "" : s;
+	}
 }

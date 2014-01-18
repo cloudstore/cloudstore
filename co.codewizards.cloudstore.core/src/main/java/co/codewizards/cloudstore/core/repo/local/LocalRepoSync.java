@@ -195,6 +195,7 @@ public class LocalRepoSync {
 				NormalFile normalFile = (NormalFile) repoFile;
 				normalFile.setLength(file.length());
 				normalFile.setSha1(sha(file, new SubProgressMonitor(monitor, 100)));
+				normalFile.setLastSyncFromRepositoryID(null);
 			}
 			repoFile.setLastModified(new Date(file.lastModified()));
 		} finally {

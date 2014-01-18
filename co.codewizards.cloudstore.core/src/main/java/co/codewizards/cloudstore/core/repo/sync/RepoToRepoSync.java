@@ -72,18 +72,18 @@ public class RepoToRepoSync {
 			readRemoteRepositoryID();
 			monitor.worked(1);
 
-			logger.info("sync: locally syncing '{}'", localRoot);
+			logger.info("sync: locally syncing {} ('{}')", localRepositoryID, localRoot);
 			localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
 
-			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
+			logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
 			sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
-			logger.info("sync: from='{}' to='{}'", localRoot, remoteRoot);
+			logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
 			sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
 			// Immediately sync back to make sure the changes we caused don't cause problems later
 			// (right now there's very likely no collision and this should be very fast).
-			logger.info("sync: from='{}' to='{}'", remoteRoot, localRoot);
+			logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
 			sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
 		} finally {
 			monitor.done();
@@ -253,7 +253,8 @@ public class RepoToRepoSync {
 				fromFileChunksDirty.add(fromFileChunk);
 			}
 
-			toRepoTransport.beginPutFile(path);
+			EntityID fromRepositoryID = fromRepoTransport.getRepositoryID();
+			toRepoTransport.beginPutFile(fromRepositoryID, path);
 			monitor.worked(1);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
@@ -274,7 +275,7 @@ public class RepoToRepoSync {
 			}
 			subMonitor.done();
 
-			toRepoTransport.endPutFile(path, fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
+			toRepoTransport.endPutFile(fromRepositoryID, path, fromFileChunkSetResponse.getLastModified(), fromFileChunkSetResponse.getLength());
 			monitor.worked(6);
 		} finally {
 			monitor.done();

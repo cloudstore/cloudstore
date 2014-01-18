@@ -425,7 +425,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				throw new IllegalStateException("parentRepoFile == null");
 
 			if (file.exists() && !file.isDirectory())
-				file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
+				file.renameTo(IOUtil.createCollisionFile(file));
 
 			if (file.exists() && !file.isDirectory())
 				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
@@ -506,15 +506,21 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void beginPutFile(String path) {
-		File file = getFile(path);
+	public void beginPutFile(EntityID fromRepositoryID, String path) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
+		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		try {
 			if (file.exists() && !file.isFile())
-				file.renameTo(new File(parentFile, String.format("%s.%s.collision", file.getName(), Long.toString(System.currentTimeMillis(), 36))));
+				file.renameTo(IOUtil.createCollisionFile(file));
 
+			if (file.exists() && !file.isFile())
+				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
+
+			boolean newFile = false;
 			if (!file.isFile()) {
+				newFile = true;
 				try {
 					file.createNewFile();
 				} catch (IOException e) {
@@ -528,6 +534,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			File localRoot = getLocalRepoManager().getLocalRoot();
 			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 			try {
+				// A complete sync run might take very long. Therefore, we better update our local meta-data
+				// *immediately* before beginning the sync of this file and before detecting a collision.
+				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.
 				RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
 				transaction.getPersistenceManager().flush();
@@ -539,7 +548,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				if (!(repoFile instanceof NormalFile))
 					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a NormalFile for file: " + file);
 
-				((NormalFile) repoFile).setInProgress(true);
+				NormalFile normalFile = (NormalFile) repoFile;
+
+				if (!newFile && !normalFile.isInProgress())
+					detectAndHandleFileCollision(transaction, fromRepositoryID, file, normalFile);
+
+				normalFile.setLastSyncFromRepositoryID(fromRepositoryID);
+				normalFile.setInProgress(true);
 
 				transaction.commit();
 			} finally {
@@ -549,6 +564,38 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (parentFileLastModified != Long.MIN_VALUE)
 				parentFile.setLastModified(parentFileLastModified);
 		}
+	}
+
+	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, File file, NormalFile normalFile) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("fromRepositoryID", fromRepositoryID);
+		assertNotNull("file", file);
+		assertNotNull("normalFile", normalFile);
+
+		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(fromRepositoryID);
+		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
+		if (normalFile.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
+			return;
+
+		// The file was transferred from the same repository before and was thus not changed locally nor in another repo.
+		// This can only happen, if the sync was interrupted (otherwise the check for the localRevision above
+		// would have already caused this method to abort).
+		if (fromRepositoryID.equals(normalFile.getLastSyncFromRepositoryID()))
+			return;
+
+		// Collision!
+		file.renameTo(IOUtil.createCollisionFile(file));
+		if (file.exists())
+			throw new IllegalStateException("Could not rename file to resolve collision: " + file);
+
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		if (!file.isFile())
+			throw new IllegalStateException("Could not create file (permissions?!): " + file);
 	}
 
 	@Override
@@ -588,7 +635,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endPutFile(String path, Date lastModified, long length) {
+	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		File file = getFile(assertNotNull("path", path));
 		assertNotNull("lastModified", lastModified);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
@@ -619,6 +667,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			file.setLastModified(lastModified.getTime());
 			localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
+			normalFile.setLastSyncFromRepositoryID(fromRepositoryID);
 			normalFile.setInProgress(false);
 
 			transaction.commit();

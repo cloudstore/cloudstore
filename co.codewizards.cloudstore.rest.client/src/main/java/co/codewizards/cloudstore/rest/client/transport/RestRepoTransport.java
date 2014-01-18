@@ -121,8 +121,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void beginPutFile(String path) {
-		getClient().beginPutFile(getRepositoryID().toString(), path);
+	public void beginPutFile(EntityID fromRepositoryID, String path) {
+		getClient().beginPutFile(fromRepositoryID, getRepositoryID().toString(), path);
 	}
 
 	@Override
@@ -131,8 +131,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void endPutFile(String path, Date lastModified, long length) {
-		getClient().endPutFile(getRepositoryID().toString(), path,new DateTime(lastModified), length);
+	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
+		getClient().endPutFile(fromRepositoryID, getRepositoryID().toString(), path,new DateTime(lastModified), length);
 	}
 
 	@Override

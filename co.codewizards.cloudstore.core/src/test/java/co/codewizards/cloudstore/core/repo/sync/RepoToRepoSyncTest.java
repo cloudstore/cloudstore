@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URL;
+
+import junit.framework.Assert;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -81,6 +84,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		localRepoManagerLocal.close();
 		localRepoManagerRemote.close();
 
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
 
@@ -118,6 +124,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		localRepoManagerRemote.close();
 
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
 
@@ -140,17 +149,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		File child_2_1_b = new File(child_2_1, "b");
 		assertThat(child_2_1_b).isFile();
 
-		RandomAccessFile raf = new RandomAccessFile(child_2_1_a, "rw");
-		try {
-			raf.seek(random.nextInt((int)child_2_1_a.length()));
-
-			byte[] buf = new byte[1 + random.nextInt(10)];
-			random.nextBytes(buf);
-
-			raf.write(buf);
-		} finally {
-			raf.close();
-		}
+		modifyFileRandomly(child_2_1_a);
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
@@ -175,6 +174,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		localRepoManagerRemote.close();
 
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 
 		// ensure that nothing was synced backwards into the wrong direction ;-)
@@ -182,6 +184,21 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		byte[] child_2_1_b_actual = IOUtil.getBytesFromFile(child_2_1_b);
 		assertThat(child_2_1_a_actual).isEqualTo(child_2_1_a_expected);
 		assertThat(child_2_1_b_actual).isEqualTo(child_2_1_b_expected);
+	}
+
+	private void modifyFileRandomly(File file) throws IOException {
+		RandomAccessFile raf = new RandomAccessFile(file, "rw");
+		try {
+			if (file.length() > 0)
+				raf.seek(random.nextInt((int)file.length()));
+
+			byte[] buf = new byte[1 + random.nextInt(10)];
+			random.nextBytes(buf);
+
+			raf.write(buf);
+		} finally {
+			raf.close();
+		}
 	}
 
 	@Test
@@ -213,6 +230,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
 		localRepoManagerRemote.close();
+
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
 
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
@@ -252,6 +272,84 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		localRepoManagerRemote.close();
 
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
 		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 	}
+
+	@Test
+	public void syncWithModificationCollision() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_a = new File(r_child_2_1, "a");
+		assertThat(r_child_2_1_a).isFile();
+
+		File l_child_2 = new File(localRoot, "2");
+		assertThat(l_child_2).isDirectory();
+
+		File l_child_2_1 = new File(l_child_2, "1");
+		assertThat(l_child_2_1).isDirectory();
+
+		File l_child_2_1_a = new File(l_child_2_1, "a");
+		assertThat(l_child_2_1_a).isFile();
+
+		modifyFileRandomly(r_child_2_1_a);
+		modifyFileRandomly(l_child_2_1_a);
+
+		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision file is synced, too (it is created during the first sync).
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+			repoToRepoSync.close();
+		}
+
+		// Expect exactly one collision in remote repo (in directory r_child_2_1).
+		File r_collision = null;
+		for (File f : r_child_2_1.listFiles()) {
+			if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX)) {
+				assertThat(r_collision).isNull();
+				r_collision = f;
+			}
+		}
+		assertThat(r_collision).isNotNull();
+
+		// Expect exactly one collision in local repo (in directory l_child_2_1).
+		File l_collision = null;
+		for (File f : l_child_2_1.listFiles()) {
+			if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX)) {
+				assertThat(l_collision).isNull();
+				l_collision = f;
+			}
+		}
+		assertThat(l_collision).isNotNull();
+
+		addToFilesInRepo(remoteRoot, r_collision);
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+	}
+
+	private void assertThatNoCollisionInRepo(File localRoot) {
+		File[] children = localRoot.listFiles();
+		if (children != null) {
+			for (File f : children) {
+				if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX))
+					Assert.fail("Collision: " + f);
+
+				assertThatNoCollisionInRepo(f);
+			}
+		}
+	}
+
+//	@Test
+//	public void syncWithDeletionCollision() throws Exception {
+//
+//	}
 }

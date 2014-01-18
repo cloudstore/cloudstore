@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Index;
@@ -18,6 +19,9 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @PersistenceCapable
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP)
@@ -32,6 +36,7 @@ import javax.jdo.annotations.Unique;
 	@Query(name="getRepoFilesChangedAfter_localRevision", value="SELECT WHERE this.localRevision > :localRevision"),
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
+	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);
 
 	private RepoFile parent;
 
@@ -68,8 +73,14 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		return localRevision;
 	}
 	@Override
-	public void setLocalRevision(long revision) {
-		this.localRevision = revision;
+	public void setLocalRevision(long localRevision) {
+		if (this.localRevision != localRevision) {
+			if (logger.isDebugEnabled()) {
+				LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
+				logger.debug("setLocalRevision: localRepositoryID={} path='{}' old={} new={}", localRepository.getEntityID(), getPath(), this.localRevision, localRevision);
+			}
+			this.localRevision = localRevision;
+		}
 	}
 
 	/**

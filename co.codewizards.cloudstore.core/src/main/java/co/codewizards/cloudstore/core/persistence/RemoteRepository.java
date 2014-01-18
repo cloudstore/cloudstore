@@ -14,6 +14,9 @@ import javax.jdo.annotations.InheritanceStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -24,12 +27,15 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 //@Index(name="RemoteRepository_remoteRoot", members="remoteRoot") // Indexing a CLOB with Derby throws an exception :-( [should be a warning, IMHO for portability reasons]
 @Index(name="RemoteRepository_remoteRootSha1", members="remoteRootSha1")
 @Query(name="getRemoteRepository_remoteRootSha1", value="SELECT UNIQUE WHERE this.remoteRootSha1 == :remoteRootSha1")
-public class RemoteRepository extends Repository {
+public class RemoteRepository extends Repository implements AutoTrackLocalRevision {
+	private static final Logger logger = LoggerFactory.getLogger(RemoteRepository.class);
 
 	@Column(jdbcType="CLOB")
 	private URL remoteRoot;
 
 	private String remoteRootSha1;
+
+	private long localRevision;
 
 	public RemoteRepository() { }
 
@@ -64,5 +70,19 @@ public class RemoteRepository extends Repository {
 
 	public String getRemoteRootSha1() {
 		return remoteRootSha1;
+	}
+
+	@Override
+	public long getLocalRevision() {
+		return localRevision;
+	}
+	@Override
+	public void setLocalRevision(long localRevision) {
+		if (this.localRevision != localRevision) {
+			if (logger.isDebugEnabled())
+				logger.debug("setLocalRevision: repositoryID={} old={} new={}", getEntityID(), this.localRevision, localRevision);
+
+			this.localRevision = localRevision;
+		}
 	}
 }

@@ -19,7 +19,7 @@ public class RemoteRepositoryRequest extends Entity {
 	private byte[] publicKey;
 
 	public EntityID getRepositoryID() {
-		return new EntityID(repositoryID);
+		return repositoryID == null ? null : new EntityID(repositoryID);
 	}
 	public void setRepositoryID(EntityID repositoryID) {
 		this.repositoryID = repositoryID == null ? null : repositoryID.toString();

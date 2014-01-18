@@ -14,6 +14,8 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 
+import co.codewizards.cloudstore.core.dto.EntityID;
+
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.SUPERCLASS_TABLE)
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="NormalFile")
@@ -31,6 +33,8 @@ public class NormalFile extends RepoFile {
 	private String sha1;
 
 	private boolean inProgress;
+
+	private String lastSyncFromRepositoryID;
 
 	/**
 	 * Gets the file size in bytes.
@@ -61,7 +65,7 @@ public class NormalFile extends RepoFile {
 	 * If yes, it is ignored in change-sets in order to prevent inconsistent data to propagate further.
 	 * <p>
 	 * TODO We should later implement a mechanism that parks all modifications locally (not in the DB, but in the
-	 * meta-directorY) before applying them to the file in one transaction.
+	 * meta-directory) before applying them to the file in one transaction.
 	 * @return <code>true</code>, if it is currently in progress of being synced; <code>false</code> otherwise.
 	 */
 	public boolean isInProgress() {
@@ -69,5 +73,12 @@ public class NormalFile extends RepoFile {
 	}
 	public void setInProgress(boolean inProgress) {
 		this.inProgress = inProgress;
+	}
+
+	public EntityID getLastSyncFromRepositoryID() {
+		return lastSyncFromRepositoryID == null ? null : new EntityID(lastSyncFromRepositoryID);
+	}
+	public void setLastSyncFromRepositoryID(EntityID repositoryID) {
+		this.lastSyncFromRepositoryID = repositoryID == null ? null : repositoryID.toString();
 	}
 }

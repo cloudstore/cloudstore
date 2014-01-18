@@ -274,7 +274,8 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void beginPutFile(String repositoryName, String path) {
+	public void beginPutFile(EntityID fromRepositoryID, String repositoryName, String path) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
@@ -282,6 +283,7 @@ public class CloudStoreRESTClient {
 			.path("_beginPutFile")
 			.path(repositoryName)
 			.path(removeLeadingAndTrailingSlashes(path))
+			.queryParam("fromRepositoryID", fromRepositoryID.toString())
 			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
@@ -332,7 +334,8 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
+	public void endPutFile(EntityID fromRepositoryID, String repositoryName, String path, DateTime lastModified, long length) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
@@ -340,6 +343,7 @@ public class CloudStoreRESTClient {
 					.path("_endPutFile")
 					.path(repositoryName)
 					.path(removeLeadingAndTrailingSlashes(path))
+					.queryParam("fromRepositoryID", fromRepositoryID.toString())
 					.queryParam("lastModified", lastModified.toString())
 					.queryParam("length",length)
 					.request()).post(null);
