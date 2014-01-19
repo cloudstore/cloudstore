@@ -436,7 +436,8 @@ public class CloudStoreRESTClient {
 //		}
 //	}
 
-	public void makeDirectory(String repositoryName, String path, Date lastModified) {
+	public void makeDirectory(EntityID fromRepositoryID, String repositoryName, String path, Date lastModified) {
+		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("path", path);
 		Client client = acquireClient();
@@ -455,7 +456,8 @@ public class CloudStoreRESTClient {
 
 			WebTarget webTarget = client.target(getBaseURL())
 					.path("_makeDirectory")
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
+					.queryParam("fromRepositoryID", fromRepositoryID);
 
 			if (lastModified != null)
 				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));

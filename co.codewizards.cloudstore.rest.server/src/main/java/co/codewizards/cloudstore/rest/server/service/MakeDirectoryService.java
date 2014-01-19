@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -35,14 +36,14 @@ public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 	private @QueryParam("lastModified") DateTime lastModified;
 
 	@POST
-	public void makeDirectory()
+	public void makeDirectory(@QueryParam("fromRepositoryID") EntityID fromRepositoryID)
 	{
-		makeDirectory("");
+		makeDirectory(fromRepositoryID, "");
 	}
 
 	@POST
 	@Path("{path:.*}")
-	public void makeDirectory(@PathParam("path") String path)
+	public void makeDirectory(@QueryParam("fromRepositoryID") EntityID fromRepositoryID, @PathParam("path") String path)
 	{
 		assertNotNull("path", path);
 		authenticateAndReturnUserName();
@@ -51,7 +52,7 @@ public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());
+			repoTransport.makeDirectory(fromRepositoryID, path, lastModified == null ? null : lastModified.toDate());
 		} finally {
 			repoTransport.close();
 		}

@@ -32,6 +32,7 @@ import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -196,11 +197,19 @@ public class RepoToRepoSync {
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncDirectory: path='{}'", path);
-			toRepoTransport.makeDirectory(path, directoryDTO.getLastModified());
+			try {
+				toRepoTransport.makeDirectory(fromRepoTransport.getRepositoryID(), path, directoryDTO.getLastModified());
+			} catch (DeleteModificationCollisionException x) {
+				// TODO log this as info!
+				doNothing();
+				return;
+			}
 		} finally {
 			monitor.done();
 		}
 	}
+
+	private static final void doNothing() { }
 
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
@@ -241,7 +250,13 @@ public class RepoToRepoSync {
 			monitor.worked(10);
 
 			EntityID fromRepositoryID = fromRepoTransport.getRepositoryID();
-			toRepoTransport.beginPutFile(fromRepositoryID, path);
+			try {
+				toRepoTransport.beginPutFile(fromRepositoryID, path);
+			} catch (DeleteModificationCollisionException x) {
+				// TODO log this as info!
+				doNothing();
+				return;
+			}
 			monitor.worked(1);
 
 			List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();

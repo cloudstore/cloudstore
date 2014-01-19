@@ -7,6 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import junit.framework.Assert;
 
@@ -310,24 +313,18 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		}
 
 		// Expect exactly one collision in remote repo (in directory r_child_2_1).
-		File r_collision = null;
-		for (File f : r_child_2_1.listFiles()) {
-			if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX)) {
-				assertThat(r_collision).isNull();
-				r_collision = f;
-			}
-		}
+		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		assertThat(remoteCollisions).isNotNull().hasSize(1);
+		File r_collision = remoteCollisions.get(0);
 		assertThat(r_collision).isNotNull();
+		assertThat(r_collision.getParentFile()).isEqualTo(r_child_2_1);
 
 		// Expect exactly one collision in local repo (in directory l_child_2_1).
-		File l_collision = null;
-		for (File f : l_child_2_1.listFiles()) {
-			if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX)) {
-				assertThat(l_collision).isNull();
-				l_collision = f;
-			}
-		}
+		List<File> localCollisions = searchCollisions(localRoot);
+		assertThat(localCollisions).isNotNull().hasSize(1);
+		File l_collision = localCollisions.get(0);
 		assertThat(l_collision).isNotNull();
+		assertThat(l_collision.getParentFile()).isEqualTo(l_child_2_1);
 
 		addToFilesInRepo(remoteRoot, r_collision);
 
@@ -337,22 +334,108 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	private void assertThatNoCollisionInRepo(File localRoot) {
-		File[] children = localRoot.listFiles();
+		List<File> collisions = searchCollisions(localRoot);
+		if (!collisions.isEmpty())
+			Assert.fail("Collision: " + collisions.get(0));
+	}
+
+	private List<File> searchCollisions(File localRoot) {
+		List<File> collisions = new ArrayList<File>();
+		searchCollisions_populate(localRoot, localRoot, collisions);
+		return collisions;
+	}
+
+	private void searchCollisions_populate(File localRoot, File file, Collection<File> collisions) {
+		File[] children = file.listFiles();
 		if (children != null) {
 			for (File f : children) {
 				if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX))
-					Assert.fail("Collision: " + f);
+					collisions.add(f);
 
-				assertThatNoCollisionInRepo(f);
+				searchCollisions_populate(localRoot, f, collisions);
 			}
 		}
 	}
 
-// TODO test this collision:
-//	@Test
-//	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
-//
-//	}
+	@Test
+	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File l_child_2 = new File(localRoot, "2");
+		assertThat(l_child_2).isDirectory();
+
+		File l_child_2_1 = new File(l_child_2, "1");
+		assertThat(l_child_2_1).isDirectory();
+
+		File l_child_2_1_a = new File(l_child_2_1, "a");
+		assertThat(l_child_2_1_a).isFile();
+
+		modifyFileRandomly(l_child_2_1_a);
+		IOUtil.deleteDirectoryRecursively(r_child_2);
+
+		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+			repoToRepoSync.close();
+		}
+
+		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		assertThat(remoteCollisions).isNotNull().hasSize(1);
+		File r_collision = remoteCollisions.get(0);
+		assertThat(r_collision).isNotNull();
+		assertThat(r_collision.getParentFile()).isEqualTo(remoteRoot);
+		assertThat(r_collision.getName()).startsWith("2.");
+
+		List<File> localCollisions = searchCollisions(localRoot);
+		assertThat(localCollisions).isNotNull().hasSize(1);
+		File l_collision = localCollisions.get(0);
+		assertThat(l_collision).isNotNull();
+		assertThat(l_collision.getParentFile()).isEqualTo(localRoot);
+		assertThat(l_collision.getName()).startsWith("2.");
+	}
+
+	@Test
+	public void syncWithFileModificationInsideDeletedDirectoryCollisionInverse() throws Exception {
+		syncRemoteRootToLocalRootInitially();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_a = new File(r_child_2_1, "a");
+		assertThat(r_child_2_1_a).isFile();
+
+		File l_child_2 = new File(localRoot, "2");
+		assertThat(l_child_2).isDirectory();
+
+		modifyFileRandomly(r_child_2_1_a);
+		IOUtil.deleteDirectoryRecursively(l_child_2);
+
+		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+			repoToRepoSync.close();
+		}
+
+		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		assertThat(remoteCollisions).isNotNull().hasSize(1);
+		File r_collision = remoteCollisions.get(0);
+		assertThat(r_collision).isNotNull();
+		assertThat(r_collision.getParentFile()).isEqualTo(remoteRoot);
+		assertThat(r_collision.getName()).startsWith("2.");
+
+		List<File> localCollisions = searchCollisions(localRoot);
+		assertThat(localCollisions).isNotNull().hasSize(1);
+		File l_collision = localCollisions.get(0);
+		assertThat(l_collision).isNotNull();
+		assertThat(l_collision.getParentFile()).isEqualTo(localRoot);
+		assertThat(l_collision.getName()).startsWith("2.");
+	}
 
 // TODO test this collision:
 //	@Test

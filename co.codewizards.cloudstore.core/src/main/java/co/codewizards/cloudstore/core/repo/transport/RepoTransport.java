@@ -45,6 +45,7 @@ public interface RepoTransport {
 	 * <p>
 	 * If there is any obstruction in the way of this path (e.g. a normal file), it is moved away (renamed or simply deleted
 	 * depending on the conflict resolution strategy).
+	 * @param fromRepositoryID TODO
 	 * @param path the path of the directory. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
@@ -53,7 +54,7 @@ public interface RepoTransport {
 	 * actual directory and not to the parent-directories! The parent-directories' {@code lastModified} properties are never
 	 * touched - even if the parent-directories are newly created.
 	 */
-	void makeDirectory(String path, Date lastModified);
+	void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified);
 
 	/**
 	 * Deletes the file (or directory) specified by {@code path}.

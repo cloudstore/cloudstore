@@ -32,6 +32,7 @@ import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
+import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
@@ -53,6 +54,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoSync;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -170,15 +172,32 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeDirectory(String path, Date lastModified) {
+	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
 		File file = getFile(assertNotNull("path", path));
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
+			assertNoDeleteModificationCollision(transaction, fromRepositoryID, path);
 			mkDir(transaction, file, lastModified);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
 		}
+	}
+
+	private void assertNoDeleteModificationCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, String path) throws DeleteModificationCollisionException {
+		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(fromRepositoryID);
+		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
+
+		if (!path.startsWith("/"))
+			path = '/' + path;
+
+		DeleteModificationDAO deleteModificationDAO = transaction.getDAO(DeleteModificationDAO.class);
+		Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForPathOrParentOfPathAfter(
+				path, lastSyncFromRemoteRepositoryLocalRevision, fromRemoteRepository);
+
+		if (!deleteModifications.isEmpty())
+			throw new DeleteModificationCollisionException(
+					String.format("There is at least one DeleteModification for repositoryID=%s path='%s'", fromRepositoryID, path));
 	}
 
 	@Override
@@ -471,6 +490,21 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+//	protected String getLocalRepoPath(File file) {
+//		File localRoot = getLocalRepoManager().getLocalRoot();
+//
+//		String path;
+//		try {
+//			path = IOUtil.getRelativePath(localRoot, file).replace(File.separatorChar, '/');
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
+//		if (!path.startsWith("/"))
+//			path = '/' + path;
+//
+//		return path;
+//	}
+
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
 		File file = new File(getLocalRepoManager().getLocalRoot(), path);
@@ -526,22 +560,24 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (file.exists() && !file.isFile())
 				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
-			boolean newFile = false;
-			if (!file.isFile()) {
-				newFile = true;
-				try {
-					file.createNewFile();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-
-			if (!file.isFile())
-				throw new IllegalStateException("Could not create file (permissions?!): " + file);
-
 			File localRoot = getLocalRepoManager().getLocalRoot();
 			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 			try {
+				assertNoDeleteModificationCollision(transaction, fromRepositoryID, path);
+
+				boolean newFile = false;
+				if (!file.isFile()) {
+					newFile = true;
+					try {
+						file.createNewFile();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
+
+				if (!file.isFile())
+					throw new IllegalStateException("Could not create file (permissions?!): " + file);
+
 				// A complete sync run might take very long. Therefore, we better update our local meta-data
 				// *immediately* before beginning the sync of this file and before detecting a collision.
 				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.

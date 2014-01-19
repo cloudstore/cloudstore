@@ -104,7 +104,8 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	/**
 	 * Gets the path from the root to <code>this</code>.
 	 * <p>
-	 * The path's elements are separated by a slash ("/").
+	 * The path's elements are separated by a slash ("/"). The path starts with a slash (like an absolute path), but
+	 * is relative to the repository's local root.
 	 * @return the path from the root to <code>this</code>. Never <code>null</code>. The repository's root itself has the path "/".
 	 */
 	public String getPath() {

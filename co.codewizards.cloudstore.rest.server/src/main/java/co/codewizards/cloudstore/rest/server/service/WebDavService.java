@@ -69,7 +69,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 
 	@MKCOL
 	@Path("{path:.*}")
-	public void mkcol(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
+	public void mkcol(@QueryParam("fromRepositoryID") EntityID fromRepositoryID, @PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
 		assertNotNull("path", path);
 		authenticateAndReturnUserName();
 
@@ -77,7 +77,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
 		try {
-			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());
+			repoTransport.makeDirectory(fromRepositoryID, path, lastModified == null ? null : lastModified.toDate());
 		} finally {
 			repoTransport.close();
 		}

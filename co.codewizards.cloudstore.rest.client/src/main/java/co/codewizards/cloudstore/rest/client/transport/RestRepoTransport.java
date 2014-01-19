@@ -29,8 +29,10 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
+import co.codewizards.cloudstore.rest.client.RemoteException;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
@@ -101,8 +103,15 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void makeDirectory(String path, Date lastModified) {
-		getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
+	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
+		try {
+			getClient().makeDirectory(fromRepositoryID, getRepositoryID().toString(), path, lastModified);
+		} catch (RemoteException x) {
+			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
+				throw new DeleteModificationCollisionException(x.getMessage());
+			else
+				throw x;
+		}
 	}
 
 	@Override
@@ -122,7 +131,14 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void beginPutFile(EntityID fromRepositoryID, String path) {
-		getClient().beginPutFile(fromRepositoryID, getRepositoryID().toString(), path);
+		try {
+			getClient().beginPutFile(fromRepositoryID, getRepositoryID().toString(), path);
+		} catch (RemoteException x) {
+			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
+				throw new DeleteModificationCollisionException(x.getMessage());
+			else
+				throw x;
+		}
 	}
 
 	@Override
