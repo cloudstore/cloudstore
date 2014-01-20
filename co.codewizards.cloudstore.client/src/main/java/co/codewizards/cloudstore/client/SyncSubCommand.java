@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +32,9 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 
 	private EntityID remoteRepositoryID;
 	private URL remoteRoot;
+
+	@Option(name="-localOnly", required=false, usage="Synchronise locally only. Do not communicate with any remote repository.")
+	private boolean localOnly;
 
 	@Override
 	public String getSubCommandName() {
@@ -87,6 +91,11 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 		EntityID repositoryID;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
+			if (localOnly) {
+				localRepoManager.localSync(new LoggerProgressMonitor(logger));
+				return;
+			}
+
 			repositoryID = localRepoManager.getRepositoryID();
 			localRoot = localRepoManager.getLocalRoot();
 			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
