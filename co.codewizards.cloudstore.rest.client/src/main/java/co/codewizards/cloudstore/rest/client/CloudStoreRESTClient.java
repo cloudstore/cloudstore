@@ -15,11 +15,11 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +38,16 @@ public class CloudStoreRESTClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRESTClient.class);
 
-	private static final int TIMEOUT_SOCKET_CONNECT_MS = 10 * 1000; // TODO make timeout configurable
-	private static final int TIMEOUT_SOCKET_READ_MS = 90 * 1000; // TODO make timeout configurable
+	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 60 * 1000;
+	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 15 * 60 * 1000;
+
+	public static final String SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT = "cloudstore.socketConnectTimeout";
+
+	public static final String SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT = "cloudstore.socketReadTimeout";
+
+	private Integer socketConnectTimeout;
+
+	private Integer socketReadTimeout;
 
 	private final String url;
 	private String baseURL;
@@ -52,6 +60,48 @@ public class CloudStoreRESTClient {
 	private SSLContext sslContext;
 
 	private CredentialsProvider credentialsProvider;
+
+	public Integer getSocketConnectTimeout() {
+		if (socketConnectTimeout == null)
+			socketConnectTimeout = getTimeoutFromConfig(SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT, DEFAULT_SOCKET_CONNECT_TIMEOUT);
+
+		return socketConnectTimeout;
+	}
+	public void setSocketConnectTimeout(Integer socketConnectTimeout) {
+		if (socketConnectTimeout != null && socketConnectTimeout < 0)
+			socketConnectTimeout = null;
+
+		this.socketConnectTimeout = socketConnectTimeout;
+	}
+
+	public Integer getSocketReadTimeout() {
+		if (socketReadTimeout == null)
+			socketReadTimeout = getTimeoutFromConfig(SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT, DEFAULT_SOCKET_READ_TIMEOUT);
+
+		return socketReadTimeout;
+	}
+	public void setSocketReadTimeout(Integer socketReadTimeout) {
+		if (socketReadTimeout != null && socketReadTimeout < 0)
+			socketReadTimeout = null;
+
+		this.socketReadTimeout = socketReadTimeout;
+	}
+
+	private Integer getTimeoutFromConfig(String systemProperty, int defaultValue) {
+		// TODO read properties file in ~/.cloudstore/ with sys-prop as override, prop-file as normal and default as third-level-fallback.
+		String value = System.getProperty(systemProperty);
+		if (value == null || value.isEmpty()) {
+			logger.warn("System property '{}' is undefined! Using default value {}.", systemProperty, defaultValue);
+			return defaultValue;
+		}
+		try {
+			Integer result = Integer.valueOf(value);
+			return result;
+		} catch (NumberFormatException x) {
+			logger.warn("System property '{}' is set to the illegal value '{}'! Falling back to default value {}.", systemProperty, value, defaultValue);
+			return defaultValue;
+		}
+	}
 
 	/**
 	 * Get the server's base-URL.
@@ -512,42 +562,10 @@ public class CloudStoreRESTClient {
 		if (client == null) {
 			SSLContext sslContext = this.sslContext;
 			HostnameVerifier hostnameVerifier = this.hostnameVerifier;
-//			X509HostnameVerifier x509HostnameVerifier = this.x509HostnameVerifier;
 
-
-//			ClientConfig clientConfig = new DefaultClientConfig(CloudStoreJaxbContextResolver.class);
-//			clientConfig.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_CONNECT_MS)); // must be a java.lang.Integer
-//			clientConfig.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, Integer.valueOf(TIMEOUT_SOCKET_READ_MS)); // must be a java.lang.Integer
-//
-//			if (sslContext != null) {
-//				HTTPSProperties httpsProperties = new HTTPSProperties(hostnameVerifier, sslContext); // hostnameVerifier is optional
-//				clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, httpsProperties);
-//			}
-//			else if (hostnameVerifier != null)
-//				throw new IllegalStateException("sslContext must not be null, if hostnameVerifier is set!");
-//
-//			client = Client.create(clientConfig);
-
-//			RequestConfig defaultRequestConfig = RequestConfig.custom()
-//				    .setSocketTimeout(TIMEOUT_SOCKET_READ_MS)
-//				    .setConnectTimeout(TIMEOUT_SOCKET_CONNECT_MS)
-//				    .setConnectionRequestTimeout(TIMEOUT_SOCKET_READ_MS)
-//				    .setStaleConnectionCheckEnabled(true)
-//				    .build();
-//
-//			HttpClientBuilder httpClientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(defaultRequestConfig);
-//
-//			if (sslContext != null)
-//				httpClientBuilder.setSslcontext(sslContext);
-//
-//			if (x509HostnameVerifier != null)
-//				httpClientBuilder.setHostnameVerifier(x509HostnameVerifier);
-//
-//			HttpClient apacheClient = httpClientBuilder.build();
-//			client = new Client(new ApacheConnectorProvider(apacheClient, new BasicCookieStore(), true));
-
-			// TODO Timeouts!
-			Configuration clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
+			ClientConfig clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
+			clientConfig.property(ClientProperties.CONNECT_TIMEOUT, getSocketConnectTimeout()); // must be a java.lang.Integer
+			clientConfig.property(ClientProperties.READ_TIMEOUT, getSocketReadTimeout()); // must be a java.lang.Integer
 
 			ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
 
@@ -556,6 +574,7 @@ public class CloudStoreRESTClient {
 
 			if (hostnameVerifier != null)
 				clientBuilder.hostnameVerifier(hostnameVerifier);
+
 
 			client = clientBuilder.build();
 
