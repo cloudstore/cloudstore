@@ -54,9 +54,8 @@ public class SignedAuthTokenEncrypter {
 			// An IV is essentially important for security, if the key is used multiple times.
 			// However, it doesn't cause us much trouble to transmit the IV and it may add
 			// additional security due to the added complexity if it is not 0. Maybe the NSA
-			// can attack easier, if the IV is 0. Very unlikely, but still, it
-			// hence we do not
-			// enforce it to be 0 (which we could).
+			// can attack easier, if the IV is 0. Very unlikely, but still. Hence we do not
+			// enforce it to be 0 (which we could to save a few bytes in the transfer).
 			// Marco :-)
 			byte[] symIV = symCipher.getIV();
 			byte[] signedAuthTokenDataEncrypted = symCipher.doFinal(signedAuthTokenData);

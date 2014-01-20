@@ -5,10 +5,53 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 import javax.jdo.Query;
 
 public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
+	private Directory localRootDirectory;
+
+	private DirectoryCache directoryCache;
+
+	private static class DirectoryCache {
+		private static final int MAX_SIZE = 50;
+		private Map<File, Directory> file2DirectoryCache = new HashMap<File, Directory>();
+		private Map<Directory, File> directory2FileCache = new HashMap<Directory, File>();
+		private LinkedList<Directory> directoryCacheList = new LinkedList<Directory>();
+
+		public Directory get(File file) {
+			return file2DirectoryCache.get(file);
+		}
+
+		public void put(File file, Directory directory) {
+			file2DirectoryCache.put(assertNotNull("file", file), assertNotNull("directory", directory));
+			directory2FileCache.put(directory, file);
+			directoryCacheList.remove(directory);
+			directoryCacheList.addLast(directory);
+			removeOldEntriesIfNecessary();
+		}
+
+		public void remove(Directory directory) {
+			File file = directory2FileCache.remove(directory);
+			file2DirectoryCache.remove(file);
+		}
+
+		public void remove(File file) {
+			Directory directory = file2DirectoryCache.remove(file);
+			directory2FileCache.remove(directory);
+		}
+
+		private void removeOldEntriesIfNecessary() {
+			while (directoryCacheList.size() > MAX_SIZE) {
+				Directory directory = directoryCacheList.removeFirst();
+				remove(directory);
+			}
+		}
+	}
+
 	/**
 	 * Get the child of the given {@code parent} with the specified {@code name}.
 	 * @param parent the {@link RepoFile#getParent() parent} of the queried child.
@@ -36,16 +79,31 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 
 	private RepoFile _getRepoFile(File localRoot, File file) {
 		if (localRoot.equals(file)) {
-			return new LocalRepositoryDAO().persistenceManager(pm()).getLocalRepositoryOrFail().getRoot();
+			return getLocalRootDirectory();
 		}
+
+		DirectoryCache directoryCache = getDirectoryCache();
+		Directory directory = directoryCache.get(file);
+		if (directory != null)
+			return directory;
 
 		File parentFile = file.getParentFile();
-		if (parentFile == null) {
+		if (parentFile == null)
 			throw new IllegalArgumentException(String.format("Repository '%s' does not contain file '%s'!", localRoot, file));
-		}
 
 		RepoFile parentRepoFile = _getRepoFile(localRoot, parentFile);
-		return getChildRepoFile(parentRepoFile, file.getName());
+		RepoFile result = getChildRepoFile(parentRepoFile, file.getName());
+		if (result instanceof Directory)
+			directoryCache.put(file, (Directory)result);
+
+		return result;
+	}
+
+	public Directory getLocalRootDirectory() {
+		if (localRootDirectory == null)
+			localRootDirectory = new LocalRepositoryDAO().persistenceManager(pm()).getLocalRepositoryOrFail().getRoot();
+
+		return localRootDirectory;
 	}
 
 	/**
@@ -86,5 +144,20 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 		} finally {
 			query.closeAll();
 		}
+	}
+
+	@Override
+	public void deletePersistent(RepoFile entity) {
+		if (entity instanceof Directory)
+			getDirectoryCache().remove((Directory) entity);
+
+		super.deletePersistent(entity);
+	}
+
+	private DirectoryCache getDirectoryCache() {
+		if (directoryCache == null)
+			directoryCache = new DirectoryCache();
+
+		return directoryCache;
 	}
 }

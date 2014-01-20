@@ -45,6 +45,12 @@ import co.codewizards.cloudstore.core.util.HashUtil;
 public class RepoToRepoSync {
 	private static final Logger logger = LoggerFactory.getLogger(RepoToRepoSync.class);
 
+	/**
+	 * Sync in the inverse direction. This is only for testing whether the RepoTransport implementations
+	 * are truely symmetric. It is less efficient! Therefore, this must NEVER be true in production!!!
+	 */
+	private static final boolean TEST_INVERSE = false;
+
 	private final File localRoot;
 	private final URL remoteRoot;
 	private final LocalRepoManager localRepoManager;
@@ -76,16 +82,31 @@ public class RepoToRepoSync {
 			logger.info("sync: locally syncing {} ('{}')", localRepositoryID, localRoot);
 			localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
 
-			logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
-			sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
+			if (!TEST_INVERSE) { // This is the normal sync (NOT test).
+				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
-			logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
-			sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
-			// Immediately sync back to make sure the changes we caused don't cause problems later
-			// (right now there's very likely no collision and this should be very fast).
-			logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
-			sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
+				// Immediately sync back to make sure the changes we caused don't cause problems later
+				// (right now there's very likely no collision and this should be very fast).
+				logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
+			}
+			else { // THIS IS FOR TESTING ONLY!
+				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryID, localRoot);
+				remoteRepoTransport.getChangeSet(localRepositoryID, true); // trigger the local sync on the remote side (we don't need the change set)
+
+				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+
+				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
+
+				logger.info("sync: up again: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+			}
 		} finally {
 			monitor.done();
 		}

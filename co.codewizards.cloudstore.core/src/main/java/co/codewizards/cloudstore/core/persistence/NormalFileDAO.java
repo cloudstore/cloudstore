@@ -27,4 +27,13 @@ public class NormalFileDAO extends DAO<NormalFile, NormalFileDAO> {
 		}
 	}
 
+	@Override
+	public void deletePersistent(NormalFile entity) {
+		throw new UnsupportedOperationException("Use RepoFileDAO for this operation!");
+	}
+
+	@Override
+	public <P extends NormalFile> P makePersistent(P entity) {
+		throw new UnsupportedOperationException("Use RepoFileDAO for this operation!");
+	}
 }

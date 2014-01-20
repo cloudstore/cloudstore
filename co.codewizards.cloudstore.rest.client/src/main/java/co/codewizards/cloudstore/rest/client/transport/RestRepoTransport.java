@@ -104,6 +104,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
+		prepareAuth(fromRepositoryID);
 		try {
 			getClient().makeDirectory(fromRepositoryID, getRepositoryID().toString(), path, lastModified);
 		} catch (RemoteException x) {
@@ -116,6 +117,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void delete(EntityID fromRepositoryID, String path) {
+		prepareAuth(fromRepositoryID);
 		getClient().delete(fromRepositoryID, getRepositoryID().toString(), path);
 	}
 
@@ -131,6 +133,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void beginPutFile(EntityID fromRepositoryID, String path) {
+		prepareAuth(fromRepositoryID);
 		try {
 			getClient().beginPutFile(fromRepositoryID, getRepositoryID().toString(), path);
 		} catch (RemoteException x) {
@@ -148,6 +151,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
+		prepareAuth(fromRepositoryID);
 		getClient().endPutFile(fromRepositoryID, getRepositoryID().toString(), path,new DateTime(lastModified), length);
 	}
 

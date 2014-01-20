@@ -20,7 +20,7 @@ import javax.jdo.annotations.Persistent;
 public class LocalRepository extends Repository {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
-	private RepoFile root;
+	private Directory root;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] privateKey;
@@ -31,10 +31,10 @@ public class LocalRepository extends Repository {
 	 * Get the root directory of this repository.
 	 * @return the root directory of this repository. Never <code>null</code> in persistence.
 	 */
-	public RepoFile getRoot() {
+	public Directory getRoot() {
 		return root;
 	}
-	public void setRoot(RepoFile root) {
+	public void setRoot(Directory root) {
 		this.root = root;
 	}
 
