@@ -86,8 +86,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
 		remoteRootURL = getRemoteRootURL(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey());
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey());
+		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey(), "");
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), "");
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -145,8 +145,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
 		remoteRootURL = getRemoteRootURL(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey());
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey());
+		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey(), "");
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), "");
 
 		File child_1 = createDirectory(localRoot, "1");
 

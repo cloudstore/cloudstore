@@ -124,13 +124,29 @@ public final class HashUtil {
 	}
 
 	public static String sha1ForHuman(InputStream in) throws IOException {
+		return formatEncodedHexStrForHuman(sha1(in));
+	}
+
+	public static String sha1(String in) {
+		return sha1(in.getBytes(IOUtil.CHARSET_UTF_8));
+	}
+
+	public static String sha1(byte[] in) {
+		try {
+			return sha1(new ByteArrayInputStream(in));
+		} catch (IOException x) {
+			throw new RuntimeException(x);
+		}
+	}
+
+	public static String sha1(InputStream in) throws IOException {
 		byte[] hash;
 		try {
 			hash = hash(HASH_ALGORITHM_SHA, in);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
-		return formatEncodedHexStrForHuman(encodeHexStr(hash));
+		return encodeHexStr(hash);
 	}
 
 }

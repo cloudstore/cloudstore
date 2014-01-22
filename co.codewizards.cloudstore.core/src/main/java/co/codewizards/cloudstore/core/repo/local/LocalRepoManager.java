@@ -90,8 +90,9 @@ public interface LocalRepoManager {
 	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
 	 * @param remoteRoot the URL of the remote repository. May be <code>null</code> (in the server, a
 	 * {@code RemoteRepository} never has a {@code remoteRoot}).
+	 * @param localPathPrefix TODO
 	 */
-	void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey);
+	void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey, String localPathPrefix);
 
 	/**
 	 * Deletes a remote repository from the local database.

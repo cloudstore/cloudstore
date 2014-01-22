@@ -1,7 +1,9 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Index;
@@ -18,23 +20,35 @@ import javax.jdo.annotations.Query;
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="DeleteModification")
 @Indices({
-	@Index(name="DeleteModification_path", members={"path"}),
+	@Index(name="DeleteModification_pathSha1", members={"pathSha1"}),
 	@Index(name="DeleteModification_sha1_length", members={"sha1", "length"})
 })
-//@Unique(name="DeleteModification_path_localRevision_remoteRepository", members={"path", "localRevision", "remoteRepository"}) // causes an NPE :-(
+//@Unique(name="DeleteModification_pathSha1_localRevision_remoteRepository", members={"pathSha1", "localRevision", "remoteRepository"}) // causes an NPE :-( The NPE is not nice, but it's clear that this cannot work: There are 2 separate tables (InheritanceStrategy.NEW_TABLE).
 @Queries({
-	@Query(name="getDeleteModificationsForPathAfter_path_localRevision_remoteRepository", value="SELECT WHERE this.path == :path && this.localRevision > :localRevision"),
+	@Query(name="getDeleteModificationsForPathAfter_pathSha1_localRevision_remoteRepository", value="SELECT WHERE this.pathSha1 == :pathSha1 && this.localRevision > :localRevision"),
 	@Query(name="getDeleteModifications_sha1_length", value="SELECT WHERE this.sha1 == :sha1 && this.length == :length")
 })
 public class DeleteModification extends Modification {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Column(jdbcType="CLOB")
 	private String path;
+
+	@Persistent(nullValue=NullValue.EXCEPTION)
+	private String pathSha1;
 
 	private long length;
 
 	private String sha1;
 
+	/**
+	 * Gets the path of the deleted directory or file.
+	 * <p>
+	 * This path is always relative to the local repository's root; even if the remote repository uses a
+	 * {@link RemoteRepository#getLocalPathPrefix() path-prefix}. Stripping of the path-prefix is
+	 * done during DTO generation.
+	 * @return the path of the deleted directory or file. Never <code>null</code>.
+	 */
 	public String getPath() {
 		return path;
 	}
@@ -47,6 +61,7 @@ public class DeleteModification extends Modification {
 			throw new IllegalArgumentException("path does not start with '/'!");
 
 		this.path = path;
+		this.pathSha1 = sha1(path);
 	}
 
 	public long getLength() {

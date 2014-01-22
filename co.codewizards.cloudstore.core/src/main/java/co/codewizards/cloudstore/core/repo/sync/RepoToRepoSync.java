@@ -29,6 +29,7 @@ import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -37,6 +38,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 
 /**
  * Logic for synchronising a local with a remote repository.
@@ -47,7 +49,7 @@ public class RepoToRepoSync {
 
 	/**
 	 * Sync in the inverse direction. This is only for testing whether the RepoTransport implementations
-	 * are truely symmetric. It is less efficient! Therefore, this must NEVER be true in production!!!
+	 * are truly symmetric. It is less efficient! Therefore, this must NEVER be true in production!!!
 	 */
 	private static final boolean TEST_INVERSE = false;
 
@@ -59,10 +61,21 @@ public class RepoToRepoSync {
 	private final EntityID localRepositoryID;
 	private EntityID remoteRepositoryID;
 
+	/**
+	 * Create an instance.
+	 * @param localRoot the root of the local repository or any file/directory inside it. This is
+	 * automatically adjusted to fit the connection-point to the remote repository (the remote
+	 * repository might be connected to a sub-directory).
+	 * @param remoteRoot the root of the remote repository. This must exactly match the connection point.
+	 * If a sub-directory of the remote repository is connected to the local repository, this sub-directory
+	 * must be referenced here.
+	 */
 	public RepoToRepoSync(File localRoot, URL remoteRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
-		this.remoteRoot = assertNotNull("remoteRoot", remoteRoot);
-		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(assertNotNull("localRoot", localRoot));
+		File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
+		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
+		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
+		this.localRoot = localRoot = new File(localRoot, getLocalPathPrefix(remoteRoot));
+
 		localRepoTransport = createRepoTransport(localRoot);
 
 		localRepositoryID = localRepoTransport.getRepositoryID();
@@ -70,6 +83,19 @@ public class RepoToRepoSync {
 			throw new IllegalStateException("localRepoTransport.getRepositoryID() returned null!");
 
 		remoteRepoTransport = createRepoTransport(remoteRoot);
+	}
+
+	private String getLocalPathPrefix(URL remoteRoot) {
+		String localPathPrefix;
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		try {
+			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			localPathPrefix = remoteRepository.getLocalPathPrefix();
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+		return localPathPrefix;
 	}
 
 	public void sync(ProgressMonitor monitor) {

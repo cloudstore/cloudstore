@@ -229,11 +229,15 @@ public abstract class AbstractIT {
 
 			filesInRepo = new HashSet<File>(filesInRepo);
 			Collection<RepoFile> repoFiles = repoFileDAO.getObjects();
+			Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
 			for (RepoFile repoFile : repoFiles) {
 				File file = repoFile.getFile(localRoot);
-				if (!filesInRepo.remove(file)) {
+				RepoFile duplicateRepoFile = file2RepoFile.put(file, repoFile);
+				if (duplicateRepoFile != null)
+					Assert.fail("There are 2 RepoFile instances for the same file! " + repoFile + " " + duplicateRepoFile + " " + file);
+
+				if (!filesInRepo.remove(file))
 					Assert.fail("Corresponding file in file-system missing for RepoFile: " + repoFile + " " + file);
-				}
 			}
 		} finally {
 			transaction.rollbackIfActive();

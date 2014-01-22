@@ -154,14 +154,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void assertNotInsideOtherRepository(File localRoot) {
-		File parentFile = localRoot.getParentFile();
-		while (parentFile != null) {
-			File parentMetaDir = new File(parentFile, META_DIR_NAME);
-			if (parentMetaDir.exists()) {
-				throw new FileAlreadyRepositoryException(localRoot);
-			}
-			parentFile = parentFile.getParentFile();
-		}
+		File localRootFound = LocalRepoHelper.getLocalRootContainingFile(localRoot);
+		if (localRootFound != null && !localRootFound.equals(localRoot))
+			throw new FileAlreadyRepositoryException(localRoot);
 	}
 
 	private void initMetaDir(boolean createRepository) throws LocalRepoManagerException {
@@ -597,7 +592,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey) {
+	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey, String localPathPrefix) {
 		assertNotNull("entityID", repositoryID);
 		assertNotNull("publicKey", publicKey);
 		LocalRepoTransaction transaction = beginTransaction();
@@ -617,6 +612,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			}
 			remoteRepository.setRemoteRoot(remoteRoot);
 			remoteRepository.setPublicKey(publicKey);
+
+			remoteRepository.setLocalPathPrefix(localPathPrefix);
 
 			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 

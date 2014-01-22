@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,40 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	private File localRoot;
 	private File remoteRoot;
 
+	private String localPathPrefix;
+	private String remotePathPrefix;
+
+	@Override
+	@Before
+	public void before() {
+		localPathPrefix = "";
+		remotePathPrefix = "";
+	}
+
+	private File getLocalRootWithPathPrefix() {
+		if (localPathPrefix.isEmpty())
+			return localRoot;
+
+		return new File(localRoot, localPathPrefix);
+	}
+
+	private File getRemoteRootWithPathPrefix() {
+		if (remotePathPrefix.isEmpty())
+			return remoteRoot;
+
+		File file = new File(remoteRoot, remotePathPrefix);
+		return file;
+	}
+
+	private URL getRemoteRootUrlWithPathPrefix() {
+		try {
+			URL url = getRemoteRootWithPathPrefix().toURI().toURL();
+			return url;
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	@Test
 	public void syncRemoteRootToLocalRootInitially() throws Exception {
 		localRoot = newTestRepositoryLocalRoot();
@@ -39,7 +75,6 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
-		URL remoteRootURL = remoteRoot.toURI().toURL();
 
 		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
@@ -47,8 +82,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryID(), remoteRootURL, localRepoManagerRemote.getPublicKey());
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey());
+		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryID(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -78,7 +113,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		logger.info("local repo: {}", localRepoManagerLocal.getRepositoryID());
 		logger.info("remote repo: {}", localRepoManagerRemote.getRepositoryID());
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -90,7 +125,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	@Test
@@ -119,7 +154,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -130,7 +165,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	@Test
@@ -169,7 +204,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -180,7 +215,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 
 		// ensure that nothing was synced backwards into the wrong direction ;-)
 		byte[] child_2_1_a_actual = IOUtil.getBytesFromFile(child_2_1_a);
@@ -226,7 +261,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -237,7 +272,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	@Test
@@ -267,7 +302,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -278,7 +313,20 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		File deleteThisFile = null;
+		try {
+			if (!getRemoteRootWithPathPrefix().exists()) {
+				getRemoteRootWithPathPrefix().mkdirs();
+				assertThat(getRemoteRootWithPathPrefix()).isDirectory();
+				deleteThisFile = getRemoteRootWithPathPrefix();
+			}
+
+			assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+		} finally {
+			// Just for manual checks of the directories: This should not exist. It's confusing, if it does.
+			if (deleteThisFile != null)
+				deleteThisFile.delete();
+		}
 	}
 
 	@Test
@@ -307,7 +355,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		modifyFileRandomly(l_child_2_1_a);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision file is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -330,7 +378,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	private void assertThatNoCollisionInRepo(File localRoot) {
@@ -377,7 +425,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		IOUtil.deleteDirectoryRecursively(r_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -417,7 +465,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		IOUtil.deleteDirectoryRecursively(l_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot.toURI().toURL());
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -442,4 +490,41 @@ public class RepoToRepoSyncTest extends AbstractTest {
 //	public void syncWithDirectFileDeletionCollision() throws Exception {
 //
 //	}
+
+	@Test
+	public void syncRemoteRootToLocalRootInitiallyWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncRemoteRootToLocalRootInitially();
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithAddedFilesAndDirectoriesWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncRemoteRootToLocalRootWithAddedFilesAndDirectories();
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithModifiedFilesWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncRemoteRootToLocalRootWithModifiedFiles();
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithDeletedFileWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncRemoteRootToLocalRootWithDeletedFile();
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithDeletedDirWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncRemoteRootToLocalRootWithDeletedDir();
+	}
+
+	@Test
+	public void syncRemoteRootToLocalRootWithDeletedDirWithRemotePathPrefix_parentOfVirtualRootDeleted() throws Exception {
+		remotePathPrefix = "/2/1";
+		syncRemoteRootToLocalRootWithDeletedDir();
+	}
+
 }

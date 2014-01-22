@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,6 +51,8 @@ import co.codewizards.cloudstore.core.persistence.RepoFile;
 import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
+import co.codewizards.cloudstore.core.repo.local.FilenameFilterSkipMetaDir;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoSync;
@@ -160,8 +164,24 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			changeSet.setModificationDTOs(toModificationDTOs(modifications));
 
+			if (!getPathPrefix().isEmpty()) {
+				Collection<DeleteModification> deleteModifications = transaction.getDAO(DeleteModificationDAO.class).getDeleteModificationsForPathOrParentOfPathAfter(
+						getPathPrefix(), lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), toRemoteRepository);
+				if (!deleteModifications.isEmpty()) { // our virtual root was deleted => create synthetic DeleteModificationDTO for virtual root
+					DeleteModificationDTO deleteModificationDTO = new DeleteModificationDTO();
+					deleteModificationDTO.setEntityID(new EntityID(0, 0));
+					deleteModificationDTO.setLocalRevision(localRepository.getRevision());
+					deleteModificationDTO.setPath("");
+					changeSet.getModificationDTOs().add(deleteModificationDTO);
+				}
+			}
+
 			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
-			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(repoFiles, repoFileDAO);
+			RepoFile pathPrefixRepoFile = null; // the virtual root for the client
+			if (!getPathPrefix().isEmpty()) {
+				pathPrefixRepoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
+			}
+			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
 			changeSet.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
 
 			transaction.commit();
@@ -171,9 +191,18 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	protected File getPathPrefixFile() {
+		String pathPrefix = getPathPrefix();
+		if (pathPrefix.isEmpty())
+			return getLocalRepoManager().getLocalRoot();
+		else
+			return new File(getLocalRepoManager().getLocalRoot(), pathPrefix);
+	}
+
 	@Override
 	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
-		File file = getFile(assertNotNull("path", path));
+		path = prefixPath(path);
+		File file = getFile(path);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			assertNoDeleteModificationCollision(transaction, fromRepositoryID, path);
@@ -202,7 +231,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void delete(EntityID fromRepositoryID, String path) {
-		File file = getFile(assertNotNull("path", path));
+		path = prefixPath(path);
+		File file = getFile(path);
+		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
@@ -210,20 +241,22 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
 
-			if (detectFileCollisionRecursively(transaction, fromRepositoryID, file)) {
-				file.renameTo(IOUtil.createCollisionFile(file));
+			if (fileIsLocalRoot) {
+				// Cannot delete the repository's root! Deleting all its contents instead.
+				long fileLastModified = file.lastModified();
+				try {
+					File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
+					if (children == null)
+						throw new IllegalStateException("File-listing localRoot returned null: " + file);
 
-				if (file.exists())
-					throw new IllegalStateException("Renaming file failed: " + file);
+					for (File child : children)
+						delete(transaction, localRepoSync, fromRepositoryID, child);
+				} finally {
+					file.setLastModified(fileLastModified);
+				}
 			}
-
-			if (!IOUtil.deleteDirectoryRecursively(file)) {
-				throw new IllegalStateException("Deleting file or directory failed: " + file);
-			}
-
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-			if (repoFile != null)
-				localRepoSync.deleteRepoFile(repoFile);
+			else
+				delete(transaction, localRepoSync, fromRepositoryID, file);
 
 			transaction.commit();
 		} finally {
@@ -234,11 +267,28 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	private void delete(LocalRepoTransaction transaction, LocalRepoSync localRepoSync, EntityID fromRepositoryID, File file) {
+		if (detectFileCollisionRecursively(transaction, fromRepositoryID, file)) {
+			file.renameTo(IOUtil.createCollisionFile(file));
+
+			if (file.exists())
+				throw new IllegalStateException("Renaming file failed: " + file);
+		}
+
+		if (!IOUtil.deleteDirectoryRecursively(file)) {
+			throw new IllegalStateException("Deleting file or directory failed: " + file);
+		}
+
+		RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+		if (repoFile != null)
+			localRepoSync.deleteRepoFile(repoFile);
+	}
+
 	@Override
 	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
-		assertNotNull("path", path);
 		FileChunkSet response = new FileChunkSet();
-		response.setPath(path);
+		response.setPath(path); // non-prefixed path!
+		path = prefixPath(path); // prefixing it afterwards
 		final int bufLength = 32 * 1024;
 		final int chunkLength = 32 * bufLength; // 1 MiB chunk size
 		File file = getFile(path);
@@ -337,7 +387,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		if (localRepoManager == null) {
 			File remoteRootFile;
 			try {
-				remoteRootFile = new File(getRemoteRoot().toURI());
+				remoteRootFile = new File(getRemoteRootWithoutPathPrefix().toURI());
 			} catch (URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
@@ -346,10 +396,34 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return localRepoManager;
 	}
 
+	@Override
+	protected URL determineRemoteRootWithoutPathPrefix() {
+		File remoteRootFile;
+		try {
+			remoteRootFile = new File(getRemoteRoot().toURI());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+
+		File localRootFile = LocalRepoHelper.getLocalRootContainingFile(remoteRootFile);
+		if (localRootFile == null)
+			throw new IllegalStateException(String.format(
+					"remoteRoot='%s' does not point to a file or directory within an existing repository (nor its root directory)!",
+					getRemoteRoot()));
+
+		try {
+			return localRootFile.toURI().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private List<ModificationDTO> toModificationDTOs(Collection<Modification> modifications) {
 		List<ModificationDTO> result = new ArrayList<ModificationDTO>(assertNotNull("modifications", modifications).size());
 		for (Modification modification : modifications) {
-			result.add(toModificationDTO(modification));
+			ModificationDTO modificationDTO = toModificationDTO(modification);
+			if (modificationDTO != null)
+				result.add(modificationDTO);
 		}
 		return result;
 	}
@@ -358,9 +432,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		ModificationDTO modificationDTO;
 		if (modification instanceof DeleteModification) {
 			DeleteModification deleteModification = (DeleteModification) modification;
+
+			String path = deleteModification.getPath();
+			if (!isPathUnderPathPrefix(path))
+				return null;
+
+			path = unprefixPath(path);
+
 			DeleteModificationDTO deleteModificationDTO;
 			modificationDTO = deleteModificationDTO = new DeleteModificationDTO();
-			deleteModificationDTO.setPath(deleteModification.getPath());
+			deleteModificationDTO.setPath(path);
 		}
 		else
 			throw new IllegalArgumentException("Unknown modification type: " + modification);
@@ -379,7 +460,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repositoryDTO;
 	}
 
-	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
+	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(RepoFile pathPrefixRepoFile, Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFiles", repoFiles);
 		Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = new HashMap<EntityID, RepoFileDTO>();
@@ -392,14 +473,40 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				}
 			}
 
+			if (pathPrefixRepoFile != null && !isDirectOrIndirectParent(pathPrefixRepoFile, rf))
+				continue;
+
 			while (rf != null) {
 				if (!entityID2RepoFileDTO.containsKey(rf.getEntityID())) {
-					entityID2RepoFileDTO.put(rf.getEntityID(), toRepoFileDTO(rf, repoFileDAO));
+					RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO);
+					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
+						repoFileDTO.setParentEntityID(null); // virtual root has no parent!
+						repoFileDTO.setName(""); // virtual root has no name!
+					}
+
+					entityID2RepoFileDTO.put(rf.getEntityID(), repoFileDTO);
 				}
+
+				if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf))
+					break;
+
 				rf = rf.getParent();
 			}
 		}
 		return entityID2RepoFileDTO;
+	}
+
+	private boolean isDirectOrIndirectParent(RepoFile parentRepoFile, RepoFile repoFile) {
+		assertNotNull("parentRepoFile", parentRepoFile);
+		assertNotNull("repoFile", repoFile);
+		RepoFile rf = repoFile;
+		while (rf != null) {
+			if (parentRepoFile.equals(rf))
+				return true;
+
+			rf = rf.getParent();
+		}
+		return false;
 	}
 
 	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO) {
@@ -505,6 +612,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 //		return path;
 //	}
 
+	/**
+	 * @param path the prefixed path (relative to the real root).
+	 * @return the file in the local repository. Never <code>null</code>.
+	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
 		File file = new File(getLocalRepoManager().getLocalRoot(), path);
@@ -513,6 +624,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public byte[] getFileData(String path, long offset, int length) {
+		path = prefixPath(path);
 		File file = getFile(path);
 		try {
 			RandomAccessFile raf = new RandomAccessFile(file, "r");
@@ -549,6 +661,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void beginPutFile(EntityID fromRepositoryID, String path) {
+		path = prefixPath(path);
 		assertNotNull("fromRepositoryID", fromRepositoryID);
 		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
 		File parentFile = file.getParentFile();
@@ -714,6 +827,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void putFileData(String path, long offset, byte[] fileData) {
+		path = prefixPath(path);
 		File file = getFile(path);
 		File localRoot = getLocalRepoManager().getLocalRoot();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
@@ -751,8 +865,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
 		assertNotNull("fromRepositoryID", fromRepositoryID);
-		File file = getFile(assertNotNull("path", path));
+		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
+		File file = getFile(path);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 

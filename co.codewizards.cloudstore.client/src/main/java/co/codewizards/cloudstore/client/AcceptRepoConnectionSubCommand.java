@@ -60,6 +60,8 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		EntityID localRepositoryID;
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
+		String localPathPrefix;
+		String remotePathPrefix;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryID = localRepoManager.getRepositoryID();
@@ -84,11 +86,13 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 				}
 				remoteRepositoryID = request.getRepositoryID();
 				remotePublicKey = request.getPublicKey();
+				localPathPrefix = request.getLocalPathPrefix();
+				remotePathPrefix = request.getRemotePathPrefix();
 				transaction.commit();
 			} finally {
 				transaction.rollbackIfActive();
 			}
-			localRepoManager.putRemoteRepository(remoteRepositoryID, null, remotePublicKey); // deletes the request.
+			localRepoManager.putRemoteRepository(remoteRepositoryID, null, remotePublicKey, localPathPrefix); // deletes the request.
 		} finally {
 			localRepoManager.close();
 		}

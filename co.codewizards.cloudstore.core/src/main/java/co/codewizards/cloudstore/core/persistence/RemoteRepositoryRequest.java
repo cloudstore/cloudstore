@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -12,11 +13,22 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 @Unique(name="RemoteRepositoryRequest_repositoryID", members="repositoryID")
 @Query(name="getRemoteRepositoryRequest_repositoryID", value="SELECT UNIQUE WHERE this.repositoryID == :repositoryID")
 public class RemoteRepositoryRequest extends Entity {
+
+	public RemoteRepositoryRequest() { }
+
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String repositoryID;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] publicKey;
+
+	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Column(defaultValue="") // for downwards compatibility
+	private String localPathPrefix;
+
+	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Column(defaultValue="") // for downwards compatibility
+	private String remotePathPrefix;
 
 	public EntityID getRepositoryID() {
 		return repositoryID == null ? null : new EntityID(repositoryID);
@@ -31,5 +43,19 @@ public class RemoteRepositoryRequest extends Entity {
 
 	public void setPublicKey(byte[] publicKey) {
 		this.publicKey = publicKey;
+	}
+
+	public String getLocalPathPrefix() {
+		return localPathPrefix;
+	}
+	public void setLocalPathPrefix(String localPathPrefix) {
+		this.localPathPrefix = localPathPrefix;
+	}
+
+	public String getRemotePathPrefix() {
+		return remotePathPrefix;
+	}
+	public void setRemotePathPrefix(String remotePathPrefix) {
+		this.remotePathPrefix = remotePathPrefix;
 	}
 }

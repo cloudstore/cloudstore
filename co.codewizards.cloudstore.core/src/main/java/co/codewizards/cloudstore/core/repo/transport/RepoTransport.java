@@ -17,6 +17,9 @@ public interface RepoTransport {
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 
+	URL getRemoteRootWithoutPathPrefix();
+	String getPathPrefix();
+
 	RepositoryDTO getRepositoryDTO();
 
 	/**

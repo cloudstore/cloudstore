@@ -74,10 +74,10 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 	 * is not located inside the repository - i.e. it is not a direct or indirect child of the given {@code localRoot}.
 	 */
 	public RepoFile getRepoFile(File localRoot, File file) throws IllegalArgumentException {
-		return _getRepoFile(assertNotNull("localRoot", localRoot), assertNotNull("file", file));
+		return _getRepoFile(assertNotNull("localRoot", localRoot), assertNotNull("file", file), file);
 	}
 
-	private RepoFile _getRepoFile(File localRoot, File file) {
+	private RepoFile _getRepoFile(File localRoot, File file, File originallySearchedFile) {
 		if (localRoot.equals(file)) {
 			return getLocalRootDirectory();
 		}
@@ -89,9 +89,9 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 
 		File parentFile = file.getParentFile();
 		if (parentFile == null)
-			throw new IllegalArgumentException(String.format("Repository '%s' does not contain file '%s'!", localRoot, file));
+			throw new IllegalArgumentException(String.format("Repository '%s' does not contain file '%s'!", localRoot, originallySearchedFile));
 
-		RepoFile parentRepoFile = _getRepoFile(localRoot, parentFile);
+		RepoFile parentRepoFile = _getRepoFile(localRoot, parentFile, originallySearchedFile);
 		RepoFile result = getChildRepoFile(parentRepoFile, file.getName());
 		if (result instanceof Directory)
 			directoryCache.put(file, (Directory)result);

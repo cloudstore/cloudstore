@@ -6,17 +6,19 @@ import java.io.File;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
 	@Argument(metaVar="<local>", required=true, index=0, usage="A path inside a repository in the local file system or a "
-			+ "repository-ID or a repository-alias (optionally with a path).\n\nIf this matches both a locally "
+			+ "repository-ID or a repository-alias (optionally with a path). If this matches both a locally "
 			+ "existing directory and a repository-ID/-alias, it is assumed to be a repository-ID/-alias. "
 			+ "Note, that it may be a sub-directory inside the repository specified in the form "
 			+ "<repositoryID>/path (this must be a '/' even on Windows).")
 	protected String local;
+
+	protected String localPathPrefix;
 
 	/**
 	 * {@link File} referencing a directory inside the repository (or its root).
@@ -36,42 +38,35 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 		super.prepare();
 		assertNotNull("local", local);
 
-		String path;
 		String repositoryName;
 		int slashIndex = local.indexOf('/');
 		if (slashIndex < 0) {
 			repositoryName = local;
-			path = "";
+			localPathPrefix = "";
 		}
 		else {
 			repositoryName = local.substring(0, slashIndex);
-			path = local.substring(slashIndex + 1);
+			localPathPrefix = local.substring(slashIndex);
+
+			if (!localPathPrefix.startsWith("/"))
+				throw new IllegalStateException("localPathPrefix does not start with '/': " + localPathPrefix);
 		}
+
+		if ("/".equals(localPathPrefix))
+			localPathPrefix = "";
 
 		localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryName(repositoryName);
 		if (localRoot != null)
-			localFile = path.isEmpty() ? localRoot : new File(localRoot, path);
+			localFile = localPathPrefix.isEmpty() ? localRoot : new File(localRoot, localPathPrefix);
 		else {
 			localFile = new File(local).getAbsoluteFile();
-			localRoot = getLocalRoot(localFile);
+			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
 		}
 		assertLocalRootNotNull();
 	}
 
 	protected void assertLocalRootNotNull() {
 		assertNotNull("localRoot", localRoot);
-	}
-
-	private File getLocalRoot(File directory) {
-		File metaDir = new File(directory, LocalRepoManager.META_DIR_NAME);
-		if (metaDir.isDirectory())
-			return directory;
-
-		File parentDir = directory.getParentFile();
-		if (parentDir == null)
-			return null;
-
-		return getLocalRoot(parentDir);
 	}
 
 }

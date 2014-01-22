@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.ArrayList;
@@ -12,10 +13,11 @@ public class DeleteModificationDAO extends DAO<DeleteModification, DeleteModific
 	public Collection<DeleteModification> getDeleteModificationsForPathAfter(String path, long localRevision, RemoteRepository remoteRepository) {
 		assertNotNull("path", path);
 		assertNotNull("remoteRepository", remoteRepository);
-		Query query = pm().newNamedQuery(getEntityClass(), "getDeleteModificationsForPathAfter_path_localRevision_remoteRepository");
+		String pathSha1 = sha1(path);
+		Query query = pm().newNamedQuery(getEntityClass(), "getDeleteModificationsForPathAfter_pathSha1_localRevision_remoteRepository");
 		try {
 			@SuppressWarnings("unchecked")
-			Collection<DeleteModification> deleteModifications = (Collection<DeleteModification>) query.execute(path, localRevision, remoteRepository);
+			Collection<DeleteModification> deleteModifications = (Collection<DeleteModification>) query.execute(pathSha1, localRevision, remoteRepository);
 			return new ArrayList<DeleteModification>(deleteModifications);
 		} finally {
 			query.closeAll();

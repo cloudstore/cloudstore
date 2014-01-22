@@ -57,11 +57,29 @@ public class LocalRepoSync {
 		if (!(assertNotNull("file", file).isAbsolute()))
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
+		if (localRoot.equals(file)) {
+			sync(null, file, monitor);
+			return;
+		}
+
 		monitor.beginTask("Local sync...", 100);
 		try {
-			RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, file.getParentFile());
-			if (parentRepoFile == null)
-				throw new IllegalStateException("There is no parentRepoFile for the parent of this file: " + file);
+			File parentFile = file.getParentFile();
+			RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, parentFile);
+			if (parentRepoFile == null) {
+				// If the file does not exist and its RepoFile neither exists, then
+				// this is in sync already and we can simply leave. This regularly
+				// happens during the deletion of a directory which is the connection-point
+				// of a remote-repository. The following re-up-sync then leads us here.
+				// To speed up things, we simply quit as this is a valid state.
+				if (!file.exists() && repoFileDAO.getRepoFile(localRoot, file) == null)
+					return;
+
+				// In the unlikely event, that this is not a valid state, we simply sync all
+				// and return.
+				sync(null, localRoot, new SubProgressMonitor(monitor, 99));
+				return;
+			}
 
 			monitor.worked(1);
 

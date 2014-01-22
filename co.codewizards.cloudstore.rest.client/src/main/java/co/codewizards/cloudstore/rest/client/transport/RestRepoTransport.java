@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.rest.client.transport;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Date;
@@ -42,7 +43,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	private EntityID repositoryID; // server-repository
 	private EntityID clientRepositoryID; // client-repository
 	private byte[] publicKey;
-	private String repositoryName;
+	private String repositoryName; // server-repository
 	private CloudStoreRESTClient client;
 	private Map<EntityID, AuthToken> clientRepositoryID2AuthToken = new HashMap<EntityID, AuthToken>(1); // should never be more ;-)
 
@@ -251,21 +252,23 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		return client;
 	}
 
+	@Override
+	protected URL determineRemoteRootWithoutPathPrefix() {
+		String repositoryName = getRepositoryName();
+		String baseURL = getClient().getBaseURL();
+		if (!baseURL.endsWith("/"))
+			throw new IllegalStateException(String.format("baseURL does not end with a '/'! baseURL='%s'", baseURL));
+
+		try {
+			return new URL(baseURL + repositoryName);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	protected String getRepositoryName() {
 		if (repositoryName == null) {
-			URL remoteRoot = getRemoteRoot();
-			if (remoteRoot == null)
-				throw new IllegalStateException("remoteRoot not yet assigned!");
-
-			String baseURL = getClient().getBaseURL();
-			if (!baseURL.endsWith("/"))
-				throw new IllegalStateException(String.format("baseURL does not end with a '/'! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
-
-			String remoteRootString = remoteRoot.toExternalForm();
-			if (!remoteRootString.startsWith(baseURL))
-				throw new IllegalStateException(String.format("remoteRoot does not start with baseURL! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
-
-			String pathAfterBaseURL = remoteRootString.substring(baseURL.length());
+			String pathAfterBaseURL = getPathAfterBaseURL();
 			int indexOfFirstSlash = pathAfterBaseURL.indexOf('/');
 			if (indexOfFirstSlash < 0) {
 				repositoryName = pathAfterBaseURL;
@@ -278,4 +281,27 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		}
 		return repositoryName;
 	}
+
+	private String pathAfterBaseURL;
+
+	protected String getPathAfterBaseURL() {
+		String pathAfterBaseURL = this.pathAfterBaseURL;
+		if (pathAfterBaseURL == null) {
+			URL remoteRoot = getRemoteRoot();
+			if (remoteRoot == null)
+				throw new IllegalStateException("remoteRoot not yet assigned!");
+
+			String baseURL = getClient().getBaseURL();
+			if (!baseURL.endsWith("/"))
+				throw new IllegalStateException(String.format("baseURL does not end with a '/'! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
+
+			String remoteRootString = remoteRoot.toExternalForm();
+			if (!remoteRootString.startsWith(baseURL))
+				throw new IllegalStateException(String.format("remoteRoot does not start with baseURL! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
+
+			this.pathAfterBaseURL = pathAfterBaseURL = remoteRootString.substring(baseURL.length());
+		}
+		return pathAfterBaseURL;
+	}
+
 }
