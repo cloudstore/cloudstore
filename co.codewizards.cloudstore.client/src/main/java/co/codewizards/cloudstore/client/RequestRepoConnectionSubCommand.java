@@ -18,7 +18,7 @@ import co.codewizards.cloudstore.core.util.HashUtil;
  */
 public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
 {
-	@Argument(metaVar="<remote>", index=1, required=true, usage="A URL to a remote repository. This may be the remote repository's root or any sub-directory. If a sub-directory is specified here, only this sub-directory is connected with the local repository. NOTE: Sync of sub-dirs is NOT YET SUPPORTED!")
+	@Argument(metaVar="<remote>", index=1, required=true, usage="A URL to a remote repository. This may be the remote repository's root or any sub-directory. If a sub-directory is specified here, only this sub-directory is connected with the local repository.")
 	private String remote;
 
 	private URL remoteURL;
