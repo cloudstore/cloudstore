@@ -21,6 +21,11 @@
 			<artifactId>co.codewizards.cloudstore.rest.server</artifactId>
 		</dependency>
 
+		<dependency> <!-- We package the entire client into the server, because it's needed for administration (=> CLI) anyway and does significantly increase the size. -->
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.client</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
 			<artifactId>jersey-container-servlet</artifactId>
@@ -94,6 +99,26 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
+						</configuration>
+					</execution>
+					<execution>
+						<id>unpack-client</id>
+						<phase>package</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>co.codewizards.cloudstore</groupId>
+									<artifactId>co.codewizards.cloudstore.client</artifactId>
+									<version>${project.version}</version>
+									<type>tar.gz</type>
+									<classifier>bin</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/co.codewizards.cloudstore.client</outputDirectory>
+								</artifactItem>
+							</artifactItems>
 						</configuration>
 					</execution>
 				</executions>
