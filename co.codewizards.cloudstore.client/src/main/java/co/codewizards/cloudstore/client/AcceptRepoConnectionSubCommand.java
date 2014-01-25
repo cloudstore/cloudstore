@@ -61,7 +61,6 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
 		String localPathPrefix;
-		String remotePathPrefix;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryID = localRepoManager.getRepositoryID();
@@ -87,7 +86,6 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 				remoteRepositoryID = request.getRepositoryID();
 				remotePublicKey = request.getPublicKey();
 				localPathPrefix = request.getLocalPathPrefix();
-				remotePathPrefix = request.getRemotePathPrefix();
 				transaction.commit();
 			} finally {
 				transaction.rollbackIfActive();

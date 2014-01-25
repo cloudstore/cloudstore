@@ -88,7 +88,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
 		repositoryDTO.setEntityID(getClientRepositoryIDOrFail());
 		repositoryDTO.setPublicKey(publicKey);
-		getClient().requestRepoConnection(getRepositoryName(), repositoryDTO);
+		getClient().requestRepoConnection(getRepositoryName(), getPathPrefix(), repositoryDTO);
 	}
 
 	@Override

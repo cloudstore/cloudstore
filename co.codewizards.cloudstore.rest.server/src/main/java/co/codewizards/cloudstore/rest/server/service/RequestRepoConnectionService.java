@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -34,9 +35,35 @@ public class RequestRepoConnectionService
 	@Consumes(MediaType.APPLICATION_XML)
 	public void requestConnection(RepositoryDTO clientRepositoryDTO)
 	{
+		requestConnection("", clientRepositoryDTO);
+	}
+
+	@POST
+	@Path("{pathPrefix:.*}")
+	@Consumes(MediaType.APPLICATION_XML)
+	public void requestConnection(@PathParam("pathPrefix") String pathPrefix, RepositoryDTO clientRepositoryDTO)
+	{
+		assertNotNull("pathPrefix", pathPrefix);
 		assertNotNull("repositoryDTO", clientRepositoryDTO);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
+
+		if (!"".equals(pathPrefix)) {
+			String localRootURLString = localRootURL.toExternalForm();
+			if (localRootURLString.endsWith("/"))
+				localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
+
+			if (!pathPrefix.startsWith("/"))
+				pathPrefix = '/' + pathPrefix;
+
+			localRootURLString = localRootURLString + pathPrefix;
+			try {
+				localRootURL = new URL(localRootURLString);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDTO.getEntityID());
 		try {

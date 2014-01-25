@@ -94,17 +94,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (remoteRepository != null)
 				throw new IllegalArgumentException("RemoteRepository already connected! repositoryID=" + clientRepositoryID);
 
+			String localPathPrefix = getPathPrefix();
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
 			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryID);
 			if (remoteRepositoryRequest != null) {
 				logger.info("RemoteRepository already requested to be connected. repositoryID={}", clientRepositoryID);
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
 				remoteRepositoryRequest.setPublicKey(publicKey);
+				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 			}
 			else {
 				remoteRepositoryRequest = new RemoteRepositoryRequest();
 				remoteRepositoryRequest.setRepositoryID(clientRepositoryID);
 				remoteRepositoryRequest.setPublicKey(publicKey);
+				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
 			}
 
