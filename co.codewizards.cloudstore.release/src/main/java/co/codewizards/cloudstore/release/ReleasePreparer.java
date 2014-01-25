@@ -41,11 +41,11 @@ public class ReleasePreparer {
 		Pattern.compile(".*\\/target\\/.*")
 	};
 
-	protected String artifactIdPrefix = "org.cumulus4j.";
+	protected String artifactIdPrefix = "co.codewizards.";
 
 	protected String rootDir = "..";
 	protected File rootDirFile;
-	protected String parentDir = "org.cumulus4j.parent/";
+	protected String parentDir = "co.codewizards.parent/";
 
 	protected Properties properties;
 
