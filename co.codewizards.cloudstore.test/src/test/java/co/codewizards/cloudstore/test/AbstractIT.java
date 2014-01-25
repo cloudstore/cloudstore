@@ -116,10 +116,11 @@ public abstract class AbstractIT {
 	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
 	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
 
-	protected File newTestRepositoryLocalRoot() throws IOException {
+	protected File newTestRepositoryLocalRoot(String suffix) throws IOException {
+		assertThat(suffix).isNotNull();
 		long timestamp = System.currentTimeMillis();
 		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
-		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36);
+		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
 		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;

@@ -48,7 +48,7 @@ public class RestRepoTransportIT extends AbstractIT {
 
 	@Test
 	public void getRepositoryID() throws Exception {
-		File remoteRoot = newTestRepositoryLocalRoot();
+		File remoteRoot = newTestRepositoryLocalRoot("");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
@@ -59,7 +59,7 @@ public class RestRepoTransportIT extends AbstractIT {
 
 		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID);
 
-		RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL).createRepoTransport(remoteRootURL);
+		RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL).createRepoTransport(remoteRootURL, null);
 		assertThat(repoTransport).isInstanceOf(RestRepoTransport.class);
 		EntityID repositoryID = repoTransport.getRepositoryID();
 		assertThat(repositoryID).isEqualTo(remoteRepositoryID);

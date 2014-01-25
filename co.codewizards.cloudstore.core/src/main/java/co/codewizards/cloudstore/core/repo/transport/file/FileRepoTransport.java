@@ -84,26 +84,26 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey) {
-		assertNotNull("remoteRepositoryID", remoteRepositoryID);
+	public void requestRepoConnection(byte[] publicKey) {
 		assertNotNull("publicKey", publicKey);
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(remoteRepositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(clientRepositoryID);
 			if (remoteRepository != null)
-				throw new IllegalArgumentException("RemoteRepository already connected! remoteRepositoryID=" + remoteRepositoryID);
+				throw new IllegalArgumentException("RemoteRepository already connected! repositoryID=" + clientRepositoryID);
 
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryID);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryID);
 			if (remoteRepositoryRequest != null) {
-				logger.info("RemoteRepository already requested to be connected. remoteRepositoryID={}", remoteRepositoryID);
+				logger.info("RemoteRepository already requested to be connected. repositoryID={}", clientRepositoryID);
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
 				remoteRepositoryRequest.setPublicKey(publicKey);
 			}
 			else {
 				remoteRepositoryRequest = new RemoteRepositoryRequest();
-				remoteRepositoryRequest.setRepositoryID(remoteRepositoryID);
+				remoteRepositoryRequest.setRepositoryID(clientRepositoryID);
 				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
 			}
@@ -129,12 +129,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync) {
-		assertNotNull("toRepositoryID", toRepositoryID);
-
+	public ChangeSet getChangeSet(boolean localSync) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		ChangeSet changeSet = new ChangeSet();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
@@ -150,7 +149,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
 			changeSet.setRepositoryDTO(toRepositoryDTO(localRepository));
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(toRepositoryID);
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
 
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(toRemoteRepository);
 			if (lastSyncToRemoteRepo == null) {
@@ -200,12 +199,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
+	public void makeDirectory(String path, Date lastModified) {
 		path = prefixPath(path);
 		File file = getFile(path);
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
-			assertNoDeleteModificationCollision(transaction, fromRepositoryID, path);
+			assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
 			mkDir(transaction, file, lastModified);
 			transaction.commit();
 		} finally {
@@ -230,9 +230,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void delete(EntityID fromRepositoryID, String path) {
+	public void delete(String path) {
 		path = prefixPath(path);
 		File file = getFile(path);
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
@@ -250,13 +251,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						throw new IllegalStateException("File-listing localRoot returned null: " + file);
 
 					for (File child : children)
-						delete(transaction, localRepoSync, fromRepositoryID, child);
+						delete(transaction, localRepoSync, clientRepositoryID, child);
 				} finally {
 					file.setLastModified(fileLastModified);
 				}
 			}
 			else
-				delete(transaction, localRepoSync, fromRepositoryID, file);
+				delete(transaction, localRepoSync, clientRepositoryID, file);
 
 			transaction.commit();
 		} finally {
@@ -290,7 +291,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		response.setPath(path); // non-prefixed path!
 		path = prefixPath(path); // prefixing it afterwards
 		final int bufLength = 32 * 1024;
-		final int chunkLength = 32 * bufLength; // 1 MiB chunk size
+		final int chunkLength = 16 * bufLength; // 512 KiB chunk size
 		File file = getFile(path);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
@@ -660,10 +661,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void beginPutFile(EntityID fromRepositoryID, String path) {
+	public void beginPutFile(String path) {
 		path = prefixPath(path);
-		assertNotNull("fromRepositoryID", fromRepositoryID);
 		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		try {
@@ -676,7 +677,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			File localRoot = getLocalRepoManager().getLocalRoot();
 			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 			try {
-				assertNoDeleteModificationCollision(transaction, fromRepositoryID, path);
+				assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
 
 				boolean newFile = false;
 				if (!file.isFile()) {
@@ -708,9 +709,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				NormalFile normalFile = (NormalFile) repoFile;
 
 				if (!newFile && !normalFile.isInProgress())
-					detectAndHandleFileCollision(transaction, fromRepositoryID, file, normalFile);
+					detectAndHandleFileCollision(transaction, clientRepositoryID, file, normalFile);
 
-				normalFile.setLastSyncFromRepositoryID(fromRepositoryID);
+				normalFile.setLastSyncFromRepositoryID(clientRepositoryID);
 				normalFile.setInProgress(true);
 
 				transaction.commit();
@@ -737,10 +738,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * In both cases, we do our best to avoid both processes from writing to the same file simultaneously without locking
 	 * it.
 	 * <p>
-	 * In the future (this is NOT YET IMPLEMENTED), we might lock it in {@link #beginPutFile(EntityID, String)} and
-	 * keep the lock until {@link #endPutFile(EntityID, String, Date, long)} or a timeout occurs - and refresh the lock
+	 * In the future (this is NOT YET IMPLEMENTED), we might lock it in {@link #beginPutFile(String)} and
+	 * keep the lock until {@link #endPutFile(String, Date, long)} or a timeout occurs - and refresh the lock
 	 * (i.e. postpone the timeout) with every {@link #putFileData(String, long, byte[])}. The reason for this
-	 * quite complicated strategy is that we cannot guarantee that the {@link #endPutFile(EntityID, String, Date, long)}
+	 * quite complicated strategy is that we cannot guarantee that the {@link #endPutFile(String, Date, long)}
 	 * is ever invoked (the client might crash inbetween). We don't want a locked file to linger forever.
 	 *
 	 * @param transaction the DB transaction. Must not be <code>null</code>.
@@ -863,11 +864,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+	public void endPutFile(String path, Date lastModified, long length) {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
 		File file = getFile(path);
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 
@@ -896,7 +897,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			file.setLastModified(lastModified.getTime());
 			localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
-			normalFile.setLastSyncFromRepositoryID(fromRepositoryID);
+			normalFile.setLastSyncFromRepositoryID(clientRepositoryID);
 			normalFile.setInProgress(false);
 
 			transaction.commit();
@@ -906,7 +907,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endSyncFromRepository(EntityID toRepositoryID) {
+	public void endSyncFromRepository() {
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			PersistenceManager pm = transaction.getPersistenceManager();
@@ -914,11 +916,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(toRepositoryID);
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
 
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
 			if (lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress() < 0)
-				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", toRepositoryID));
+				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", clientRepositoryID));
 
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
@@ -936,11 +938,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision) {
+	public void endSyncToRepository(long fromLocalRevision) {
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(fromRepositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
 			remoteRepository.setRevision(fromLocalRevision);
 
 			transaction.commit();

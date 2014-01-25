@@ -65,13 +65,13 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootInitially() throws Exception {
-		localRoot = newTestRepositoryLocalRoot();
+	public void syncFromRemoteToLocal() throws Exception {
+		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		remoteRoot = newTestRepositoryLocalRoot();
+		remoteRoot = newTestRepositoryLocalRoot("remote");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
@@ -129,8 +129,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithAddedFilesAndDirectories() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+	public void syncFromRemoteToLocalWithAddedFilesAndDirectories() throws Exception {
+		syncFromRemoteToLocal();
 
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
@@ -169,8 +169,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithModifiedFiles() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+	public void syncFromRemoteToLocalWithModifiedFiles() throws Exception {
+		syncFromRemoteToLocal();
 
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
@@ -240,8 +240,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithDeletedFile() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+	public void syncFromRemoteToLocalWithDeletedFile() throws Exception {
+		syncFromRemoteToLocal();
 
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
@@ -276,8 +276,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithDeletedDir() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+	public void syncFromRemoteToLocalWithDeletedDir() throws Exception {
+		syncFromRemoteToLocal();
 
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
@@ -331,7 +331,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 	@Test
 	public void syncWithDirectFileModificationCollision() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+		syncFromRemoteToLocal();
 
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
@@ -407,7 +407,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 	@Test
 	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+		syncFromRemoteToLocal();
 
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
@@ -447,7 +447,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 	@Test
 	public void syncWithFileModificationInsideDeletedDirectoryCollisionInverse() throws Exception {
-		syncRemoteRootToLocalRootInitially();
+		syncFromRemoteToLocal();
 
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
@@ -492,39 +492,39 @@ public class RepoToRepoSyncTest extends AbstractTest {
 //	}
 
 	@Test
-	public void syncRemoteRootToLocalRootInitiallyWithRemotePathPrefix() throws Exception {
+	public void syncFromRemoteToLocalWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
-		syncRemoteRootToLocalRootInitially();
+		syncFromRemoteToLocal();
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithAddedFilesAndDirectoriesWithRemotePathPrefix() throws Exception {
+	public void syncFromRemoteToLocalWithAddedFilesAndDirectoriesWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
-		syncRemoteRootToLocalRootWithAddedFilesAndDirectories();
+		syncFromRemoteToLocalWithAddedFilesAndDirectories();
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithModifiedFilesWithRemotePathPrefix() throws Exception {
+	public void syncFromRemoteToLocalWithModifiedFilesWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
-		syncRemoteRootToLocalRootWithModifiedFiles();
+		syncFromRemoteToLocalWithModifiedFiles();
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithDeletedFileWithRemotePathPrefix() throws Exception {
+	public void syncFromRemoteToLocalWithDeletedFileWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
-		syncRemoteRootToLocalRootWithDeletedFile();
+		syncFromRemoteToLocalWithDeletedFile();
 	}
 
 	@Test
-	public void syncRemoteRootToLocalRootWithDeletedDirWithRemotePathPrefix() throws Exception {
+	public void syncFromRemoteToLocalWithDeletedDirWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
-		syncRemoteRootToLocalRootWithDeletedDir();
+		syncFromRemoteToLocalWithDeletedDir();
 	}
 
 	@Test
 	public void syncRemoteRootToLocalRootWithDeletedDirWithRemotePathPrefix_parentOfVirtualRootDeleted() throws Exception {
 		remotePathPrefix = "/2/1";
-		syncRemoteRootToLocalRootWithDeletedDir();
+		syncFromRemoteToLocalWithDeletedDir();
 	}
 
 }

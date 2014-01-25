@@ -14,6 +14,7 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,7 +37,32 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 	private File localRoot;
 	private File remoteRoot;
-	private URL remoteRootURL;
+
+	private String localPathPrefix;
+	private String remotePathPrefix;
+	private URL remoteRootURLWithPathPrefix;
+
+	@Override
+	@Before
+	public void before() {
+		localPathPrefix = "";
+		remotePathPrefix = "";
+	}
+
+	private File getLocalRootWithPathPrefix() {
+		if (localPathPrefix.isEmpty())
+			return localRoot;
+
+		return new File(localRoot, localPathPrefix);
+	}
+
+	private File getRemoteRootWithPathPrefix() {
+		if (remotePathPrefix.isEmpty())
+			return remoteRoot;
+
+		File file = new File(remoteRoot, remotePathPrefix);
+		return file;
+	}
 
 	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override
@@ -60,19 +86,19 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
 	}
 
-	private URL getRemoteRootURL(EntityID remoteRepositoryID) throws MalformedURLException {
-		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID);
+	private URL getRemoteRootURLWithPathPrefix(EntityID remoteRepositoryID) throws MalformedURLException {
+		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID + remotePathPrefix);
 		return remoteRootURL;
 	}
 
 	@Test
 	public void syncFromRemoteToLocal() throws Exception {
-		localRoot = newTestRepositoryLocalRoot();
+		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		remoteRoot = newTestRepositoryLocalRoot();
+		remoteRoot = newTestRepositoryLocalRoot("remote");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
@@ -84,10 +110,10 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
-		remoteRootURL = getRemoteRootURL(remoteRepositoryID);
+		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey(), "");
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), "");
+		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURLWithPathPrefix, localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -110,7 +136,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		createFileWithRandomContent(child_3, "c");
 		createFileWithRandomContent(child_3, "d");
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -119,19 +145,19 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		localRepoManagerLocal.close();
 		localRepoManagerRemote.close();
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	@Test
 	public void syncFromLocalToRemote() throws Exception {
-		localRoot = newTestRepositoryLocalRoot();
+		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		remoteRoot = newTestRepositoryLocalRoot();
+		remoteRoot = newTestRepositoryLocalRoot("remote");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
@@ -143,10 +169,10 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
-		remoteRootURL = getRemoteRootURL(remoteRepositoryID);
+		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURL, localRepoManagerRemote.getPublicKey(), "");
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), "");
+		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURLWithPathPrefix, localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
 		File child_1 = createDirectory(localRoot, "1");
 
@@ -173,7 +199,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -182,9 +208,9 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		localRepoManagerLocal.close();
 		localRepoManagerRemote.close();
 
-		assertDirectoriesAreEqualRecursively(localRoot, remoteRoot);
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
 	@Test
@@ -207,7 +233,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		IOUtil.deleteDirectoryRecursively(r_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -247,7 +273,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		IOUtil.deleteDirectoryRecursively(l_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURL);
+			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -305,4 +331,11 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 			raf.close();
 		}
 	}
+
+	@Test
+	public void syncFromRemoteToLocalWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncFromRemoteToLocal();
+	}
+
 }

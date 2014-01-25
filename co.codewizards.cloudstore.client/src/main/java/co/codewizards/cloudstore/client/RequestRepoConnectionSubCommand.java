@@ -51,13 +51,13 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 		try {
 			localRepositoryID = localRepoManager.getRepositoryID();
 			localPublicKey = localRepoManager.getPublicKey();
-			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL);
+			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL, localRepositoryID);
 			try {
 				remoteRepositoryID = repoTransport.getRepositoryID();
 				remotePublicKey = repoTransport.getPublicKey();
 				String remotePathPrefix = repoTransport.getPathPrefix();
 				localRepoManager.putRemoteRepository(remoteRepositoryID, remoteURL, remotePublicKey, localPathPrefix);
-				repoTransport.requestRepoConnection(localRepositoryID, localRepoManager.getPublicKey());
+				repoTransport.requestRepoConnection(localRepoManager.getPublicKey());
 			} finally {
 				repoTransport.close();
 			}

@@ -41,7 +41,6 @@ import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
 
 	private EntityID repositoryID; // server-repository
-	private EntityID clientRepositoryID; // client-repository
 	private byte[] publicKey;
 	private String repositoryName; // server-repository
 	private CloudStoreRESTClient client;
@@ -85,9 +84,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey) {
+	public void requestRepoConnection(byte[] publicKey) {
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
-		repositoryDTO.setEntityID(remoteRepositoryID);
+		repositoryDTO.setEntityID(getClientRepositoryIDOrFail());
 		repositoryDTO.setPublicKey(publicKey);
 		getClient().requestRepoConnection(getRepositoryName(), repositoryDTO);
 	}
@@ -98,16 +97,15 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync) {
-		prepareAuth(toRepositoryID);
-		return getClient().getChangeSet(getRepositoryID().toString(), localSync, toRepositoryID);
+	public ChangeSet getChangeSet(boolean localSync) {
+		return getClient().getChangeSet(getRepositoryID().toString(), localSync);
 	}
 
 	@Override
-	public void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified) {
-		prepareAuth(fromRepositoryID);
+	public void makeDirectory(String path, Date lastModified) {
+		path = prefixPath(path);
 		try {
-			getClient().makeDirectory(fromRepositoryID, getRepositoryID().toString(), path, lastModified);
+			getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
 		} catch (RemoteException x) {
 			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
 				throw new DeleteModificationCollisionException(x.getMessage());
@@ -117,26 +115,28 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void delete(EntityID fromRepositoryID, String path) {
-		prepareAuth(fromRepositoryID);
-		getClient().delete(fromRepositoryID, getRepositoryID().toString(), path);
+	public void delete(String path) {
+		path = prefixPath(path);
+		getClient().delete(getRepositoryID().toString(), path);
 	}
 
 	@Override
 	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
+		path = prefixPath(path);
 		return getClient().getFileChunkSet(getRepositoryID().toString(), path, allowHollow);
 	}
 
 	@Override
 	public byte[] getFileData(String path, long offset, int length) {
+		path = prefixPath(path);
 		return getClient().getFileData(getRepositoryID().toString(), path, offset, length);
 	}
 
 	@Override
-	public void beginPutFile(EntityID fromRepositoryID, String path) {
-		prepareAuth(fromRepositoryID);
+	public void beginPutFile(String path) {
+		path = prefixPath(path);
 		try {
-			getClient().beginPutFile(fromRepositoryID, getRepositoryID().toString(), path);
+			getClient().beginPutFile(getRepositoryID().toString(), path);
 		} catch (RemoteException x) {
 			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
 				throw new DeleteModificationCollisionException(x.getMessage());
@@ -147,32 +147,29 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void putFileData(String path, long offset, byte[] fileData) {
+		path = prefixPath(path);
 		getClient().putFileData(getRepositoryID().toString(), path, offset, fileData);
 	}
 
 	@Override
-	public void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length) {
-		prepareAuth(fromRepositoryID);
-		getClient().endPutFile(fromRepositoryID, getRepositoryID().toString(), path,new DateTime(lastModified), length);
+	public void endPutFile(String path, Date lastModified, long length) {
+		path = prefixPath(path);
+		getClient().endPutFile(getRepositoryID().toString(), path, new DateTime(lastModified),length);
 	}
 
 	@Override
-	public void endSyncFromRepository(EntityID fromRepositoryID) {
-		prepareAuth(fromRepositoryID);
-		getClient().endSyncFromRepository(getRepositoryID().toString(), fromRepositoryID);
+	public void endSyncFromRepository() {
+		getClient().endSyncFromRepository(getRepositoryID().toString());
 	}
 
 	@Override
-	public void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision) {
-		prepareAuth(fromRepositoryID);
-		getClient().endSyncToRepository(getRepositoryID().toString(), fromRepositoryID, fromLocalRevision);
+	public void endSyncToRepository(long fromLocalRevision) {
+		getClient().endSyncToRepository(getRepositoryID().toString(), fromLocalRevision);
 	}
 
 	@Override
 	public String getUserName() {
-		if (clientRepositoryID == null)
-			throw new IllegalStateException("prepareAuth(...) not called!");
-
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		return AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX + clientRepositoryID;
 	}
 
@@ -182,14 +179,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		return authToken.getPassword();
 	}
 
-	private void prepareAuth(EntityID clientRepositoryID) {
-		this.clientRepositoryID = assertNotNull("clientRepositoryID", clientRepositoryID);
-	}
-
 	private AuthToken getAuthToken() {
-		if (clientRepositoryID == null)
-			throw new IllegalStateException("prepareAuth(...) not called!");
-
+		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		AuthToken authToken = clientRepositoryID2AuthToken.get(clientRepositoryID);
 		if (authToken != null && (isAfterRenewalDate(authToken) || isExpired(authToken)))
 			authToken = null;
@@ -274,7 +265,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 				repositoryName = pathAfterBaseURL;
 			}
 			else {
-				repositoryName = pathAfterBaseURL.substring(indexOfFirstSlash);
+				repositoryName = pathAfterBaseURL.substring(0, indexOfFirstSlash);
 			}
 			if (repositoryName.isEmpty())
 				throw new IllegalStateException("repositoryName is empty!");

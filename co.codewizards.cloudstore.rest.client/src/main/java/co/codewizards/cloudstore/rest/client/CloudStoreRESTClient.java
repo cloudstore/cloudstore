@@ -247,14 +247,13 @@ public class CloudStoreRESTClient {
 		return "_" + dtoClass.getSimpleName();
 	}
 
-	public ChangeSet getChangeSet(String repositoryName, boolean localSync, EntityID toRepositoryID) {
+	public ChangeSet getChangeSet(String repositoryName, boolean localSync) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			WebTarget webTarget = client.target(getBaseURL())
 					.path(getPath(ChangeSet.class))
-					.path(repositoryName)
-					.path(toRepositoryID.toString());
+					.path(repositoryName);
 
 			if (localSync)
 				webTarget = webTarget.queryParam("localSync", localSync);
@@ -270,9 +269,9 @@ public class CloudStoreRESTClient {
 	}
 
 	public void requestRepoConnection(String repositoryName, RepositoryDTO clientRepositoryDTO) {
-		assertNotNull("repositoryDTO", clientRepositoryDTO);
-		assertNotNull("repositoryDTO.entityID", clientRepositoryDTO.getEntityID());
-		assertNotNull("repositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
+		assertNotNull("clientRepositoryDTO", clientRepositoryDTO);
+		assertNotNull("clientRepositoryDTO.entityID", clientRepositoryDTO.getEntityID());
+		assertNotNull("clientRepositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
 		Client client = acquireClient();
 		try {
 			Response response = client.target(getBaseURL())
@@ -324,8 +323,7 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void beginPutFile(EntityID fromRepositoryID, String repositoryName, String path) {
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+	public void beginPutFile(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
@@ -333,7 +331,6 @@ public class CloudStoreRESTClient {
 			.path("_beginPutFile")
 			.path(repositoryName)
 			.path(removeLeadingAndTrailingSlashes(path))
-			.queryParam("fromRepositoryID", fromRepositoryID.toString())
 			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
@@ -344,14 +341,13 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void endSyncFromRepository(String repositoryName, EntityID fromRepositoryID) {
+	public void endSyncFromRepository(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			Response response = assignCredentials(client.target(getBaseURL())
 			.path("_endSyncFromRepository")
 			.path(repositoryName)
-			.path(fromRepositoryID.toString())
 			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
@@ -362,7 +358,7 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void endSyncToRepository(String repositoryName, EntityID fromRepositoryID, long fromLocalRevision) {
+	public void endSyncToRepository(String repositoryName, long fromLocalRevision) {
 		assertNotNull("repositoryName", repositoryName);
 		if (fromLocalRevision < 0)
 			throw new IllegalArgumentException("fromLocalRevision < 0");
@@ -372,7 +368,6 @@ public class CloudStoreRESTClient {
 			Response response = assignCredentials(client.target(getBaseURL())
 			.path("_endSyncToRepository")
 			.path(repositoryName)
-			.path(fromRepositoryID.toString())
 			.queryParam("fromLocalRevision", fromLocalRevision)
 			.request()).post(null);
 			assertResponseIndicatesSuccess(response);
@@ -384,8 +379,7 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void endPutFile(EntityID fromRepositoryID, String repositoryName, String path, DateTime lastModified, long length) {
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
@@ -393,7 +387,6 @@ public class CloudStoreRESTClient {
 					.path("_endPutFile")
 					.path(repositoryName)
 					.path(removeLeadingAndTrailingSlashes(path))
-					.queryParam("fromRepositoryID", fromRepositoryID.toString())
 					.queryParam("lastModified", lastModified.toString())
 					.queryParam("length",length)
 					.request()).post(null);
@@ -455,13 +448,12 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void delete(EntityID fromRepositoryID, String repositoryName, String path) {
+	public void delete(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			Response response = assignCredentials(client.target(getBaseURL())
 					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
-					.queryParam("fromRepositoryID", fromRepositoryID)
 					.request()).delete();
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
@@ -486,8 +478,7 @@ public class CloudStoreRESTClient {
 //		}
 //	}
 
-	public void makeDirectory(EntityID fromRepositoryID, String repositoryName, String path, Date lastModified) {
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+	public void makeDirectory(String repositoryName, String path, Date lastModified) {
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("path", path);
 		Client client = acquireClient();
@@ -506,8 +497,7 @@ public class CloudStoreRESTClient {
 
 			WebTarget webTarget = client.target(getBaseURL())
 					.path("_makeDirectory")
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
-					.queryParam("fromRepositoryID", fromRepositoryID);
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
 
 			if (lastModified != null)
 				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));

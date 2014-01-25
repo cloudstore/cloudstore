@@ -17,6 +17,9 @@ public interface RepoTransport {
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 
+	EntityID getClientRepositoryID();
+	void setClientRepositoryID(EntityID clientRepositoryID);
+
 	URL getRemoteRootWithoutPathPrefix();
 	String getPathPrefix();
 
@@ -34,12 +37,11 @@ public interface RepoTransport {
 
 	/**
 	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryID}.
-	 * @param remoteRepositoryID the unique ID of the remote repository to be connected. Must not be <code>null</code>.
 	 * @param publicKey TODO
 	 */
-	void requestRepoConnection(EntityID remoteRepositoryID, byte[] publicKey);
+	void requestRepoConnection(byte[] publicKey);
 
-	ChangeSet getChangeSet(EntityID toRepositoryID, boolean localSync);
+	ChangeSet getChangeSet(boolean localSync);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).
@@ -48,7 +50,6 @@ public interface RepoTransport {
 	 * <p>
 	 * If there is any obstruction in the way of this path (e.g. a normal file), it is moved away (renamed or simply deleted
 	 * depending on the conflict resolution strategy).
-	 * @param fromRepositoryID TODO
 	 * @param path the path of the directory. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
@@ -57,7 +58,7 @@ public interface RepoTransport {
 	 * actual directory and not to the parent-directories! The parent-directories' {@code lastModified} properties are never
 	 * touched - even if the parent-directories are newly created.
 	 */
-	void makeDirectory(EntityID fromRepositoryID, String path, Date lastModified);
+	void makeDirectory(String path, Date lastModified);
 
 	/**
 	 * Deletes the file (or directory) specified by {@code path}.
@@ -65,12 +66,11 @@ public interface RepoTransport {
 	 * If there is no such file (or directory), this method is a noop.
 	 * <p>
 	 * If {@code path} denotes a directory, all its children (if there are) are deleted recursively.
-	 * @param fromRepositoryID TODO
 	 * @param path the path of the file (or directory) to be deleted. Must not be <code>null</code>. No matter which
 	 * operating system is used, the separation-character is always '/'. This path may start with a "/", but there is no
 	 * difference, if it does: It is always relative to the repository's root directory.
 	 */
-	void delete(EntityID fromRepositoryID, String path);
+	void delete(String path);
 
 	FileChunkSet getFileChunkSet(String path, boolean allowHollow);
 
@@ -91,37 +91,38 @@ public interface RepoTransport {
 	 * Begins a file transfer to this {@code RepoTransport}.
 	 * <p>
 	 * Usually, this method creates the specified file in the file system (if necessary with parent-directories)
-	 * and in the database. But this operation may be deferred until {@link #endPutFile(EntityID, String, Date, long)}.
+	 * and in the database. But this operation may be deferred until {@link #endPutFile(String, Date, long)}.
 	 * <p>
 	 * If the file is immediately created, it should not be synchronised to any other repository, yet! It should
-	 * be ignored, until {@link #endPutFile(EntityID, String, Date, long)} was called for it.
+	 * be ignored, until {@link #endPutFile(String, Date, long)} was called for it.
 	 * <p>
 	 * In normal operation, zero or more invocations of {@link #putFileData(String, long, byte[])} and
-	 * finally one invocation of {@link #endPutFile(EntityID, String, Date, long)} follow this method. However, this is not
+	 * finally one invocation of {@link #endPutFile(String, Date, long)} follow this method. However, this is not
 	 * guaranteed and the file transfer may be interrupted. If it is resumed, later this method is called again,
-	 * without {@link #endPutFile(EntityID, String, Date, long)} ever having been called inbetween.
-	 * @param fromRepositoryID TODO
+	 * without {@link #endPutFile(String, Date, long)} ever having been called inbetween.
 	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
 	 * @see #putFileData(String, long, byte[])
-	 * @see #endPutFile(EntityID, String, Date, long)
+	 * @see #endPutFile(String, Date, long)
 	 */
-	void beginPutFile(EntityID fromRepositoryID, String path);
+	void beginPutFile(String path);
 
 	/**
 	 * Write a block of binary data into the file.
 	 * <p>
-	 * This method may only be called after {@link #beginPutFile(EntityID, String)} and before {@link #endPutFile(EntityID, String, Date, long)}.
+	 * This method may only be called after {@link #beginPutFile(String)} and before {@link #endPutFile(String, Date, long)}.
 	 * @param offset the 0-based position in the file at which the block should be written.
-	 * @see #beginPutFile(EntityID, String)
-	 * @see #endPutFile(EntityID, String, Date, long)
+	 * @see #beginPutFile(String)
+	 * @see #endPutFile(String, Date, long)
 	 */
 	void putFileData(String path, long offset, byte[] fileData);
 
-	void endPutFile(EntityID fromRepositoryID, String path, Date lastModified, long length);
+	void endPutFile(String path, Date lastModified, long length);
 
-	void endSyncFromRepository(EntityID toRepositoryID);
+	void endSyncFromRepository();
 
-	void endSyncToRepository(EntityID fromRepositoryID, long fromLocalRevision);
+	void endSyncToRepository(long fromLocalRevision);
+	String prefixPath(String path);
+	String unprefixPath(String path);
 }

@@ -2,8 +2,6 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.URL;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,11 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
 @Path("_FileChunkSet/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -44,12 +39,9 @@ public class FileChunkSetService extends AbstractServiceWithRepoToRepoAuth
 	public FileChunkSet getFileChunkSet(@PathParam("path") String path, @QueryParam("allowHollow") boolean allowHollow)
 	{
 		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
+			path = repoTransport.unprefixPath(path);
 			FileChunkSet response = repoTransport.getFileChunkSet(path, allowHollow);
 			return response;
 		} finally {

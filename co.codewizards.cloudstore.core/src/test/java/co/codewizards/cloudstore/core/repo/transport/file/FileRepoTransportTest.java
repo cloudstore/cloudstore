@@ -45,7 +45,7 @@ public class FileRepoTransportTest extends AbstractTest {
 
 	@Test
 	public void getChangeSetForEntireRepository() throws Exception {
-		remoteRoot = newTestRepositoryLocalRoot();
+		remoteRoot = newTestRepositoryLocalRoot("remote");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
@@ -54,7 +54,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		assertThat(localRepoManager).isNotNull();
 		remoteRepositoryID = localRepoManager.getRepositoryID();
 
-		localRoot = newTestRepositoryLocalRoot();
+		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		LocalRepoManager toLocalRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
@@ -90,9 +90,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		changeSetResponse1 = repoTransport.getChangeSet(localRepositoryID, false);
+		changeSetResponse1 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse1).isNotNull();
 		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();
@@ -140,9 +140,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -179,9 +179,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -222,9 +222,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(localRepositoryID, false);
+		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();

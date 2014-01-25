@@ -1,9 +1,14 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 
@@ -22,7 +27,15 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.persistence.RemoteRepository;
+import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
 import co.codewizards.cloudstore.rest.server.auth.AuthRepoPasswordManager;
@@ -132,10 +145,8 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 		Auth auth = getAuth();
 		try {
-			if (auth.getUserName().startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
-				String repositoryIDString = auth.getUserName().substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
-				EntityID clientRepositoryID = new EntityID(repositoryIDString);
-
+			EntityID clientRepositoryID = getClientRepositoryIDFromUserName(auth.getUserName());
+			if (clientRepositoryID != null) {
 				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryID, clientRepositoryID, auth.getPassword()))
 					return auth.getUserName();
 				else
@@ -147,7 +158,74 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		throw newUnauthorizedException();
 	}
 
+	protected EntityID getClientRepositoryIDFromUserName(String userName) {
+		if (assertNotNull("userName", userName).startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
+			String repositoryIDString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
+			EntityID clientRepositoryID = new EntityID(repositoryIDString);
+			return clientRepositoryID;
+		}
+		return null;
+	}
+
+	protected EntityID getClientRepositoryIDFromUserNameOrFail(String userName) {
+		EntityID clientRepositoryID = getClientRepositoryIDFromUserName(userName);
+		if (clientRepositoryID == null)
+			throw new IllegalArgumentException(String.format("userName='%s' is not a repository!", userName));
+
+		return clientRepositoryID;
+	}
+
 	private WebApplicationException newUnauthorizedException() {
 		return new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
+	}
+
+	protected RepoTransport authenticateAndCreateLocalRepoTransport() {
+		String userName = authenticateAndReturnUserName();
+		EntityID clientRepositoryID = getClientRepositoryIDFromUserNameOrFail(userName);
+		URL localRootURL = getLocalRootURL(clientRepositoryID);
+		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryID);
+		return repoTransport;
+	}
+
+	protected URL authenticateAndGetLocalRootURL() {
+		String userName = authenticateAndReturnUserName();
+		EntityID clientRepositoryID = getClientRepositoryIDFromUserNameOrFail(userName);
+		return getLocalRootURL(clientRepositoryID);
+	}
+
+	protected URL getLocalRootURL(EntityID clientRepositoryID) {
+		assertNotNull("repositoryName", repositoryName);
+		String localPathPrefix;
+		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		try {
+			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(clientRepositoryID);
+			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+		URL localRootURL;
+		try {
+			localRootURL = localRoot.toURI().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		if (!localPathPrefix.isEmpty()) {
+			String localRootURLString = localRootURL.toExternalForm();
+			if (localRootURLString.endsWith("/"))
+				localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
+
+			// localPathPrefix is guaranteed to start with a '/'.
+			localRootURLString += localPathPrefix;
+			try {
+				localRootURL = new URL(localRootURLString);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return localRootURL;
 	}
 }

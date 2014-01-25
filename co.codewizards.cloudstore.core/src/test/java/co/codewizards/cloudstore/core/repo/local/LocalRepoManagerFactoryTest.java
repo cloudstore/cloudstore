@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.local;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Proxy;
 
 import org.junit.AfterClass;
@@ -142,6 +143,10 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		assertThat(sub1SubAaaDir).isDirectory();
 
 		localRepoManagerFactory.createLocalRepoManagerForNewRepository(sub1SubAaaDir);
+	}
+
+	private File newTestRepositoryLocalRoot() throws IOException {
+		return newTestRepositoryLocalRoot("");
 	}
 
 }

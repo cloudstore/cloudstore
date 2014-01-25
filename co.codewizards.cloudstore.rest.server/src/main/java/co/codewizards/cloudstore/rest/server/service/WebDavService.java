@@ -2,8 +2,6 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.URL;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -20,11 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.rest.server.webdav.COPY;
 import co.codewizards.cloudstore.rest.server.webdav.MKCOL;
 import co.codewizards.cloudstore.rest.server.webdav.MOVE;
@@ -55,12 +49,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 			@QueryParam("length") @DefaultValue("-1") int length)
 	{
 		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
+			path = repoTransport.unprefixPath(path);
 			return repoTransport.getFileData(path, offset, length);
 		} finally {
 			repoTransport.close();
@@ -69,32 +60,18 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 
 	@MKCOL
 	@Path("{path:.*}")
-	public void mkcol(@QueryParam("fromRepositoryID") EntityID fromRepositoryID, @PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
-		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
-		try {
-			repoTransport.makeDirectory(fromRepositoryID, path, lastModified == null ? null : lastModified.toDate());
-		} finally {
-			repoTransport.close();
-		}
+	public void mkcol(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
+		throw new UnsupportedOperationException("NYI");
 	}
 
 	@DELETE
 	@Path("{path:.*}")
-	public void delete(@QueryParam("fromRepositoryID") EntityID fromRepositoryID, @PathParam("path") String path) {
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+	public void delete(@PathParam("path") String path) {
 		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
-			repoTransport.delete(fromRepositoryID, path);
+			path = repoTransport.unprefixPath(path);
+			repoTransport.delete(path);
 		} finally {
 			repoTransport.close();
 		}
@@ -105,12 +82,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public void putFileData(@PathParam("path") String path, @QueryParam("offset") long offset, byte[] fileData) {
 		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
+			path = repoTransport.unprefixPath(path);
 			repoTransport.putFileData(path, offset, fileData);
 		} finally {
 			repoTransport.close();
@@ -135,47 +109,18 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@COPY
 	@Path("{path:.*}")
 	public void copy(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
-		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-//		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-//		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
-//		try {
-//			repoTransport.delete(path);
-//		} finally {
-//			repoTransport.close();
-//		}
+		throw new UnsupportedOperationException("NYI");
 	}
 
 	@MOVE
 	@Path("{path:.*}")
 	public void move(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
-		assertNotNull("path", path);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-//		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-//		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
-//		try {
-//			repoTransport.delete(path);
-//		} finally {
-//			repoTransport.close();
-//		}
+		throw new UnsupportedOperationException("NYI");
 	}
 
 	@PROPFIND
 	@Path("{path:.*}")
 	public void propfind(@HeaderParam("CONTENT_LENGTH") final long contentLength) {
-//		assertNotNull("path", path);
-//
-//		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-//		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-//		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
-//		try {
-//			repoTransport.delete(path);
-//		} finally {
-//			repoTransport.close();
-//		}
+		throw new UnsupportedOperationException("NYI");
 	}
 }

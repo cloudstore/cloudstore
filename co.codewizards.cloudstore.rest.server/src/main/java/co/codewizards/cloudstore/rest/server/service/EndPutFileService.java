@@ -2,8 +2,6 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.URL;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -16,12 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
 @Path("_endPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -37,21 +31,16 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 	@POST
 	@Path("{path:.*}")
 	public void endPutFile(
-			@QueryParam("fromRepositoryID") EntityID fromRepositoryID,
 			@PathParam("path") String path,
 			@QueryParam("lastModified") DateTime lastModified,
 			@QueryParam("length") long length)
 	{
-		assertNotNull("fromRepositoryID", fromRepositoryID);
 		assertNotNull("path", path);
 		assertNotNull("lastModified", lastModified);
-		authenticateAndReturnUserName();
-
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
-			repoTransport.endPutFile(fromRepositoryID, path, lastModified.toDate(), length);
+			path = repoTransport.unprefixPath(path);
+			repoTransport.endPutFile(path, lastModified.toDate(), length);
 		} finally {
 			repoTransport.close();
 		}

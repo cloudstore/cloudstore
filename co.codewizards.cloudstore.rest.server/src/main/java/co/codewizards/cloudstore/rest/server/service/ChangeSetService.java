@@ -1,11 +1,8 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import java.net.URL;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -14,12 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.ChangeSet;
-import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 
 @Path("_ChangeSet/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -33,14 +26,10 @@ public class ChangeSetService extends AbstractServiceWithRepoToRepoAuth
 	}
 
 	@GET
-	@Path("{toRepositoryID}")
-	public ChangeSet getChangeSet(@PathParam("toRepositoryID") EntityID toRepositoryID, @QueryParam("localSync") boolean localSync) {
-		authenticateAndReturnUserName();
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL);
+	public ChangeSet getChangeSet(@QueryParam("localSync") boolean localSync) {
+		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
-			ChangeSet response = repoTransport.getChangeSet(toRepositoryID, localSync);
+			ChangeSet response = repoTransport.getChangeSet(localSync);
 			return response;
 		} finally {
 			repoTransport.close();

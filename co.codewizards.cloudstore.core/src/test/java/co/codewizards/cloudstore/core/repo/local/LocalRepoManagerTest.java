@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.local;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -343,4 +344,9 @@ public class LocalRepoManagerTest extends AbstractTest {
 
 		localRepoManager.close();
 	}
+
+	private File newTestRepositoryLocalRoot() throws IOException {
+		return newTestRepositoryLocalRoot("");
+	}
+
 }

@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.local;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,4 +47,9 @@ public class LocalRepoRegistryTest extends AbstractTest
 			assertThat(localRoot).isEqualTo(newEntry.getValue());
 		}
 	}
+
+	private File newTestRepositoryLocalRoot() throws IOException {
+		return newTestRepositoryLocalRoot("");
+	}
+
 }

@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.URL;
 
+import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class AbstractRepoTransport implements RepoTransport {
@@ -12,6 +13,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	private URL remoteRoot;
 	private URL remoteRootWithoutPathPrefix;
 	private String pathPrefix;
+	private EntityID clientRepositoryID;
 
 	@Override
 	public RepoTransportFactory getRepoTransportFactory() {
@@ -35,6 +37,23 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 			throw new IllegalStateException("Cannot re-assign remoteRoot!");
 
 		this.remoteRoot = remoteRoot;
+	}
+
+	public EntityID getClientRepositoryIDOrFail() {
+		EntityID clientRepositoryID = getClientRepositoryID();
+		if (clientRepositoryID == null)
+			throw new IllegalStateException("clientRepositoryID == null :: You must invoke setClientRepositoryID(...) before!");
+
+		return clientRepositoryID;
+	}
+
+	@Override
+	public EntityID getClientRepositoryID() {
+		return clientRepositoryID;
+	}
+	@Override
+	public void setClientRepositoryID(EntityID clientRepositoryID) {
+		this.clientRepositoryID = clientRepositoryID;
 	}
 
 	@Override
@@ -78,7 +97,8 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 		return pathPrefix;
 	}
 
-	protected String prefixPath(String path) {
+	@Override
+	public String prefixPath(String path) {
 		assertNotNull("path", path);
 		if ("".equals(path) || "/".equals(path))
 			return getPathPrefix();
@@ -88,11 +108,15 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 			return getPathPrefix() + '/' + path;
 	}
 
-	protected String unprefixPath(String path) {
+	@Override
+	public String unprefixPath(String path) {
 		assertNotNull("path", path);
 		String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return path;
+
+		if (!path.startsWith("/"))
+			path = '/' + path;
 
 		if (!path.startsWith(pathPrefix))
 			throw new IllegalArgumentException(String.format("path='%s' does not start with pathPrefix='%s'!", path, pathPrefix));
