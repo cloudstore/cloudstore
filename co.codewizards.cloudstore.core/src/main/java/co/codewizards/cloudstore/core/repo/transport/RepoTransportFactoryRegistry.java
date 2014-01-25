@@ -69,11 +69,15 @@ public class RepoTransportFactoryRegistry {
 		return repoTransportFactories;
 	}
 
+	protected static int _compare(int x, int y) {
+        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+    }
+
 	private static void sortRepoTransportFactories(List<RepoTransportFactory> repoTransportFactories) {
 		Collections.sort(repoTransportFactories, new Comparator<RepoTransportFactory>() {
 			@Override
 			public int compare(RepoTransportFactory o1, RepoTransportFactory o2) {
-				int result = -1 * Integer.compare(o1.getPriority(), o2.getPriority());
+				int result = -1 * _compare(o1.getPriority(), o2.getPriority());
 				if (result != 0)
 					return result;
 

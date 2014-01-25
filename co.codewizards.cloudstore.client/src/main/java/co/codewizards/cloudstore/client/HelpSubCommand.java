@@ -25,7 +25,7 @@ public class HelpSubCommand extends SubCommand {
 
 	@Override
 	public void run() throws Exception {
-		throw new UnsupportedOperationException("The help command is handled by the KeyManagerCLI itself.");
+		throw new UnsupportedOperationException("The help command is handled by the CloudStoreClient itself.");
 	}
 
 }

@@ -27,5 +27,10 @@
     	<filtered>true</filtered>
     	<fileMode>0777</fileMode>
     </file>
+    <file>
+    	<source>${basedir}/src/bin/cloudstore.bat</source>
+    	<outputDirectory>/bin</outputDirectory>
+    	<filtered>true</filtered>
+    </file>
   </files>
 </assembly>

@@ -40,7 +40,8 @@ public class CloudStoreClient {
 				HelpSubCommand.class,
 				RepoInfoSubCommand.class,
 				RequestRepoConnectionSubCommand.class,
-				SyncSubCommand.class
+				SyncSubCommand.class,
+				VersionSubCommand.class
 				);
 
 		subCommandClasses = Collections.unmodifiableList(l);
