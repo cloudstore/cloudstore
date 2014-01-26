@@ -48,6 +48,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
+import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
 public class CloudStoreServer implements Runnable {
@@ -140,24 +141,11 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized int getSecurePort() {
 		if (securePort <= 0) {
-			String value = System.getProperty(SYSTEM_PROPERTY_SECURE_PORT);
-			if (value == null) {
-				logger.debug("System property '{}' not set. Listening on default port {}.", SYSTEM_PROPERTY_SECURE_PORT, DEFAULT_SECURE_PORT);
+			securePort = PropertiesUtil.getSystemPropertyValueAsInt(SYSTEM_PROPERTY_SECURE_PORT, DEFAULT_SECURE_PORT);
+			if (securePort < 1 || securePort > 65535) {
+				logger.warn("System property '{}' is set to the value '{}' which is out of range for a port number. Falling back to default port {}.",
+						SYSTEM_PROPERTY_SECURE_PORT, securePort, DEFAULT_SECURE_PORT);
 				securePort = DEFAULT_SECURE_PORT;
-			}
-			else {
-				try {
-					securePort = Integer.valueOf(value);
-				} catch (NumberFormatException x) {
-					logger.warn("System property '{}' is set to the value '{}' which is not an integer. Falling back to default port {}.",
-							SYSTEM_PROPERTY_SECURE_PORT, value, DEFAULT_SECURE_PORT);
-					securePort = DEFAULT_SECURE_PORT;
-				}
-				if (securePort < 1 || securePort > 65535) {
-					logger.warn("System property '{}' is set to the value '{}' which is out of range. Falling back to default port {}.",
-							SYSTEM_PROPERTY_SECURE_PORT, securePort, DEFAULT_SECURE_PORT);
-					securePort = DEFAULT_SECURE_PORT;
-				}
 			}
 		}
 		return securePort;

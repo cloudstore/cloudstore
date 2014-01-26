@@ -15,12 +15,17 @@ import java.util.TreeSet;
 import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
+import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class AuthRepoPasswordManager {
 
 	private static final int DEFAULT_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS = 60 * 60 * 1000;
 	private static final int DEFAULT_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS = 10 * 60 * 1000;
 	private static final int DEFAULT_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS = 60 * 1000;
+
+	public static final String SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS = "cloudstore.passwordValiditiyDurationMaxMillis";
+	public static final String SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS = "cloudstore.passwordValiditiyDurationMinMillis";
+	public static final String SYSTEM_PROPERTY_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS = "cloudstore.removeExpiredPasswordsPeriodMillis";
 
 	private int passwordValidityDurationMaxMillis = Integer.MIN_VALUE;
 	private int passwordValidityDurationMinMillis = Integer.MIN_VALUE;
@@ -128,24 +133,24 @@ public class AuthRepoPasswordManager {
 
 	protected int getPasswordValidityDurationMaxMillis() {
 		if (passwordValidityDurationMaxMillis == Integer.MIN_VALUE) {
-			// TODO system property!
-			passwordValidityDurationMaxMillis = DEFAULT_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS;
+			passwordValidityDurationMaxMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS, DEFAULT_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS);
 		}
 		return passwordValidityDurationMaxMillis;
 	}
 
 	protected int getPasswordValidityDurationMinMillis() {
 		if (passwordValidityDurationMinMillis == Integer.MIN_VALUE) {
-			// TODO system property!
-			passwordValidityDurationMinMillis = DEFAULT_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS;
+			passwordValidityDurationMinMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS, DEFAULT_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS);
 		}
 		return passwordValidityDurationMinMillis;
 	}
 
 	protected int getRemoveExpiredPasswordsPeriodMillis() {
 		if (removeExpiredPasswordsPeriodMillis == Integer.MIN_VALUE) {
-			// TODO system property!
-			removeExpiredPasswordsPeriodMillis = DEFAULT_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS;
+			removeExpiredPasswordsPeriodMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS, DEFAULT_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS);
 		}
 		return removeExpiredPasswordsPeriodMillis;
 	}
@@ -157,10 +162,10 @@ public class AuthRepoPasswordManager {
 			Date expiryDate2 = o2.getAuthToken().getExpiryDateTime().toDate();
 
 			if (expiryDate1.before(expiryDate2))
-				return -1;
+				return +1;
 
 			if (expiryDate1.after(expiryDate2))
-				return +1;
+				return -1;
 
 			int result = o1.getServerRepositoryID().toUUID().compareTo(o2.getServerRepositoryID().toUUID());
 			if (result != 0)

@@ -195,7 +195,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	private AuthToken getAuthToken() {
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		AuthToken authToken = clientRepositoryID2AuthToken.get(clientRepositoryID);
-		if (authToken != null && (isAfterRenewalDate(authToken) || isExpired(authToken))) {
+		if (authToken != null && isAfterRenewalDate(authToken)) {
 			logger.debug("getAuthToken: old AuthToken passed renewal-date: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
 					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
 
@@ -223,6 +223,13 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 					verifier.verify(signedAuthToken);
 
 					authToken = new AuthTokenIO().deserialise(signedAuthToken.getAuthTokenData());
+					Date expiryDate = assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime()).toDate();
+					Date renewalDate = assertNotNull("authToken.renewalDateTime", authToken.getRenewalDateTime()).toDate();
+					if (!renewalDate.before(expiryDate))
+						throw new IllegalArgumentException(
+								String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
+										authToken.getRenewalDateTime(), authToken.getExpiryDateTime()));
+
 					clientRepositoryID2AuthToken.put(clientRepositoryID, authToken);
 
 					transaction.commit();
@@ -247,12 +254,6 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		assertNotNull("authToken", authToken);
 		final int reserveMillis = 60000; // in case client or server are not exactly on time
 		return System.currentTimeMillis() + reserveMillis > authToken.getRenewalDateTime().getMillis();
-	}
-
-	private boolean isExpired(AuthToken authToken) {
-		assertNotNull("authToken", authToken);
-		final int reserveMillis = 60000; // in case client or server are not exactly on time
-		return System.currentTimeMillis() + reserveMillis > authToken.getExpiryDateTime().getMillis();
 	}
 
 	protected CloudStoreRESTClient getClient() {

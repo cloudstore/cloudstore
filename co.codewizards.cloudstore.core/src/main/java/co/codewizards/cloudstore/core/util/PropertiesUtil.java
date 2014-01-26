@@ -8,8 +8,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link java.util.Properties} utilities.
@@ -18,6 +22,8 @@ import java.util.regex.Pattern;
  */
 public final class PropertiesUtil
 {
+	private static final Logger logger = LoggerFactory.getLogger(PropertiesUtil.class);
+
 	private PropertiesUtil() { }
 
 	/**
@@ -391,5 +397,30 @@ public final class PropertiesUtil
 
 		String metaNullValue = String.valueOf(properties.get(getMetaPropertyKeyNullValue(key)));
 		return Boolean.parseBoolean(metaNullValue);
+	}
+
+	public static int getSystemPropertyValueAsInt(String key, int defaultValue) {
+		long value = getSystemPropertyValueAsLong(key, defaultValue);
+		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+			logger.warn("System property '{}' is set to the value '{}' which is out of range for a 32-bit integer. Falling back to default value {}.",
+					key, value, defaultValue);
+			return defaultValue;
+		}
+		return (int) value;
+	}
+
+	public static long getSystemPropertyValueAsLong(String key, long defaultValue) {
+		String value = System.getProperty(key);
+		if (value == null) {
+			logger.debug("System property '{}' is not set. Falling back to default value {}.", key, defaultValue);
+			return defaultValue;
+		}
+		try {
+			return Integer.valueOf(value);
+		} catch (NumberFormatException x) {
+			logger.warn("System property '{}' is set to the value '{}' which is not an integer (long). Falling back to default value {}.",
+					key, value, defaultValue);
+			return defaultValue;
+		}
 	}
 }
