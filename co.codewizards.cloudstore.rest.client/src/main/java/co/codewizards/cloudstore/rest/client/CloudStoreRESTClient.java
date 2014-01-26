@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Date;
 import java.util.LinkedList;
@@ -219,8 +221,10 @@ public class CloudStoreRESTClient {
 				} catch (Exception y) {
 					logger.error("handleException: " + y, y);
 				}
-				if (error != null)
+				if (error != null) {
+					throwOriginalExceptionIfPossible(error);
 					throw new RemoteException(error);
+				}
 			}
 			throw new WebApplicationException(response);
 		}
@@ -608,10 +612,85 @@ public class CloudStoreRESTClient {
 			logger.error("handleException: " + y, y);
 		}
 
-		if (error != null)
+		if (error != null) {
+			throwOriginalExceptionIfPossible(error);
 			throw new RemoteException(error);
+		}
 
 		throw x;
+	}
+
+	private void throwOriginalExceptionIfPossible(Error error) {
+		Class<?> clazz;
+		try {
+			clazz = Class.forName(error.getClassName());
+		} catch (ClassNotFoundException e) {
+			return;
+		}
+		if (!Throwable.class.isAssignableFrom(clazz))
+			return;
+
+		Object throwableO = null;
+		if (throwableO == null) {
+			throwableO = getObjectOrNull(clazz, new Class<?>[] { String.class }, error.getMessage());
+		}
+
+		if (throwableO == null) {
+			throwableO = getObjectOrNull(clazz, null);
+		}
+
+		if (throwableO != null) {
+			Throwable throwable = (Throwable) throwableO;
+			throwable.initCause(new RemoteException(error));
+			if (throwable instanceof RuntimeException)
+				throw (RuntimeException) throwable;
+
+			if (throwable instanceof java.lang.Error)
+				throw (java.lang.Error) throwable;
+
+			throw new RuntimeException(throwable);
+		}
+	}
+
+	private Object getObjectOrNull(Class<?> clazz, Class<?>[] argumentTypes, Object ... arguments) {
+		Object result = null;
+		if (argumentTypes == null)
+			argumentTypes = new Class<?> [0];
+
+		if (argumentTypes.length == 0) {
+			try {
+				result = clazz.newInstance();
+			} catch (InstantiationException e) {
+				return null;
+			} catch (IllegalAccessException e) {
+				return null;
+			}
+		}
+
+		if (result == null) {
+			Constructor<?> constructor;
+			try {
+				constructor = clazz.getConstructor(argumentTypes);
+			} catch (NoSuchMethodException e) {
+				return null;
+			} catch (SecurityException e) {
+				return null;
+			}
+
+			try {
+				result = constructor.newInstance(arguments);
+			} catch (InstantiationException e) {
+				return null;
+			} catch (IllegalAccessException e) {
+				return null;
+			} catch (IllegalArgumentException e) {
+				return null;
+			} catch (InvocationTargetException e) {
+				return null;
+			}
+		}
+
+		return result;
 	}
 
 	public CredentialsProvider getCredentialsProvider() {

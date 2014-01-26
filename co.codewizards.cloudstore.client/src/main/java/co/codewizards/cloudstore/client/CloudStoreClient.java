@@ -23,6 +23,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.MainArgsUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -145,6 +146,7 @@ public class CloudStoreClient {
 	public static void main(String[] args) throws Exception
 	{
 		initLogging();
+		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 		int programExitStatus = 1;
 		boolean displayHelp = true;
 		String subCommandName = null;

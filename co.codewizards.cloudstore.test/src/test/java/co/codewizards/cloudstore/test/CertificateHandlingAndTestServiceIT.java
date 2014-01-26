@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
+import co.codewizards.cloudstore.core.util.TestException;
 import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.RemoteException;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
@@ -81,10 +82,14 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		} catch (Exception x) {
 			logger.info(x.toString(), x);
 			assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
-			assertThat(x).isInstanceOf(RemoteException.class);
+			assertThat(x).isInstanceOf(TestException.class);
+			assertThat(x.getMessage()).isEqualTo("Test");
 
-			RemoteException rx = (RemoteException) x;
-			assertThat(rx.getErrorClassName()).isEqualTo(RuntimeException.class.getName());
+			assertThat(x.getCause()).isNotNull();
+			assertThat(x.getCause()).isInstanceOf(RemoteException.class);
+
+			RemoteException rx = (RemoteException) x.getCause();
+			assertThat(rx.getErrorClassName()).isEqualTo(TestException.class.getName());
 			assertThat(rx.getMessage()).isEqualTo("Test");
 			assertThat(rx.getStackTrace()).isNotNull();
 			assertThat(rx.getStackTrace().length).isGreaterThan(0);

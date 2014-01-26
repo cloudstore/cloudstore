@@ -47,6 +47,7 @@ import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.MainArgsUtil;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
 public class CloudStoreServer implements Runnable {
@@ -73,6 +74,7 @@ public class CloudStoreServer implements Runnable {
 
 	public static void main(String[] args) throws Exception {
 		initLogging();
+		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 		new CloudStoreServer().run();
 	}
 

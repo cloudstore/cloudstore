@@ -10,6 +10,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.auth.AuthTokenIO;
@@ -18,11 +21,13 @@ import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
+import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkSet;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -30,15 +35,17 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
-import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
-import co.codewizards.cloudstore.rest.client.RemoteException;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
 
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
+	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
+
+	private long changeSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
+	private long fileChunkSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
 
 	private EntityID repositoryID; // server-repository
 	private byte[] publicKey;
@@ -98,20 +105,23 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public ChangeSet getChangeSet(boolean localSync) {
-		return getClient().getChangeSet(getRepositoryID().toString(), localSync);
+		long beginTimestamp = System.currentTimeMillis();
+		while (true) {
+			try {
+				return getClient().getChangeSet(getRepositoryID().toString(), localSync);
+			} catch (DeferredCompletionException x) {
+				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
+					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);
+
+				logger.info("getChangeSet: Got DeferredCompletionException; will retry.");
+			}
+		}
 	}
 
 	@Override
 	public void makeDirectory(String path, Date lastModified) {
 		path = prefixPath(path);
-		try {
-			getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
-		} catch (RemoteException x) {
-			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
-				throw new DeleteModificationCollisionException(x.getMessage());
-			else
-				throw x;
-		}
+		getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
 	}
 
 	@Override
@@ -123,7 +133,17 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
 		path = prefixPath(path);
-		return getClient().getFileChunkSet(getRepositoryID().toString(), path, allowHollow);
+		long beginTimestamp = System.currentTimeMillis();
+		while (true) {
+			try {
+				return getClient().getFileChunkSet(getRepositoryID().toString(), path, allowHollow);
+			} catch (DeferredCompletionException x) {
+				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
+					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);
+
+				logger.info("getFileChunkSet: Got DeferredCompletionException; will retry.");
+			}
+		}
 	}
 
 	@Override
@@ -135,14 +155,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public void beginPutFile(String path) {
 		path = prefixPath(path);
-		try {
-			getClient().beginPutFile(getRepositoryID().toString(), path);
-		} catch (RemoteException x) {
-			if (DeleteModificationCollisionException.class.getName().equals(x.getErrorClassName()))
-				throw new DeleteModificationCollisionException(x.getMessage());
-			else
-				throw x;
-		}
+		getClient().beginPutFile(getRepositoryID().toString(), path);
 	}
 
 	@Override

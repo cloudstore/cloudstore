@@ -10,6 +10,8 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.util.TestException;
+
 @Path("_test")
 @Consumes(MediaType.WILDCARD)
 public class TestService
@@ -32,7 +34,7 @@ public class TestService
 	public String test()
 	{
 		if (exception)
-			throw new RuntimeException("Test");
+			throw new TestException("Test");
 
 		return "SUCCESS";
 	}
