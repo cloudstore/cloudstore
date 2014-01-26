@@ -252,8 +252,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	private boolean isAfterRenewalDate(AuthToken authToken) {
 		assertNotNull("authToken", authToken);
-		final int reserveMillis = 60000; // in case client or server are not exactly on time
-		return System.currentTimeMillis() + reserveMillis > authToken.getRenewalDateTime().getMillis();
+		return System.currentTimeMillis() > authToken.getRenewalDateTime().getMillis();
 	}
 
 	protected CloudStoreRESTClient getClient() {

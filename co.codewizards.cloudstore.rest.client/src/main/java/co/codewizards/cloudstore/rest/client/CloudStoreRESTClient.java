@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
+import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSet;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -602,13 +603,19 @@ public class CloudStoreRESTClient {
 		if (Response.Status.NO_CONTENT.getStatusCode() == response.getStatus())
 			return;
 
-		logger.error("handleException: " + x, x);
 		Error error = null;
 		try {
 			response.bufferEntity();
 			if (response.hasEntity())
 				error = response.readEntity(Error.class);
+
+			if (error != null && DeferredCompletionException.class.getName().equals(error.getClassName()))
+				logger.debug("handleException: " + x, x);
+			else
+				logger.error("handleException: " + x, x);
+
 		} catch (Exception y) {
+			logger.error("handleException: " + x, x);
 			logger.error("handleException: " + y, y);
 		}
 

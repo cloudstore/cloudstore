@@ -10,6 +10,7 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
@@ -36,7 +37,10 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 	{
 		// We need to log the exception here, because it otherwise doesn't occur in any log
 		// in a vanilla tomcat 7.0.25. Marco :-)
-		logger.error(throwable.toString(), throwable);
+		if (throwable instanceof DeferredCompletionException) // normal part of protocol => only debug
+			logger.debug(String.valueOf(throwable), throwable);
+		else
+			logger.error(String.valueOf(throwable),throwable);
 
 		if (throwable instanceof WebApplicationException) {
 			return ((WebApplicationException)throwable).getResponse();
