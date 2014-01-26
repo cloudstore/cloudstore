@@ -19,16 +19,19 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class AuthRepoPasswordManager {
 
-	private static final int DEFAULT_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS = 60 * 60 * 1000;
-	private static final int DEFAULT_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS = 10 * 60 * 1000;
+	private static final int DEFAULT_PASSWORD_VALIDITIY_PERIOD_MILLIS = 60 * 60 * 1000;
+	private static final int DEFAULT_PASSWORD_RENEWAL_AFTER_MILLIS = 30 * 60 * 1000;
+	private static final int DEFAULT_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS = 15 * 60 * 1000;
 	private static final int DEFAULT_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS = 60 * 1000;
 
-	public static final String SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS = "cloudstore.passwordValiditiyDurationMaxMillis";
-	public static final String SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS = "cloudstore.passwordValiditiyDurationMinMillis";
+	public static final String SYSTEM_PROPERTY_PASSWORD_VALIDITIY_PERIOD_MILLIS = "cloudstore.passwordValidityPeriodMillis";
+	public static final String SYSTEM_PROPERTY_PASSWORD_RENEWAL_AFTER_MILLIS = "cloudstore.passwordRenewalAfterMillis";
+	public static final String SYSTEM_PROPERTY_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS = "cloudstore.passwordEarlyRenewalPeriodMillis";
 	public static final String SYSTEM_PROPERTY_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS = "cloudstore.removeExpiredPasswordsPeriodMillis";
 
-	private int passwordValidityDurationMaxMillis = Integer.MIN_VALUE;
-	private int passwordValidityDurationMinMillis = Integer.MIN_VALUE;
+	private int passwordValidityPeriodMillis = Integer.MIN_VALUE;
+	private int passwordRenewalAfterMillis = Integer.MIN_VALUE;
+	private int passwordEarlyRenewalPeriodMillis = Integer.MIN_VALUE;
 	private int removeExpiredPasswordsPeriodMillis = Integer.MIN_VALUE;
 
 	private static class AuthRepoPasswordManagerHolder {
@@ -72,7 +75,7 @@ public class AuthRepoPasswordManager {
 		}
 
 		AuthRepoPassword authRepoPassword = authRepoPasswordSet.isEmpty() ? null : authRepoPasswordSet.first();
-		if (authRepoPassword != null && isAfterRenewalDate(authRepoPassword))
+		if (authRepoPassword != null && isAfterRenewalDateOrInEarlyRenewalPeriod(authRepoPassword))
 			authRepoPassword = null;
 
 		if (authRepoPassword == null) {
@@ -131,20 +134,28 @@ public class AuthRepoPasswordManager {
 		}
 	}
 
-	protected int getPasswordValidityDurationMaxMillis() {
-		if (passwordValidityDurationMaxMillis == Integer.MIN_VALUE) {
-			passwordValidityDurationMaxMillis = PropertiesUtil.getSystemPropertyValueAsInt(
-					SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS, DEFAULT_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS);
+	protected int getPasswordValidityPeriodMillis() {
+		if (passwordValidityPeriodMillis == Integer.MIN_VALUE) {
+			passwordValidityPeriodMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_PASSWORD_VALIDITIY_PERIOD_MILLIS, DEFAULT_PASSWORD_VALIDITIY_PERIOD_MILLIS);
 		}
-		return passwordValidityDurationMaxMillis;
+		return passwordValidityPeriodMillis;
 	}
 
-	protected int getPasswordValidityDurationMinMillis() {
-		if (passwordValidityDurationMinMillis == Integer.MIN_VALUE) {
-			passwordValidityDurationMinMillis = PropertiesUtil.getSystemPropertyValueAsInt(
-					SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS, DEFAULT_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS);
+	protected int getPasswordRenewalAfterMillis() {
+		if (passwordRenewalAfterMillis == Integer.MIN_VALUE) {
+			passwordRenewalAfterMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_PASSWORD_RENEWAL_AFTER_MILLIS, DEFAULT_PASSWORD_RENEWAL_AFTER_MILLIS);
 		}
-		return passwordValidityDurationMinMillis;
+		return passwordRenewalAfterMillis;
+	}
+
+	protected int getPasswordEarlyRenewalPeriodMillis() {
+		if (passwordEarlyRenewalPeriodMillis == Integer.MIN_VALUE) {
+			passwordEarlyRenewalPeriodMillis = PropertiesUtil.getSystemPropertyValueAsInt(
+					SYSTEM_PROPERTY_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS, DEFAULT_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS);
+		}
+		return passwordEarlyRenewalPeriodMillis;
 	}
 
 	protected int getRemoveExpiredPasswordsPeriodMillis() {
@@ -176,9 +187,9 @@ public class AuthRepoPasswordManager {
 		}
 	};
 
-	private boolean isAfterRenewalDate(AuthRepoPassword authRepoPassword) {
+	private boolean isAfterRenewalDateOrInEarlyRenewalPeriod(AuthRepoPassword authRepoPassword) {
 		assertNotNull("authRepoPassword", authRepoPassword);
-		return System.currentTimeMillis() > authRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
+		return System.currentTimeMillis() + getPasswordEarlyRenewalPeriodMillis() > authRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
 	}
 
 	private boolean isExpired(AuthRepoPassword authRepoPassword) {
@@ -188,8 +199,8 @@ public class AuthRepoPasswordManager {
 
 	private AuthToken createAuthToken() {
 		AuthToken authToken = new AuthToken();
-		Date expiryDate = new Date(System.currentTimeMillis() + getPasswordValidityDurationMaxMillis());
-		Date renewalDate = new Date(System.currentTimeMillis() + getPasswordValidityDurationMinMillis());
+		Date expiryDate = new Date(System.currentTimeMillis() + getPasswordValidityPeriodMillis());
+		Date renewalDate = new Date(System.currentTimeMillis() + getPasswordRenewalAfterMillis());
 		authToken.setExpiryDateTime(new DateTime(expiryDate));
 		authToken.setRenewalDateTime(new DateTime(renewalDate));
 		authToken.setPassword(new String(PasswordUtil.createRandomPassword(40)));

@@ -22,15 +22,17 @@ public class AuthRepoPasswordManagerTest {
 
 	@BeforeClass
 	public static void beforeClass() {
-		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS, Integer.toString(PASSWORD_VALIDITIY_DURATION_MAX_MILLIS));
-		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS, Integer.toString(PASSWORD_VALIDITIY_DURATION_MIN_MILLIS));
+		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_PERIOD_MILLIS, Integer.toString(PASSWORD_VALIDITIY_DURATION_MAX_MILLIS));
+		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_RENEWAL_AFTER_MILLIS, Integer.toString(PASSWORD_VALIDITIY_DURATION_MIN_MILLIS));
+		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS, Integer.toString(0));
 		System.setProperty(AuthRepoPasswordManager.SYSTEM_PROPERTY_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS, Integer.toString(REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS));
 	}
 
 	@AfterClass
 	public static void afterClass() {
-		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MAX_MILLIS);
-		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_DURATION_MIN_MILLIS);
+		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_VALIDITIY_PERIOD_MILLIS);
+		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_RENEWAL_AFTER_MILLIS);
+		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_PASSWORD_EARLY_RENEWAL_PERIOD_MILLIS);
 		System.getProperties().remove(AuthRepoPasswordManager.SYSTEM_PROPERTY_REMOVE_EXPIRED_PASSWORDS_PERIOD_MILLIS);
 	}
 
@@ -129,7 +131,7 @@ public class AuthRepoPasswordManagerTest {
 
 			assertThat(validCount).isGreaterThanOrEqualTo(1).isLessThanOrEqualTo(2);
 
-			expectedLoopBeginTimestamp += 550; // 50 ms reserve
+			expectedLoopBeginTimestamp += 505; // 100 ms reserve
 			long difference = expectedLoopBeginTimestamp - System.currentTimeMillis();
 			if (difference > 0)
 				Thread.sleep(difference);
