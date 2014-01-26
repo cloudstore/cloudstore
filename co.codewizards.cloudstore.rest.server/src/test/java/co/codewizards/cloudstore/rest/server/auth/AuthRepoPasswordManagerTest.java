@@ -131,7 +131,7 @@ public class AuthRepoPasswordManagerTest {
 
 			assertThat(validCount).isGreaterThanOrEqualTo(1).isLessThanOrEqualTo(2);
 
-			expectedLoopBeginTimestamp += 505; // 100 ms reserve
+			expectedLoopBeginTimestamp += 505; // 5 ms reserve
 			long difference = expectedLoopBeginTimestamp - System.currentTimeMillis();
 			if (difference > 0)
 				Thread.sleep(difference);
