@@ -195,10 +195,17 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	private AuthToken getAuthToken() {
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		AuthToken authToken = clientRepositoryID2AuthToken.get(clientRepositoryID);
-		if (authToken != null && (isAfterRenewalDate(authToken) || isExpired(authToken)))
+		if (authToken != null && (isAfterRenewalDate(authToken) || isExpired(authToken))) {
+			logger.debug("getAuthToken: old AuthToken passed renewal-date: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
+
 			authToken = null;
+		}
 
 		if (authToken == null) {
+			logger.debug("getAuthToken: getting new AuthToken: clientRepositoryID={} serverRepositoryID={}",
+					clientRepositoryID, getRepositoryID());
+
 			File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryID);
 			LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 			try {
@@ -225,7 +232,14 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			} finally {
 				localRepoManager.close();
 			}
+
+			logger.info("getAuthToken: got new AuthToken: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
 		}
+		else
+			logger.trace("getAuthToken: old AuthToken still valid: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
+
 		return authToken;
 	}
 

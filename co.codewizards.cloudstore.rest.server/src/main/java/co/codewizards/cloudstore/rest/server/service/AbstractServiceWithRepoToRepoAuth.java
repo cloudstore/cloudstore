@@ -112,7 +112,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 						password[idx++] = cb.get();
 				}
 			} catch (Exception e) {
-				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e)).build());
+				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_XML).entity(new Error(e)).build());
 			} finally {
 				// For extra safety: Overwrite all sensitive memory with 0.
 				Arrays.fill(basicAuthDecodedBA, (byte)0);

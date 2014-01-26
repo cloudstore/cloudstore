@@ -51,7 +51,7 @@ public class RepoToRepoSync {
 	 * Sync in the inverse direction. This is only for testing whether the RepoTransport implementations
 	 * are truly symmetric. It is less efficient! Therefore, this must NEVER be true in production!!!
 	 */
-	private static final boolean TEST_INVERSE = true;
+	private static final boolean TEST_INVERSE = false;
 
 	private final File localRoot;
 	private final URL remoteRoot;
