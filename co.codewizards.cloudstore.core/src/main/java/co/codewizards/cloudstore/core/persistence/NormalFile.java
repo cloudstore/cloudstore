@@ -38,7 +38,7 @@ public class NormalFile extends RepoFile {
 
 	private String lastSyncFromRepositoryID;
 
-	@Persistent(mappedBy="normalFile")
+	@Persistent(mappedBy="normalFile", dependentElement="true")
 	private SortedSet<FileChunk> fileChunks;
 
 	/**

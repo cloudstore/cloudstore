@@ -54,7 +54,7 @@ public class CreateRepoSubCommand extends SubCommand
 		localRoot = localRootFile.getPath();
 
 		if (alias == null || alias.isEmpty()) // empty alias means the same as alias not specified.
-			alias = localRootFile.getName();
+			alias = localRootFile.getCanonicalFile().getName();
 	}
 
 	@Override

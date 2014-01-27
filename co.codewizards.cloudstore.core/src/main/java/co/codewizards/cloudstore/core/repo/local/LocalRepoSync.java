@@ -285,6 +285,9 @@ public class LocalRepoSync {
 	private void sha(NormalFile normalFile, File file, ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", (int)Math.min(file.length(), Integer.MAX_VALUE));
 		try {
+			normalFile.getFileChunks().clear();
+			transaction.getPersistenceManager().flush();
+
 			MessageDigest mdAll = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
 			MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
 
