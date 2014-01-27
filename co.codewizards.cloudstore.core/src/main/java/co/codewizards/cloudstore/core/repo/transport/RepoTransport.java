@@ -6,7 +6,7 @@ import java.util.Date;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
+import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 
 public interface RepoTransport {
@@ -37,11 +37,11 @@ public interface RepoTransport {
 
 	/**
 	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryID}.
-	 * @param publicKey TODO
+	 * @param publicKey the public key of the client-repository which requests the connection.
 	 */
 	void requestRepoConnection(byte[] publicKey);
 
-	ChangeSetDTO getChangeSet(boolean localSync);
+	ChangeSetDTO getChangeSetDTO(boolean localSync);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).
@@ -72,7 +72,7 @@ public interface RepoTransport {
 	 */
 	void delete(String path);
 
-	FileChunkSetDTO getFileChunkSet(String path);
+	RepoFileDTO getRepoFileDTO(String path);
 
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.

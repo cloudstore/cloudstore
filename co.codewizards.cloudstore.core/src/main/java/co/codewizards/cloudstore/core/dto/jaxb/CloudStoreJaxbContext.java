@@ -11,7 +11,6 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -32,7 +31,6 @@ public class CloudStoreJaxbContext {
 						EntityID.class,
 						Error.class,
 						ErrorStackTraceElement.class,
-						FileChunkSetDTO.class,
 						FileChunkDTO.class,
 						ModificationDTO.class,
 						NormalFileDTO.class,

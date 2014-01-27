@@ -63,7 +63,8 @@ public class AuthTokenSignAndVerifyTest {
 
 	private KeyPair createKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(4096, random);
+//		keyGen.initialize(4096, random);
+		keyGen.initialize(1024, random); // much faster - we don't need high security for testing only!
 		KeyPair pair = keyGen.generateKeyPair();
 		return pair;
 	}

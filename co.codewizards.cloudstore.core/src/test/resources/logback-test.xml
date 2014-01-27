@@ -23,6 +23,7 @@
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	<logger name="DataNucleus.Query" level="INFO" />
 	-->
+	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	<!-- END DataNucleus -->
 
 	<logger name="co.codewizards.cloudstore.core.repo.sync" level="ALL" />

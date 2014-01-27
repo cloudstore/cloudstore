@@ -46,7 +46,7 @@ public class ChangeSetDTOService extends AbstractServiceWithRepoToRepoAuth
 								@Override
 								public ChangeSetDTO call() throws Exception { // called *A*synchronously
 									try {
-										ChangeSetDTO changeSetDTO = rt.getChangeSet(localSync);
+										ChangeSetDTO changeSetDTO = rt.getChangeSetDTO(localSync);
 										return changeSetDTO;
 									} finally {
 										rt.close();

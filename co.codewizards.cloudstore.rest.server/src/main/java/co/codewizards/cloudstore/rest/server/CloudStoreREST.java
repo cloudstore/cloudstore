@@ -15,7 +15,7 @@ import co.codewizards.cloudstore.rest.server.service.EncryptedSignedAuthTokenSer
 import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
-import co.codewizards.cloudstore.rest.server.service.FileChunkSetDTOService;
+import co.codewizards.cloudstore.rest.server.service.RepoFileDTOService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
@@ -47,7 +47,7 @@ public class CloudStoreREST extends ResourceConfig {
 				EndPutFileService.class,
 				EndSyncFromRepositoryService.class,
 				EndSyncToRepositoryService.class,
-				FileChunkSetDTOService.class,
+				RepoFileDTOService.class,
 //				LocalSyncService.class,
 				MakeDirectoryService.class,
 				RepositoryDTOService.class,

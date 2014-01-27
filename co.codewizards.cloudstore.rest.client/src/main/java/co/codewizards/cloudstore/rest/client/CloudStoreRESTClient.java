@@ -32,7 +32,7 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
+import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
@@ -306,20 +306,20 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public FileChunkSetDTO getFileChunkSet(String repositoryName, String path) {
+	public RepoFileDTO getRepoFileDTO(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			WebTarget webTarget = client.target(getBaseURL())
-					.path(getPath(FileChunkSetDTO.class))
+					.path(getPath(RepoFileDTO.class))
 					.path(repositoryName)
 					.path(removeLeadingAndTrailingSlashes(path));
 
-			FileChunkSetDTO fileChunkSetDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(FileChunkSetDTO.class);
-			return fileChunkSetDTO;
+			RepoFileDTO repoFileDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(RepoFileDTO.class);
+			return repoFileDTO;
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // we do not expect null
+			return null;
 		} finally {
 			releaseClient(client);
 		}

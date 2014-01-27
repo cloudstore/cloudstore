@@ -17,49 +17,49 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.CallableProvider;
 import co.codewizards.cloudstore.core.concurrent.DeferrableExecutor;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
+import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 
-@Path("_FileChunkSetDTO/{repositoryName}")
+@Path("_RepoFileDTO/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class FileChunkSetDTOService extends AbstractServiceWithRepoToRepoAuth
+public class RepoFileDTOService extends AbstractServiceWithRepoToRepoAuth
 {
-	private static final Logger logger = LoggerFactory.getLogger(FileChunkSetDTOService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RepoFileDTOService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
 
 	@GET
-	public FileChunkSetDTO getFileChunkSetDTO()
+	public RepoFileDTO getRepoFileDTO()
 	{
-		return getFileChunkSetDTO("");
+		return getRepoFileDTO("");
 	}
 
 	@GET
 	@Path("{path:.*}")
-	public FileChunkSetDTO getFileChunkSetDTO(final @PathParam("path") String path)
+	public RepoFileDTO getRepoFileDTO(final @PathParam("path") String path)
 	{
 		assertNotNull("path", path);
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			String callIdentifier = FileChunkSetDTOService.class.getName() + ".getFileChunkSet|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;
+			String callIdentifier = RepoFileDTOService.class.getName() + ".getRepoFileDTO|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
-					new CallableProvider<FileChunkSetDTO>() {
+					new CallableProvider<RepoFileDTO>() {
 						@Override
-						public Callable<FileChunkSetDTO> getCallable() { // called synchronously during DeferrableExecutor.call(...) - if called at all
+						public Callable<RepoFileDTO> getCallable() { // called synchronously during DeferrableExecutor.call(...) - if called at all
 							final RepoTransport rt = repoTransport[0];
 							repoTransport[0] = null;
 							final String unprefixedPath = rt.unprefixPath(path);
-							return new Callable<FileChunkSetDTO>() {
+							return new Callable<RepoFileDTO>() {
 								@Override
-								public FileChunkSetDTO call() throws Exception { // called *A*synchronously
+								public RepoFileDTO call() throws Exception { // called *A*synchronously
 									try {
-										FileChunkSetDTO fileChunkSetDTO = rt.getFileChunkSet(unprefixedPath);
-										return fileChunkSetDTO;
+										RepoFileDTO repoFileDTO = rt.getRepoFileDTO(unprefixedPath);
+										return repoFileDTO;
 									} finally {
 										rt.close();
 									}

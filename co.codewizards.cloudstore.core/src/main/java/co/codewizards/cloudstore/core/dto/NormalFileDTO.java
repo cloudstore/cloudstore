@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.core.dto;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -10,6 +12,8 @@ public class NormalFileDTO extends RepoFileDTO {
 	private long length;
 
 	private String sha1;
+
+	private List<FileChunkDTO> fileChunkDTOs;
 
 	/**
 	 * Gets the file size in bytes.
@@ -32,5 +36,15 @@ public class NormalFileDTO extends RepoFileDTO {
 	}
 	public void setSha1(String sha) {
 		this.sha1 = sha;
+	}
+
+	public List<FileChunkDTO> getFileChunkDTOs() {
+		if (fileChunkDTOs == null)
+			fileChunkDTOs = new ArrayList<FileChunkDTO>();
+
+		return fileChunkDTOs;
+	}
+	public void setFileChunkDTOs(List<FileChunkDTO> fileChunkDTOs) {
+		this.fileChunkDTOs = fileChunkDTOs;
 	}
 }

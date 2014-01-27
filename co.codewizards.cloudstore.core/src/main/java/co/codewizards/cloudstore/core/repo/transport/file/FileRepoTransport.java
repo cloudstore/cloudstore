@@ -25,7 +25,6 @@ import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -129,7 +128,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSetDTO getChangeSet(boolean localSync) {
+	public ChangeSetDTO getChangeSetDTO(boolean localSync) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
@@ -286,28 +285,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public FileChunkSetDTO getFileChunkSet(String path) {
-		FileChunkSetDTO response = new FileChunkSetDTO();
-		response.setPath(path); // non-prefixed path!
-		path = prefixPath(path); // prefixing it afterwards
+	public RepoFileDTO getRepoFileDTO(String path) {
+		RepoFileDTO repoFileDTO = null;
+		path = prefixPath(path);
 		File file = getFile(path);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
 
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-			if (!(repoFile instanceof NormalFile))
-				response.setFileExists(false);
-			else {
-				NormalFile normalFile = (NormalFile) repoFile;
-				response.setLastModified(normalFile.getLastModified());
-				response.setLength(normalFile.getLength());
-				response.setSha1(normalFile.getSha1());
-				for (FileChunk fileChunk : normalFile.getFileChunks()) {
-					response.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
-				}
-			}
+			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+			RepoFile repoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+			if (repoFile != null)
+				repoFileDTO = toRepoFileDTO(repoFile, repoFileDAO, Integer.MAX_VALUE); // TODO pass depth as argument - or maybe leave it this way?
+
 			transaction.commit();
 		} catch (RuntimeException x) {
 			throw x;
@@ -316,7 +307,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		} finally {
 			transaction.rollbackIfActive();
 		}
-		return response;
+		return repoFileDTO;
 	}
 
 	private FileChunkDTO toFileChunkDTO(FileChunk fileChunk) {
@@ -422,7 +413,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			while (rf != null) {
 				if (!entityID2RepoFileDTO.containsKey(rf.getEntityID())) {
-					RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO);
+					RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO, 0);
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
 						repoFileDTO.setParentEntityID(null); // virtual root has no parent!
 						repoFileDTO.setName(""); // virtual root has no name!
@@ -453,7 +444,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return false;
 	}
 
-	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO) {
+	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO, int depth) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFile", repoFile);
 		RepoFileDTO repoFileDTO;
@@ -463,6 +454,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			repoFileDTO = normalFileDTO = new NormalFileDTO();
 			normalFileDTO.setLength(normalFile.getLength());
 			normalFileDTO.setSha1(normalFile.getSha1());
+			if (depth > 0) {
+				for (FileChunk fileChunk : normalFile.getFileChunks()) {
+					normalFileDTO.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
+				}
+			}
 		}
 		else if (repoFile instanceof Directory) {
 			repoFileDTO = new DirectoryDTO();
@@ -540,21 +536,6 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				parentFile.setLastModified(parentFileLastModified);
 		}
 	}
-
-//	protected String getLocalRepoPath(File file) {
-//		File localRoot = getLocalRepoManager().getLocalRoot();
-//
-//		String path;
-//		try {
-//			path = IOUtil.getRelativePath(localRoot, file).replace(File.separatorChar, '/');
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//		if (!path.startsWith("/"))
-//			path = '/' + path;
-//
-//		return path;
-//	}
 
 	/**
 	 * @param path the prefixed path (relative to the real root).

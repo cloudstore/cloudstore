@@ -351,15 +351,4 @@ public class LocalRepoSync {
 			monitor.done();
 		}
 	}
-
-	/**
-	 * @deprecated Noop - to be removed!
-	 */
-	@Deprecated
-	public void putSha1(File file, String sha1) {
-//		if (!(assertNotNull("file", file).isAbsolute()))
-//			throw new IllegalArgumentException("file is not absolute: " + file);
-//
-//		file2Sha1.put(file, sha1);
-	}
 }

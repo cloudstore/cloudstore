@@ -20,7 +20,6 @@ import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -123,7 +122,7 @@ public class RepoToRepoSync {
 			}
 			else { // THIS IS FOR TESTING ONLY!
 				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryID, localRoot);
-				remoteRepoTransport.getChangeSet(true); // trigger the local sync on the remote side (we don't need the change set)
+				remoteRepoTransport.getChangeSetDTO(true); // trigger the local sync on the remote side (we don't need the change set)
 
 				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
@@ -190,7 +189,7 @@ public class RepoToRepoSync {
 	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			ChangeSetDTO changeSetDTO = fromRepoTransport.getChangeSet(fromRepoLocalSync);
+			ChangeSetDTO changeSetDTO = fromRepoTransport.getChangeSetDTO(fromRepoLocalSync);
 			monitor.worked(8);
 
 			sync(fromRepoTransport, toRepoTransport, changeSetDTO, new SubProgressMonitor(monitor, 90));
@@ -267,19 +266,31 @@ public class RepoToRepoSync {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
 
-			FileChunkSetDTO fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path);
-			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
+			RepoFileDTO fromRepoFileDTO = fromRepoTransport.getRepoFileDTO(path);
+			if (fromRepoFileDTO == null) {
 				logger.warn("File was deleted during sync on source side: {}", path);
+				return;
+			}
+			if (!(fromRepoFileDTO instanceof NormalFileDTO)) {
+				logger.warn("Normal file was replaced by a directory (or another type) during sync on source side: {}", path);
 				return;
 			}
 			monitor.worked(10);
 
-			FileChunkSetDTO toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path);
-			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
+			NormalFileDTO fromNormalFileDTO = (NormalFileDTO) fromRepoFileDTO;
+
+			RepoFileDTO toRepoFileDTO = toRepoTransport.getRepoFileDTO(path);
+			if (areFilesExistingAndEqual(fromRepoFileDTO, toRepoFileDTO)) {
 				logger.info("File is already equal on destination side: {}", path);
 				return;
 			}
 			monitor.worked(10);
+
+			NormalFileDTO toNormalFileDTO;
+			if (toRepoFileDTO instanceof NormalFileDTO)
+				toNormalFileDTO = (NormalFileDTO) toRepoFileDTO;
+			else
+				toNormalFileDTO = new NormalFileDTO(); // dummy (null-object pattern)
 
 			try {
 				toRepoTransport.beginPutFile(path);
@@ -293,9 +304,9 @@ public class RepoToRepoSync {
 			monitor.worked(1);
 
 			List<FileChunkDTO> fromFileChunksDirty = new ArrayList<FileChunkDTO>();
-			Iterator<FileChunkDTO> toFileChunkIterator = toFileChunkSetResponse.getFileChunkDTOs().iterator();
+			Iterator<FileChunkDTO> toFileChunkIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
 			int fileChunkIndex = -1;
-			for (FileChunkDTO fromFileChunk : fromFileChunkSetResponse.getFileChunkDTOs()) {
+			for (FileChunkDTO fromFileChunk : fromNormalFileDTO.getFileChunkDTOs()) {
 				FileChunkDTO toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
 				++fileChunkIndex;
 				if (toFileChunk != null
@@ -326,8 +337,8 @@ public class RepoToRepoSync {
 			subMonitor.done();
 
 			toRepoTransport.endPutFile(
-					path, fromFileChunkSetResponse.getLastModified(),
-					fromFileChunkSetResponse.getLength());
+					path, fromNormalFileDTO.getLastModified(),
+					fromNormalFileDTO.getLength());
 
 			monitor.worked(6);
 		} finally {
@@ -347,12 +358,19 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private boolean areFilesExistingAndEqual(FileChunkSetDTO fromFileChunkSetResponse, FileChunkSetDTO toFileChunkSetResponse) {
-		return (fromFileChunkSetResponse.isFileExists()
-				&& toFileChunkSetResponse.isFileExists()
-				&& equal(fromFileChunkSetResponse.getLength(), toFileChunkSetResponse.getLength())
-				&& equal(fromFileChunkSetResponse.getLastModified(), toFileChunkSetResponse.getLastModified())
-				&& equal(fromFileChunkSetResponse.getSha1(), toFileChunkSetResponse.getSha1()));
+	private boolean areFilesExistingAndEqual(RepoFileDTO fromRepoFileDTO, RepoFileDTO toRepoFileDTO) {
+		if (!(fromRepoFileDTO instanceof NormalFileDTO))
+			return false;
+
+		if (!(toRepoFileDTO instanceof NormalFileDTO))
+			return false;
+
+		NormalFileDTO fromNormalFileDTO = (NormalFileDTO) fromRepoFileDTO;
+		NormalFileDTO toNormalFileDTO = (NormalFileDTO) toRepoFileDTO;
+
+		return equal(fromNormalFileDTO.getLength(), toNormalFileDTO.getLength())
+				&& equal(fromNormalFileDTO.getLastModified(), toNormalFileDTO.getLastModified())
+				&& equal(fromNormalFileDTO.getSha1(), toNormalFileDTO.getSha1());
 	}
 
 	public void close() {

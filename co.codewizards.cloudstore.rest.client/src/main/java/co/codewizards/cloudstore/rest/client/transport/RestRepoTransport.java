@@ -25,7 +25,7 @@ import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
+import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
@@ -104,7 +104,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSetDTO getChangeSet(boolean localSync) {
+	public ChangeSetDTO getChangeSetDTO(boolean localSync) {
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
@@ -131,12 +131,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public FileChunkSetDTO getFileChunkSet(String path) {
+	public RepoFileDTO getRepoFileDTO(String path) {
 		path = prefixPath(path);
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().getFileChunkSet(getRepositoryID().toString(), path);
+				return getClient().getRepoFileDTO(getRepositoryID().toString(), path);
 			} catch (DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
 					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);
