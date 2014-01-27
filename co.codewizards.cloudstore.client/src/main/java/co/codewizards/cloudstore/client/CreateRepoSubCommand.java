@@ -10,6 +10,7 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * {@link SubCommand} implementation for creating a repository in the local file system.
@@ -53,8 +54,10 @@ public class CreateRepoSubCommand extends SubCommand
 
 		localRoot = localRootFile.getPath();
 
-		if (alias == null || alias.isEmpty()) // empty alias means the same as alias not specified.
-			alias = localRootFile.getCanonicalFile().getName();
+		if (alias == null || alias.isEmpty()) { // empty alias means the same as alias not specified.
+			String simplified = IOUtil.simplifyPath(localRootFile);
+			alias = new File(simplified).getName();
+		}
 	}
 
 	@Override
