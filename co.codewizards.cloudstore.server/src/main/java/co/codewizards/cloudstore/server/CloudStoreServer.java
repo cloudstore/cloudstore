@@ -278,7 +278,16 @@ public class CloudStoreServer implements Runnable {
 		sslContextFactory.setKeyManagerPassword(KEY_PASSWORD_STRING);
 		sslContextFactory.setTrustStorePath(getKeyStoreFile().getPath());
 		sslContextFactory.setTrustStorePassword(KEY_STORE_PASSWORD_STRING);
-		sslContextFactory.setExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA", "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", ".*RC4.*");
+		sslContextFactory.setExcludeCipherSuites(
+				"SSL_RSA_WITH_DES_CBC_SHA",
+				"SSL_DHE_RSA_WITH_DES_CBC_SHA",
+				"SSL_DHE_DSS_WITH_DES_CBC_SHA",
+				"SSL_RSA_EXPORT_WITH_RC4_40_MD5",
+				"SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+				"SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+				"SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+				".*RC4.*",
+				".*3DES.*");
 		//        sslContextFactory.setCertAlias(CERTIFICATE_ALIAS); // Jetty uses our certificate. We put only one single cert into the key store. Hence, we don't need this.
 
 		ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpConfigurationForHTTPS));

@@ -5,9 +5,75 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 Security
 -------
 
+CloudStore aims to be the most secure file synchronisation tool available. Here we describe in
+detail how this is done:
+
 $H$H$H Encryption
+
+CloudStore uses HTTPS only. There is no unencrypted HTTP port open. Therefore, you cannot accidentally
+use an insecure, unencrypted communication channel. All communication between client and server is
+encrypted - always. 
+
+When you start the server for the first time, it automatically generates a 4096 bit RSA key pair
+(private key + certificate). This is the most secure asymmetric encryption standardized today. Even
+though ECDSA reaches the same level of security with shorter key lengths, there are reasonable
+doubts about the quality of the constants used in the ECDSA-based standards (look for the key
+words \"cooked numbers\", \"nothing up my sleeve number\" and \"ECDSA\" in the web). Therefore,
+we stick with RSA for now.
+
+Of course, RSA is only used for the initial connection setup. The actual
+communication is symmetrically encrypted using AES with a key length of either 128 or 256 bit.
+
+128 bit AES is generally assumed to be very secure and totally sufficient. However, 256 bit
+RSA is - of course - even much more secure.
+
+If you use the OpenJDK, you\'re likely using 256 bit already. If you use the Oracle JDK,
+you\'ll have to download and install the
+\"Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files\" to make
+256 bit symmetric key encryption available.
+
+Whether you have 256 bit ciphers available is logged when the server starts up. Look for a message similar to this:
+
+	19:52:32.435 [main] DEBUG o.e.j.u.s.SslContextFactory - Enabled Ciphers   [TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384, TLS_DHE_RSA_WITH_AES_256_CBC_SHA256, TLS_DHE_DSS_WITH_AES_256_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDH_RSA_WITH_AES_256_CBC_SHA, TLS_DHE_RSA_WITH_AES_256_CBC_SHA, TLS_DHE_DSS_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_DSS_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA, TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDH_RSA_WITH_AES_128_CBC_SHA, TLS_DHE_RSA_WITH_AES_128_CBC_SHA, TLS_DHE_DSS_WITH_AES_128_CBC_SHA, TLS_EMPTY_RENEGOTIATION_INFO_SCSV] of [TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384, TLS_DHE_RSA_WITH_AES_256_CBC_SHA256, TLS_DHE_DSS_WITH_AES_256_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDH_RSA_WITH_AES_256_CBC_SHA, TLS_DHE_RSA_WITH_AES_256_CBC_SHA, TLS_DHE_DSS_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_DSS_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA, TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDH_RSA_WITH_AES_128_CBC_SHA, TLS_DHE_RSA_WITH_AES_128_CBC_SHA, TLS_DHE_DSS_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, TLS_ECDHE_RSA_WITH_RC4_128_SHA, SSL_RSA_WITH_RC4_128_SHA, TLS_ECDH_ECDSA_WITH_RC4_128_SHA, TLS_ECDH_RSA_WITH_RC4_128_SHA, TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA, TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, SSL_RSA_WITH_3DES_EDE_CBC_SHA, TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA, TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA, SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA, SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA, SSL_RSA_WITH_RC4_128_MD5, TLS_EMPTY_RENEGOTIATION_INFO_SCSV, TLS_DH_anon_WITH_AES_256_CBC_SHA256, TLS_ECDH_anon_WITH_AES_256_CBC_SHA, TLS_DH_anon_WITH_AES_256_CBC_SHA, TLS_DH_anon_WITH_AES_128_CBC_SHA256, TLS_ECDH_anon_WITH_AES_128_CBC_SHA, TLS_DH_anon_WITH_AES_128_CBC_SHA, TLS_ECDH_anon_WITH_RC4_128_SHA, SSL_DH_anon_WITH_RC4_128_MD5, TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA, SSL_DH_anon_WITH_3DES_EDE_CBC_SHA, TLS_RSA_WITH_NULL_SHA256, TLS_ECDHE_ECDSA_WITH_NULL_SHA, TLS_ECDHE_RSA_WITH_NULL_SHA, SSL_RSA_WITH_NULL_SHA, TLS_ECDH_ECDSA_WITH_NULL_SHA, TLS_ECDH_RSA_WITH_NULL_SHA, TLS_ECDH_anon_WITH_NULL_SHA, SSL_RSA_WITH_NULL_MD5, SSL_RSA_WITH_DES_CBC_SHA, SSL_DHE_RSA_WITH_DES_CBC_SHA, SSL_DHE_DSS_WITH_DES_CBC_SHA, SSL_DH_anon_WITH_DES_CBC_SHA, SSL_RSA_EXPORT_WITH_RC4_40_MD5, SSL_DH_anon_EXPORT_WITH_RC4_40_MD5, SSL_RSA_EXPORT_WITH_DES40_CBC_SHA, SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA, SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA, SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA, TLS_KRB5_WITH_RC4_128_SHA, TLS_KRB5_WITH_RC4_128_MD5, TLS_KRB5_WITH_3DES_EDE_CBC_SHA, TLS_KRB5_WITH_3DES_EDE_CBC_MD5, TLS_KRB5_WITH_DES_CBC_SHA, TLS_KRB5_WITH_DES_CBC_MD5, TLS_KRB5_EXPORT_WITH_RC4_40_SHA, TLS_KRB5_EXPORT_WITH_RC4_40_MD5, TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA, TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5]
+
+Of course, you must have 256 bit ciphers available on both sides - client and server - to actually
+use more than only 128 bit keys.
+
+
+$H$H$H Not trusting CAs
+
+CloudStore does not trust any CA. You have to verify yourself that the certificate received by the
+client really is the one sent by the server.
+
+CAs are run by companies/people you do not know - why should you trust them?
+
+It is very easy for government-backed, powerful adversaries - e.g. the NSA - to make a CA
+create a wrong certificate claiming to be your server. If the CloudStore-client trusted this CA, it
+would connect to an NSA server without you noticing - routing all your private files through their server.
+
+That\'s why the server shows the so-called \"fingerprint\" (a check-sum) of its certificate when it starts.
+When your client connects to the server for the first time, it presents the fingerprint of the
+certificate it received from the server to you. If both are the same, you\'re safe. If they are different, someone
+is tampering with your connection and you must *not* continue to connect!
+
+The client stores the certificate locally. Therefore, you are asked only once. If you are asked again, later,
+it is very likely, someone is tampering with your connection! Of course, you might just have generated a new
+certificate or deleted the client\'s trust-store. Check the situation carefully!
 
 
 $H$H$H Authentication
 
+CloudStore does *not* employ user names or passwords. Instead, communication is restricted to so-called *connected*
+repositories: The client authenticates as a repository which was connected before. Only if the server knows
+this client-repository and it was really *connected* before, access is granted.
 
+In order to *connect* two repositories, two steps have to be performed:
+
+* The client requests the connection.
+
+* The administrator of the server accepts the connection on the server-side.
+
+Again, RSA is used for this purpose: Every repository has its own 4096 bit RSA key pair
+(private key + certificate). When you connect two repositories as just described, the certificates
+(a.k.a. public keys) are exchanged. Again, you have to verify carefully that their fingerprints really
+are the same on client- and server-side!
