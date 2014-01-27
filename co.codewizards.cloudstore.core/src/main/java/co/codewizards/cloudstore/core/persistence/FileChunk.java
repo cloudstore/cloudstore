@@ -10,11 +10,13 @@ import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.Unique;
 import javax.jdo.listener.LoadCallback;
 import javax.jdo.listener.StoreCallback;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
+@Unique(name="FileChunk_normalFile_offset", members={"normalFile", "offset"})
 public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCallback, LoadCallback {
 
 	@NotPersistent
