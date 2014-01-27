@@ -54,10 +54,13 @@ public class CreateRepoSubCommand extends SubCommand
 
 		localRoot = localRootFile.getPath();
 
-		if (alias == null || alias.isEmpty()) { // empty alias means the same as alias not specified.
+		if (!noAlias && (alias == null || alias.isEmpty())) { // empty alias means the same as alias not specified.
 			String simplified = IOUtil.simplifyPath(localRootFile);
 			alias = new File(simplified).getName();
 		}
+
+		if (alias != null && alias.isEmpty())
+			alias = null;
 	}
 
 	@Override
@@ -81,7 +84,7 @@ public class CreateRepoSubCommand extends SubCommand
 			localRepoManager.close();
 		}
 
-		if (!noAlias) {
+		if (!noAlias && alias != null) {
 			LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
 			EntityID oldRepositoryID = localRepoRegistry.getRepositoryID(alias);
 
