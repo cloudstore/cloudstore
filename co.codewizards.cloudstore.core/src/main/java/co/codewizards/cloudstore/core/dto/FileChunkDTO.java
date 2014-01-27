@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.core.dto;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class FileChunk {
+public class FileChunkDTO {
 
 	private long offset;
 

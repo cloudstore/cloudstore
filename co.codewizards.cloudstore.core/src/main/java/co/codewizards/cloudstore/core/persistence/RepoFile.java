@@ -135,6 +135,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		}
 		return result;
 	}
+
 	/**
 	 * Gets the timestamp of the file's last modification.
 	 * <p>

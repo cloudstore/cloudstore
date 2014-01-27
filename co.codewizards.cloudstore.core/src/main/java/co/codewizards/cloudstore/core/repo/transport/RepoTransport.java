@@ -4,9 +4,9 @@ import java.io.File;
 import java.net.URL;
 import java.util.Date;
 
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 
 public interface RepoTransport {
@@ -41,7 +41,7 @@ public interface RepoTransport {
 	 */
 	void requestRepoConnection(byte[] publicKey);
 
-	ChangeSet getChangeSet(boolean localSync);
+	ChangeSetDTO getChangeSet(boolean localSync);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).
@@ -72,7 +72,7 @@ public interface RepoTransport {
 	 */
 	void delete(String path);
 
-	FileChunkSet getFileChunkSet(String path, boolean allowHollow);
+	FileChunkSetDTO getFileChunkSet(String path);
 
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.

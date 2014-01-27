@@ -3,14 +3,11 @@ package co.codewizards.cloudstore.core.repo.transport.file;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -23,12 +20,12 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunk;
-import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.FileChunkDTO;
+import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -36,6 +33,7 @@ import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
 import co.codewizards.cloudstore.core.persistence.Directory;
+import co.codewizards.cloudstore.core.persistence.FileChunk;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepoDAO;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
@@ -59,7 +57,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoSync;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
-import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class FileRepoTransport extends AbstractRepoTransport {
@@ -132,12 +129,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSet getChangeSet(boolean localSync) {
+	public ChangeSetDTO getChangeSet(boolean localSync) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		ChangeSet changeSet = new ChangeSet();
+		ChangeSetDTO changeSetDTO = new ChangeSetDTO();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
@@ -150,7 +147,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the
 			// next run.
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
-			changeSet.setRepositoryDTO(toRepositoryDTO(localRepository));
+			changeSetDTO.setRepositoryDTO(toRepositoryDTO(localRepository));
 
 			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
 
@@ -164,7 +161,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
 
 			Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
-			changeSet.setModificationDTOs(toModificationDTOs(modifications));
+			changeSetDTO.setModificationDTOs(toModificationDTOs(modifications));
 
 			if (!getPathPrefix().isEmpty()) {
 				Collection<DeleteModification> deleteModifications = transaction.getDAO(DeleteModificationDAO.class).getDeleteModificationsForPathOrParentOfPathAfter(
@@ -174,7 +171,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					deleteModificationDTO.setEntityID(new EntityID(0, 0));
 					deleteModificationDTO.setLocalRevision(localRepository.getRevision());
 					deleteModificationDTO.setPath("");
-					changeSet.getModificationDTOs().add(deleteModificationDTO);
+					changeSetDTO.getModificationDTOs().add(deleteModificationDTO);
 				}
 			}
 
@@ -184,10 +181,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				pathPrefixRepoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
 			}
 			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
-			changeSet.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
+			changeSetDTO.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
 
 			transaction.commit();
-			return changeSet;
+			return changeSetDTO;
 		} finally {
 			transaction.rollbackIfActive();
 		}
@@ -289,91 +286,26 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
-		FileChunkSet response = new FileChunkSet();
+	public FileChunkSetDTO getFileChunkSet(String path) {
+		FileChunkSetDTO response = new FileChunkSetDTO();
 		response.setPath(path); // non-prefixed path!
 		path = prefixPath(path); // prefixing it afterwards
-		final int bufLength = 32 * 1024;
-		final int chunkLength = 16 * bufLength; // 512 KiB chunk size
 		File file = getFile(path);
 		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
 		try {
-			if (!file.isFile())
+			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			localRepoSync.sync(file, new NullProgressMonitor());
+
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+			if (!(repoFile instanceof NormalFile))
 				response.setFileExists(false);
 			else {
-				LocalRepoSync localRepoSync = null;
-				boolean hollow = allowHollow;
-				if (hollow) {
-					RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-					if (repoFile == null || !(repoFile instanceof NormalFile))
-						hollow = false;
-					else {
-						NormalFile normalFile = (NormalFile) repoFile;
-						if (localRepoSync == null)
-							localRepoSync = new LocalRepoSync(transaction);
-
-						hollow = !localRepoSync.isModified(repoFile, file);
-
-						if (hollow) {
-							response.setFileChunksLoaded(false);
-							response.setLastModified(normalFile.getLastModified());
-							response.setLength(normalFile.getLength());
-							response.setSha1(normalFile.getSha1());
-						}
-					}
-				}
-
-				if (!hollow) {
-					response.setLastModified(new Date(file.lastModified()));
-
-					MessageDigest mdAll = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
-					MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
-
-					long offset = 0;
-					InputStream in = new FileInputStream(file);
-					try {
-						FileChunk fileChunk = null;
-
-						byte[] buf = new byte[bufLength];
-						while (true) {
-							if (fileChunk == null) {
-								fileChunk = new FileChunk();
-								fileChunk.setOffset(offset);
-								fileChunk.setLength(0);
-								mdChunk.reset();
-							}
-
-							int bytesRead = in.read(buf, 0, buf.length);
-
-							if (bytesRead > 0) {
-								mdAll.update(buf, 0, bytesRead);
-								mdChunk.update(buf, 0, bytesRead);
-								offset += bytesRead;
-								fileChunk.setLength(fileChunk.getLength() + bytesRead);
-							}
-
-							if (bytesRead < 0 || fileChunk.getLength() >= chunkLength) {
-								fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
-								response.getFileChunks().add(fileChunk);
-								fileChunk = null;
-
-								if (bytesRead < 0) {
-									break;
-								}
-							}
-						}
-					} finally {
-						in.close();
-					}
-					response.setSha1(HashUtil.encodeHexStr(mdAll.digest()));
-					response.setLength(offset);
-
-					if (localRepoSync == null)
-						localRepoSync = new LocalRepoSync(transaction);
-
-					localRepoSync.putSha1(file, response.getSha1());
-
-					localRepoSync.sync(file, new NullProgressMonitor());
+				NormalFile normalFile = (NormalFile) repoFile;
+				response.setLastModified(normalFile.getLastModified());
+				response.setLength(normalFile.getLength());
+				response.setSha1(normalFile.getSha1());
+				for (FileChunk fileChunk : normalFile.getFileChunks()) {
+					response.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
 				}
 			}
 			transaction.commit();
@@ -385,6 +317,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			transaction.rollbackIfActive();
 		}
 		return response;
+	}
+
+	private FileChunkDTO toFileChunkDTO(FileChunk fileChunk) {
+		FileChunkDTO fileChunkDTO = new FileChunkDTO();
+		fileChunkDTO.setOffset(fileChunk.getOffset());
+		fileChunkDTO.setLength(fileChunk.getLength());
+		fileChunkDTO.setSha1(fileChunk.getSha1());
+		return fileChunkDTO;
 	}
 
 	protected LocalRepoManager getLocalRepoManager() {

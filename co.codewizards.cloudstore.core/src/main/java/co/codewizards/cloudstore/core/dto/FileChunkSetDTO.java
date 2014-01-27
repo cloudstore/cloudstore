@@ -7,7 +7,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class FileChunkSet {
+public class FileChunkSetDTO {
 
 	private String path;
 	private boolean fileExists = true;
@@ -15,8 +15,7 @@ public class FileChunkSet {
 	private Date lastModified;
 	private long length;
 
-	private boolean fileChunksLoaded = true;
-	private List<FileChunk> fileChunks;
+	private List<FileChunkDTO> fileChunkDTOs;
 
 	public String getPath() {
 		return path;
@@ -46,14 +45,14 @@ public class FileChunkSet {
 		this.lastModified = lastModified;
 	}
 
-	public List<FileChunk> getFileChunks() {
-		if (fileChunks == null)
-			fileChunks = new ArrayList<FileChunk>();
+	public List<FileChunkDTO> getFileChunkDTOs() {
+		if (fileChunkDTOs == null)
+			fileChunkDTOs = new ArrayList<FileChunkDTO>();
 
-		return fileChunks;
+		return fileChunkDTOs;
 	}
-	public void setFileChunks(List<FileChunk> fileChunks) {
-		this.fileChunks = fileChunks;
+	public void setFileChunkDTOs(List<FileChunkDTO> fileChunkDTOs) {
+		this.fileChunkDTOs = fileChunkDTOs;
 	}
 
 	public boolean isFileExists() {
@@ -61,16 +60,5 @@ public class FileChunkSet {
 	}
 	public void setFileExists(boolean fileExists) {
 		this.fileExists = fileExists;
-	}
-
-	public boolean isFileChunksLoaded() {
-		return fileChunksLoaded;
-	}
-	public void setFileChunksLoaded(boolean fileChunksLoaded) {
-		this.fileChunksLoaded = fileChunksLoaded;
-	}
-
-	public boolean isHollow() {
-		return !isFileChunksLoaded();
 	}
 }

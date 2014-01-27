@@ -34,6 +34,7 @@ import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.Entity;
+import co.codewizards.cloudstore.core.persistence.FileChunk;
 import co.codewizards.cloudstore.core.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
 import co.codewizards.cloudstore.core.persistence.LocalRepositoryDAO;
@@ -312,6 +313,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		pm.getExtent(DeleteModification.class);
 		pm.getExtent(Directory.class);
 		pm.getExtent(Entity.class);
+		pm.getExtent(FileChunk.class);
 		pm.getExtent(LastSyncToRemoteRepo.class);
 		pm.getExtent(LocalRepository.class);
 		pm.getExtent(Modification.class);

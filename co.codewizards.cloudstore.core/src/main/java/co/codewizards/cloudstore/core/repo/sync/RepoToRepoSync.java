@@ -15,12 +15,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunk;
-import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.FileChunkDTO;
+import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
@@ -190,27 +190,27 @@ public class RepoToRepoSync {
 	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			ChangeSet changeSet = fromRepoTransport.getChangeSet(fromRepoLocalSync);
+			ChangeSetDTO changeSetDTO = fromRepoTransport.getChangeSet(fromRepoLocalSync);
 			monitor.worked(8);
 
-			sync(fromRepoTransport, toRepoTransport, changeSet, new SubProgressMonitor(monitor, 90));
+			sync(fromRepoTransport, toRepoTransport, changeSetDTO, new SubProgressMonitor(monitor, 90));
 
 			fromRepoTransport.endSyncFromRepository();
-			toRepoTransport.endSyncToRepository(changeSet.getRepositoryDTO().getRevision());
+			toRepoTransport.endSyncToRepository(changeSetDTO.getRepositoryDTO().getRevision());
 			monitor.worked(2);
 		} finally {
 			monitor.done();
 		}
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSet changeSet, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSet.getModificationDTOs().size() + changeSet.getRepoFileDTOs().size());
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetDTO changeSetDTO, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising...", changeSetDTO.getModificationDTOs().size() + changeSetDTO.getRepoFileDTOs().size());
 		try {
-			for (ModificationDTO modificationDTO : changeSet.getModificationDTOs()) {
+			for (ModificationDTO modificationDTO : changeSetDTO.getModificationDTOs()) {
 				syncModification(fromRepoTransport, toRepoTransport, modificationDTO, new SubProgressMonitor(monitor, 1));
 			}
 
-			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSet.getRepoFileDTOs());
+			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
 			if (repoFileDTOTree != null) {
 				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
 					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
@@ -250,8 +250,10 @@ public class RepoToRepoSync {
 			try {
 				toRepoTransport.makeDirectory(path, directoryDTO.getLastModified());
 			} catch (DeleteModificationCollisionException x) {
-				// TODO log this as info!
-				doNothing();
+				logger.info("DeleteModificationCollisionException during makeDirectory: {}", path);
+				if (logger.isDebugEnabled())
+					logger.debug(x.toString(), x);
+
 				return;
 			}
 		} finally {
@@ -259,66 +261,47 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private static final void doNothing() { }
-
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
 			String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
 
-			FileChunkSet fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, true);
+			FileChunkSetDTO fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path);
 			if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
-				logger.warn("Hollow check revealed: File was deleted during sync on source side: {}", path);
+				logger.warn("File was deleted during sync on source side: {}", path);
 				return;
 			}
+			monitor.worked(10);
 
-			FileChunkSet toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, true);
+			FileChunkSetDTO toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path);
 			if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
-				logger.info("Hollow check revealed: File is already equal on destination side: {}", path);
+				logger.info("File is already equal on destination side: {}", path);
 				return;
 			}
-
-			// TODO the check-sums should be obtained simultaneously with 2 threads.
-			if (fromFileChunkSetResponse.isHollow()) {
-				fromFileChunkSetResponse = fromRepoTransport.getFileChunkSet(path, false);
-				if (!assertNotNull("fromFileChunkSetResponse", fromFileChunkSetResponse).isFileExists()) {
-					logger.warn("File was deleted during sync on source side: {}", path);
-					return;
-				}
-				assertNotNull("fromFileChunkSetResponse.lastModified", fromFileChunkSetResponse.getLastModified());
-			}
 			monitor.worked(10);
 
-			if (toFileChunkSetResponse.isHollow()) {
-				toFileChunkSetResponse = toRepoTransport.getFileChunkSet(path, false);
-				if (areFilesExistingAndEqual(fromFileChunkSetResponse, assertNotNull("toFileChunkSetResponse", toFileChunkSetResponse))) {
-					logger.info("File is already equal on destination side: {}", path);
-					return;
-				}
-			}
-			monitor.worked(10);
-
-			EntityID fromRepositoryID = fromRepoTransport.getRepositoryID();
 			try {
 				toRepoTransport.beginPutFile(path);
 			} catch (DeleteModificationCollisionException x) {
-				// TODO log this as info!
-				doNothing();
+				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
+				if (logger.isDebugEnabled())
+					logger.debug(x.toString(), x);
+
 				return;
 			}
 			monitor.worked(1);
 
-			List<FileChunk> fromFileChunksDirty = new ArrayList<FileChunk>();
-			Iterator<FileChunk> toFileChunkIterator = toFileChunkSetResponse.getFileChunks().iterator();
+			List<FileChunkDTO> fromFileChunksDirty = new ArrayList<FileChunkDTO>();
+			Iterator<FileChunkDTO> toFileChunkIterator = toFileChunkSetResponse.getFileChunkDTOs().iterator();
 			int fileChunkIndex = -1;
-			for (FileChunk fromFileChunk : fromFileChunkSetResponse.getFileChunks()) {
-				FileChunk toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
+			for (FileChunkDTO fromFileChunk : fromFileChunkSetResponse.getFileChunkDTOs()) {
+				FileChunkDTO toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
 				++fileChunkIndex;
 				if (toFileChunk != null
 						&& equal(fromFileChunk.getLength(), toFileChunk.getLength())
 						&& equal(fromFileChunk.getSha1(), toFileChunk.getSha1())) {
-					logger.debug("Skipping FileChunk {} (already equal on destination side). File: {}", fileChunkIndex, path);
+					logger.debug("Skipping FileChunkDTO {} (already equal on destination side). File: {}", fileChunkIndex, path);
 					continue;
 				}
 				fromFileChunksDirty.add(fromFileChunk);
@@ -326,10 +309,10 @@ public class RepoToRepoSync {
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
 			subMonitor.beginTask("Synchronising...", fromFileChunksDirty.size());
-			for (FileChunk fileChunk : fromFileChunksDirty) {
-				byte[] fileData = fromRepoTransport.getFileData(path, fileChunk.getOffset(), fileChunk.getLength());
+			for (FileChunkDTO fileChunkDTO : fromFileChunksDirty) {
+				byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDTO.getOffset(), fileChunkDTO.getLength());
 
-				if (fileData == null || fileData.length != fileChunk.getLength() || !sha1(fileData).equals(fileChunk.getSha1())) {
+				if (fileData == null || fileData.length != fileChunkDTO.getLength() || !sha1(fileData).equals(fileChunkDTO.getSha1())) {
 					logger.warn("Source file was modified or deleted during sync: {}", path);
 					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
 					// direction. The file should be synced again in the correct direction in the next run (after the source
@@ -337,7 +320,7 @@ public class RepoToRepoSync {
 					return;
 				}
 
-				toRepoTransport.putFileData(path, fileChunk.getOffset(), fileData);
+				toRepoTransport.putFileData(path, fileChunkDTO.getOffset(), fileData);
 				subMonitor.worked(1);
 			}
 			subMonitor.done();
@@ -364,7 +347,7 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private boolean areFilesExistingAndEqual(FileChunkSet fromFileChunkSetResponse, FileChunkSet toFileChunkSetResponse) {
+	private boolean areFilesExistingAndEqual(FileChunkSetDTO fromFileChunkSetResponse, FileChunkSetDTO toFileChunkSetResponse) {
 		return (fromFileChunkSetResponse.isFileExists()
 				&& toFileChunkSetResponse.isFileExists()
 				&& equal(fromFileChunkSetResponse.getLength(), toFileChunkSetResponse.getLength())

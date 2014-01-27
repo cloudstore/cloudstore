@@ -15,39 +15,39 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.CallableProvider;
 import co.codewizards.cloudstore.core.concurrent.DeferrableExecutor;
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 
-@Path("_ChangeSet/{repositoryName}")
+@Path("_ChangeSetDTO/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
 @Produces(MediaType.APPLICATION_XML)
-public class ChangeSetService extends AbstractServiceWithRepoToRepoAuth
+public class ChangeSetDTOService extends AbstractServiceWithRepoToRepoAuth
 {
-	private static final Logger logger = LoggerFactory.getLogger(ChangeSetService.class);
+	private static final Logger logger = LoggerFactory.getLogger(ChangeSetDTOService.class);
 
 	{
 		logger.debug("<init>: created new instance");
 	}
 
 	@GET
-	public ChangeSet getChangeSet(final @QueryParam("localSync") boolean localSync) {
+	public ChangeSetDTO getChangeSetDTO(final @QueryParam("localSync") boolean localSync) {
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			String callIdentifier = ChangeSetService.class.getName() + ".getChangeSet|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
+			String callIdentifier = ChangeSetDTOService.class.getName() + ".getChangeSet|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
-					new CallableProvider<ChangeSet>() {
+					new CallableProvider<ChangeSetDTO>() {
 						@Override
-						public Callable<ChangeSet> getCallable() { // called synchronously during DeferrableExecutor.call(...) - if called at all
+						public Callable<ChangeSetDTO> getCallable() { // called synchronously during DeferrableExecutor.call(...) - if called at all
 							final RepoTransport rt = repoTransport[0];
 							repoTransport[0] = null;
-							return new Callable<ChangeSet>() {
+							return new Callable<ChangeSetDTO>() {
 								@Override
-								public ChangeSet call() throws Exception { // called *A*synchronously
+								public ChangeSetDTO call() throws Exception { // called *A*synchronously
 									try {
-										ChangeSet changeSet = rt.getChangeSet(localSync);
-										return changeSet;
+										ChangeSetDTO changeSetDTO = rt.getChangeSet(localSync);
+										return changeSetDTO;
 									} finally {
 										rt.close();
 									}

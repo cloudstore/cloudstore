@@ -5,12 +5,12 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
+import co.codewizards.cloudstore.core.persistence.FileChunk;
 import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
@@ -39,7 +40,6 @@ public class LocalRepoSync {
 	private final RepoFileDAO repoFileDAO;
 	private final RemoteRepositoryDAO remoteRepositoryDAO;
 	private final ModificationDAO modificationDAO;
-	private final Map<File, String> file2Sha1 = new HashMap<File, String>();
 
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -166,6 +166,9 @@ public class LocalRepoSync {
 				}
 				return true;
 			}
+
+			if (normalFile.getFileChunks().isEmpty()) // TODO remove this - only needed for downward compatibility!
+				return true;
 		}
 
 		return false;
@@ -185,8 +188,7 @@ public class LocalRepoSync {
 				repoFile = new Directory();
 			} else if (file.isFile()) {
 				NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
-				normalFile.setLength(file.length());
-				normalFile.setSha1(sha(file, new SubProgressMonitor(monitor, 99)));
+				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
 				return null;
@@ -211,8 +213,7 @@ public class LocalRepoSync {
 					throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
 
 				NormalFile normalFile = (NormalFile) repoFile;
-				normalFile.setLength(file.length());
-				normalFile.setSha1(sha(file, new SubProgressMonitor(monitor, 100)));
+				sha(normalFile, file, new SubProgressMonitor(monitor, 100));
 				normalFile.setLastSyncFromRepositoryID(null);
 			}
 			repoFile.setLastModified(new Date(file.lastModified()));
@@ -281,24 +282,64 @@ public class LocalRepoSync {
 		repoFileDAO.getPersistenceManager().flush(); // We run *sometimes* into foreign key violations if we don't delete immediately :-(
 	}
 
-	private String sha(File file, ProgressMonitor monitor) {
-		if (!(assertNotNull("file", file).isAbsolute()))
-			throw new IllegalArgumentException("file is not absolute: " + file);
-
-		if (!file.isFile()) {
-			return null;
-		}
-
-		monitor.beginTask("Local sync...", 100);
+	private void sha(NormalFile normalFile, File file, ProgressMonitor monitor) {
+		monitor.beginTask("Local sync...", (int)Math.min(file.length(), Integer.MAX_VALUE));
 		try {
-			String sha1 = file2Sha1.get(file);
-			if (sha1 != null)
-				return sha1;
+			MessageDigest mdAll = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
+			MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
 
-			FileInputStream in = new FileInputStream(file);
-			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, in, new SubProgressMonitor(monitor, 100));
-			in.close();
-			return HashUtil.encodeHexStr(hash);
+			final int bufLength = 32 * 1024;
+			final int chunkLength = 32 * bufLength; // 1 MiB chunk size
+
+			long offset = 0;
+			InputStream in = new FileInputStream(file);
+			try {
+				FileChunk fileChunk = null;
+
+				byte[] buf = new byte[bufLength];
+				while (true) {
+					if (fileChunk == null) {
+						fileChunk = new FileChunk();
+						fileChunk.setRepoFile(normalFile);
+						fileChunk.setOffset(offset);
+						fileChunk.setLength(0);
+						mdChunk.reset();
+					}
+
+					int bytesRead = in.read(buf, 0, buf.length);
+
+					if (bytesRead > 0) {
+						mdAll.update(buf, 0, bytesRead);
+						mdChunk.update(buf, 0, bytesRead);
+						offset += bytesRead;
+						fileChunk.setLength(fileChunk.getLength() + bytesRead);
+					}
+
+					if (bytesRead < 0 || fileChunk.getLength() >= chunkLength) {
+						fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
+						fileChunk.makeReadOnly();
+						normalFile.getFileChunks().add(fileChunk);
+						fileChunk = null;
+
+						if (bytesRead < 0) {
+							break;
+						}
+					}
+
+					if (bytesRead > 0)
+						monitor.worked(bytesRead);
+				}
+			} finally {
+				in.close();
+			}
+			normalFile.setSha1(HashUtil.encodeHexStr(mdAll.digest()));
+			normalFile.setLength(offset);
+
+			long fileLength = file.length(); // Important to check it now at the end.
+			if (fileLength != offset) {
+				logger.warn("sha: file.length() != bytesReadTotal :: File seems to be written concurrently! file='{}' file.length={} bytesReadTotal={}",
+						file, fileLength, offset);
+			}
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
@@ -308,10 +349,14 @@ public class LocalRepoSync {
 		}
 	}
 
+	/**
+	 * @deprecated Noop - to be removed!
+	 */
+	@Deprecated
 	public void putSha1(File file, String sha1) {
-		if (!(assertNotNull("file", file).isAbsolute()))
-			throw new IllegalArgumentException("file is not absolute: " + file);
-
-		file2Sha1.put(file, sha1);
+//		if (!(assertNotNull("file", file).isAbsolute()))
+//			throw new IllegalArgumentException("file is not absolute: " + file);
+//
+//		file2Sha1.put(file, sha1);
 	}
 }

@@ -22,10 +22,10 @@ import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
-import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
@@ -104,7 +104,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSet getChangeSet(boolean localSync) {
+	public ChangeSetDTO getChangeSet(boolean localSync) {
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
@@ -131,12 +131,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public FileChunkSet getFileChunkSet(String path, boolean allowHollow) {
+	public FileChunkSetDTO getFileChunkSet(String path) {
 		path = prefixPath(path);
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().getFileChunkSet(getRepositoryID().toString(), path, allowHollow);
+				return getClient().getFileChunkSet(getRepositoryID().toString(), path);
 			} catch (DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
 					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.AbstractTest;
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
@@ -41,7 +41,7 @@ public class FileRepoTransportTest extends AbstractTest {
 	private EntityID remoteRepositoryID;
 	private File localRoot;
 	private EntityID localRepositoryID;
-	private ChangeSet changeSetResponse1;
+	private ChangeSetDTO changeSetResponse1;
 
 	@Test
 	public void getChangeSetForEntireRepository() throws Exception {
@@ -142,7 +142,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
+		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -181,7 +181,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
+		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
@@ -224,7 +224,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
 
-		ChangeSet changeSetResponse2 = repoTransport.getChangeSet(false);
+		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSet(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();

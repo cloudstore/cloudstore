@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
-import co.codewizards.cloudstore.core.dto.ChangeSet;
+import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.dto.FileChunkSet;
+import co.codewizards.cloudstore.core.dto.FileChunkSetDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
@@ -252,19 +252,19 @@ public class CloudStoreRESTClient {
 		return "_" + dtoClass.getSimpleName();
 	}
 
-	public ChangeSet getChangeSet(String repositoryName, boolean localSync) {
+	public ChangeSetDTO getChangeSet(String repositoryName, boolean localSync) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			WebTarget webTarget = client.target(getBaseURL())
-					.path(getPath(ChangeSet.class))
+					.path(getPath(ChangeSetDTO.class))
 					.path(repositoryName);
 
 			if (localSync)
 				webTarget = webTarget.queryParam("localSync", localSync);
 
-			ChangeSet changeSet = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSet.class);
-			return changeSet;
+			ChangeSetDTO changeSetDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSetDTO.class);
+			return changeSetDTO;
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // we do not expect null
@@ -306,20 +306,17 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public FileChunkSet getFileChunkSet(String repositoryName, String path, boolean allowHollow) {
+	public FileChunkSetDTO getFileChunkSet(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
 		Client client = acquireClient();
 		try {
 			WebTarget webTarget = client.target(getBaseURL())
-					.path(getPath(FileChunkSet.class))
+					.path(getPath(FileChunkSetDTO.class))
 					.path(repositoryName)
 					.path(removeLeadingAndTrailingSlashes(path));
 
-			if (allowHollow)
-				webTarget = webTarget.queryParam("allowHollow", allowHollow);
-
-			FileChunkSet fileChunkSet = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(FileChunkSet.class);
-			return fileChunkSet;
+			FileChunkSetDTO fileChunkSetDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(FileChunkSetDTO.class);
+			return fileChunkSetDTO;
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // we do not expect null

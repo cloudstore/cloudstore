@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.core.persistence;
 
 import java.io.File;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
@@ -35,6 +37,9 @@ public class NormalFile extends RepoFile {
 	private boolean inProgress;
 
 	private String lastSyncFromRepositoryID;
+
+	@Persistent(mappedBy="normalFile")
+	private SortedSet<FileChunk> fileChunks;
 
 	/**
 	 * Gets the file size in bytes.
@@ -80,5 +85,13 @@ public class NormalFile extends RepoFile {
 	}
 	public void setLastSyncFromRepositoryID(EntityID repositoryID) {
 		this.lastSyncFromRepositoryID = repositoryID == null ? null : repositoryID.toString();
+	}
+
+	public SortedSet<FileChunk> getFileChunks() {
+		if (fileChunks == null)
+			fileChunks = new TreeSet<FileChunk>();
+
+		// TODO this should return a decorator which automatically calls FileChunk.makeReadOnly() when enlisting a new instance!
+		return fileChunks;
 	}
 }
