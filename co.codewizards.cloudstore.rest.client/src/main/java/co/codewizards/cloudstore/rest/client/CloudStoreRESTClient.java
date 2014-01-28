@@ -36,6 +36,8 @@ import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
+import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
+import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
 public class CloudStoreRESTClient {
 
@@ -567,11 +569,15 @@ public class CloudStoreRESTClient {
 			if (hostnameVerifier != null)
 				clientBuilder.hostnameVerifier(hostnameVerifier);
 
+			clientBuilder.register(GZIPReaderInterceptor.class);
+			clientBuilder.register(GZIPWriterInterceptor.class);
 
 			client = clientBuilder.build();
 
+			// An authentication is always required. Otherwise Jersey throws an exception.
+			// Hence, we set it to "anonymous" here and set it to the real values for those
+			// requests really requiring it.
 			HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("anonymous", "");
-//			HttpAuthenticationFeature feature = HttpAuthenticationFeature.basicBuilder().build();
 			client.register(feature);
 
 			configFrozen = true;

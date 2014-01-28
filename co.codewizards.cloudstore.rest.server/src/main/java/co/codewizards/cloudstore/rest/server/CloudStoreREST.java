@@ -15,12 +15,14 @@ import co.codewizards.cloudstore.rest.server.service.EncryptedSignedAuthTokenSer
 import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
-import co.codewizards.cloudstore.rest.server.service.RepoFileDTOService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
+import co.codewizards.cloudstore.rest.server.service.RepoFileDTOService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 import co.codewizards.cloudstore.rest.server.service.WebDavService;
+import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
+import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
@@ -58,6 +60,8 @@ public class CloudStoreREST extends ResourceConfig {
 
 				// BEGIN providers
 				// providers are not services (they are infrastructure), but they are registered the same way.
+				GZIPReaderInterceptor.class,
+				GZIPWriterInterceptor.class,
 				CloudStoreJaxbContextResolver.class,
 				DefaultExceptionMapper.class
 				// END providers

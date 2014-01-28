@@ -20,10 +20,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.servlet.DispatcherType;
 
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
@@ -35,7 +32,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -270,9 +266,8 @@ public class CloudStoreServer implements Runnable {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
 		ServletContainer servletContainer = new ServletContainer(new CloudStoreREST());
-//		com.sun.jersey.spi.container.servlet.ServletContainer servletContainer = new com.sun.jersey.spi.container.servlet.ServletContainer(CloudStoreREST.class);
 		context.addServlet(new ServletHolder(servletContainer), "/*");
-		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+//		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;
 	}
 

@@ -14,13 +14,14 @@
 	<dependencies>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.core</artifactId>
+			<artifactId>co.codewizards.cloudstore.rest.shared</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
 		</dependency>
+
 		<!--
 		<dependency>
 			<groupId>org.glassfish.jersey.connectors</groupId>
