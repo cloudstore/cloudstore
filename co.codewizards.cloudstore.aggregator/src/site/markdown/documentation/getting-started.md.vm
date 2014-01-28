@@ -58,43 +58,41 @@ $H$H$H$H Copy the CloudStore archives to your server machine
 
 The CloudStore server needs to be running on your server *myserver.mydomain.tld*. Therefore, you have to copy it to this
 machine. Additionally, you\'ll need the CloudStore client to perform administrative tasks like creating repositories.
+However, the CloudStore client is contained in the server archive, hence you only have to upload one file.
 
 We recommend using *rsync* or *scp* to copy the files:
 
-<div><pre>rsync -avP ~/Downloads/co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
-rsync -avP ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+<div><pre>rsync -avP ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz user@myserver.mydomain.tld:/tmp/
 </pre></div>
 
 or
 
-<div><pre>scp -p ~/Downloads/co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
-scp -p ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz user@myserver.mydomain.tld:/tmp/
+<div><pre>scp -p ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz user@myserver.mydomain.tld:/tmp/
 </pre></div>
 
 
 $H$H$H$H Extract the CloudStore archives on the server
 
-Now, two *tar.gz* files are located in the */tmp/* folder on your server. To continue, you open a shell to the server machine:
+Now, one *tar.gz* file is located in the */tmp/* folder on your server. To continue, you open a shell to the server machine:
 
 <div><pre>ssh user@myserver.mydomain.tld</pre></div>
 
-We uploaded the files to */tmp/*, hence we go into this directory, extract the tarballs there and then move the extracted directories
+We uploaded the file to */tmp/*, hence we go into this directory, extract the tarball there and then move the extracted directory
 into the user\'s home:
 
 <div><pre>cd /tmp
-tar xzf co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz
-tar xzf co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz
-mv cloudstore-client ~/
+tar xzf co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz
 mv cloudstore-server ~/</pre></div>
 
 
 $H$H$H$H Create a repository on the server
 
-There is the directory named *cloudstore-client* in your user\'s home containing the client with its CLI (command line interface).
-We use it to create a new directory and make it a CloudStore repository:
+There is the directory named *cloudstore-server* in your user\'s home containing both server and client with its CLI
+(command line interface).
+We use this CLI to create a new directory and make it a CloudStore repository:
 
 <div><pre>cd ~
-~/cloudstore-client/bin/cloudstore createRepo cloudstore-repos/myDocuments -createDir</pre></div>
+~/cloudstore-server/bin/cloudstore createRepo cloudstore-repos/myDocuments -createDir</pre></div>
 
 Note, that this creates all parent-directories as needed. Hence the folder *~/cloudstore-repos*, which likely didn\'t exist yet,
 is created together with the actual repository "myDocuments".
@@ -114,10 +112,10 @@ By default, the server listens on port 8443. Please make sure, this port is acce
 
 $H$H$H$H Extract the CloudStore client archive on the workstation
 
-Locally, on your workstation, you have to extract the client just as you did on the server:
+Locally, on your workstation, you have to extract the client and move it to your home directory:
 
 <div><pre>cd ~/Downloads
-tar xzf co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz
+tar xzf co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz
 mv cloudstore-client ~/</pre></div>
 
 
@@ -168,7 +166,7 @@ access to the repository is granted.
 
 You can accept this request via the following command, executed on the server-side (via SSH):
 
-<div><pre>~/cloudstore-client/bin/cloudstore acceptRepoConnection myDocuments</pre></div>
+<div><pre>~/cloudstore-server/bin/cloudstore acceptRepoConnection myDocuments</pre></div>
 
 
 $H$H$H$H Synchronise

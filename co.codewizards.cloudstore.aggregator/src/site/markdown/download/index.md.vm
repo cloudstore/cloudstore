@@ -15,21 +15,21 @@ $H$H$H Binaries
 $H$H$H$H Client
 
 * tar.gz (recommended)
-	* [co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz](./co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz)
-	* [OpenPGP signature](./co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz.sig)
+	* [co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz](./co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz)
+	* [OpenPGP signature](./co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz.sig)
 * zip (if you really cannot open tar.gz files)
-	* [co.codewizards.cloudstore.client-${cloudstore_version}.zip](./co.codewizards.cloudstore.client-${cloudstore_version}.zip)
-	* [OpenPGP signature](./co.codewizards.cloudstore.client-${cloudstore_version}.zip.sig)
+	* [co.codewizards.cloudstore.client-${cloudstore_version}-bin.zip](./co.codewizards.cloudstore.client-${cloudstore_version}-bin.zip)
+	* [OpenPGP signature](./co.codewizards.cloudstore.client-${cloudstore_version}-bin.zip.sig)
 
 
 $H$H$H$H Server
 
 * tar.gz (recommended)
-	* [co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz](./co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz)
-	* [OpenPGP signature](./co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz.sig)
+	* [co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz](./co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz)
+	* [OpenPGP signature](./co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz.sig)
 * zip (if you really cannot open tar.gz files)
-	* [co.codewizards.cloudstore.server-${cloudstore_version}.zip](./co.codewizards.cloudstore.server-${cloudstore_version}.zip)
-	* [OpenPGP signature](./co.codewizards.cloudstore.server-${cloudstore_version}.zip.sig)
+	* [co.codewizards.cloudstore.server-${cloudstore_version}-bin.zip](./co.codewizards.cloudstore.server-${cloudstore_version}-bin.zip)
+	* [OpenPGP signature](./co.codewizards.cloudstore.server-${cloudstore_version}-bin.zip.sig)
 
 **Important:** Only stable versions are signed. It is thus normal that you get a 404 error when trying to download a signature
 for a *SNAPSHOT* version. We simply do not sign snapshots. They are for testing only and should not be used productively,
@@ -47,8 +47,8 @@ Both files should be located in the same directory.
 Then open a console, switch to the directory containing the downloads and verify them using these commands:
 
 <div><pre>cd ~/Downloads
-gpg co.codewizards.cloudstore.client-${cloudstore_version}.tar.gz.sig
-gpg co.codewizards.cloudstore.server-${cloudstore_version}.tar.gz.sig</pre></div>
+gpg co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz.sig
+gpg co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz.sig</pre></div>
 
 Of course, you need the OpenPGP *public* key which was used for signing. The CodeWizards\' keys can be found
 [here on the CodeWizards web-site](http://codewizards.co/site/current/about/contact.html).
