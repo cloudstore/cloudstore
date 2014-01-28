@@ -215,6 +215,59 @@ Marco :-)
 					</reportPlugins>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-binaries</id>
+						<phase>site</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>co.codewizards.cloudstore</groupId>
+									<artifactId>co.codewizards.cloudstore.client</artifactId>
+									<version>${project.version}</version>
+									<type>tar.gz</type>
+									<classifier>bin</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/site/download</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>co.codewizards.cloudstore</groupId>
+									<artifactId>co.codewizards.cloudstore.client</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+									<classifier>bin</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/site/download</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>co.codewizards.cloudstore</groupId>
+									<artifactId>co.codewizards.cloudstore.server</artifactId>
+									<version>${project.version}</version>
+									<type>tar.gz</type>
+									<classifier>bin</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/site/download</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>co.codewizards.cloudstore</groupId>
+									<artifactId>co.codewizards.cloudstore.server</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+									<classifier>bin</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/site/download</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

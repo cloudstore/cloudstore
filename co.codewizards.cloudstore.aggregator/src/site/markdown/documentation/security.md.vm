@@ -42,7 +42,7 @@ use more than only 128 bit keys.
 
 $H$H$H Not trusting CAs
 
-CloudStore does not trust any CA. You have to verify yourself that the certificate received by the
+CloudStore does not trust any CA. You have to *verify yourself* that the certificate received by the
 client really is the one sent by the server.
 
 CAs are run by companies/people you do not know - why should you trust them?
@@ -64,8 +64,8 @@ certificate or deleted the client\'s trust-store. Check the situation carefully!
 $H$H$H Authentication
 
 CloudStore does *not* employ user names or passwords. Instead, communication is restricted to so-called *connected*
-repositories: The client authenticates as a repository which was connected before. Only if the server knows
-this client-repository and it was really *connected* before, access is granted.
+repositories: The client authenticates as a repository which was *connected* before. Only if the server finds
+the client-repository in the list of its *connected* repositories, access is granted.
 
 In order to *connect* two repositories, two steps have to be performed:
 
