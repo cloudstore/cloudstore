@@ -19,6 +19,7 @@
 		<module>../co.codewizards.cloudstore.site.skin</module>
 		<module>../co.codewizards.cloudstore.rest.client</module>
 		<module>../co.codewizards.cloudstore.rest.server</module>
+		<module>../co.codewizards.cloudstore.rest.shared</module>
 		<module>../co.codewizards.cloudstore.server</module>
 		<module>../co.codewizards.cloudstore.test</module>
 		<module>../co.codewizards.cloudstore.webapp</module>
