@@ -16,12 +16,12 @@ $H$H$H Security
 The [Security](./security.html) documentation explains how CloudStore secures your data. 
 
 
-$H$H$H Advanced
-
-The [Advanced](./advanced.html) docs are for the advanced users interested in tweaking CloudStore.
-
-
 $H$H$H Development
 
 Are you a developer? Do you want to contribute to this project? Or do you want to verify the source codes?
 Then please read the [Development](./development.html) infos here.
+
+
+$H$H$H FAQ (frequently asked questions)
+
+Any question? Please check our [FAQ](./faq.html)! Maybe it\'s already answered there.
