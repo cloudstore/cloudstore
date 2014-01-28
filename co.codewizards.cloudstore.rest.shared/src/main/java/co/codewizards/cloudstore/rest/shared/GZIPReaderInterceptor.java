@@ -23,14 +23,17 @@ public class GZIPReaderInterceptor implements ReaderInterceptor {
         if (!originalInputStream.markSupported())
         	originalInputStream = new BufferedInputStream(originalInputStream);
 
+        // Test, if it contains data. We only try to unzip, if it is not empty.
         originalInputStream.mark(5);
         int read = originalInputStream.read();
         originalInputStream.reset();
 
         if (read > -1)
         	context.setInputStream(new GZIPInputStream(originalInputStream));
-        else
+        else {
+        	context.setInputStream(originalInputStream); // We might have wrapped it with our BufferedInputStream!
         	logger.debug("aroundReadFrom: originalInputStream is empty! Skipping GZIP.");
+        }
 
         return context.proceed();
     }
