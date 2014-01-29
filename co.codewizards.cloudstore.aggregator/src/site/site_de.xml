@@ -25,18 +25,20 @@
 		<links>
 			<item name="Hauptseite" href="./index.html" />
 			<item name="Dokumentation" href="./documentation/index.html" />
+			<!--
 			<item name="Forum" href="../../forum" />
+			-->
 			<item name="Tracker" href="../../tracker" />
 			<item name="Herunterladen" href="./download/index.html" />
 		</links>
 
 		<menu name="Dokumentation">
 			<item name="Erste Schritte" href="./documentation/getting-started.html" />
-			<item name="Benutzung" href="./documentation/usage.html" />
+			<item name="Wiki" href="../../wiki" />
+			<item name="Häufige Fragen (FAQ)" href="./documentation/faq.html" />
+			<item name="Sicherheit" href="./documentation/security.html" />
 			<item name="Entwicklung" href="./documentation/development.html" />
 			<item name="Javadoc" href="./apidocs/index.html" />
-			<item name="Wiki" href="https://github.com/cloudstore/main/wiki" />
-			<item name="Häufige Fragen (FAQ)" href="./documentation/faq.html" />
 			<item name="Was ist neu?" href="./documentation/whats-new.html" />
 		</menu>
 

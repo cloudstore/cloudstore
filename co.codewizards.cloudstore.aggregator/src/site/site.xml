@@ -34,11 +34,11 @@
 
 		<menu name="Documentation">
 			<item name="Getting started" href="./documentation/getting-started.html" />
+			<item name="Wiki" href="../wiki" />
+			<item name="FAQ" href="./documentation/faq.html" />
 			<item name="Security" href="./documentation/security.html" />
 			<item name="Development" href="./documentation/development.html" />
 			<item name="Javadoc" href="./apidocs/index.html" />
-			<item name="Wiki" href="https://github.com/cloudstore/main/wiki" />
-			<item name="FAQ" href="./documentation/faq.html" />
 			<item name="What's new?" href="./documentation/whats-new.html" />
 		</menu>
 

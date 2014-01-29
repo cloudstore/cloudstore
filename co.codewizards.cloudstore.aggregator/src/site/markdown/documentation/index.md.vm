@@ -11,6 +11,17 @@ Please read the [Getting started](./getting-started.html) page first. It shows y
 and gives a basic understanding about how things work.
 
 
+$H$H$H Wiki
+
+The [wiki](../../wiki) provides additional documentation. Also it is a place where *you* can help us and others by
+writing down helpful hints about making the most of CloudStore.
+
+
+$H$H$H FAQ (frequently asked questions)
+
+Any question? Please check our [FAQ](./faq.html)! Maybe it\'s already answered there.
+
+
 $H$H$H Security
 
 The [Security](./security.html) documentation explains how CloudStore secures your data. 
@@ -21,7 +32,3 @@ $H$H$H Development
 Are you a developer? Do you want to contribute to this project? Or do you want to verify the source codes?
 Then please read the [Development](./development.html) infos here.
 
-
-$H$H$H FAQ (frequently asked questions)
-
-Any question? Please check our [FAQ](./faq.html)! Maybe it\'s already answered there.
