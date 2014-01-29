@@ -314,24 +314,33 @@ public class RepoToRepoSync {
 						&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
 						&& equal(fromFileChunkDTO.getLength(), toFileChunkDTO.getLength())
 						&& equal(fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1())) {
-					logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
-							fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+					if (logger.isTraceEnabled()) {
+						logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
+								fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+					}
 					continue;
 				}
-				logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
-						fileChunkIndex, fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1());
+				if (logger.isTraceEnabled()) {
+					logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
+							fileChunkIndex, fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1());
+				}
 				fromFileChunkDTOsDirty.add(fromFileChunkDTO);
 			}
-			logger.debug("Found {} dirty FileChunkDTOs (of {} total). path='{}'",
+
+			logger.info("Need to copy {} dirty file-chunks (of {} total). path='{}'",
 					fromFileChunkDTOsDirty.size(), fromNormalFileDTO.getFileChunkDTOs().size(), path);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
 			subMonitor.beginTask("Synchronising...", fromFileChunkDTOsDirty.size());
 			fileChunkIndex = -1;
+			long bytesCopied = 0;
+			long copyChunksBeginTimestamp = System.currentTimeMillis();
 			for (FileChunkDTO fileChunkDTO : fromFileChunkDTOsDirty) {
 				++fileChunkIndex;
-				logger.trace("Reading data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
-						fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+				if (logger.isTraceEnabled()) {
+					logger.trace("Reading data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
+							fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+				}
 				byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDTO.getOffset(), fileChunkDTO.getLength());
 
 				if (fileData == null || fileData.length != fileChunkDTO.getLength() || !sha1(fileData).equals(fileChunkDTO.getSha1())) {
@@ -342,12 +351,18 @@ public class RepoToRepoSync {
 					return;
 				}
 
-				logger.trace("Writing data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
-						fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+				if (logger.isTraceEnabled()) {
+					logger.trace("Writing data for dirty FileChunkDTO ({} of {}). path='{}' offset={}",
+							fileChunkIndex + 1, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+				}
 				toRepoTransport.putFileData(path, fileChunkDTO.getOffset(), fileData);
+				bytesCopied += fileData.length;
 				subMonitor.worked(1);
 			}
 			subMonitor.done();
+
+			logger.info("Copied {} dirty file-chunks with together {} bytes in {} ms. path='{}'",
+					fromFileChunkDTOsDirty.size(), bytesCopied, System.currentTimeMillis() - copyChunksBeginTimestamp, path);
 
 			toRepoTransport.endPutFile(
 					path, fromNormalFileDTO.getLastModified(),
