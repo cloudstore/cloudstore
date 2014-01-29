@@ -53,7 +53,7 @@ your notebook and your workstation at home and you modified the file on both mac
 there will be two files:
 
 * */home/me/Documents/work/project123.tex*
-* */home/me/Documents/work/project123.hqzur8ul.collision.tex*
+* */home/me/Documents/work/project123.tex.hqzur8ul.collision.tex*
 
 In this example, \"hqzur8ul\" is the encoded timestamp of when the collision was detected and resolved.
 
