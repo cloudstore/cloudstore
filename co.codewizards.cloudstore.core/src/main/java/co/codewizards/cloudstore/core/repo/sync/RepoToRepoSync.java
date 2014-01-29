@@ -303,24 +303,35 @@ public class RepoToRepoSync {
 			}
 			monitor.worked(1);
 
-			List<FileChunkDTO> fromFileChunksDirty = new ArrayList<FileChunkDTO>();
-			Iterator<FileChunkDTO> toFileChunkIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
+			logger.debug("Comparing {} FileChunkDTOs. path='{}'", fromNormalFileDTO.getFileChunkDTOs().size(), path);
+			List<FileChunkDTO> fromFileChunkDTOsDirty = new ArrayList<FileChunkDTO>();
+			Iterator<FileChunkDTO> toFileChunkDTOIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
 			int fileChunkIndex = -1;
-			for (FileChunkDTO fromFileChunk : fromNormalFileDTO.getFileChunkDTOs()) {
-				FileChunkDTO toFileChunk = toFileChunkIterator.hasNext() ? toFileChunkIterator.next() : null;
+			for (FileChunkDTO fromFileChunkDTO : fromNormalFileDTO.getFileChunkDTOs()) {
+				FileChunkDTO toFileChunkDTO = toFileChunkDTOIterator.hasNext() ? toFileChunkDTOIterator.next() : null;
 				++fileChunkIndex;
-				if (toFileChunk != null
-						&& equal(fromFileChunk.getLength(), toFileChunk.getLength())
-						&& equal(fromFileChunk.getSha1(), toFileChunk.getSha1())) {
-					logger.debug("Skipping FileChunkDTO {} (already equal on destination side). File: {}", fileChunkIndex, path);
+				if (toFileChunkDTO != null
+						&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
+						&& equal(fromFileChunkDTO.getLength(), toFileChunkDTO.getLength())
+						&& equal(fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1())) {
+					logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
+							fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
 					continue;
 				}
-				fromFileChunksDirty.add(fromFileChunk);
+				logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
+						fileChunkIndex, fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1());
+				fromFileChunkDTOsDirty.add(fromFileChunkDTO);
 			}
+			logger.debug("Found {} dirty FileChunkDTOs (of {} total). path='{}'",
+					fromFileChunkDTOsDirty.size(), fromNormalFileDTO.getFileChunkDTOs().size(), path);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
-			subMonitor.beginTask("Synchronising...", fromFileChunksDirty.size());
-			for (FileChunkDTO fileChunkDTO : fromFileChunksDirty) {
+			subMonitor.beginTask("Synchronising...", fromFileChunkDTOsDirty.size());
+			fileChunkIndex = -1;
+			for (FileChunkDTO fileChunkDTO : fromFileChunkDTOsDirty) {
+				++fileChunkIndex;
+				logger.trace("Reading data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
+						fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
 				byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDTO.getOffset(), fileChunkDTO.getLength());
 
 				if (fileData == null || fileData.length != fileChunkDTO.getLength() || !sha1(fileData).equals(fileChunkDTO.getSha1())) {
@@ -331,6 +342,8 @@ public class RepoToRepoSync {
 					return;
 				}
 
+				logger.trace("Writing data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
+						fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
 				toRepoTransport.putFileData(path, fileChunkDTO.getOffset(), fileData);
 				subMonitor.worked(1);
 			}
