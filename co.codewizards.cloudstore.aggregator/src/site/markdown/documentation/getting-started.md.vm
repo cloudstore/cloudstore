@@ -60,7 +60,7 @@ The CloudStore server needs to be running on your server *myserver.mydomain.tld*
 machine. Additionally, you\'ll need the CloudStore client to perform administrative tasks like creating repositories.
 However, the CloudStore client is contained in the server archive, hence you only have to upload one file.
 
-We recommend using *rsync* or *scp* to copy the files:
+We recommend using *rsync* or *scp* to copy the file:
 
 <div><pre>rsync -avP ~/Downloads/co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz user@myserver.mydomain.tld:/tmp/
 </pre></div>
