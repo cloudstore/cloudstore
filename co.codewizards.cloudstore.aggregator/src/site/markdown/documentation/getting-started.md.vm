@@ -54,7 +54,7 @@ If you prefer to build directly from the sources, please consult the [Developmen
 In the following, we assume that you downloaded the files into your *~/Downloads/* directory.
 
 
-$H$H$H$H Copy the CloudStore archives to your server machine
+$H$H$H$H Copy the CloudStore archive to your server machine
 
 The CloudStore server needs to be running on your server *myserver.mydomain.tld*. Therefore, you have to copy it to this
 machine. Additionally, you\'ll need the CloudStore client to perform administrative tasks like creating repositories.
@@ -71,7 +71,7 @@ or
 </pre></div>
 
 
-$H$H$H$H Extract the CloudStore archives on the server
+$H$H$H$H Extract the CloudStore archive on the server
 
 Now, one *tar.gz* file is located in the */tmp/* folder on your server. To continue, you open a shell to the server machine:
 
