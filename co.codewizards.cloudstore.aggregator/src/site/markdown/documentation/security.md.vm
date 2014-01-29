@@ -40,10 +40,10 @@ Of course, you must have 256 bit ciphers available on both sides - client and se
 use more than only 128 bit keys.
 
 
-$H$H$H Not trusting CAs
+$H$H$H Not trusting certificate authorities (CAs)
 
-CloudStore does not trust any CA. You have to *verify yourself* that the certificate received by the
-client really is the one sent by the server.
+CloudStore does not trust any certificate authority (CA). You have to *verify yourself* that the certificate
+received by the client really is the one sent by the server (and was not replaced on its way through the internet).
 
 CAs are run by companies/people you do not know - why should you trust them?
 
