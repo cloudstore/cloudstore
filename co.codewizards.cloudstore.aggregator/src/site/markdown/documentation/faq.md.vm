@@ -34,3 +34,28 @@ or even modify all the data traversing it.
 Therefore, CloudStore trusts only those certificates that you *personally* chose to trust. Trust cannot be blindly delegated.
 
 Please consult the [Security](./security.html) page for further details.
+
+
+$H$H$H What happens in case of a collision?
+
+If you modify the same file in two separate repositories and then synchronise, there is - obviously - a collision.
+You also run into a collision, if you modify a file in one repository and delete it in the other (without synchronising
+inbetween). There are more situations leading to collisions, of course, but there\'s no need to list them all here.
+
+All collisions are solved in the same way: The colliding directory (or file) is renamed to:
+
+	<originalFileName>.<timestamp>.collision<originalFileExtension>
+
+Let\'s look at an example to make this clear:
+
+Your repository is */home/me/Documents/* and it contains the file *work/project123.tex*. You synchronise this file between
+your notebook and your workstation at home and you modified the file on both machines. When you synchronise the next time,
+there will be two files:
+
+* */home/me/Documents/work/project123.tex*
+* */home/me/Documents/work/project123.hqzur8ul.collision.tex*
+
+In this example, \"hqzur8ul\" is the encoded timestamp of when the collision was detected and resolved.
+
+If you instead deleted the file in one repository, there won\'t be two files, but the one affected file is still renamed
+as shown above.
