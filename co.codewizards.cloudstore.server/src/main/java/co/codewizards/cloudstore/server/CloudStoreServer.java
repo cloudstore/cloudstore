@@ -45,6 +45,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
@@ -292,6 +293,9 @@ public class CloudStoreServer implements Runnable {
 	}
 
 	private static void initLogging() throws IOException, JoranException {
+		File logDir = ConfigDir.getInstance().getLogDir();
+		DerbyUtil.setLogFile(new File(logDir, "derby.log"));
+
 		String logbackXmlName = "logback.server.xml";
 		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())

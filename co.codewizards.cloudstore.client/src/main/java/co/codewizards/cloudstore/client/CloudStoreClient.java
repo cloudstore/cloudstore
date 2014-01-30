@@ -21,6 +21,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
@@ -223,7 +224,10 @@ public class CloudStoreClient {
 	}
 
 	private static void initLogging() throws IOException, JoranException {
-		String logbackXmlName = "logback.client.xml";
+		File logDir = ConfigDir.getInstance().getLogDir();
+		DerbyUtil.setLogFile(new File(logDir, "derby.log"));
+
+		final String logbackXmlName = "logback.client.xml";
 		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreClient.class, logbackXmlName, logbackXmlFile);

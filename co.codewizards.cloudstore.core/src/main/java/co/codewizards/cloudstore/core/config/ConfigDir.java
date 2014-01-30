@@ -23,6 +23,7 @@ public class ConfigDir {
 
 	private String value;
 	private File file;
+	private File logDir;
 
 	private ConfigDir() {
 		value = System.getProperty(SYSTEM_PROPERTY, "${user.home}/.cloudstore");
@@ -47,4 +48,15 @@ public class ConfigDir {
 		return file;
 	}
 
+	public File getLogDir() {
+		if (logDir == null) {
+			logDir = new File(getFile(), "log");
+			if (!logDir.isDirectory())
+				logDir.mkdirs();
+
+			if (!logDir.isDirectory())
+				throw new IllegalStateException("Could not create directory (permissions?!): " + logDir);
+		}
+		return logDir;
+	}
 }

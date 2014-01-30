@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.File;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
@@ -31,4 +32,7 @@ public class DerbyUtil {
 		}
 	}
 
+	public static void setLogFile(File file) {
+		System.setProperty("derby.stream.error.file", assertNotNull("file", file).getAbsolutePath());
+	}
 }
