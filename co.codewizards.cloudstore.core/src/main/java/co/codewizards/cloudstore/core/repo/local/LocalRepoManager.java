@@ -10,9 +10,15 @@ import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public interface LocalRepoManager {
 
-	public static final String META_DIR_NAME = ".cloudstore-repo";
-	public static final String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
-	public static final int DEFAULT_KEY_SIZE = 4096;
+	String META_DIR_NAME = ".cloudstore-repo";
+	String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
+	int DEFAULT_KEY_SIZE = 4096;
+
+	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
+	String PROP_REPOSITORY_ID = "repository.id";
+	String PROP_VERSION = "repository.version";
+
+	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
 	/**
 	 * Gets the repository's local root directory.

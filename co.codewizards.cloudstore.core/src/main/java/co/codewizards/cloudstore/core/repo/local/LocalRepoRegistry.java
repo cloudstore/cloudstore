@@ -9,11 +9,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
@@ -21,10 +26,19 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class LocalRepoRegistry
 {
-	public static final String LOCAL_REPO_REGISTRY_FILE = "repositoryList.properties";
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoRegistry.class);
+
+	public static final String LOCAL_REPO_REGISTRY_FILE = "repoRegistry.properties"; // new name since 0.9.1
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryID:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
+	private static final String PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP = "evictDeadEntriesLastTimestamp";
+	private static final String PROP_EVICT_DEAD_ENTRIES_PERIOD = "evictDeadEntriesPeriod";
 	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
+
+	private File registryFile;
+	private long repoRegistryFileLastModified;
+	private Properties repoRegistryProperties;
+	private boolean repoRegistryPropertiesDirty;
 
 	private static class LocalRepoRegistryHolder {
 		public static final LocalRepoRegistry INSTANCE = new LocalRepoRegistry();
@@ -37,11 +51,14 @@ public class LocalRepoRegistry
 	private LocalRepoRegistry() { }
 
 	private File getRegistryFile() {
-		return new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
+		if (registryFile == null) {
+			File old = new File(ConfigDir.getInstance().getFile(), "repositoryList.properties"); // old name until 0.9.0
+			registryFile = new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
+			if (old.exists() && !registryFile.exists())
+				old.renameTo(registryFile);
+		}
+		return registryFile;
 	}
-
-	private long repoRegistryFileLastModified;
-	private Properties repoRegistryProperties;
 
 	public synchronized Collection<EntityID> getRepositoryIDs() {
 		loadRepoRegistryIfNeeded();
@@ -175,10 +192,10 @@ public class LocalRepoRegistry
 			String propertyKey = getPropertyKeyForAlias(repositoryAlias);
 			String oldRepositoryIDString = repoRegistryProperties.getProperty(propertyKey);
 			String repositoryIDString = repositoryID.toString();
-			if (!repositoryIDString.equals(oldRepositoryIDString)) {
-				repoRegistryProperties.setProperty(propertyKey, repositoryIDString);
-				storeRepoRegistry();
-			}
+			if (!repositoryIDString.equals(oldRepositoryIDString))
+				setProperty(propertyKey, repositoryIDString);
+
+			storeRepoRegistryIfDirty();
 		} finally {
 			lockFile.release();
 		}
@@ -192,10 +209,10 @@ public class LocalRepoRegistry
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKeyForAlias(repositoryAlias);
 			String repositoryIDString = repoRegistryProperties.getProperty(propertyKey);
-			if (repositoryIDString != null) {
-				repoRegistryProperties.remove(propertyKey);
-				storeRepoRegistry();
-			}
+			if (repositoryIDString != null)
+				removeProperty(propertyKey);
+
+			storeRepoRegistryIfDirty();
 		} finally {
 			lockFile.release();
 		}
@@ -214,13 +231,52 @@ public class LocalRepoRegistry
 			String propertyKey = getPropertyKeyForID(repositoryID);
 			String oldLocalRootPath = repoRegistryProperties.getProperty(propertyKey);
 			String localRootPath = localRoot.getPath();
-			if (!localRootPath.equals(oldLocalRootPath)) {
-				repoRegistryProperties.setProperty(propertyKey, localRootPath);
-				storeRepoRegistry();
-			}
+			if (!localRootPath.equals(oldLocalRootPath))
+				setProperty(propertyKey, localRootPath);
+
+			storeRepoRegistryIfDirty();
 		} finally {
 			lockFile.release();
 		}
+	}
+
+	private Date getPropertyAsDate(String key) {
+		String value = getProperty(key);
+		if (value == null || value.trim().isEmpty())
+			return null;
+
+		return new DateTime(value).toDate();
+	}
+
+	private void setProperty(String key, Date value) {
+		setProperty(key, new DateTime(assertNotNull("value", value)).toString());
+	}
+
+	private Long getPropertyAsLong(String key) {
+		String value = getProperty(key);
+		if (value == null || value.trim().isEmpty())
+			return null;
+
+		return Long.valueOf(value);
+	}
+
+	private void setProperty(String key, long value) {
+		setProperty(key, Long.toString(value));
+	}
+
+	private String getProperty(String key) {
+		return repoRegistryProperties.getProperty(assertNotNull("key", key));
+	}
+
+	private void setProperty(String key, String value) {
+		repoRegistryPropertiesDirty = true;
+		repoRegistryProperties.setProperty(assertNotNull("key", key), assertNotNull("value", value));
+	}
+
+
+	private void removeProperty(String key) {
+		repoRegistryPropertiesDirty = true;
+		repoRegistryProperties.remove(assertNotNull("key", key));
 	}
 
 	/**
@@ -261,8 +317,15 @@ public class LocalRepoRegistry
 	}
 
 	private void loadRepoRegistryIfNeeded() {
-		if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
-			loadRepoRegistry();
+		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		try {
+			if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
+				loadRepoRegistry();
+
+			evictDeadEntriesPeriodically();
+		} finally {
+			lockFile.release();
+		}
 	}
 
 	private void loadRepoRegistry() {
@@ -274,10 +337,17 @@ public class LocalRepoRegistry
 				repoRegistryProperties = new Properties();
 
 			repoRegistryFileLastModified = registryFile.lastModified();
+			repoRegistryPropertiesDirty = false;
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
-		evictDeadEntriesPeriodically();
+	}
+
+	private void storeRepoRegistryIfDirty() {
+		if (repoRegistryPropertiesDirty) {
+			storeRepoRegistry();
+			repoRegistryPropertiesDirty = false;
+		}
 	}
 
 	private void storeRepoRegistry() {
@@ -293,8 +363,91 @@ public class LocalRepoRegistry
 		}
 	}
 
+	/**
+	 * Checks, which entries point to non-existing directories or directories which are not (anymore) repositories
+	 * and removes them.
+	 */
 	private void evictDeadEntriesPeriodically() {
-		// TODO implement this: We must periodically check which entries point to non-existing directories and remove them.
+		Long period = getPropertyAsLong(PROP_EVICT_DEAD_ENTRIES_PERIOD);
+		if (period == null) {
+			period = 24 * 60 * 60 * 1000L;
+			setProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD, period);
+		}
+		Date last = getPropertyAsDate(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP);
+		if (last != null) {
+			long millisAfterLast = System.currentTimeMillis() - last.getTime();
+			if (millisAfterLast >= 0 && millisAfterLast <= period) // < 0 : travelled back in time
+				return;
+		}
+		evictDeadEntries();
+		setProperty(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP, new Date());
+	}
 
+
+	private void evictDeadEntries() {
+		for (Entry<Object, Object> me : new ArrayList<Entry<Object, Object>>(repoRegistryProperties.entrySet())) {
+			String key = String.valueOf(me.getKey());
+			String value = String.valueOf(me.getValue());
+			EntityID repositoryIDFromRegistry;
+			if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ALIAS)) {
+				repositoryIDFromRegistry = new EntityID(value);
+			} else if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ID)) {
+				repositoryIDFromRegistry = new EntityID(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
+			} else
+				continue;
+
+			String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryIDFromRegistry));
+			if (localRootString == null) {
+				evictDeadEntry(key);
+				continue;
+			}
+
+			File localRoot = new File(localRootString);
+			if (!localRoot.isDirectory()) {
+				evictDeadEntry(key);
+				continue;
+			}
+
+			File repoMetaDir = new File(localRoot, LocalRepoManager.META_DIR_NAME);
+			if (!repoMetaDir.isDirectory()) {
+				evictDeadEntry(key);
+				continue;
+			}
+
+			File repositoryPropertiesFile = new File(repoMetaDir, LocalRepoManager.REPOSITORY_PROPERTIES_FILE_NAME);
+			if (!repositoryPropertiesFile.exists()) {
+				logger.warn("evictDeadEntries: File does not exist (repo corrupt?!): {}", repositoryPropertiesFile);
+				continue;
+			}
+
+			Properties repositoryProperties;
+			try {
+				repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
+			} catch (IOException e) {
+				logger.warn("evictDeadEntries: Could not read file (repo corrupt?!): {}", repositoryPropertiesFile);
+				logger.warn("evictDeadEntries: " + e, e);
+				continue;
+			}
+
+			String repositoryIDFromRepo = repositoryProperties.getProperty(LocalRepoManager.PROP_REPOSITORY_ID);
+			if (repositoryIDFromRepo == null) {
+				logger.warn("evictDeadEntries: repositoryProperties '{}' do not contain key='{}'!", repositoryPropertiesFile, LocalRepoManager.PROP_REPOSITORY_ID);
+				// Old repos don't have the repo-id in the properties, yet.
+				// This is automatically added, when the LocalRepoManager is started up for this repo, the next time.
+				// For now, we ignore it.
+				continue;
+			}
+
+			if (!repositoryIDFromRegistry.toString().equals(repositoryIDFromRepo)) { // new repo was created at the same location
+				evictDeadEntry(key);
+				continue;
+			}
+		}
+	}
+
+	private void evictDeadEntry(String key) {
+		repoRegistryPropertiesDirty = true;
+		Object value = repoRegistryProperties.remove(key);
+		logger.info("evictDeadEntry: key='{}' value='{}'", key, value);
 	}
 }

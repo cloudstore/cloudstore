@@ -72,11 +72,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
 
-	private static final String PROP_VERSION = "repository.version";
-
-	private static final String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
-	private static final String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
-
 	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
 
 	private final File localRoot;
@@ -108,6 +103,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			// file later (somehow making this really transactional).
 			initMetaDir(createRepository);
 			initPersistenceManagerFactory(createRepository);
+			updateRepositoryPropertiesFile();
 			releaseLockFile = false;
 			deleteMetaDir = false; // if we come here, creation is successful => NO deletion
 		} finally {
@@ -239,8 +235,24 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					String.format("Meta-file '%s' contains an illegal value (not a number) for property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
 		}
 
-		if (ver != 1) // There is only one single version, right now. This is just a sanity check for allowing automatic upgrades, later.
+		// There is only one single version, right now. This is just a sanity check for allowing automatic upgrades, later.
+		// Additionally, this prevents old versions to work with a newer repo (and possibly corrupt it).
+		if (ver != 1)
 			throw new RepositoryCorruptException(localRoot, "Repository is not version 1!");
+	}
+
+	private void updateRepositoryPropertiesFile() {
+		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		try {
+			Properties repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
+			String repositoryID = assertNotNull("repositoryID", getRepositoryID()).toString();
+			if (!repositoryID.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
+				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryID);
+				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
