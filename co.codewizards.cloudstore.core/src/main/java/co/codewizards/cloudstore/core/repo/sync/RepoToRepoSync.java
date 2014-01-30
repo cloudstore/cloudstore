@@ -322,7 +322,10 @@ public class RepoToRepoSync {
 				}
 				if (logger.isTraceEnabled()) {
 					logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
-							fileChunkIndex, fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1());
+							fileChunkIndex, fromFileChunkDTO.getOffset(),
+							(toFileChunkDTO == null ? "null" : toFileChunkDTO.getOffset()),
+							fromFileChunkDTO.getSha1(),
+							(toFileChunkDTO == null ? "null" : toFileChunkDTO.getSha1()));
 				}
 				fromFileChunkDTOsDirty.add(fromFileChunkDTO);
 			}
