@@ -77,6 +77,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private final File localRoot;
 	private LockFile lockFile;
 	private EntityID repositoryID;
+	/**
+	 * The properties read from {@link LocalRepoManager#REPOSITORY_PROPERTIES_FILE_NAME}.
+	 * <p>
+	 * <b>Important:</b> This is only assigned from {@link #createRepositoryPropertiesFile()} / {@link #checkRepositoryPropertiesFile()}
+	 * until {@link #updateRepositoryPropertiesFile()}. Afterwards, it is <code>null</code> again!
+	 */
+	private Properties repositoryProperties;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private final AtomicInteger openReferenceCounter = new AtomicInteger();
 	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
@@ -201,7 +208,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void createRepositoryPropertiesFile() {
 		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
-			Properties repositoryProperties = new Properties();
+			repositoryProperties = new Properties();
 			repositoryProperties.put(PROP_VERSION, Integer.valueOf(1).toString());
 			PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 		} catch (IOException e) {
@@ -215,7 +222,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			throw new RepositoryCorruptException(localRoot,
 					String.format("Meta-directory does not contain '%s'!", REPOSITORY_PROPERTIES_FILE_NAME));
 
-		Properties repositoryProperties;
 		try {
 			repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
 		} catch (IOException e) {
@@ -242,14 +248,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void updateRepositoryPropertiesFile() {
+		assertNotNull("repositoryProperties", repositoryProperties);
 		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
-			Properties repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
 			String repositoryID = assertNotNull("repositoryID", getRepositoryID()).toString();
 			if (!repositoryID.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
 				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryID);
 				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 			}
+			repositoryProperties = null; // not needed anymore => gc
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
