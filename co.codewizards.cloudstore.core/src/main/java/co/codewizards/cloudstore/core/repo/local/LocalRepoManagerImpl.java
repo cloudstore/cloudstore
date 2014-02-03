@@ -10,6 +10,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +68,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	protected final String id = Integer.toHexString(System.identityHashCode(this));
 
 	protected static volatile long closeDeferredMillis = 20 * 1000L; // TODO make properly configurable!
-	private final long lockTimeoutMillis = 30000; // TODO make configurable!
+	private static final long lockTimeoutMillis = 30000; // TODO make configurable!
+
+	private static final long remoteRepositoryRequestExpiryAge = 24 * 60 * 60 * 1000L;
 
 	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
 	private static final String VAR_META_DIR = "repository.metaDir";
@@ -90,8 +93,23 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
-	private Timer closeDeferredTimer = new Timer(true);
+	private Timer closeDeferredTimer = new Timer("closeDeferredTimer", true);
 	private TimerTask closeDeferredTimerTask;
+
+	private final Timer deleteExpiredRemoteRepositoryRequestsTimer = new Timer("deleteExpiredRemoteRepositoryRequestsTimer", true);
+	private final TimerTask deleteExpiredRemoteRepositoryRequestsTimeTask = new TimerTask() {
+		@Override
+		public void run() {
+			if (isOpen())
+				deleteExpiredRemoteRepositoryRequests();
+		}
+	};
+	{
+		deleteExpiredRemoteRepositoryRequestsTimer.schedule(
+				deleteExpiredRemoteRepositoryRequestsTimeTask,
+				60 * 60 * 1000L, 60 * 60 * 1000L); // TODO make times configurable
+	}
+
 
 	private byte[] privateKey;
 	private byte[] publicKey;
@@ -110,6 +128,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			// file later (somehow making this really transactional).
 			initMetaDir(createRepository);
 			initPersistenceManagerFactory(createRepository);
+			deleteExpiredRemoteRepositoryRequests();
 			updateRepositoryPropertiesFile();
 			releaseLockFile = false;
 			deleteMetaDir = false; // if we come here, creation is successful => NO deletion
@@ -121,24 +140,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
 		LocalRepoRegistry.getInstance().putRepository(repositoryID, localRoot);
-	}
-
-	protected boolean open() {
-		boolean result;
-		synchronized(this) {
-			logger.debug("[{}]open: closing={} closeAbortable={}", id, closing, closeAbortable);
-			result = !closing || closeAbortable;
-			if (result) {
-				closing = false;
-				closeAbortable = true;
-			}
-			if (closeDeferredTimerTask != null) {
-				closeDeferredTimerTask.cancel();
-				closeDeferredTimerTask = null;
-			}
-		}
-		openReferenceCounter.incrementAndGet();
-		return result;
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -285,6 +286,24 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			pm.close();
 		}
 		logger.info("[{}]initPersistenceManagerFactory: Started up PersistenceManagerFactory successfully in {} ms.", id, System.currentTimeMillis() - beginTimestamp);
+	}
+
+	private void deleteExpiredRemoteRepositoryRequests() {
+		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		try {
+			pm.currentTransaction().begin();
+
+			RemoteRepositoryRequestDAO dao = new RemoteRepositoryRequestDAO().persistenceManager(pm);
+			Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
+			pm.deletePersistentAll(expiredRequests);
+
+			pm.currentTransaction().commit();
+		} finally {
+			if (pm.currentTransaction().isActive())
+				pm.currentTransaction().rollback();
+
+			pm.close();
+		}
 	}
 
 	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(boolean createRepository) {
@@ -470,6 +489,27 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	};
 
+	protected boolean open() {
+		boolean result;
+		synchronized(this) {
+			logger.debug("[{}]open: closing={} closeAbortable={}", id, closing, closeAbortable);
+			result = !closing || closeAbortable;
+			if (result) {
+				closing = false;
+				closeAbortable = true;
+
+				if (closeDeferredTimerTask != null) {
+					closeDeferredTimerTask.cancel();
+					closeDeferredTimerTask = null;
+				}
+			}
+		}
+		if (result)
+			openReferenceCounter.incrementAndGet();
+
+		return result;
+	}
+
 	@Override
 	public void close() {
 		synchronized(this) {
@@ -533,6 +573,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.preClose(event);
 		}
+
+		deleteExpiredRemoteRepositoryRequestsTimer.cancel();
 
 		synchronized (this) {
 			if (persistenceManagerFactory != null) {

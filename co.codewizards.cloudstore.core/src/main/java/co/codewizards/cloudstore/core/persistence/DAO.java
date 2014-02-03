@@ -162,6 +162,16 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		return result;
 	}
 
+	public long getObjectsCount() {
+		Query query = pm().newQuery(entityClass);
+		query.setResult("count(this)");
+		Long result = (Long) query.execute();
+		if (result == null)
+			throw new IllegalStateException("Query for count(this) returned null!");
+
+		return result;
+	}
+
 	public <P extends E> P makePersistent(P entity)
 	{
 		assertNotNull("entity", entity);
@@ -175,7 +185,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		logger.debug("deletePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
 		pm().deletePersistent(entity);
 	}
-	
+
 	public void deletePersistentAll(Collection<? extends E> entities)
 	{
 		assertNotNull("entities", entities);

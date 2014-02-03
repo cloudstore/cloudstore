@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.persistence;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
 
@@ -10,7 +11,10 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 
 @PersistenceCapable
 @Unique(name="RemoteRepositoryRequest_repositoryID", members="repositoryID")
-@Query(name="getRemoteRepositoryRequest_repositoryID", value="SELECT UNIQUE WHERE this.repositoryID == :repositoryID")
+@Queries({
+	@Query(name="getRemoteRepositoryRequest_repositoryID", value="SELECT UNIQUE WHERE this.repositoryID == :repositoryID"),
+	@Query(name="getRemoteRepositoryRequestsChangedBefore_changed", value="SELECT WHERE this.changed < :changed")
+})
 public class RemoteRepositoryRequest extends Entity {
 
 	public RemoteRepositoryRequest() { }

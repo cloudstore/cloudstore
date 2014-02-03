@@ -61,6 +61,8 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 public class FileRepoTransport extends AbstractRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
 
+	private static final long MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY = 100; // TODO make configurable!
+
 	private LocalRepoManager localRepoManager;
 
 	@Override
@@ -100,6 +102,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 			}
 			else {
+				long remoteRepositoryRequestsCount = remoteRepositoryRequestDAO.getObjectsCount();
+				if (remoteRepositoryRequestsCount >= MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY)
+					throw new IllegalStateException(String.format(
+							"The maximum number of connection requests (%s) is reached or exceeded! Please retry later, when old requests were accepted or expired.", MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY));
+
 				remoteRepositoryRequest = new RemoteRepositoryRequest();
 				remoteRepositoryRequest.setRepositoryID(clientRepositoryID);
 				remoteRepositoryRequest.setPublicKey(publicKey);

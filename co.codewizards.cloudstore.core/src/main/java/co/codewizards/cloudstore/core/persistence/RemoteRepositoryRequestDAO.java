@@ -1,5 +1,11 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+
 import javax.jdo.Query;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -23,5 +29,17 @@ public class RemoteRepositoryRequestDAO extends DAO<RemoteRepositoryRequest, Rem
 			throw new IllegalArgumentException(String.format("There is no RemoteRepositoryRequest with repositoryID='%s'!", repositoryID));
 
 		return remoteRepositoryRequest;
+	}
+
+	public Collection<RemoteRepositoryRequest> getRemoteRepositoryRequestsChangedBefore(Date changed) {
+		assertNotNull("changed", changed);
+		Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepositoryRequestsChangedBefore_changed");
+		try {
+			@SuppressWarnings("unchecked")
+			Collection<RemoteRepositoryRequest> c = (Collection<RemoteRepositoryRequest>) query.execute(changed);
+			return new ArrayList<RemoteRepositoryRequest>(c);
+		} finally {
+			query.closeAll();
+		}
 	}
 }
