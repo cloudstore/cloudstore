@@ -8,6 +8,7 @@ import org.kohsuke.args4j.Argument;
 
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
@@ -61,6 +62,13 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 		else {
 			localFile = new File(local).getAbsoluteFile();
 			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
+			if (localRoot == null)
+				localRoot = localFile;
+
+			if (localRoot.equals(localFile))
+				localPathPrefix = "";
+			else
+				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile);
 		}
 		assertLocalRootNotNull();
 	}

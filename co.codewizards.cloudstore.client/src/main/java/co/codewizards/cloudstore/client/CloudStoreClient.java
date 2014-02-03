@@ -49,9 +49,9 @@ public class CloudStoreClient {
 		subCommandClasses = Collections.unmodifiableList(l);
 	};
 
-	public static final List<SubCommand> subCommands;
-	public static final Map<String, SubCommand> subCommandName2subCommand;
-	static {
+	public final List<SubCommand> subCommands;
+	public final Map<String, SubCommand> subCommandName2subCommand;
+	{
 		try {
 			ArrayList<SubCommand> l = new ArrayList<SubCommand>();
 			Map<String, SubCommand> m = new HashMap<String, SubCommand>();
@@ -77,11 +77,6 @@ public class CloudStoreClient {
 //			throw new RuntimeException(e);
 //		}
 //	}
-
-	static {
-		RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
-		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
-	}
 
 	public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override
@@ -144,9 +139,16 @@ public class CloudStoreClient {
 	 *
 	 * @param args the program arguments.
 	 */
-	public static void main(String[] args) throws Exception
+	public static void main(String... args) throws Exception
 	{
+		RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
 		initLogging();
+		int programExitStatus = new CloudStoreClient().execute(args);
+		System.exit(programExitStatus);
+	}
+
+	public int execute(String... args) throws Exception {
 		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 		int programExitStatus = 1;
 		boolean displayHelp = true;
@@ -220,7 +222,7 @@ public class CloudStoreClient {
 			}
 		}
 
-		System.exit(programExitStatus);
+		return programExitStatus;
 	}
 
 	private static void initLogging() throws IOException, JoranException {

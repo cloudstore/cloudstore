@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.client.CloudStoreClient;
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -76,7 +77,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	private static RestRepoTransportFactory restRepoTransportFactory;
 
 	@BeforeClass
-	public static void beforeClass() {
+	public static void beforeClass() throws Exception {
 		restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
 		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
 	}
@@ -112,8 +113,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
 		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURLWithPathPrefix, localRepoManagerRemote.getPublicKey(), localPathPrefix);
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
+		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
+		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -171,8 +172,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
 		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
 
-		localRepoManagerLocal.putRemoteRepository(remoteRepositoryID, remoteRootURLWithPathPrefix, localRepoManagerRemote.getPublicKey(), localPathPrefix);
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
+		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
+		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
 
 		File child_1 = createDirectory(localRoot, "1");
 
