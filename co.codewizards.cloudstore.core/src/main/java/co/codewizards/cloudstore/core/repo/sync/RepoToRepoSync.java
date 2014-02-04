@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.concurrent.CallerBlocksPolicy;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
@@ -493,10 +494,10 @@ public class RepoToRepoSync {
 
 	private ThreadPoolExecutor createSyncFileAsynchronouslyExecutor() {
 		// TODO make configurable
-		ThreadPoolExecutor syncFileAsynchronouslyExecutor = new ThreadPoolExecutor(2, 2,
+		ThreadPoolExecutor syncFileAsynchronouslyExecutor = new ThreadPoolExecutor(3, 3,
 				60, TimeUnit.SECONDS,
 				new LinkedBlockingQueue<Runnable>(2));
-		syncFileAsynchronouslyExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		syncFileAsynchronouslyExecutor.setRejectedExecutionHandler(new CallerBlocksPolicy());
 		return syncFileAsynchronouslyExecutor;
 	}
 
