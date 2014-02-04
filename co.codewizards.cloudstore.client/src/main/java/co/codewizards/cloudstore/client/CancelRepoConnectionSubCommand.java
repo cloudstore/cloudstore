@@ -64,7 +64,7 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryID = localRepoManager.getRepositoryID();
-			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 			try {
 				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 				if (remoteRepositoryID != null) {

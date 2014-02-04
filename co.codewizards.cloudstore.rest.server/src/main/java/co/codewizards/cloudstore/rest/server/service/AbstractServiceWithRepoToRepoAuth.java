@@ -204,7 +204,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		String localPathPrefix;
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
 			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(clientRepositoryID);
 			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();

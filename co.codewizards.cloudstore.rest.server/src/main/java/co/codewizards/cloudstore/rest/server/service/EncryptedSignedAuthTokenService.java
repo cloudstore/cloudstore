@@ -54,7 +54,7 @@ public class EncryptedSignedAuthTokenService
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {
 				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 				RemoteRepository clientRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);

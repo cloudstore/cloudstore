@@ -105,7 +105,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDTOs());
 		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
 
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);

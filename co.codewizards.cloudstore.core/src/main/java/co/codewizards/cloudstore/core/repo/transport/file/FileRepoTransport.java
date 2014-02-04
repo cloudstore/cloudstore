@@ -85,7 +85,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public void requestRepoConnection(byte[] publicKey) {
 		assertNotNull("publicKey", publicKey);
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(clientRepositoryID);
@@ -122,7 +122,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public RepositoryDTO getRepositoryDTO() {
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
@@ -141,7 +141,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		ChangeSetDTO changeSetDTO = new ChangeSetDTO();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
@@ -209,7 +209,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		path = prefixPath(path);
 		File file = getFile(path);
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
 			mkDir(transaction, file, lastModified);
@@ -243,7 +243,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
 		File parentFile = file.getParentFile();
 		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
@@ -296,7 +296,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		RepoFileDTO repoFileDTO = null;
 		path = prefixPath(path);
 		File file = getFile(path);
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // it performs a local sync!
 		try {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
@@ -606,7 +606,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 			File localRoot = getLocalRepoManager().getLocalRoot();
-			LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+			LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 			try {
 				assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
 
@@ -762,7 +762,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		path = prefixPath(path);
 		File file = getFile(path);
 		File localRoot = getLocalRepoManager().getLocalRoot();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); // It writes into the file system, but it only reads from the DB.
 		try {
 			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
 			if (repoFile == null)
@@ -800,7 +800,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		assertNotNull("lastModified", lastModified);
 		File file = getFile(path);
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 
 			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
@@ -840,7 +840,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void endSyncFromRepository() {
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			PersistenceManager pm = transaction.getPersistenceManager();
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
@@ -871,7 +871,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void endSyncToRepository(long fromLocalRevision) {
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginTransaction();
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);

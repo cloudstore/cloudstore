@@ -10,7 +10,15 @@ import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +68,9 @@ public class RepoToRepoSync {
 	private final EntityID localRepositoryID;
 	private final EntityID remoteRepositoryID;
 
+	private ExecutorService localSyncExecutor;
+	private Future<Void> localSyncFuture;
+
 	/**
 	 * Create an instance.
 	 * @param localRoot the root of the local repository or any file/directory inside it. This is
@@ -87,7 +98,7 @@ public class RepoToRepoSync {
 
 	private String getLocalPathPrefix(URL remoteRoot) {
 		String localPathPrefix;
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
 			localPathPrefix = remoteRepository.getLocalPathPrefix();
@@ -98,19 +109,36 @@ public class RepoToRepoSync {
 		return localPathPrefix;
 	}
 
-	public void sync(ProgressMonitor monitor) {
+	public void sync(final ProgressMonitor monitor) {
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Synchronising...", 201);
 		try {
 			readRemoteRepositoryIDFromRepoTransport();
 			monitor.worked(1);
 
-			logger.info("sync: locally syncing {} ('{}')", localRepositoryID, localRoot);
-			localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
+			if (localSyncExecutor != null)
+				throw new IllegalStateException("localSyncExecutor != null");
+			if (localSyncFuture != null)
+				throw new IllegalStateException("localSyncFuture != null");
+
+			localSyncExecutor = Executors.newFixedThreadPool(1);
+			localSyncFuture = localSyncExecutor.submit(new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					logger.info("sync: locally syncing {} ('{}')", localRepositoryID, localRoot);
+					localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
+					return null;
+				}
+			});
 
 			if (!TEST_INVERSE) { // This is the normal sync (NOT test).
 				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
 				sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
+
+				if (localSyncExecutor != null)
+					throw new IllegalStateException("localSyncExecutor != null");
+				if (localSyncFuture != null)
+					throw new IllegalStateException("localSyncFuture != null");
 
 				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
@@ -123,6 +151,8 @@ public class RepoToRepoSync {
 			else { // THIS IS FOR TESTING ONLY!
 				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryID, localRoot);
 				remoteRepoTransport.getChangeSetDTO(true); // trigger the local sync on the remote side (we don't need the change set)
+
+				waitForAndCheckLocalSyncFuture();
 
 				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
@@ -138,9 +168,27 @@ public class RepoToRepoSync {
 		}
 	}
 
+	private void waitForAndCheckLocalSyncFutureIfExists() {
+		if (localSyncFuture != null)
+			waitForAndCheckLocalSyncFuture();
+	}
+
+	private void waitForAndCheckLocalSyncFuture() {
+		try {
+			assertNotNull("localSyncFuture", localSyncFuture).get();
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		assertNotNull("localSyncExecutor", localSyncExecutor).shutdown();
+		localSyncFuture = null;
+		localSyncExecutor = null;
+	}
+
 	private EntityID readRemoteRepositoryIDFromLocalDB() {
 		EntityID remoteRepositoryID;
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
 			remoteRepositoryID = remoteRepository.getEntityID();
@@ -192,6 +240,8 @@ public class RepoToRepoSync {
 			ChangeSetDTO changeSetDTO = fromRepoTransport.getChangeSetDTO(fromRepoLocalSync);
 			monitor.worked(8);
 
+			waitForAndCheckLocalSyncFutureIfExists();
+
 			sync(fromRepoTransport, toRepoTransport, changeSetDTO, new SubProgressMonitor(monitor, 90));
 
 			fromRepoTransport.endSyncFromRepository();
@@ -209,17 +259,32 @@ public class RepoToRepoSync {
 				syncModification(fromRepoTransport, toRepoTransport, modificationDTO, new SubProgressMonitor(monitor, 1));
 			}
 
-			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
-			if (repoFileDTOTree != null) {
-				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
-					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
-					if (repoFileDTO instanceof DirectoryDTO)
-						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-					else if (repoFileDTO instanceof NormalFileDTO)
-						syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
-					else
-						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+			LinkedList<Future<Void>> syncFileAsynchronouslyFutures = new LinkedList<Future<Void>>();
+			ThreadPoolExecutor syncFileAsynchronouslyExecutor = createSyncFileAsynchronouslyExecutor();
+			try {
+
+				RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
+				if (repoFileDTOTree != null) {
+					for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
+						RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
+						if (repoFileDTO instanceof DirectoryDTO)
+							syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+						else if (repoFileDTO instanceof NormalFileDTO) {
+							Future<Void> syncFileAsynchronouslyFuture = syncFileAsynchronously(syncFileAsynchronouslyExecutor,
+									fromRepoTransport, toRepoTransport,
+									repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
+							syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
+						}
+						else
+							throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+
+						checkAndEvictDoneSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
+					}
 				}
+
+				checkAndEvictAllSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
+			} finally {
+				syncFileAsynchronouslyExecutor.shutdown();
 			}
 		} finally {
 			monitor.done();
@@ -258,6 +323,22 @@ public class RepoToRepoSync {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private Future<Void> syncFileAsynchronously(
+			ThreadPoolExecutor syncFileAsynchronouslyExecutor,
+			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDTOTreeNode repoFileDTOTreeNode, final RepoFileDTO normalFileDTO, final ProgressMonitor monitor) {
+
+		Callable<Void> callable = new Callable<Void>() {
+			@Override
+			public Void call() throws Exception {
+				syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, normalFileDTO, monitor);
+				return null;
+			}
+		};
+		Future<Void> future = syncFileAsynchronouslyExecutor.submit(callable);
+		return future;
 	}
 
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
@@ -408,5 +489,44 @@ public class RepoToRepoSync {
 		localRepoManager.close();
 		localRepoTransport.close();
 		remoteRepoTransport.close();
+	}
+
+	private ThreadPoolExecutor createSyncFileAsynchronouslyExecutor() {
+		// TODO make configurable
+		ThreadPoolExecutor syncFileAsynchronouslyExecutor = new ThreadPoolExecutor(2, 2,
+				60, TimeUnit.SECONDS,
+				new LinkedBlockingQueue<Runnable>(2));
+		syncFileAsynchronouslyExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		return syncFileAsynchronouslyExecutor;
+	}
+
+	private void checkAndEvictDoneSyncFileAsynchronouslyFutures(LinkedList<Future<Void>> syncFileAsynchronouslyFutures) {
+		for (Iterator<Future<Void>> it = syncFileAsynchronouslyFutures.iterator(); it.hasNext();) {
+			Future<Void> future = it.next();
+			if (future.isDone()) {
+				it.remove();
+				try {
+					future.get(); // We definitely don't need a timeout here, because we invoke it only, if it's done already. It should never wait.
+				} catch (RuntimeException e) {
+					throw e;
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+	}
+
+	private void checkAndEvictAllSyncFileAsynchronouslyFutures(LinkedList<Future<Void>> syncFileAsynchronouslyFutures) {
+		for (Iterator<Future<Void>> it = syncFileAsynchronouslyFutures.iterator(); it.hasNext();) {
+			Future<Void> future = it.next();
+			it.remove();
+			try {
+				future.get(); // I don't think we need a timeout, because the operations done in the callable have timeouts already.
+			} catch (RuntimeException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }

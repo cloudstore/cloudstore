@@ -65,7 +65,7 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		try {
 			localRepositoryID = localRepoManager.getRepositoryID();
 			localPublicKey = localRepoManager.getPublicKey();
-			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 			try {
 				RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
 				RemoteRepositoryRequest request;

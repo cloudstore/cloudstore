@@ -47,7 +47,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @return the message to be logged.
 	 * @see #setMessage(String)
 	 */
-	public String getMessage() {
+	public synchronized String getMessage() {
 		return message;
 	}
 
@@ -65,7 +65,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @param message the message to be logged.
 	 * @see #getMessage()
 	 */
-	public void setMessage(String message) {
+	public synchronized void setMessage(String message) {
 		if (message == null)
 			throw new IllegalArgumentException("message must not be null!");
 
@@ -99,7 +99,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @return the minimum log period.
 	 * @see #setLogMinPeriodMSec(long)
 	 */
-	public long getLogMinPeriodMSec() {
+	public synchronized long getLogMinPeriodMSec() {
 		return logMinPeriodMSec;
 	}
 	/**
@@ -128,7 +128,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @see #getLogMinPeriodMSec()
 	 * @see #setLogMinPercentageDifference(float)
 	 */
-	public void setLogMinPeriodMSec(long logMinPeriodMSec) {
+	public synchronized void setLogMinPeriodMSec(long logMinPeriodMSec) {
 		this.logMinPeriodMSec = logMinPeriodMSec;
 	}
 
@@ -140,7 +140,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @return the minimum percentage difference.
 	 * @see #setLogMinPercentageDifference(float)
 	 */
-	public float getLogMinPercentageDifference() {
+	public synchronized float getLogMinPercentageDifference() {
 		return logMinPercentageDifference;
 	}
 	/**
@@ -170,14 +170,14 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @see #getLogMinPercentageDifference()
 	 * @see #setLogMinPeriodMSec(long)
 	 */
-	public void setLogMinPercentageDifference(float logMinPercentageDifference) {
+	public synchronized void setLogMinPercentageDifference(float logMinPercentageDifference) {
 		this.logMinPercentageDifference = logMinPercentageDifference;
 	}
 
 	private int nestedBeginTasks = 0;
 
 	@Override
-	public void beginTask(String name, int totalWork) {
+	public synchronized void beginTask(String name, int totalWork) {
 		// Ignore nested begin task calls.
 		if (++nestedBeginTasks > 1)
 			return;
@@ -193,7 +193,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	}
 
 	@Override
-	public void done() {
+	public synchronized void done() {
 		// Ignore if more done calls than beginTask calls or if we are still
 		// in some nested beginTasks
 		if (nestedBeginTasks == 0 || --nestedBeginTasks > 0)
@@ -205,7 +205,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	}
 
 	@Override
-	public void internalWorked(double worked) {
+	public synchronized void internalWorked(double worked) {
 		if (worked < 0 || worked == Double.NaN)
 			return;
 
@@ -289,7 +289,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * Set the log-level to use when writing to the logger.
 	 * @param logLevel the {@link LogLevel} to be used.
 	 */
-	public void setLogLevel(LogLevel logLevel) {
+	public synchronized void setLogLevel(LogLevel logLevel) {
 		if (logLevel == null)
 			throw new IllegalArgumentException("logLevel must not be null!");
 
@@ -311,12 +311,12 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	}
 
 	@Override
-	public void setTaskName(String name) {
+	public synchronized void setTaskName(String name) {
 		this.name = name; // TODO not sure, if this is a correct implementation
 	}
 
 	@Override
-	public void subTask(String name) {
+	public synchronized void subTask(String name) {
 		this.name = name; // TODO not sure, if this is a correct implementation
 	}
 

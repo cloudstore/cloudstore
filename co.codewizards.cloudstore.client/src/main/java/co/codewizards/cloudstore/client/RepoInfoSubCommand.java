@@ -45,7 +45,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	public void run() throws Exception {
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {
 				showMainProperties(transaction);
 //				showRepositoryAliases(transaction);

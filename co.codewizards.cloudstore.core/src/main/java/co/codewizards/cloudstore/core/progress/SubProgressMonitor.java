@@ -27,11 +27,11 @@ package co.codewizards.cloudstore.core.progress;
  * </p><p>
  * This class may be instantiated or subclassed by clients.
  * </p>
- * 
+ *
  * @author Marius Heinzmann [marius<at>NightLabs<dot>de]
  */
 public class SubProgressMonitor extends ProgressMonitorDelegator {
-	
+
 	/**
 	 * Style constant indicating that calls to <code>subTask</code>
 	 * should not have any effect.
@@ -102,7 +102,7 @@ public class SubProgressMonitor extends ProgressMonitorDelegator {
 	 * every string passed to <code>subTask(String)</code>.
 	 */
 	@Override
-	public void beginTask(String name, int totalWork) {
+	public synchronized void beginTask(String name, int totalWork) {
 		nestedBeginTasks++;
 		// Ignore nested begin task calls.
 		if (nestedBeginTasks > 1) {
@@ -118,7 +118,7 @@ public class SubProgressMonitor extends ProgressMonitorDelegator {
 	}
 
 	@Override
-	public void done() {
+	public synchronized void done() {
 		// Ignore if more done calls than beginTask calls or if we are still
 		// in some nested beginTasks
 		if (nestedBeginTasks == 0 || --nestedBeginTasks > 0)
@@ -134,7 +134,7 @@ public class SubProgressMonitor extends ProgressMonitorDelegator {
 	}
 
 	@Override
-	public void internalWorked(double work) {
+	public synchronized void internalWorked(double work) {
 		if (usedUp || nestedBeginTasks != 1) {
 			return;
 		}
@@ -148,7 +148,7 @@ public class SubProgressMonitor extends ProgressMonitorDelegator {
 	}
 
 	@Override
-	public void subTask(String name) {
+	public synchronized void subTask(String name) {
 		if ((style & SUPPRESS_SUBTASK_LABEL) != 0) {
 			return;
 		}

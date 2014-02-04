@@ -20,6 +20,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
@@ -95,6 +97,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private boolean deleteMetaDir;
 	private Timer closeDeferredTimer = new Timer("closeDeferredTimer", true);
 	private TimerTask closeDeferredTimerTask;
+	private final Lock lock = new ReentrantLock();
 
 	private final Timer deleteExpiredRemoteRepositoryRequestsTimer = new Timer("deleteExpiredRemoteRepositoryRequestsTimer", true);
 	private final TimerTask deleteExpiredRemoteRepositoryRequestsTimeTask = new TimerTask() {
@@ -289,20 +292,25 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void deleteExpiredRemoteRepositoryRequests() {
-		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		lock.lock();
 		try {
-			pm.currentTransaction().begin();
+			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+			try {
+				pm.currentTransaction().begin();
 
-			RemoteRepositoryRequestDAO dao = new RemoteRepositoryRequestDAO().persistenceManager(pm);
-			Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
-			pm.deletePersistentAll(expiredRequests);
+				RemoteRepositoryRequestDAO dao = new RemoteRepositoryRequestDAO().persistenceManager(pm);
+				Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
+				pm.deletePersistentAll(expiredRequests);
 
-			pm.currentTransaction().commit();
+				pm.currentTransaction().commit();
+			} finally {
+				if (pm.currentTransaction().isActive())
+					pm.currentTransaction().rollback();
+
+				pm.close();
+			}
 		} finally {
-			if (pm.currentTransaction().isActive())
-				pm.currentTransaction().rollback();
-
-			pm.close();
+			lock.unlock();
 		}
 	}
 
@@ -631,16 +639,22 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized LocalRepoTransaction beginTransaction() {
+	public synchronized LocalRepoTransaction beginReadTransaction() {
 		assertOpen();
-		return new LocalRepoTransaction(this);
+		return new LocalRepoTransaction(this, false);
+	}
+
+	@Override
+	public synchronized LocalRepoTransaction beginWriteTransaction() {
+		assertOpen();
+		return new LocalRepoTransaction(this, true);
 	}
 
 	@Override
 	public void localSync(ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", 100);
 		try {
-			LocalRepoTransaction transaction = beginTransaction();
+			LocalRepoTransaction transaction = beginWriteTransaction();
 			try {
 				monitor.worked(1);
 				new LocalRepoSync(transaction).sync(new SubProgressMonitor(monitor, 98));
@@ -658,7 +672,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey, String localPathPrefix) {
 		assertNotNull("entityID", repositoryID);
 		assertNotNull("publicKey", publicKey);
-		LocalRepoTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 
@@ -694,7 +708,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	@Override
 	public void deleteRemoteRepository(EntityID repositoryID) {
 		assertNotNull("entityID", repositoryID);
-		LocalRepoTransaction transaction = beginTransaction();
+		LocalRepoTransaction transaction = beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
@@ -723,5 +737,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			logger.warn("System property '{}': keySize '{}' is not a valid number!" + x, SYSTEM_PROPERTY_KEY_SIZE, keySizeString);
 			return DEFAULT_KEY_SIZE;
 		}
+	}
+
+	@Override
+	public Lock getLock() {
+		return lock;
 	}
 }

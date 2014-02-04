@@ -11,7 +11,7 @@ import java.security.InvalidParameterException;
  */
 public abstract class ProgressMonitorDelegator implements ProgressMonitor
 {
-	private ProgressMonitor monitor;
+	private final ProgressMonitor monitor;
 
 	public ProgressMonitorDelegator(ProgressMonitor monitor) {
 		if (monitor == null)

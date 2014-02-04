@@ -215,7 +215,7 @@ public abstract class AbstractIT {
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
-		LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
 			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);

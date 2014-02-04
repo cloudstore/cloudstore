@@ -209,7 +209,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryID);
 			LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 			try {
-				LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+				LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 				try {
 					RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(getRepositoryID());
 

@@ -98,7 +98,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 
 			repositoryID = localRepoManager.getRepositoryID();
 			localRoot = localRepoManager.getLocalRoot();
-			LocalRepoTransaction transaction = localRepoManager.beginTransaction();
+			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {
 				Collection<RemoteRepository> remoteRepositories = transaction.getDAO(RemoteRepositoryDAO.class).getObjects();
 				for (RemoteRepository remoteRepository : remoteRepositories) {

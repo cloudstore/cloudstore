@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.io.File;
 import java.net.URL;
+import java.util.concurrent.locks.Lock;
 
 import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
@@ -76,10 +77,16 @@ public interface LocalRepoManager {
 	void close();
 
 	/**
-	 * Begin a JDO transaction in the underlying database.
+	 * Begin a JDO transaction for read operations only in the underlying database.
 	 * @return the transaction handle. Never <code>null</code>.
 	 */
-	LocalRepoTransaction beginTransaction();
+	LocalRepoTransaction beginReadTransaction();
+
+	/**
+	 * Begin a JDO transaction for read and write operations in the underlying database.
+	 * @return the transaction handle. Never <code>null</code>.
+	 */
+	LocalRepoTransaction beginWriteTransaction();
 
 	/**
 	 * Synchronises the local file system with the local database.
@@ -107,4 +114,6 @@ public interface LocalRepoManager {
 	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
 	 */
 	void deleteRemoteRepository(EntityID repositoryID);
+
+	Lock getLock();
 }
