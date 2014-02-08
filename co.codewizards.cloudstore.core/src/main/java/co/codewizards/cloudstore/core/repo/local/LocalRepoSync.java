@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,11 +19,14 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.persistence.CopyModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
+import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.FileChunk;
 import co.codewizards.cloudstore.core.persistence.ModificationDAO;
 import co.codewizards.cloudstore.core.persistence.NormalFile;
+import co.codewizards.cloudstore.core.persistence.NormalFileDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RepoFile;
@@ -38,15 +42,20 @@ public class LocalRepoSync {
 	private final LocalRepoTransaction transaction;
 	private final File localRoot;
 	private final RepoFileDAO repoFileDAO;
+	private final NormalFileDAO normalFileDAO;
 	private final RemoteRepositoryDAO remoteRepositoryDAO;
 	private final ModificationDAO modificationDAO;
+	private final DeleteModificationDAO deleteModificationDAO;
+	private Collection<RemoteRepository> remoteRepositories;
 
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
 		repoFileDAO = this.transaction.getDAO(RepoFileDAO.class);
+		normalFileDAO = this.transaction.getDAO(NormalFileDAO.class);
 		remoteRepositoryDAO = this.transaction.getDAO(RemoteRepositoryDAO.class);
 		modificationDAO = this.transaction.getDAO(ModificationDAO.class);
+		deleteModificationDAO = this.transaction.getDAO(DeleteModificationDAO.class);
 	}
 
 	public void sync(ProgressMonitor monitor) {
@@ -198,6 +207,9 @@ public class LocalRepoSync {
 			repoFile.setName(file.getName());
 			repoFile.setLastModified(new Date(file.lastModified()));
 
+			if (repoFile instanceof NormalFile)
+				createCopyModificationsIfPossible((NormalFile)repoFile);
+
 			return repoFileDAO.makePersistent(repoFile);
 		} finally {
 			monitor.done();
@@ -249,28 +261,83 @@ public class LocalRepoSync {
 		pm.flush();
 	}
 
+	private void createCopyModificationsIfPossible(NormalFile newNormalFile) {
+		Collection<NormalFile> normalFiles = normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
+		for (NormalFile normalFile : normalFiles) {
+			if (newNormalFile.equals(normalFile)) // should never happen, because newNormalFile is not yet persisted, but we write robust code that doesn't break easily after refactoring.
+				continue;
+
+			createCopyModifications(normalFile, newNormalFile);
+		}
+
+		Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
+		for (DeleteModification deleteModification : deleteModifications)
+			createCopyModifications(deleteModification, newNormalFile);
+	}
+
+	private void createCopyModifications(DeleteModification deleteModification, NormalFile toNormalFile) {
+		assertNotNull("deleteModification", deleteModification);
+		assertNotNull("toNormalFile", toNormalFile);
+
+		if (deleteModification.getLength() != toNormalFile.getLength())
+			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
+
+		if (!deleteModification.getSha1().equals(toNormalFile.getSha1()))
+			throw new IllegalArgumentException("fromNormalFile.sha1 != toNormalFile.sha1");
+
+		for (RemoteRepository remoteRepository : getRemoteRepositories()) {
+			CopyModification modification = new CopyModification();
+			modification.setRemoteRepository(remoteRepository);
+			modification.setFromPath(deleteModification.getPath());
+			modification.setToPath(toNormalFile.getPath());
+			modification.setLength(toNormalFile.getLength());
+			modification.setSha1(toNormalFile.getSha1());
+			modificationDAO.makePersistent(modification);
+		}
+	}
+
+	private void createCopyModifications(NormalFile fromNormalFile, NormalFile toNormalFile) {
+		assertNotNull("fromNormalFile", fromNormalFile);
+		assertNotNull("toNormalFile", toNormalFile);
+
+		if (fromNormalFile.getLength() != toNormalFile.getLength())
+			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
+
+		if (!fromNormalFile.getSha1().equals(toNormalFile.getSha1()))
+			throw new IllegalArgumentException("fromNormalFile.sha1 != toNormalFile.sha1");
+
+		for (RemoteRepository remoteRepository : getRemoteRepositories()) {
+			CopyModification modification = new CopyModification();
+			modification.setRemoteRepository(remoteRepository);
+			modification.setFromPath(fromNormalFile.getPath());
+			modification.setToPath(toNormalFile.getPath());
+			modification.setLength(toNormalFile.getLength());
+			modification.setSha1(toNormalFile.getSha1());
+			modificationDAO.makePersistent(modification);
+		}
+	}
+
 	private void createDeleteModifications(RepoFile repoFile) {
 		assertNotNull("repoFile", repoFile);
 		NormalFile normalFile = null;
 		if (repoFile instanceof NormalFile)
 			normalFile = (NormalFile) repoFile;
 
-		// TODO check, if the deleted file exists somewhere else. If so, move it (instead of deleting it).
-		// Maybe we need a CopyModification instead of a MoveModification, because it can occur in multiple
-		// locations and whether to move or to copy should better be decided by the client.
-		// TODO Note that there are two possible scenarios: Either the new file is first created and then the old
-		// file deleted or the old file is first deleted and then the new file is created. We must handle both
-		// cases (here is just one of them).
-		// And we should test both cases - somehow.
-
-		for (RemoteRepository remoteRepository : remoteRepositoryDAO.getObjects()) {
-			DeleteModification deleteModification = new DeleteModification();
-			deleteModification.setRemoteRepository(remoteRepository);
-			deleteModification.setPath(repoFile.getPath());
-			deleteModification.setLength(normalFile == null ? -1 : normalFile.getLength());
-			deleteModification.setSha1(normalFile == null ? null : normalFile.getSha1());
-			modificationDAO.makePersistent(deleteModification);
+		for (RemoteRepository remoteRepository : getRemoteRepositories()) {
+			DeleteModification modification = new DeleteModification();
+			modification.setRemoteRepository(remoteRepository);
+			modification.setPath(repoFile.getPath());
+			modification.setLength(normalFile == null ? -1 : normalFile.getLength());
+			modification.setSha1(normalFile == null ? null : normalFile.getSha1());
+			modificationDAO.makePersistent(modification);
 		}
+	}
+
+	private Collection<RemoteRepository> getRemoteRepositories() {
+		if (remoteRepositories == null)
+			remoteRepositories = Collections.unmodifiableCollection(remoteRepositoryDAO.getObjects());
+
+		return remoteRepositories;
 	}
 
 	private void deleteRepoFileWithAllChildrenRecursively(RepoFile repoFile) {

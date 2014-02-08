@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +43,18 @@ public class DeleteModificationDAO extends DAO<DeleteModification, DeleteModific
 			p = p.substring(0, lastSlash);
 		}
 		return deleteModifications;
+	}
+
+	public Collection<DeleteModification> getDeleteModificationsForSha1(String sha1, long length) {
+		assertNotNull("sha1", sha1);
+		Query query = pm().newNamedQuery(getEntityClass(), "getDeleteModifications_sha1_length");
+		try {
+			@SuppressWarnings("unchecked")
+			Collection<DeleteModification> deleteModifications = (Collection<DeleteModification>) query.execute(sha1, length);
+			return new ArrayList<DeleteModification>(deleteModifications);
+		} finally {
+			query.closeAll();
+		}
 	}
 
 }

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +34,7 @@ import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
+import co.codewizards.cloudstore.core.persistence.CopyModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.Directory;
 import co.codewizards.cloudstore.core.persistence.Entity;
@@ -356,6 +357,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final void doNothing() { }
 
 	private void initPersistenceCapableClasses(PersistenceManager pm) {
+		pm.getExtent(CopyModification.class);
 		pm.getExtent(DeleteModification.class);
 		pm.getExtent(Directory.class);
 		pm.getExtent(Entity.class);

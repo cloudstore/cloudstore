@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,13 +15,13 @@ public class NormalFileDAO extends DAO<NormalFile, NormalFileDAO> {
 	 * @param length the {@link RepoFile#getLength() length} for which to query.
 	 * @return those {@link RepoFile}s matching the given criteria. Never <code>null</code>; but maybe empty.
 	 */
-	public Collection<RepoFile> getRepoFilesForSha1(String sha1, long length) {
+	public Collection<NormalFile> getNormalFilesForSha1(String sha1, long length) {
 		assertNotNull("sha1", sha1);
 		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFiles_sha1_length");
 		try {
 			@SuppressWarnings("unchecked")
-			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(sha1, length);
-			return new ArrayList<RepoFile>(repoFiles);
+			Collection<NormalFile> repoFiles = (Collection<NormalFile>) query.execute(sha1, length);
+			return new ArrayList<NormalFile>(repoFiles);
 		} finally {
 			query.closeAll();
 		}

@@ -45,7 +45,7 @@ public class NormalFile extends RepoFile {
 	 * Gets the file size in bytes.
 	 * <p>
 	 * It reflects the {@link File#length() File.length} property.
-	 * @return the file size in bytes. <code>0</code>, if this is a directory.
+	 * @return the file size in bytes.
 	 */
 	public long getLength() {
 		return length;
