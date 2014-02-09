@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -257,7 +258,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			try {
-				IOUtil.copyFile(fromFile, toFile);
+				Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -787,7 +788,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				throw new IllegalStateException("Could not rename file to resolve collision: " + file);
 
 			try {
-				IOUtil.copyFile(collisionFile, file);
+				Files.copy(collisionFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

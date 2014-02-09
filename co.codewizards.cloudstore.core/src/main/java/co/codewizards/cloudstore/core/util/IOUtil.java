@@ -365,104 +365,104 @@ public final class IOUtil {
 		return transferStreamData(in, out, 0, -1);
 	}
 
-	public static enum CreateSymlinkResult {
-		/**
-		 * The symlink was successfully created.
-		 */
-		symlinked,
-
-		/**
-		 * The data was copied instead of being symlinked.
-		 */
-		copied,
-
-		/**
-		 * If the destination already exists.
-		 */
-		alreadyExists,
-
-		/**
-		 * While waiting for the symlink to be created, we catched an {@link InterruptedException}.
-		 */
-		interrupted,
-
-		/**
-		 * The symlink was not created and <code>copyIfSymlinksNotSupported</code> was set to <code>false</code>.
-		 */
-		unsupported,
-
-		/**
-		 * Specifies that the existing File object neither denotes a Directory nor a File. This can only be returned
-		 * when creation of the symlink was not possible.
-		 */
-		unknownFileType
-	}
-
-	/**
-	 * This method creates a symlink if supported by the operating system. Even though windows
-	 * does support them, this method supports them only on GNU/Linux, so far. It seems, anyway,
-	 * that symlinks on windows can cause very strange behaviour and data loss! see this for more
-	 * details: http://shell-shocked.org/article.php?id=284
-	 *
-	 * @param existing The existing file or directory. If this is relative, the symlink will be relative, too.
-	 *		If the data needs to be copied, it will be copied to <code>new File(link, existing.getPath())</code>.
-	 * @param link The link that shall be created.
-	 * @param copyIfSymlinksNotSupported If this is <code>true</code> and the OS does not support symlinks, the method
-	 *		will delegate to {@link #copyDirectory(File, File)} or {@link #copyFile(File, File)}. If it is <code>false</code>,
-	 *		either the symlink can be created or nothing will be done.
-	 * @return an instance of {@link CreateSymlinkResult} - never <code>null</code>.
-	 * @throws IOException if IO fails in an underlying call.
-	 */
-	public static CreateSymlinkResult createSymlink(File existing, File link, boolean copyIfSymlinksNotSupported)
-	throws IOException
-	{
-		Logger logger = LoggerFactory.getLogger(IOUtil.class);
-
-		if (logger.isDebugEnabled())
-			logger.debug("createSymlink: begin: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-
-		if (link.exists())
-			return CreateSymlinkResult.alreadyExists;
-
-		File linkParent = link.getParentFile();
-		if (linkParent != null && !linkParent.exists() && !linkParent.mkdirs())
-			logger.warn("createSymlink: creating the link's parent directories failed!");
-
-		int processResult;
-		Process process = Runtime.getRuntime().exec(new String[] { "/bin/ln", "-s", existing.getPath(), link.getAbsolutePath() });
-		try {
-			processResult = process.waitFor();
-		} catch (InterruptedException e) {
-			logger.warn("createSymlink: interrupted! will return immediately!", e);
-			return CreateSymlinkResult.interrupted;
-		}
-
-		if (processResult != 0)
-			logger.warn("createSymlink: processResult != 0, but: " + processResult);
-
-		if (link.exists())
-			return CreateSymlinkResult.symlinked;
-
-		if (!copyIfSymlinksNotSupported)
-			return CreateSymlinkResult.unsupported;
-
-		logger.debug("createSymlink: symlink could not be created - will copy instead: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-
-		// A symlink references from the ${link} to the ${existing}. Therefore, we must modify ${existing}, if it is not absolute.
-		if (!existing.isAbsolute())
-			existing = new File(link, existing.getPath());
-
-		if (existing.isDirectory())
-			copyDirectory(existing, link);
-		else if (existing.isFile())
-			copyFile(existing, link);
-		else {
-			logger.debug("createSymlink: ${existing} is neither a directory, nor a file! cannot create link: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-			return CreateSymlinkResult.unknownFileType;
-		}
-
-		return CreateSymlinkResult.copied;
-	}
+//	public static enum CreateSymlinkResult {
+//		/**
+//		 * The symlink was successfully created.
+//		 */
+//		symlinked,
+//
+//		/**
+//		 * The data was copied instead of being symlinked.
+//		 */
+//		copied,
+//
+//		/**
+//		 * If the destination already exists.
+//		 */
+//		alreadyExists,
+//
+//		/**
+//		 * While waiting for the symlink to be created, we catched an {@link InterruptedException}.
+//		 */
+//		interrupted,
+//
+//		/**
+//		 * The symlink was not created and <code>copyIfSymlinksNotSupported</code> was set to <code>false</code>.
+//		 */
+//		unsupported,
+//
+//		/**
+//		 * Specifies that the existing File object neither denotes a Directory nor a File. This can only be returned
+//		 * when creation of the symlink was not possible.
+//		 */
+//		unknownFileType
+//	}
+//
+//	/**
+//	 * This method creates a symlink if supported by the operating system. Even though windows
+//	 * does support them, this method supports them only on GNU/Linux, so far. It seems, anyway,
+//	 * that symlinks on windows can cause very strange behaviour and data loss! see this for more
+//	 * details: http://shell-shocked.org/article.php?id=284
+//	 *
+//	 * @param existing The existing file or directory. If this is relative, the symlink will be relative, too.
+//	 *		If the data needs to be copied, it will be copied to <code>new File(link, existing.getPath())</code>.
+//	 * @param link The link that shall be created.
+//	 * @param copyIfSymlinksNotSupported If this is <code>true</code> and the OS does not support symlinks, the method
+//	 *		will delegate to {@link #copyDirectory(File, File)} or {@link #copyFile(File, File)}. If it is <code>false</code>,
+//	 *		either the symlink can be created or nothing will be done.
+//	 * @return an instance of {@link CreateSymlinkResult} - never <code>null</code>.
+//	 * @throws IOException if IO fails in an underlying call.
+//	 */
+//	public static CreateSymlinkResult createSymlink(File existing, File link, boolean copyIfSymlinksNotSupported)
+//	throws IOException
+//	{
+//		Logger logger = LoggerFactory.getLogger(IOUtil.class);
+//
+//		if (logger.isDebugEnabled())
+//			logger.debug("createSymlink: begin: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
+//
+//		if (link.exists())
+//			return CreateSymlinkResult.alreadyExists;
+//
+//		File linkParent = link.getParentFile();
+//		if (linkParent != null && !linkParent.exists() && !linkParent.mkdirs())
+//			logger.warn("createSymlink: creating the link's parent directories failed!");
+//
+//		int processResult;
+//		Process process = Runtime.getRuntime().exec(new String[] { "/bin/ln", "-s", existing.getPath(), link.getAbsolutePath() });
+//		try {
+//			processResult = process.waitFor();
+//		} catch (InterruptedException e) {
+//			logger.warn("createSymlink: interrupted! will return immediately!", e);
+//			return CreateSymlinkResult.interrupted;
+//		}
+//
+//		if (processResult != 0)
+//			logger.warn("createSymlink: processResult != 0, but: " + processResult);
+//
+//		if (link.exists())
+//			return CreateSymlinkResult.symlinked;
+//
+//		if (!copyIfSymlinksNotSupported)
+//			return CreateSymlinkResult.unsupported;
+//
+//		logger.debug("createSymlink: symlink could not be created - will copy instead: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
+//
+//		// A symlink references from the ${link} to the ${existing}. Therefore, we must modify ${existing}, if it is not absolute.
+//		if (!existing.isAbsolute())
+//			existing = new File(link, existing.getPath());
+//
+//		if (existing.isDirectory())
+//			copyDirectory(existing, link);
+//		else if (existing.isFile())
+//			copyFile(existing, link);
+//		else {
+//			logger.debug("createSymlink: ${existing} is neither a directory, nor a file! cannot create link: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
+//			return CreateSymlinkResult.unknownFileType;
+//		}
+//
+//		return CreateSymlinkResult.copied;
+//	}
 
 	/**
 	 * This method deletes the given directory recursively. If the given parameter
@@ -999,33 +999,33 @@ public final class IOUtil {
 		}
 	}
 
-	/**
-	 * Copy a directory recursively.
-	 * @param sourceDirectory The source directory
-	 * @param destinationDirectory The destination directory
-	 * @throws IOException in case of an error
-	 */
-	public static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException
-	{
-		if(!sourceDirectory.exists() || !sourceDirectory.isDirectory())
-			throw new IOException("No such source directory: "+sourceDirectory.getAbsolutePath());
-		if(destinationDirectory.exists()) {
-			if(!destinationDirectory.isDirectory())
-				throw new IOException("Destination exists but is not a directory: "+sourceDirectory.getAbsolutePath());
-		} else
-			destinationDirectory.mkdirs();
-
-		File[] files = sourceDirectory.listFiles();
-		for (File file : files) {
-			File destinationFile = new File(destinationDirectory, file.getName());
-			if(file.isDirectory())
-				copyDirectory(file, destinationFile);
-			else
-				copyFile(file, destinationFile);
-		}
-
-		destinationDirectory.setLastModified(sourceDirectory.lastModified());
-	}
+//	/**
+//	 * Copy a directory recursively.
+//	 * @param sourceDirectory The source directory
+//	 * @param destinationDirectory The destination directory
+//	 * @throws IOException in case of an error
+//	 */
+//	public static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException
+//	{
+//		if(!sourceDirectory.exists() || !sourceDirectory.isDirectory())
+//			throw new IOException("No such source directory: "+sourceDirectory.getAbsolutePath());
+//		if(destinationDirectory.exists()) {
+//			if(!destinationDirectory.isDirectory())
+//				throw new IOException("Destination exists but is not a directory: "+sourceDirectory.getAbsolutePath());
+//		} else
+//			destinationDirectory.mkdirs();
+//
+//		File[] files = sourceDirectory.listFiles();
+//		for (File file : files) {
+//			File destinationFile = new File(destinationDirectory, file.getName());
+//			if(file.isDirectory())
+//				copyDirectory(file, destinationFile);
+//			else
+//				copyFile(file, destinationFile);
+//		}
+//
+//		destinationDirectory.setLastModified(sourceDirectory.lastModified());
+//	}
 
 	/**
 	 * Copy a resource loaded by the class loader of a given class to a file.
@@ -1088,64 +1088,64 @@ public final class IOUtil {
 		}
 	}
 
-	/**
-	 * Copy a file.
-	 * @param sourceFile The source file to copy
-	 * @param destinationFile To which file to copy the source
-	 * @throws IOException in case of an error
-	 */
-	public static void copyFile(File sourceFile, File destinationFile)
-	throws IOException
-	{
-		copyFile(sourceFile, destinationFile, null);
-	}
-	public static void copyFile(File sourceFile, File destinationFile, ProgressMonitor monitor)
-	throws IOException
-	{
-		FileInputStream source = null;
-		FileOutputStream destination = null;
-
-		try {
-			// First make sure the specified source file
-			// exists, is a file, and is readable.
-			if (!sourceFile.exists() || !sourceFile.isFile())
-				throw new IOException("FileCopy: no such source file: "+sourceFile.getCanonicalPath());
-			if (!sourceFile.canRead())
-			 throw new IOException("FileCopy: source file is unreadable: "+sourceFile.getCanonicalPath());
-
-			// If the destination exists, make sure it is a writeable file.	If the destination doesn't
-			// exist, make sure the directory exists and is writeable.
-			if (destinationFile.exists()) {
-				if (destinationFile.isFile()) {
-					if (!destinationFile.canWrite())
-						throw new IOException("FileCopy: destination file is unwriteable: " + destinationFile.getCanonicalPath());
-				} else
-					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
-			} else {
-				File parentdir = destinationFile.getParentFile();
-				if (parentdir == null || !parentdir.exists())
-					throw new IOException("FileCopy: destination directory doesn't exist: " +
-									destinationFile.getCanonicalPath());
-				 if (!parentdir.canWrite())
-					 throw new IOException("FileCopy: destination directory is unwriteable: " +
-									destinationFile.getCanonicalPath());
-			}
-			// If we've gotten this far, then everything is okay; we can
-			// copy the file.
-			source = new FileInputStream(sourceFile);
-			destination = new FileOutputStream(destinationFile);
-			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
-			// No matter what happens, always close any streams we've opened.
-		} finally {
-			if (source != null)
-				try { source.close(); } catch (IOException e) { ; }
-			if (destination != null)
-				try { destination.close(); } catch (IOException e) { ; }
-		}
-
-		// copy the timestamp
-		destinationFile.setLastModified(sourceFile.lastModified());
-	}
+//	/**
+//	 * Copy a file.
+//	 * @param sourceFile The source file to copy
+//	 * @param destinationFile To which file to copy the source
+//	 * @throws IOException in case of an error
+//	 */
+//	public static void copyFile(File sourceFile, File destinationFile)
+//	throws IOException
+//	{
+//		copyFile(sourceFile, destinationFile, null);
+//	}
+//	public static void copyFile(File sourceFile, File destinationFile, ProgressMonitor monitor)
+//	throws IOException
+//	{
+//		FileInputStream source = null;
+//		FileOutputStream destination = null;
+//
+//		try {
+//			// First make sure the specified source file
+//			// exists, is a file, and is readable.
+//			if (!sourceFile.exists() || !sourceFile.isFile())
+//				throw new IOException("FileCopy: no such source file: "+sourceFile.getCanonicalPath());
+//			if (!sourceFile.canRead())
+//			 throw new IOException("FileCopy: source file is unreadable: "+sourceFile.getCanonicalPath());
+//
+//			// If the destination exists, make sure it is a writeable file.	If the destination doesn't
+//			// exist, make sure the directory exists and is writeable.
+//			if (destinationFile.exists()) {
+//				if (destinationFile.isFile()) {
+//					if (!destinationFile.canWrite())
+//						throw new IOException("FileCopy: destination file is unwriteable: " + destinationFile.getCanonicalPath());
+//				} else
+//					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
+//			} else {
+//				File parentdir = destinationFile.getParentFile();
+//				if (parentdir == null || !parentdir.exists())
+//					throw new IOException("FileCopy: destination directory doesn't exist: " +
+//									destinationFile.getCanonicalPath());
+//				 if (!parentdir.canWrite())
+//					 throw new IOException("FileCopy: destination directory is unwriteable: " +
+//									destinationFile.getCanonicalPath());
+//			}
+//			// If we've gotten this far, then everything is okay; we can
+//			// copy the file.
+//			source = new FileInputStream(sourceFile);
+//			destination = new FileOutputStream(destinationFile);
+//			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
+//			// No matter what happens, always close any streams we've opened.
+//		} finally {
+//			if (source != null)
+//				try { source.close(); } catch (IOException e) { ; }
+//			if (destination != null)
+//				try { destination.close(); } catch (IOException e) { ; }
+//		}
+//
+//		// copy the timestamp
+//		destinationFile.setLastModified(sourceFile.lastModified());
+//	}
 
 	/**
 	 * Add a trailing file separator character to the
