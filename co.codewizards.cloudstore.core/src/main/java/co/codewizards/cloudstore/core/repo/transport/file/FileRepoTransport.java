@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
+import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -29,6 +31,7 @@ import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.persistence.CopyModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
 import co.codewizards.cloudstore.core.persistence.Directory;
@@ -236,6 +239,86 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
+	public void copy(String fromPath, String toPath) {
+		fromPath = prefixPath(fromPath);
+		toPath = prefixPath(toPath);
+
+		File fromFile = getFile(fromPath);
+		File toFile = getFile(toPath);
+
+		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
+			return;
+
+		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
+			return;
+
+		File toParentFile = toFile.getParentFile();
+		long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		try {
+			try {
+				IOUtil.copyFile(fromFile, toFile);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			localRepoSync.sync(toFile, new NullProgressMonitor());
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+
+			if (toParentFileLastModified != Long.MIN_VALUE)
+				toParentFile.setLastModified(toParentFileLastModified);
+		}
+	}
+
+	@Override
+	public void move(String fromPath, String toPath) {
+		fromPath = prefixPath(fromPath);
+		toPath = prefixPath(toPath);
+
+		File fromFile = getFile(fromPath);
+		File toFile = getFile(toPath);
+
+		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
+			return;
+
+		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
+			return;
+
+		File fromParentFile = fromFile.getParentFile();
+		File toParentFile = toFile.getParentFile();
+		long fromParentFileLastModified = fromParentFile.exists() ? fromParentFile.lastModified() : Long.MIN_VALUE;
+		long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		try {
+			try {
+				Files.move(fromFile.toPath(), toFile.toPath());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			localRepoSync.sync(toFile, new NullProgressMonitor());
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
+			if (repoFile != null)
+				localRepoSync.deleteRepoFile(repoFile);
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+
+			if (fromParentFileLastModified != Long.MIN_VALUE)
+				fromParentFile.setLastModified(fromParentFileLastModified);
+
+			if (toParentFileLastModified != Long.MIN_VALUE)
+				toParentFile.setLastModified(toParentFileLastModified);
+		}
+	}
+
+	@Override
 	public void delete(String path) {
 		path = prefixPath(path);
 		File file = getFile(path);
@@ -372,7 +455,23 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private ModificationDTO toModificationDTO(Modification modification) {
 		ModificationDTO modificationDTO;
-		if (modification instanceof DeleteModification) {
+		if (modification instanceof CopyModification) {
+			CopyModification copyModification = (CopyModification) modification;
+
+			String fromPath = copyModification.getFromPath();
+			String toPath = copyModification.getToPath();
+			if (!isPathUnderPathPrefix(fromPath) || !isPathUnderPathPrefix(toPath))
+				return null;
+
+			fromPath = unprefixPath(fromPath);
+			toPath = unprefixPath(toPath);
+
+			CopyModificationDTO copyModificationDTO = new CopyModificationDTO();
+			modificationDTO = copyModificationDTO;
+			copyModificationDTO.setFromPath(fromPath);
+			copyModificationDTO.setToPath(toPath);
+		}
+		else if (modification instanceof DeleteModification) {
 			DeleteModification deleteModification = (DeleteModification) modification;
 
 			String path = deleteModification.getPath();

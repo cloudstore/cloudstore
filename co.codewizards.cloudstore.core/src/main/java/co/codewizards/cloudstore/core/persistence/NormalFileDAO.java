@@ -17,7 +17,7 @@ public class NormalFileDAO extends DAO<NormalFile, NormalFileDAO> {
 	 */
 	public Collection<NormalFile> getNormalFilesForSha1(String sha1, long length) {
 		assertNotNull("sha1", sha1);
-		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFiles_sha1_length");
+		Query query = pm().newNamedQuery(getEntityClass(), "getNormalFiles_sha1_length");
 		try {
 			@SuppressWarnings("unchecked")
 			Collection<NormalFile> repoFiles = (Collection<NormalFile>) query.execute(sha1, length);

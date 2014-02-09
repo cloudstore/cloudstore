@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -459,6 +459,42 @@ public class CloudStoreRESTClient {
 			Response response = assignCredentials(client.target(getBaseURL())
 					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
 					.request()).delete();
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void copy(String repositoryName, String fromPath, String toPath) {
+		assertNotNull("repositoryName", repositoryName);
+		Client client = acquireClient();
+		try {
+			Response response = assignCredentials(client.target(getBaseURL())
+					.path("_copy")
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(fromPath))
+					.queryParam("to", toPath)
+					.request()).post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient(client);
+		}
+	}
+
+	public void move(String repositoryName, String fromPath, String toPath) {
+		assertNotNull("repositoryName", repositoryName);
+		Client client = acquireClient();
+		try {
+			Response response = assignCredentials(client.target(getBaseURL())
+					.path("_move")
+					.path(repositoryName).path(removeLeadingAndTrailingSlashes(fromPath))
+					.queryParam("to", toPath)
+					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -490,6 +491,36 @@ public class RepoToRepoSyncTest extends AbstractTest {
 //	public void syncWithDirectFileDeletionCollision() throws Exception {
 //
 //	}
+
+	@Test
+	public void syncMovedFile() throws Exception {
+		syncFromRemoteToLocal();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_b = new File(r_child_2_1, "b");
+		assertThat(r_child_2_1_b).isFile();
+
+		File r_child_2_b = new File(r_child_2, "b");
+		assertThat(r_child_2_b).doesNotExist();
+
+		Files.move(r_child_2_1_b.toPath(), r_child_2_b.toPath());
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_b).isFile();
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
+
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_b).isFile();
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
 
 	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix() throws Exception {

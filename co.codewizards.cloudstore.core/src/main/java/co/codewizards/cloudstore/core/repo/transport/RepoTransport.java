@@ -60,6 +60,9 @@ public interface RepoTransport {
 	 */
 	void makeDirectory(String path, Date lastModified);
 
+	void copy(String fromPath, String toPath);
+	void move(String fromPath, String toPath);
+
 	/**
 	 * Deletes the file (or directory) specified by {@code path}.
 	 * <p>

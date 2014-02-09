@@ -11,11 +11,13 @@ import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolve
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
 import co.codewizards.cloudstore.rest.server.service.BeginPutFileService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetDTOService;
+import co.codewizards.cloudstore.rest.server.service.CopyService;
 import co.codewizards.cloudstore.rest.server.service.EncryptedSignedAuthTokenService;
 import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
+import co.codewizards.cloudstore.rest.server.service.MoveService;
 import co.codewizards.cloudstore.rest.server.service.RepoFileDTOService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
@@ -45,6 +47,7 @@ public class CloudStoreREST extends ResourceConfig {
 				// BEGIN services
 				BeginPutFileService.class,
 				ChangeSetDTOService.class,
+				CopyService.class,
 				EncryptedSignedAuthTokenService.class,
 				EndPutFileService.class,
 				EndSyncFromRepositoryService.class,
@@ -52,6 +55,7 @@ public class CloudStoreREST extends ResourceConfig {
 				RepoFileDTOService.class,
 //				LocalSyncService.class,
 				MakeDirectoryService.class,
+				MoveService.class,
 				RepositoryDTOService.class,
 				RequestRepoConnectionService.class,
 				TestService.class,

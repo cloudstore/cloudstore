@@ -262,8 +262,16 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModificationsIfPossible(NormalFile newNormalFile) {
+		// A CopyModification is not necessary for an empty file. And since this method is called
+		// during RepoTransport.beginPutFile(...), we easily filter out this unwanted case already.
+		if (newNormalFile.getLength() == 0)
+			return;
+
 		Collection<NormalFile> normalFiles = normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
 		for (NormalFile normalFile : normalFiles) {
+//			if (normalFile.isInProgress()) // Additional check. Do we really want this?
+//				continue;
+
 			if (newNormalFile.equals(normalFile)) // should never happen, because newNormalFile is not yet persisted, but we write robust code that doesn't break easily after refactoring.
 				continue;
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -122,6 +122,20 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	public void makeDirectory(String path, Date lastModified) {
 		path = prefixPath(path);
 		getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
+	}
+
+	@Override
+	public void copy(String fromPath, String toPath) {
+		fromPath = prefixPath(fromPath);
+		toPath = prefixPath(toPath);
+		getClient().copy(getRepositoryID().toString(), fromPath, toPath);
+	}
+
+	@Override
+	public void move(String fromPath, String toPath) {
+		fromPath = prefixPath(fromPath);
+		toPath = prefixPath(toPath);
+		getClient().move(getRepositoryID().toString(), fromPath, toPath);
 	}
 
 	@Override
