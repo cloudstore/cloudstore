@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.equal;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -14,6 +13,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -294,65 +296,61 @@ public class RepoToRepoSync {
 		}
 	}
 
+	private SortedMap<Long, Collection<ModificationDTO>> getLocalRevision2ModificationDTOs(Collection<ModificationDTO> modificationDTOs) {
+		SortedMap<Long, Collection<ModificationDTO>> map = new TreeMap<Long, Collection<ModificationDTO>>();
+		for (ModificationDTO modificationDTO : modificationDTOs) {
+			long localRevision = modificationDTO.getLocalRevision();
+			Collection<ModificationDTO> collection = map.get(localRevision);
+			if (collection == null) {
+				collection = new ArrayList<ModificationDTO>();
+				map.put(localRevision, collection);
+			}
+			collection.add(modificationDTO);
+		}
+		return map;
+	}
+
 	private void syncModifications(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, Collection<ModificationDTO> modificationDTOs, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", modificationDTOs.size());
 		try {
-			// TODO this algorithm is not yet optimal. Since we currently sort by
-			// type only and first do the copying and then the deleting, it might
-			// happen, that we delete sth. that was *AFTERWARDS* copied there.
-			// However, in this case, it will be regularly copied, later. These CopyModifications
-			// are only a performance improvement, anyway. They are not essentially necessary
-			// for correct sync results. Still this should be improved later ;-)
-			ModificationDTOSet modificationDTOSet = new ModificationDTOSet(modificationDTOs);
+			SortedMap<Long,Collection<ModificationDTO>> localRevision2ModificationDTOs = getLocalRevision2ModificationDTOs(modificationDTOs);
+			for (Map.Entry<Long,Collection<ModificationDTO>> me : localRevision2ModificationDTOs.entrySet()) {
+				ModificationDTOSet modificationDTOSet = new ModificationDTOSet(me.getValue());
 
-			for (List<CopyModificationDTO> copyModificationDTOs : modificationDTOSet.getFromPath2CopyModificationDTOs().values()) {
+				for (List<CopyModificationDTO> copyModificationDTOs : modificationDTOSet.getFromPath2CopyModificationDTOs().values()) {
 
-				for (Iterator<CopyModificationDTO> itCopyMod = copyModificationDTOs.iterator(); itCopyMod.hasNext(); ) {
-					CopyModificationDTO copyModificationDTO = itCopyMod.next();
-					List<DeleteModificationDTO> deleteModificationDTOs = modificationDTOSet.getPath2DeleteModificationDTOs().get(copyModificationDTO.getFromPath());
-					boolean moveInstead = false;
-					if (!itCopyMod.hasNext() && deleteModificationDTOs != null && !deleteModificationDTOs.isEmpty())
-						moveInstead = true;
+					for (Iterator<CopyModificationDTO> itCopyMod = copyModificationDTOs.iterator(); itCopyMod.hasNext(); ) {
+						CopyModificationDTO copyModificationDTO = itCopyMod.next();
+						List<DeleteModificationDTO> deleteModificationDTOs = modificationDTOSet.getPath2DeleteModificationDTOs().get(copyModificationDTO.getFromPath());
+						boolean moveInstead = false;
+						if (!itCopyMod.hasNext() && deleteModificationDTOs != null && !deleteModificationDTOs.isEmpty())
+							moveInstead = true;
 
-					if (moveInstead)
-						toRepoTransport.move(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
-					else
-						toRepoTransport.copy(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
+						if (moveInstead)
+							toRepoTransport.move(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
+						else
+							toRepoTransport.copy(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
 
-					if (!moveInstead && deleteModificationDTOs != null) {
-						for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
-							logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
-							toRepoTransport.delete(deleteModificationDTO.getPath());
+						if (!moveInstead && deleteModificationDTOs != null) {
+							for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
+								logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
+								toRepoTransport.delete(deleteModificationDTO.getPath());
+							}
 						}
 					}
 				}
-			}
 
-			for (List<DeleteModificationDTO> deleteModificationDTOs : modificationDTOSet.getPath2DeleteModificationDTOs().values()) {
-				for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
-					logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
-					toRepoTransport.delete(deleteModificationDTO.getPath());
+				for (List<DeleteModificationDTO> deleteModificationDTOs : modificationDTOSet.getPath2DeleteModificationDTOs().values()) {
+					for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
+						logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
+						toRepoTransport.delete(deleteModificationDTO.getPath());
+					}
 				}
 			}
 		} finally {
 			monitor.done();
 		}
 	}
-
-//	private void syncModification(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ModificationDTO modificationDTO, ProgressMonitor monitor) {
-//		monitor.beginTask("Synchronising...", 100);
-//		try {
-//			if (modificationDTO instanceof DeleteModificationDTO) {
-//				DeleteModificationDTO deleteModificationDTO = (DeleteModificationDTO) modificationDTO;
-//				logger.info("syncModification: Deleting '{}'", deleteModificationDTO.getPath());
-//				toRepoTransport.delete(deleteModificationDTO.getPath());
-//			}
-//			else
-//				throw new IllegalStateException("Unknown modificationDTO type: " + modificationDTO);
-//		} finally {
-//			monitor.done();
-//		}
-//	}
 
 	private void syncDirectory(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
