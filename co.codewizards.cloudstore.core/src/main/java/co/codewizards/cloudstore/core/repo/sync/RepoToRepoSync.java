@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.equal;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -326,10 +327,14 @@ public class RepoToRepoSync {
 						if (!itCopyMod.hasNext() && deleteModificationDTOs != null && !deleteModificationDTOs.isEmpty())
 							moveInstead = true;
 
-						if (moveInstead)
+						if (moveInstead) {
+							logger.info("syncModifications: Moving from '{}' to '{}'", copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
 							toRepoTransport.move(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
-						else
+						}
+						else {
+							logger.info("syncModifications: Copying from '{}' to '{}'", copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
 							toRepoTransport.copy(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
+						}
 
 						if (!moveInstead && deleteModificationDTOs != null) {
 							for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
