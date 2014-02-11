@@ -254,27 +254,28 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			return;
 
 		File toParentFile = toFile.getParentFile();
-		long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
+			long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
 			try {
-				if (!toParentFile.isDirectory())
-					toParentFile.mkdirs();
+				try {
+					if (!toParentFile.isDirectory())
+						toParentFile.mkdirs();
 
-				Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+					Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				localRepoSync.sync(toFile, new NullProgressMonitor());
+			} finally {
+				if (toParentFileLastModified != Long.MIN_VALUE)
+					toParentFile.setLastModified(toParentFileLastModified);
 			}
-
-			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-			localRepoSync.sync(toFile, new NullProgressMonitor());
-
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
-
-			if (toParentFileLastModified != Long.MIN_VALUE)
-				toParentFile.setLastModified(toParentFileLastModified);
 		}
 	}
 
@@ -294,34 +295,36 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		File fromParentFile = fromFile.getParentFile();
 		File toParentFile = toFile.getParentFile();
-		long fromParentFileLastModified = fromParentFile.exists() ? fromParentFile.lastModified() : Long.MIN_VALUE;
-		long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
+			long fromParentFileLastModified = fromParentFile.exists() ? fromParentFile.lastModified() : Long.MIN_VALUE;
+			long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
 			try {
-				if (!toParentFile.isDirectory())
-					toParentFile.mkdirs();
+				try {
+					if (!toParentFile.isDirectory())
+						toParentFile.mkdirs();
 
-				Files.move(fromFile.toPath(), toFile.toPath());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+					Files.move(fromFile.toPath(), toFile.toPath());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				localRepoSync.sync(toFile, new NullProgressMonitor());
+				RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
+				if (repoFile != null)
+					localRepoSync.deleteRepoFile(repoFile);
+
+			} finally {
+				if (fromParentFileLastModified != Long.MIN_VALUE)
+					fromParentFile.setLastModified(fromParentFileLastModified);
+
+				if (toParentFileLastModified != Long.MIN_VALUE)
+					toParentFile.setLastModified(toParentFileLastModified);
 			}
-
-			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-			localRepoSync.sync(toFile, new NullProgressMonitor());
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
-			if (repoFile != null)
-				localRepoSync.deleteRepoFile(repoFile);
-
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
-
-			if (fromParentFileLastModified != Long.MIN_VALUE)
-				fromParentFile.setLastModified(fromParentFileLastModified);
-
-			if (toParentFileLastModified != Long.MIN_VALUE)
-				toParentFile.setLastModified(toParentFileLastModified);
 		}
 	}
 
@@ -332,35 +335,37 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
 		File parentFile = file.getParentFile();
-		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-			localRepoSync.sync(file, new NullProgressMonitor());
+			long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			try {
+				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				localRepoSync.sync(file, new NullProgressMonitor());
 
-			if (fileIsLocalRoot) {
-				// Cannot delete the repository's root! Deleting all its contents instead.
-				long fileLastModified = file.lastModified();
-				try {
-					File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
-					if (children == null)
-						throw new IllegalStateException("File-listing localRoot returned null: " + file);
+				if (fileIsLocalRoot) {
+					// Cannot delete the repository's root! Deleting all its contents instead.
+					long fileLastModified = file.lastModified();
+					try {
+						File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
+						if (children == null)
+							throw new IllegalStateException("File-listing localRoot returned null: " + file);
 
-					for (File child : children)
-						delete(transaction, localRepoSync, clientRepositoryID, child);
-				} finally {
-					file.setLastModified(fileLastModified);
+						for (File child : children)
+							delete(transaction, localRepoSync, clientRepositoryID, child);
+					} finally {
+						file.setLastModified(fileLastModified);
+					}
 				}
-			}
-			else
-				delete(transaction, localRepoSync, clientRepositoryID, file);
+				else
+					delete(transaction, localRepoSync, clientRepositoryID, file);
 
+			} finally {
+				if (parentFileLastModified != Long.MIN_VALUE)
+					parentFile.setLastModified(parentFileLastModified);
+			}
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
-
-			if (parentFileLastModified != Long.MIN_VALUE)
-				parentFile.setLastModified(parentFileLastModified);
 		}
 	}
 
@@ -703,17 +708,17 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
 		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
 		File parentFile = file.getParentFile();
-		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			if (file.exists() && !file.isFile())
-				file.renameTo(IOUtil.createCollisionFile(file));
-
-			if (file.exists() && !file.isFile())
-				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
-
-			File localRoot = getLocalRepoManager().getLocalRoot();
-			LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+			long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 			try {
+				if (file.exists() && !file.isFile())
+					file.renameTo(IOUtil.createCollisionFile(file));
+
+				if (file.exists() && !file.isFile())
+					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
+
+				File localRoot = getLocalRepoManager().getLocalRoot();
 				assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
 
 				boolean newFile = false;
@@ -750,14 +755,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 				normalFile.setLastSyncFromRepositoryID(clientRepositoryID);
 				normalFile.setInProgress(true);
-
-				transaction.commit();
 			} finally {
-				transaction.rollbackIfActive();
+				if (parentFileLastModified != Long.MIN_VALUE)
+					parentFile.setLastModified(parentFileLastModified);
 			}
+			transaction.commit();
 		} finally {
-			if (parentFileLastModified != Long.MIN_VALUE)
-				parentFile.setLastModified(parentFileLastModified);
+			transaction.rollbackIfActive();
 		}
 	}
 
