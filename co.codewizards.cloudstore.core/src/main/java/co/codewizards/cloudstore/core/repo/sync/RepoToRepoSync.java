@@ -11,6 +11,7 @@ import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -260,32 +261,92 @@ public class RepoToRepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetDTO changeSetDTO, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetDTO.getModificationDTOs().size() + changeSetDTO.getRepoFileDTOs().size());
+		monitor.beginTask("Synchronising...", changeSetDTO.getModificationDTOs().size() + 2 * changeSetDTO.getRepoFileDTOs().size());
 		try {
+			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
+			if (repoFileDTOTree != null) {
+				sync(fromRepoTransport, toRepoTransport, repoFileDTOTree,
+						new Class<?>[] { DirectoryDTO.class }, new Class<?>[0],
+						new SubProgressMonitor(monitor, repoFileDTOTree.size()));
+			}
+
 			syncModifications(fromRepoTransport, toRepoTransport, changeSetDTO.getModificationDTOs(),
 					new SubProgressMonitor(monitor, changeSetDTO.getModificationDTOs().size()));
 
+			if (repoFileDTOTree != null) {
+				sync(fromRepoTransport, toRepoTransport, repoFileDTOTree,
+						new Class<?>[] { RepoFileDTO.class }, new Class<?>[] { DirectoryDTO.class },
+						new SubProgressMonitor(monitor, repoFileDTOTree.size()));
+			}
+		} finally {
+			monitor.done();
+		}
+	}
+
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport,
+			RepoFileDTOTreeNode repoFileDTOTree,
+			Class<?>[] repoFileDTOClassesIncl, Class<?>[] repoFileDTOClassesExcl,
+			ProgressMonitor monitor) {
+		assertNotNull("fromRepoTransport", fromRepoTransport);
+		assertNotNull("toRepoTransport", toRepoTransport);
+		assertNotNull("repoFileDTOTree", repoFileDTOTree);
+		assertNotNull("repoFileDTOClassesIncl", repoFileDTOClassesIncl);
+		assertNotNull("repoFileDTOClassesExcl", repoFileDTOClassesExcl);
+		assertNotNull("monitor", monitor);
+
+		Map<Class<?>, Boolean> repoFileDTOClass2Included = new HashMap<Class<?>, Boolean>();
+		Map<Class<?>, Boolean> repoFileDTOClass2Excluded = new HashMap<Class<?>, Boolean>();
+
+		monitor.beginTask("Synchronising...", repoFileDTOTree.size());
+		try {
 			LinkedList<Future<Void>> syncFileAsynchronouslyFutures = new LinkedList<Future<Void>>();
 			ThreadPoolExecutor syncFileAsynchronouslyExecutor = createSyncFileAsynchronouslyExecutor();
 			try {
+				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
+					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
+					Class<? extends RepoFileDTO> repoFileDTOClass = repoFileDTO.getClass();
 
-				RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
-				if (repoFileDTOTree != null) {
-					for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
-						RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
-						if (repoFileDTO instanceof DirectoryDTO)
-							syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-						else if (repoFileDTO instanceof NormalFileDTO) {
-							Future<Void> syncFileAsynchronouslyFuture = syncFileAsynchronously(syncFileAsynchronouslyExecutor,
-									fromRepoTransport, toRepoTransport,
-									repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
-							syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
+					Boolean included = repoFileDTOClass2Included.get(repoFileDTOClass);
+					if (included == null) {
+						included = false;
+						for (Class<?> clazz : repoFileDTOClassesIncl) {
+							if (clazz.isAssignableFrom(repoFileDTOClass)) {
+								included = true;
+								break;
+							}
 						}
-						else
-							throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
-
-						checkAndEvictDoneSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
+						repoFileDTOClass2Included.put(repoFileDTOClass, included);
 					}
+
+					Boolean excluded = repoFileDTOClass2Excluded.get(repoFileDTOClass);
+					if (excluded == null) {
+						excluded = false;
+						for (Class<?> clazz : repoFileDTOClassesExcl) {
+							if (clazz.isAssignableFrom(repoFileDTOClass)) {
+								excluded = true;
+								break;
+							}
+						}
+						repoFileDTOClass2Excluded.put(repoFileDTOClass, excluded);
+					}
+
+					if (!included || excluded) {
+						monitor.worked(1);
+						continue;
+					}
+
+					if (repoFileDTO instanceof DirectoryDTO)
+						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+					else if (repoFileDTO instanceof NormalFileDTO) {
+						Future<Void> syncFileAsynchronouslyFuture = syncFileAsynchronously(syncFileAsynchronouslyExecutor,
+								fromRepoTransport, toRepoTransport,
+								repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
+						syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
+					}
+					else
+						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+
+					checkAndEvictDoneSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
 				}
 
 				checkAndEvictAllSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);

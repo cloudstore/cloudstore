@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,6 +70,7 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 	private RepoFileDTOTreeNode parent;
 	private final RepoFileDTO repoFileDTO;
 	private final List<RepoFileDTOTreeNode> children = new ArrayList<RepoFileDTOTreeNode>();
+	private List<RepoFileDTOTreeNode> flattenedTreeList;
 
 	protected RepoFileDTOTreeNode(RepoFileDTO repoFileDTO) {
 		this.repoFileDTO = assertNotNull("repoFileDTO", repoFileDTO);
@@ -125,9 +126,20 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 
 	@Override
 	public Iterator<RepoFileDTOTreeNode> iterator() {
-		List<RepoFileDTOTreeNode> list = new ArrayList<RepoFileDTOTreeNode>();
-		flattenTree(list, this);
-		return list.iterator();
+		return getFlattenedTreeList().iterator();
+	}
+
+	public int size() {
+		return getFlattenedTreeList().size();
+	}
+
+	private List<RepoFileDTOTreeNode> getFlattenedTreeList() {
+		if (flattenedTreeList == null) {
+			List<RepoFileDTOTreeNode> list = new ArrayList<RepoFileDTOTreeNode>();
+			flattenTree(list, this);
+			flattenedTreeList = list;
+		}
+		return flattenedTreeList;
 	}
 
 	private void flattenTree(List<RepoFileDTOTreeNode> result, RepoFileDTOTreeNode node) {

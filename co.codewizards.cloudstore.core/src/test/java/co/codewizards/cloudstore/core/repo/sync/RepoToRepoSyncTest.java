@@ -523,6 +523,40 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	}
 
 	@Test
+	public void syncMovedFileToNewDir() throws Exception {
+		syncFromRemoteToLocal();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_b = new File(r_child_2_1, "b");
+		assertThat(r_child_2_1_b).isFile();
+
+		File r_child_2_new = new File(r_child_2, "new");
+		assertThat(r_child_2_new).doesNotExist();
+		r_child_2_new.mkdir();
+		assertThat(r_child_2_new).isDirectory();
+
+		File r_child_2_new_xxx = new File(r_child_2_new, "xxx");
+
+		Files.move(r_child_2_1_b.toPath(), r_child_2_new_xxx.toPath());
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_new_xxx).isFile();
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
+
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_new_xxx).isFile();
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
+	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix() throws Exception {
 		remotePathPrefix = "/2";
 		syncFromRemoteToLocal();

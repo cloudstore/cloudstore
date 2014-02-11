@@ -258,6 +258,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			try {
+				if (!toParentFile.isDirectory())
+					toParentFile.mkdirs();
+
 				Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -296,6 +299,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			try {
+				if (!toParentFile.isDirectory())
+					toParentFile.mkdirs();
+
 				Files.move(fromFile.toPath(), toFile.toPath());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
