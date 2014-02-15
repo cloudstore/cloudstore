@@ -1,12 +1,13 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -339,4 +340,81 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		syncFromRemoteToLocal();
 	}
 
+
+
+	@Test
+	public void syncMovedFile() throws Exception {
+		syncFromRemoteToLocal();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_b = new File(r_child_2_1, "b");
+		assertThat(r_child_2_1_b).isFile();
+
+		File r_child_2_b = new File(r_child_2, "b");
+		assertThat(r_child_2_b).doesNotExist();
+
+		Files.move(r_child_2_1_b.toPath(), r_child_2_b.toPath());
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_b).isFile();
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
+
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_b).isFile();
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
+	@Test
+	public void syncMovedFileToNewDir() throws Exception {
+		syncFromRemoteToLocal();
+
+		File r_child_2 = new File(remoteRoot, "2");
+		assertThat(r_child_2).isDirectory();
+
+		File r_child_2_1 = new File(r_child_2, "1");
+		assertThat(r_child_2_1).isDirectory();
+
+		File r_child_2_1_b = new File(r_child_2_1, "b");
+		assertThat(r_child_2_1_b).isFile();
+
+		File r_child_2_new = new File(r_child_2, "new");
+		assertThat(r_child_2_new).doesNotExist();
+		r_child_2_new.mkdir();
+		assertThat(r_child_2_new).isDirectory();
+
+		File r_child_2_new_xxx = new File(r_child_2_new, "xxx");
+
+		Files.move(r_child_2_1_b.toPath(), r_child_2_new_xxx.toPath());
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_new_xxx).isFile();
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
+
+		assertThat(r_child_2_1_b).doesNotExist();
+		assertThat(r_child_2_new_xxx).isFile();
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
+	@Test
+	public void syncMovedFileWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncMovedFile();
+	}
+
+	@Test
+	public void syncMovedFileToNewDirWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncMovedFileToNewDir();
+	}
 }

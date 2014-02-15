@@ -592,4 +592,15 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocalWithDeletedDir();
 	}
 
+	@Test
+	public void syncMovedFileWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncMovedFile();
+	}
+
+	@Test
+	public void syncMovedFileToNewDirWithRemotePathPrefix() throws Exception {
+		remotePathPrefix = "/2";
+		syncMovedFileToNewDir();
+	}
 }
