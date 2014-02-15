@@ -8,6 +8,13 @@
   </formats>
   <baseDirectory>cloudstore</baseDirectory>
   <fileSets>
+  	<fileSet>
+      <directory>${basedir}/src/etc/init</directory>
+      <outputDirectory>/etc/init</outputDirectory>
+      <includes>
+        <include>*</include>
+      </includes>
+    </fileSet>
     <fileSet>
       <directory>${project.build.directory}/dependency</directory>
       <outputDirectory>/lib</outputDirectory>

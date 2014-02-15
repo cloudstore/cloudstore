@@ -33,8 +33,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Java version. -->
-		<maven.compiler.source>6</maven.compiler.source>
-		<maven.compiler.target>6</maven.compiler.target>
+		<maven.compiler.source>7</maven.compiler.source>
+		<maven.compiler.target>7</maven.compiler.target>
 
 		<maven-datanucleus-plugin.version>3.2.0-m1</maven-datanucleus-plugin.version>
 		<datanucleus-api-jdo.version>3.2.6</datanucleus-api-jdo.version>
