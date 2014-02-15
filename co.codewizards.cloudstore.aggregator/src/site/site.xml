@@ -28,13 +28,13 @@
 			<!--
 			<item name="Forum" href="../forum" />
 			-->
-			<item name="Tracker" href="/tracker" />
+			<item name="Tracker" href="../tracker" />
 			<item name="Download" href="./download/index.html" />
 		</links>
 
 		<menu name="Documentation">
 			<item name="Getting started" href="./documentation/getting-started.html" />
-			<item name="Wiki" href="/wiki" />
+			<item name="Wiki" href="../wiki" />
 			<item name="FAQ" href="./documentation/faq.html" />
 			<item name="Security" href="./documentation/security.html" />
 			<item name="Development" href="./documentation/development.html" />
