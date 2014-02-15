@@ -126,3 +126,7 @@ a.download_link {
     width:248px;
     text-indent:-9999px;
 }
+
+.main-bullet-detail {
+    padding-left: 35px;
+}

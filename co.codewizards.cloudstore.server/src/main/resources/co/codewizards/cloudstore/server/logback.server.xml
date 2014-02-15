@@ -41,7 +41,9 @@
 	-->
 	<!-- END DataNucleus -->
 
-	<logger name="org.eclipse.jetty.util.ssl.SslContextFactory" level="TRACE" />
+	<logger name="org.eclipse.jetty.util.ssl.SslContextFactory" level="TRACE">
+		<appender-ref ref="STDOUT" />
+	</logger>
 
 	<!-- The level of the root logger is set to INFO by default. But we want to be able to change it here. -->
 	<root level="INFO">

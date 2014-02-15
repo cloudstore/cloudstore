@@ -110,16 +110,51 @@
 			
 				<td valign="top" width="50%">
 					<ul>
-						<li>... fast</li>
-						<li>... secure</li>
-						<li>... easy to use</li>
+						<li>... fast
+							<div class="main-bullet-detail">
+							CloudStore copies only modified data. If a file is not modified, it is not copied.
+							If a file is large and only a small part of it is modified, only this small part is
+							copied. If a file is moved or renamed, it is not copied over the network - instead,
+							the move operation is imitated on all remote repositories.
+							</div>
+						</li>
+						<li>... secure
+							<div class="main-bullet-detail">
+							CloudStore uses strong encryption and a sophisticated, password-less authentication
+							mechanism. Read more about this on the <a href="./documentation/security.html">Security</a> page.
+							</div>
+						</li>
+						<li>... easy to use
+							<div class="main-bullet-detail">
+							Due to its unique approach to security, the initial setup is done in a few
+							seconds (no cumbersome password management). And once set up, CloudStore
+							synchronises data in the background. You don't need to do anything, anymore.
+							</div>
+						</li>
 					</ul>
 				</td>
 				<td valign="top" width="50%">
 					<ul>
-						<li>... robust</li>
-						<li>... flexible</li>
-						<li>... clean code.</li>
+						<li>... robust
+							<div class="main-bullet-detail">
+							CloudStore does everything possible to prevent data loss:
+							For example, it detects collisions and resolves them; also if a data transfer
+							is interrupted, CloudStore resumes it later.
+							</div>
+						</li>
+						<li>... flexible
+							<div class="main-bullet-detail">
+							Synchronise a repository with as many other repositories as you want. You can
+							synchronise a sub-directory only, too (e.g. sync only a small part of your
+							server's huge repository to your notebook).
+							</div>
+						</li>
+						<li>... test-driven and clean code.
+							<div class="main-bullet-detail">
+							Fellow developers might appreciate that CloudStore is test-driven and - please
+							<a href="./documentation/development.html">see for yourself</a> - clean code.
+							</div>
+						</li>
 					</ul>
 				</td>
 			</tr>
