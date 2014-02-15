@@ -338,7 +338,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
 					shutdownDerbyDatabase(connectionURL);
 
-// java.sql.SQLNonTransientConnectionException: No current connection.
+// https://github.com/cloudstore/main/issues/10 :: java.sql.SQLNonTransientConnectionException: No current connection.
 // http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
 // Forcing garbage collection.
 					System.gc();

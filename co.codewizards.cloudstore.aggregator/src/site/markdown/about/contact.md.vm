@@ -5,9 +5,15 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-contact
 Contact us
 -------
 
+$H$H$H Tracker
+
+The best way to ask a question or otherwise contact us is the [Tracker](/tracker). When asking a question
+there, please label it as "question".
+
+
 $H$H$H E-mail
 
-The best way to contact us is by e-mail. We support secure communication
+If you want to contact us a in a private way instead, you can send us an e-mail. We support secure communication
 with <a href="http://en.wikipedia.org/wiki/OpenPGP" target="_blank">OpenPGP</a>!
 
 Address: info *at* codewizards *dot* co  
