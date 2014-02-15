@@ -44,6 +44,16 @@ does not matter.
 We assume that you have shell access to the server (using SSH).
 
 
+$H$H$H$H Install Java
+
+If you didn\'t install Java, yet, you should do this now. Please download and install either
+[Oracle Java](http://java.com/) or the OpenJDK.
+
+If you use Ubuntu, you could open a shell and enter the following command to install the OpenJDK:
+
+	sudo apt-get install openjdk-7-jre
+
+
 $H$H$H$H Download
 
 Please [download](../download/index.html) the CloudStore client and server to your local machine. It is recommended that
