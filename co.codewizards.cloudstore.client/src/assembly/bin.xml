@@ -9,11 +9,14 @@
   <baseDirectory>cloudstore</baseDirectory>
   <fileSets>
     <fileSet>
+      <directory>${basedir}/src/etc/profile.d</directory>
+      <outputDirectory>/etc/profile.d</outputDirectory>
+      <includes><include>*</include></includes>
+    </fileSet>
+    <fileSet>
       <directory>${project.build.directory}/dependency</directory>
       <outputDirectory>/lib</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
+      <includes><include>*</include></includes>
     </fileSet>
   </fileSets>
   <files>
