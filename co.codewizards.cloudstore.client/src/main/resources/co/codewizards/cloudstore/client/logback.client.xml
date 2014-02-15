@@ -9,6 +9,22 @@
 		</encoder>
 	</appender>
 
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${cloudstore.logDir}/cloudstore-client.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>cloudstore-client.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+
+			<!-- keep 30 days -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+
+		<encoder>
+			<!-- <pattern>%date [%thread] %level %logger{10} [%file:%line] %msg%n</pattern> -->
+			<pattern>%date [%thread] %level %logger{10} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
 <!--
 	<logger name="com.lordofthejars.foo" level="INFO" additivity="false">
 		<appender-ref ref="STDOUT" />
@@ -28,5 +44,6 @@
 	<!-- The level of the root logger is set to INFO by default. But we want to be able to change it here. -->
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
 	</root>
 </configuration>

@@ -15,7 +15,9 @@ public class ConfigDir {
 	 * <p>
 	 * If this system property is not set, it defaults to: <code>${user.home}/.cloudstore</code>
 	 */
-	public static final String SYSTEM_PROPERTY = "cloudstore.configDir";
+	public static final String SYSTEM_PROPERTY_CONFIG_DIR = "cloudstore.configDir";
+
+	public static final String SYSTEM_PROPERTY_LOG_DIR = "cloudstore.logDir";
 
 	private static final class ConfigDirHolder {
 		public static ConfigDir instance = new ConfigDir();
@@ -26,7 +28,8 @@ public class ConfigDir {
 	private File logDir;
 
 	private ConfigDir() {
-		value = System.getProperty(SYSTEM_PROPERTY, "${user.home}/.cloudstore");
+		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
+		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
 		String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
 		file = new File(resolvedValue).getAbsoluteFile();
 		if (!file.isDirectory())
@@ -51,6 +54,7 @@ public class ConfigDir {
 	public File getLogDir() {
 		if (logDir == null) {
 			logDir = new File(getFile(), "log");
+			System.setProperty(SYSTEM_PROPERTY_LOG_DIR, logDir.getPath());
 			if (!logDir.isDirectory())
 				logDir.mkdirs();
 

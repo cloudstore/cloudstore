@@ -7,7 +7,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 
 public class DynamicX509TrustManagerTest {
 	static {
-		System.setProperty(ConfigDir.SYSTEM_PROPERTY, "target/.cloudstore");
+		System.setProperty(ConfigDir.SYSTEM_PROPERTY_CONFIG_DIR, "target/.cloudstore");
 	}
 
 	@BeforeClass

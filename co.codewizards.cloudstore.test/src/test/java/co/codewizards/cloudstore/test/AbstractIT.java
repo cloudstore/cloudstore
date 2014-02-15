@@ -35,7 +35,7 @@ import co.codewizards.cloudstore.server.CloudStoreServer;
 
 public abstract class AbstractIT {
 	static {
-		System.setProperty(ConfigDir.SYSTEM_PROPERTY, "target/.cloudstore");
+		System.setProperty(ConfigDir.SYSTEM_PROPERTY_CONFIG_DIR, "target/.cloudstore");
 		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_KEY_SIZE, "1024");
 	}
 

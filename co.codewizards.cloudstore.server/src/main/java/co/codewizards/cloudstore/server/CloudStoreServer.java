@@ -164,6 +164,13 @@ public class CloudStoreServer implements Runnable {
 
 	private void initKeyStore() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, SecurityException, SignatureException, NoSuchProviderException, UnrecoverableEntryException {
 		if (!getKeyStoreFile().exists()) {
+			logger.info("initKeyStore: keyStoreFile='{}' does not exist!", getKeyStoreFile());
+			logger.info("initKeyStore: Creating RSA key pair (this might take a while)...");
+			System.out.println("**********************************************************************");
+			System.out.println("There is no key, yet. Creating a new RSA key pair, now. This might");
+			System.out.println("take a while (a few seconds up to a few minutes). Please be patient!");
+			System.out.println("**********************************************************************");
+			long keyGenStartTimestamp = System.currentTimeMillis();
 			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
@@ -195,6 +202,10 @@ public class CloudStoreServer implements Runnable {
 			} finally {
 				fos.close();
 			}
+
+			long keyGenDuration = System.currentTimeMillis() - keyGenStartTimestamp;
+			logger.info("initKeyStore: Creating RSA key pair took {} ms.", keyGenDuration);
+			System.out.println(String.format("Generating a new RSA key pair took %s ms.", keyGenDuration));
 		}
 
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -218,6 +229,7 @@ public class CloudStoreServer implements Runnable {
 		System.out.println("Please keep this fingerprint at a safe place. You'll need it whenever");
 		System.out.println("one of your clients connects to this server for the first time.");
 		System.out.println("**********************************************************************");
+		logger.info("initKeyStore: RSA fingerprint (SHA1): {}", certificateSha1);
 	}
 
 	private Server createServer() {
