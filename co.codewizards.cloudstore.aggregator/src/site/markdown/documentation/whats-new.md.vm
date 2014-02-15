@@ -2,7 +2,21 @@
 $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed.jpg")}
 #set( $H = '#' )
 
-What\'s new
+What\'s new?
 -------
 
-There\'s nothing new, yet. We\'re still working on the very first release.
+$H$H$H What\'s new in 0.9.1?
+
+Compared to version 0.9.0, there are the following changes:
+
+* Enhancement: The new [copy/rename/move detection](https://github.com/cloudstore/main/issues/5) makes
+sure a file is not copied across the network unnecessarily.
+
+* Enhancement: Faster sync especially when suffering high latencies due to
+[multi-threaded transfers](https://github.com/cloudstore/main/issues/9).
+
+* Enhancement: Improved security by preventing denial of service attacks by
+[limiting pending connection requests](https://github.com/cloudstore/main/issues/8) and by
+[cleaning up expired requests](https://github.com/cloudstore/main/issues/7).
+
+* [More enhancements and bug fixes.](https://github.com/cloudstore/main/issues?milestone=1&page=1&state=closed)
