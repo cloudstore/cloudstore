@@ -5,6 +5,7 @@ import javax.xml.bind.JAXBException;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
+import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
 import co.codewizards.cloudstore.core.dto.EntityID;
@@ -25,6 +26,7 @@ public class CloudStoreJaxbContext {
 			try {
 				jaxbContext = JAXBContext.newInstance(
 						ChangeSetDTO.class,
+						CopyModificationDTO.class,
 						DeleteModificationDTO.class,
 						DirectoryDTO.class,
 						EncryptedSignedAuthToken.class,
