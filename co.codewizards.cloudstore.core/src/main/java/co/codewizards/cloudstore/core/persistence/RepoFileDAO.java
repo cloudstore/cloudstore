@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.core.persistence;
 import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -126,7 +125,7 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 		try {
 			@SuppressWarnings("unchecked")
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(parent);
-			return new ArrayList<RepoFile>(repoFiles);
+			return load(repoFiles);
 		} finally {
 			query.closeAll();
 		}
@@ -149,7 +148,7 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 			logger.debug("getRepoFilesChangedAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
 			startTimestamp = System.currentTimeMillis();
-			repoFiles = new ArrayList<RepoFile>(repoFiles);
+			repoFiles = load(repoFiles);
 			logger.debug("getRepoFilesChangedAfter: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
 
 			return repoFiles;
