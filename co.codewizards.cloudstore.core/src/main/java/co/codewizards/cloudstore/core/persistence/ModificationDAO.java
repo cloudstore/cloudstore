@@ -1,13 +1,18 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ModificationDAO extends DAO<Modification, ModificationDAO> {
+	private static final Logger logger = LoggerFactory.getLogger(ModificationDAO.class);
+
 	/**
 	 * Get those {@link Modification}s being assigned to the given {@link Modification#getRemoteRepository() remoteRepository}
 	 * whose {@link Modification#getLocalRevision() localRevision} is greater than the given {@code localRevision}.
@@ -20,14 +25,21 @@ public class ModificationDAO extends DAO<Modification, ModificationDAO> {
 		assertNotNull("remoteRepository", remoteRepository);
 		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
+			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
-			return new ArrayList<Modification>(modifications);
+			logger.debug("getModificationsAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+
+			startTimestamp = System.currentTimeMillis();
+			modifications = new ArrayList<Modification>(modifications);
+			logger.debug("getModificationsAfter: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
+
+			return modifications;
 		} finally {
 			query.closeAll();
 		}
 	}
-	
+
 	public Collection<Modification> getModificationsBeforeOrEqual(RemoteRepository remoteRepository, long localRevision) {
 		assertNotNull("remoteRepository", remoteRepository);
 		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");

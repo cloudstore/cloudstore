@@ -1,11 +1,15 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.util.Collection;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.persistence.CopyModificationDAO;
+import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
+import co.codewizards.cloudstore.core.persistence.DirectoryDAO;
+import co.codewizards.cloudstore.core.persistence.NormalFileDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
@@ -51,6 +55,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 //				showRepositoryAliases(transaction);
 				showRemoteRepositories(transaction);
 				showRemoteRepositoryRequests(transaction);
+				showRepositoryStats(transaction);
 
 				transaction.commit();
 			} finally {
@@ -116,5 +121,23 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 				System.out.println();
 			}
 		}
+	}
+
+	private void showRepositoryStats(LocalRepoTransaction transaction) {
+		NormalFileDAO normalFileDAO = transaction.getDAO(NormalFileDAO.class);
+		DirectoryDAO directoryDAO = transaction.getDAO(DirectoryDAO.class);
+		CopyModificationDAO copyModificationDAO = transaction.getDAO(CopyModificationDAO.class);
+		DeleteModificationDAO deleteModificationDAO = transaction.getDAO(DeleteModificationDAO.class);
+		long normalFileCount = normalFileDAO.getObjectsCount();
+		long directoryCount = directoryDAO.getObjectsCount();
+		long copyModificationCount = copyModificationDAO.getObjectsCount();
+		long deleteModificationCount = deleteModificationDAO.getObjectsCount();
+
+		System.out.println("Statistics:");
+		System.out.println("  * Count(NormalFile): " + normalFileCount);
+		System.out.println("  * Count(Directory): " + directoryCount);
+		System.out.println("  * Count(CopyModification): " + copyModificationCount);
+		System.out.println("  * Count(DeleteModification): " + deleteModificationCount);
+		System.out.println();
 	}
 }

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,7 +11,12 @@ import java.util.Map;
 
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
+	private static final Logger logger = LoggerFactory.getLogger(RepoFileDAO.class);
+
 	private Directory localRootDirectory;
 
 	private DirectoryCache directoryCache;
@@ -138,9 +143,16 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 	public Collection<RepoFile> getRepoFilesChangedAfter(long localRevision) {
 		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision");
 		try {
+			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision);
-			return new ArrayList<RepoFile>(repoFiles);
+			logger.debug("getRepoFilesChangedAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+
+			startTimestamp = System.currentTimeMillis();
+			repoFiles = new ArrayList<RepoFile>(repoFiles);
+			logger.debug("getRepoFilesChangedAfter: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
+
+			return repoFiles;
 		} finally {
 			query.closeAll();
 		}

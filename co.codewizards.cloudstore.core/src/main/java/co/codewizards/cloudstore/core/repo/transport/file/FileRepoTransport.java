@@ -456,12 +456,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	private List<ModificationDTO> toModificationDTOs(Collection<Modification> modifications) {
+		long startTimestamp = System.currentTimeMillis();
 		List<ModificationDTO> result = new ArrayList<ModificationDTO>(assertNotNull("modifications", modifications).size());
 		for (Modification modification : modifications) {
 			ModificationDTO modificationDTO = toModificationDTO(modification);
 			if (modificationDTO != null)
 				result.add(modificationDTO);
 		}
+		logger.debug("toModificationDTOs: Creating {} ModificationDTOs took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
 		return result;
 	}
 
