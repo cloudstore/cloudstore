@@ -4,7 +4,6 @@ import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.concurrent.locks.Lock;
 
-import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
@@ -38,7 +37,6 @@ public class LocalRepoTransaction {
 			lock();
 
 		persistenceManager = persistenceManagerFactory.getPersistenceManager();
-		persistenceManager.getFetchPlan().setGroup(FetchPlan.DEFAULT);
 		hookLifecycleListeners();
 		jdoTransaction = persistenceManager.currentTransaction();
 		jdoTransaction.begin();

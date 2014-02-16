@@ -30,8 +30,11 @@ public class ModificationDAO extends DAO<Modification, ModificationDAO> {
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
 			logger.debug("getModificationsAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
+
+
 			startTimestamp = System.currentTimeMillis();
-			modifications = new ArrayList<Modification>(modifications);
+//			modifications = new ArrayList<Modification>(modifications);
+			modifications = load(modifications);
 			logger.debug("getModificationsAfter: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
 
 			return modifications;
@@ -39,6 +42,7 @@ public class ModificationDAO extends DAO<Modification, ModificationDAO> {
 			query.closeAll();
 		}
 	}
+
 
 	public Collection<Modification> getModificationsBeforeOrEqual(RemoteRepository remoteRepository, long localRevision) {
 		assertNotNull("remoteRepository", remoteRepository);

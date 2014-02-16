@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 
 import org.slf4j.Logger;
@@ -170,6 +171,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
 			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
 
+			transaction.getPersistenceManager().getFetchPlan().setGroup(FetchPlan.ALL);
 			Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			changeSetDTO.setModificationDTOs(toModificationDTOs(modifications));
 

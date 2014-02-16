@@ -264,7 +264,8 @@ public class LocalRepoSync {
 	private void createCopyModificationsIfPossible(NormalFile newNormalFile) {
 		// A CopyModification is not necessary for an empty file. And since this method is called
 		// during RepoTransport.beginPutFile(...), we easily filter out this unwanted case already.
-		if (newNormalFile.getLength() == 0)
+		// Changed to a minimum size of 100 KB - it's not worth the overhead for such small files.
+		if (newNormalFile.getLength() < 100 * 1024)
 			return;
 
 		Collection<NormalFile> normalFiles = normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
@@ -278,12 +279,13 @@ public class LocalRepoSync {
 			createCopyModifications(normalFile, newNormalFile);
 		}
 
+		Set<String> fromPaths = new HashSet<String>();
 		Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
 		for (DeleteModification deleteModification : deleteModifications)
-			createCopyModifications(deleteModification, newNormalFile);
+			createCopyModifications(deleteModification, newNormalFile, fromPaths);
 	}
 
-	private void createCopyModifications(DeleteModification deleteModification, NormalFile toNormalFile) {
+	private void createCopyModifications(DeleteModification deleteModification, NormalFile toNormalFile, Set<String> fromPaths) {
 		assertNotNull("deleteModification", deleteModification);
 		assertNotNull("toNormalFile", toNormalFile);
 
@@ -293,10 +295,14 @@ public class LocalRepoSync {
 		if (!deleteModification.getSha1().equals(toNormalFile.getSha1()))
 			throw new IllegalArgumentException("fromNormalFile.sha1 != toNormalFile.sha1");
 
+		String fromPath = deleteModification.getPath();
+		if (!fromPaths.add(fromPath)) // already done before => prevent duplicates.
+			return;
+
 		for (RemoteRepository remoteRepository : getRemoteRepositories()) {
 			CopyModification modification = new CopyModification();
 			modification.setRemoteRepository(remoteRepository);
-			modification.setFromPath(deleteModification.getPath());
+			modification.setFromPath(fromPath);
 			modification.setToPath(toNormalFile.getPath());
 			modification.setLength(toNormalFile.getLength());
 			modification.setSha1(toNormalFile.getSha1());

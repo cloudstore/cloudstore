@@ -1,12 +1,16 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -195,5 +199,58 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 			}
 		}
 		pm().deletePersistentAll(entities);
+	}
+
+	protected Collection<E> load(Collection<E> entities) {
+		Collection<E> result = new ArrayList<>();
+		Map<Class<? extends Entity>, Set<EntityID>> entityClass2EntityIDs = new HashMap<Class<? extends Entity>, Set<EntityID>>();
+		for (E entity : entities) {
+			Set<EntityID> entityIDs = entityClass2EntityIDs.get(entity.getClass());
+			if (entityIDs == null) {
+				entityIDs = new HashSet<EntityID>();
+				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+			}
+			entityIDs.add(entity.getEntityID());
+		}
+
+		Map<String, Object> params = new HashMap<>();
+		for (Map.Entry<Class<? extends Entity>, Set<EntityID>> me : entityClass2EntityIDs.entrySet()) {
+			Class<? extends Entity> entityClass = me.getKey();
+			Query query = pm().newQuery(pm().getExtent(entityClass, false));
+
+			Set<EntityID> entityIDs = me.getValue();
+			StringBuilder filter = new StringBuilder();
+			int idx = -1;
+			for (EntityID entityID : entityIDs) {
+				if (++idx != 0)
+					filter.append(" || ");
+
+				String varH = "h" + Integer.toString(idx, 36);
+				String varL = "l" + Integer.toString(idx, 36);
+				filter.append("(this.idHigh == :").append(varH).append(" && this.idLow == :").append(varL).append(")");
+				params.put(varH, entityID.idHigh);
+				params.put(varL, entityID.idLow);
+				if (idx > 300) {
+					idx = -1;
+					populateLoadResult(result, query, filter, params);
+				}
+			}
+			populateLoadResult(result, query, filter, params);
+		}
+		return result;
+	}
+
+	private void populateLoadResult(Collection<E> result, Query query, StringBuilder filter, Map<String, Object> params) {
+		if (filter.length() == 0)
+			return;
+
+		query.setFilter(filter.toString());
+		filter.setLength(0);
+
+		@SuppressWarnings("unchecked")
+		Collection<E> c = (Collection<E>) query.executeWithMap(params);
+		result.addAll(c);
+		params.clear();
+		query.closeAll();
 	}
 }
