@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.File;
 import java.util.Collection;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import co.codewizards.cloudstore.core.AbstractTest;
@@ -14,13 +16,26 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 
 public class PersistenceTest extends AbstractTest {
 
+	private static long closeDeferredMillis;
+
+	@BeforeClass
+	public static void beforePersistenceTest() {
+		closeDeferredMillis = LocalRepoManagerImplHelper.getCloseDeferredMillis();
+		LocalRepoManagerImplHelper.setCloseDeferredMillis(0);
+	}
+
+	@AfterClass
+	public static void afterPersistenceTest() {
+		LocalRepoManagerImplHelper.setCloseDeferredMillis(closeDeferredMillis);
+	}
+
 	@Test
 	public void getModifications() throws Exception {
-		LocalRepoManagerImplHelper.disableDeferredClose();
 		File remoteRoot = newTestRepositoryLocalRoot("remote");
 		remoteRoot.mkdirs();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
+		final int modificationCount = 1000;
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {
 			RemoteRepository remoteRepository = new RemoteRepository();
@@ -29,7 +44,7 @@ public class PersistenceTest extends AbstractTest {
 			remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).makePersistent(remoteRepository);
 
 			CopyModificationDAO copyModificationDAO = transaction.getDAO(CopyModificationDAO.class);
-			for (int i = 0; i < 1000; ++i) {
+			for (int i = 0; i < modificationCount; ++i) {
 				CopyModification copyModification = new CopyModification();
 				copyModification.setRemoteRepository(remoteRepository);
 				copyModification.setFromPath("/from/" + i);
@@ -51,6 +66,7 @@ public class PersistenceTest extends AbstractTest {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjects().iterator().next();
 			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 			Collection<Modification> modifications = modificationDAO.getModificationsAfter(remoteRepository, -1);
+			assertThat(modifications).hasSize(modificationCount);
 			System.out.println("*** Accessing fromPath and toPath ***");
 			for (Modification modification : modifications) {
 				if (modification instanceof CopyModification) {
@@ -66,4 +82,8 @@ public class PersistenceTest extends AbstractTest {
 		}
 	}
 
+//	@Test
+//	public void getModification2s() throws Exception {
+//
+//	}
 }
