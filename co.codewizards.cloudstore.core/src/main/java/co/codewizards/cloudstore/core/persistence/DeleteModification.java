@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
@@ -30,7 +30,7 @@ import javax.jdo.annotations.Query;
 })
 public class DeleteModification extends Modification {
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Persistent(nullValue=NullValue.EXCEPTION, defaultFetchGroup="true")
 	@Column(jdbcType="CLOB")
 	private String path;
 

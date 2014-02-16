@@ -32,14 +32,14 @@ import javax.jdo.annotations.Query;
 })
 public class CopyModification extends Modification {
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Persistent(nullValue=NullValue.EXCEPTION, defaultFetchGroup="true")
 	@Column(jdbcType="CLOB")
 	private String fromPath;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String fromPathSha1;
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+	@Persistent(nullValue=NullValue.EXCEPTION, defaultFetchGroup="true")
 	@Column(jdbcType="CLOB")
 	private String toPath;
 
