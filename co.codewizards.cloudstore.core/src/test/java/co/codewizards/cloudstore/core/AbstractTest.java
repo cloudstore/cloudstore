@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -88,11 +88,19 @@ public abstract class AbstractTest {
 	}
 
 	protected File createFileWithRandomContent(File parent, String name) throws IOException {
+		return createFileWithRandomContent(parent, name, 0);
+	}
+
+	protected File createFileWithRandomContent(File parent, String name, long minLength) throws IOException {
 		File file = new File(parent, name);
-		return createFileWithRandomContent(file);
+		return createFileWithRandomContent(file, minLength);
 	}
 
 	protected File createFileWithRandomContent(File file) throws IOException {
+		return createFileWithRandomContent(file, 0);
+	}
+
+	protected File createFileWithRandomContent(File file, long minLength) throws IOException {
 		assertThat(file).doesNotExist(); // prevent accidentally overwriting important data ;-)
 		OutputStream out = new FileOutputStream(file);
 		byte[] buf = new byte[1 + random.nextInt(10241)];
@@ -100,6 +108,12 @@ public abstract class AbstractTest {
 		for (int i = 0; i < loops; ++i) {
 			random.nextBytes(buf);
 			out.write(buf);
+		}
+		out.flush();
+		while (file.length() < minLength) {
+			random.nextBytes(buf);
+			out.write(buf);
+			out.flush();
 		}
 		out.close();
 		assertThat(file).isFile();

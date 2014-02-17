@@ -8,10 +8,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -47,6 +51,8 @@ public class LocalRepoSync {
 	private final ModificationDAO modificationDAO;
 	private final DeleteModificationDAO deleteModificationDAO;
 	private Collection<RemoteRepository> remoteRepositories;
+
+	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
 
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -261,33 +267,82 @@ public class LocalRepoSync {
 		pm.flush();
 	}
 
+	private int getMaxCopyModificationCount(NormalFile newNormalFile) {
+		final long fileLength = newNormalFile.getLength();
+		if (fileLength < 10 * 1024) // 10 KiB
+			return 0;
+
+		if (fileLength < 100 * 1024) // 100 KiB
+			return 1;
+
+		if (fileLength < 1024 * 1024) // 1 MiB
+			return 2;
+
+		if (fileLength < 10 * 1024 * 1024) // 10 MiB
+			return 3;
+
+		if (fileLength < 100 * 1024 * 1024) // 100 MiB
+			return 5;
+
+		if (fileLength < 1024 * 1024 * 1024) // 1 GiB
+			return 7;
+
+		if (fileLength < 10 * 1024 * 1024 * 1024) // 10 GiB
+			return 9;
+
+		return 11;
+	}
+
 	private void createCopyModificationsIfPossible(NormalFile newNormalFile) {
 		// A CopyModification is not necessary for an empty file. And since this method is called
 		// during RepoTransport.beginPutFile(...), we easily filter out this unwanted case already.
-		// Changed to a minimum size of 100 KB - it's not worth the overhead for such small files.
-		if (newNormalFile.getLength() < 100 * 1024)
+		// Changed to dynamic limit of CopyModifications depending on file size.
+		// The bigger the file, the more it's worth the overhead.
+		final int maxCopyModificationCount = getMaxCopyModificationCount(newNormalFile);
+		if (maxCopyModificationCount < 1)
 			return;
 
-		Collection<NormalFile> normalFiles = normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
+		Set<String> fromPaths = new HashSet<String>();
+
+		Set<String> paths = sha1AndLength2Paths.get(getSha1AndLength(newNormalFile.getSha1(), newNormalFile.getLength()));
+		if (paths != null) {
+			List<String> pathList = new ArrayList<>(paths);
+			Collections.shuffle(pathList);
+
+			for (String path : pathList) {
+				createCopyModifications(path, newNormalFile, fromPaths);
+				if (fromPaths.size() >= maxCopyModificationCount)
+					return;
+			}
+		}
+
+		List<NormalFile> normalFiles = new ArrayList<>(normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
+		Collections.shuffle(normalFiles);
 		for (NormalFile normalFile : normalFiles) {
-//			if (normalFile.isInProgress()) // Additional check. Do we really want this?
+//			if (normalFile.isInProgress()) // Additional check. Do we really want this? I don't think so!
 //				continue;
 
 			if (newNormalFile.equals(normalFile)) // should never happen, because newNormalFile is not yet persisted, but we write robust code that doesn't break easily after refactoring.
 				continue;
 
-			createCopyModifications(normalFile, newNormalFile);
+			createCopyModifications(normalFile, newNormalFile, fromPaths);
+			if (fromPaths.size() >= maxCopyModificationCount)
+				return;
 		}
 
-		Set<String> fromPaths = new HashSet<String>();
-		Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength());
-		for (DeleteModification deleteModification : deleteModifications)
+		List<DeleteModification> deleteModifications = new ArrayList<>(deleteModificationDAO.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
+		Collections.shuffle(deleteModifications);
+		for (DeleteModification deleteModification : deleteModifications) {
 			createCopyModifications(deleteModification, newNormalFile, fromPaths);
+			if (fromPaths.size() >= maxCopyModificationCount)
+				return;
+		}
 	}
 
 	private void createCopyModifications(DeleteModification deleteModification, NormalFile toNormalFile, Set<String> fromPaths) {
 		assertNotNull("deleteModification", deleteModification);
 		assertNotNull("toNormalFile", toNormalFile);
+		assertNotNull("fromPaths", fromPaths);
 
 		if (deleteModification.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -295,7 +350,14 @@ public class LocalRepoSync {
 		if (!deleteModification.getSha1().equals(toNormalFile.getSha1()))
 			throw new IllegalArgumentException("fromNormalFile.sha1 != toNormalFile.sha1");
 
-		String fromPath = deleteModification.getPath();
+		createCopyModifications(deleteModification.getPath(), toNormalFile, fromPaths);
+	}
+
+	private void createCopyModifications(String fromPath, NormalFile toNormalFile, Set<String> fromPaths) {
+		assertNotNull("fromPath", fromPath);
+		assertNotNull("toNormalFile", toNormalFile);
+		assertNotNull("fromPaths", fromPaths);
+
 		if (!fromPaths.add(fromPath)) // already done before => prevent duplicates.
 			return;
 
@@ -310,9 +372,10 @@ public class LocalRepoSync {
 		}
 	}
 
-	private void createCopyModifications(NormalFile fromNormalFile, NormalFile toNormalFile) {
+	private void createCopyModifications(NormalFile fromNormalFile, NormalFile toNormalFile, Set<String> fromPaths) {
 		assertNotNull("fromNormalFile", fromNormalFile);
 		assertNotNull("toNormalFile", toNormalFile);
+		assertNotNull("fromPaths", fromPaths);
 
 		if (fromNormalFile.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -320,15 +383,7 @@ public class LocalRepoSync {
 		if (!fromNormalFile.getSha1().equals(toNormalFile.getSha1()))
 			throw new IllegalArgumentException("fromNormalFile.sha1 != toNormalFile.sha1");
 
-		for (RemoteRepository remoteRepository : getRemoteRepositories()) {
-			CopyModification modification = new CopyModification();
-			modification.setRemoteRepository(remoteRepository);
-			modification.setFromPath(fromNormalFile.getPath());
-			modification.setToPath(toNormalFile.getPath());
-			modification.setLength(toNormalFile.getLength());
-			modification.setSha1(toNormalFile.getSha1());
-			modificationDAO.makePersistent(modification);
-		}
+		createCopyModifications(fromNormalFile.getPath(), toNormalFile, fromPaths);
 	}
 
 	private void createDeleteModifications(RepoFile repoFile) {
@@ -359,8 +414,26 @@ public class LocalRepoSync {
 		for (RepoFile childRepoFile : repoFileDAO.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}
+		putIntoSha1AndLength2PathsIfNormalFile(repoFile);
 		repoFileDAO.deletePersistent(repoFile);
 		repoFileDAO.getPersistenceManager().flush(); // We run *sometimes* into foreign key violations if we don't delete immediately :-(
+	}
+
+	private void putIntoSha1AndLength2PathsIfNormalFile(RepoFile repoFile) {
+		if (repoFile instanceof NormalFile) {
+			NormalFile normalFile = (NormalFile) repoFile;
+			String sha1AndLength = getSha1AndLength(normalFile.getSha1(), normalFile.getLength());
+			Set<String> paths = sha1AndLength2Paths.get(sha1AndLength);
+			if (paths == null) {
+				paths = new HashSet<>(1);
+				sha1AndLength2Paths.put(sha1AndLength, paths);
+			}
+			paths.add(normalFile.getPath());
+		}
+	}
+
+	private String getSha1AndLength(String sha1, long length) {
+		return sha1 + ':' + length;
 	}
 
 	private void sha(NormalFile normalFile, File file, ProgressMonitor monitor) {

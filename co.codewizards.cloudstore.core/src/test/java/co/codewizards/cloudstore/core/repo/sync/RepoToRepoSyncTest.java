@@ -98,7 +98,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		File child_2_1 = createDirectory(child_2, "1");
 		createFileWithRandomContent(child_2_1, "a");
-		createFileWithRandomContent(child_2_1, "b");
+		createFileWithRandomContent(child_2_1, "b", 150000);
 
 		File child_3 = createDirectory(remoteRoot, "3");
 

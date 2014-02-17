@@ -40,6 +40,7 @@
 		<datanucleus-api-jdo.version>3.2.6</datanucleus-api-jdo.version>
 		<datanucleus-core.version>3.2.11</datanucleus-core.version>
 		<datanucleus-rdbms.version>3.2.10</datanucleus-rdbms.version>
+		<datanucleus.javadoc.version>3.2</datanucleus.javadoc.version>
 	</properties>
 
 	<distributionManagement>
@@ -491,26 +492,24 @@
 -->
             			<header><![CDATA[<b><a target="_blank" href="http://cloudstore.codewizards.co/${project.version}/">CloudStore</a> API</b><br />(${project.version})]]></header>
             			<links>
-            				<!-- The Legion of the Bouncy Castle -->
+            				<!-- The Legion of the Bouncy Castle
             				<link>http://www.bouncycastle.org/docs/docs1.6</link>
             				<link>http://www.bouncycastle.org/docs/mdocs1.6</link>
             				<link>http://www.bouncycastle.org/docs/pgdocs1.6</link>
             				<link>http://www.bouncycastle.org/docs/tspdocs1.6</link>
+            				-->
 
-            				<!-- DataNucleus -->
+            				<!-- DataNucleus
             				<link>http://www.datanucleus.org/javadocs/core/${datanucleus.javadoc.version}</link>
             				<link>http://www.datanucleus.org/javadocs/api.jdo/${datanucleus.javadoc.version}</link>
-            				<link>http://www.datanucleus.org/javadocs/jpa/${datanucleus.javadoc.version}</link>
             				<link>http://www.datanucleus.org/javadocs/store.rdbms/${datanucleus.javadoc.version}</link>
+            				-->
 
             				<!-- JDO (javax.jdo.*) -->
             				<link>http://db.apache.org/jdo/api30/apidocs</link>
 
             				<!-- Jersey (REST implementation) -->
             				<link>http://jersey.java.net/nonav/apidocs/${jersey.version}/jersey</link>
-
-            				<!-- JavaEE (javax.*) -->
-            				<link>http://download.oracle.com/javaee/6/api</link>
             			</links>
             			<linksource>true</linksource>
 					</configuration>
