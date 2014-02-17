@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
@@ -27,7 +28,6 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
@@ -77,8 +77,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public EntityID getRepositoryID() {
-		return getLocalRepoManager().getRepositoryID();
+	public UUID getRepositoryId() {
+		return getLocalRepoManager().getRepositoryId();
 	}
 
 	@Override
@@ -89,19 +89,19 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void requestRepoConnection(byte[] publicKey) {
 		assertNotNull("publicKey", publicKey);
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(clientRepositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(clientRepositoryId);
 			if (remoteRepository != null)
-				throw new IllegalArgumentException("RemoteRepository already connected! repositoryID=" + clientRepositoryID);
+				throw new IllegalArgumentException("RemoteRepository already connected! repositoryId=" + clientRepositoryId);
 
 			String localPathPrefix = getPathPrefix();
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryID);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryId);
 			if (remoteRepositoryRequest != null) {
-				logger.info("RemoteRepository already requested to be connected. repositoryID={}", clientRepositoryID);
+				logger.info("RemoteRepository already requested to be connected. repositoryId={}", clientRepositoryId);
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
 				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
@@ -113,7 +113,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 							"The maximum number of connection requests (%s) is reached or exceeded! Please retry later, when old requests were accepted or expired.", MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY));
 
 				remoteRepositoryRequest = new RemoteRepositoryRequest();
-				remoteRepositoryRequest.setRepositoryID(clientRepositoryID);
+				remoteRepositoryRequest.setRepositoryId(clientRepositoryId);
 				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 				remoteRepositoryRequestDAO.makePersistent(remoteRepositoryRequest);
@@ -144,7 +144,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		ChangeSetDTO changeSetDTO = new ChangeSetDTO();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
 		try {
@@ -160,7 +160,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
 			changeSetDTO.setRepositoryDTO(toRepositoryDTO(localRepository));
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(toRemoteRepository);
 			if (lastSyncToRemoteRepo == null) {
@@ -180,7 +180,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						getPathPrefix(), lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), toRemoteRepository);
 				if (!deleteModifications.isEmpty()) { // our virtual root was deleted => create synthetic DeleteModificationDTO for virtual root
 					DeleteModificationDTO deleteModificationDTO = new DeleteModificationDTO();
-					deleteModificationDTO.setEntityID(new EntityID(0, 0));
+					deleteModificationDTO.setId(0);
 					deleteModificationDTO.setLocalRevision(localRepository.getRevision());
 					deleteModificationDTO.setPath("");
 					changeSetDTO.getModificationDTOs().add(deleteModificationDTO);
@@ -192,8 +192,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (!getPathPrefix().isEmpty()) {
 				pathPrefixRepoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
 			}
-			Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = getEntityID2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
-			changeSetDTO.setRepoFileDTOs(new ArrayList<RepoFileDTO>(entityID2RepoFileDTO.values()));
+			Map<Long, RepoFileDTO> id2RepoFileDTO = getId2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
+			changeSetDTO.setRepoFileDTOs(new ArrayList<RepoFileDTO>(id2RepoFileDTO.values()));
 
 			transaction.commit();
 			return changeSetDTO;
@@ -214,10 +214,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public void makeDirectory(String path, Date lastModified) {
 		path = prefixPath(path);
 		File file = getFile(path);
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
+			assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 			mkDir(transaction, file, lastModified);
 			transaction.commit();
 		} finally {
@@ -225,8 +225,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void assertNoDeleteModificationCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, String path) throws DeleteModificationCollisionException {
-		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(fromRepositoryID);
+	private void assertNoDeleteModificationCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
+		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 
 		if (!path.startsWith("/"))
@@ -238,7 +238,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		if (!deleteModifications.isEmpty())
 			throw new DeleteModificationCollisionException(
-					String.format("There is at least one DeleteModification for repositoryID=%s path='%s'", fromRepositoryID, path));
+					String.format("There is at least one DeleteModification for repositoryId=%s path='%s'", fromRepositoryId, path));
 	}
 
 	@Override
@@ -334,7 +334,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public void delete(String path) {
 		path = prefixPath(path);
 		File file = getFile(path);
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
 		File parentFile = file.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
@@ -353,13 +353,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 							throw new IllegalStateException("File-listing localRoot returned null: " + file);
 
 						for (File child : children)
-							delete(transaction, localRepoSync, clientRepositoryID, child);
+							delete(transaction, localRepoSync, clientRepositoryId, child);
 					} finally {
 						file.setLastModified(fileLastModified);
 					}
 				}
 				else
-					delete(transaction, localRepoSync, clientRepositoryID, file);
+					delete(transaction, localRepoSync, clientRepositoryId, file);
 
 			} finally {
 				if (parentFileLastModified != Long.MIN_VALUE)
@@ -371,8 +371,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void delete(LocalRepoTransaction transaction, LocalRepoSync localRepoSync, EntityID fromRepositoryID, File file) {
-		if (detectFileCollisionRecursively(transaction, fromRepositoryID, file)) {
+	private void delete(LocalRepoTransaction transaction, LocalRepoSync localRepoSync, UUID fromRepositoryId, File file) {
+		if (detectFileCollisionRecursively(transaction, fromRepositoryId, file)) {
 			file.renameTo(IOUtil.createCollisionFile(file));
 
 			if (file.exists())
@@ -503,7 +503,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		else
 			throw new IllegalArgumentException("Unknown modification type: " + modification);
 
-		modificationDTO.setEntityID(modification.getEntityID());
+		modificationDTO.setId(modification.getId());
 		modificationDTO.setLocalRevision(modification.getLocalRevision());
 
 		return modificationDTO;
@@ -511,16 +511,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private RepositoryDTO toRepositoryDTO(LocalRepository localRepository) {
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
-		repositoryDTO.setEntityID(localRepository.getEntityID());
+		repositoryDTO.setRepositoryId(localRepository.getRepositoryId());
 		repositoryDTO.setRevision(localRepository.getRevision());
 		repositoryDTO.setPublicKey(localRepository.getPublicKey());
 		return repositoryDTO;
 	}
 
-	private Map<EntityID, RepoFileDTO> getEntityID2RepoFileDTOWithParents(RepoFile pathPrefixRepoFile, Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
+	private Map<Long, RepoFileDTO> getId2RepoFileDTOWithParents(RepoFile pathPrefixRepoFile, Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFiles", repoFiles);
-		Map<EntityID, RepoFileDTO> entityID2RepoFileDTO = new HashMap<EntityID, RepoFileDTO>();
+		Map<Long, RepoFileDTO> entityID2RepoFileDTO = new HashMap<Long, RepoFileDTO>();
 		for (RepoFile repoFile : repoFiles) {
 			RepoFile rf = repoFile;
 			if (rf instanceof NormalFile) {
@@ -534,14 +534,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				continue;
 
 			while (rf != null) {
-				if (!entityID2RepoFileDTO.containsKey(rf.getEntityID())) {
+				if (!entityID2RepoFileDTO.containsKey(rf.getId())) {
 					RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO, 0);
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
-						repoFileDTO.setParentEntityID(null); // virtual root has no parent!
+						repoFileDTO.setParentId(null); // virtual root has no parent!
 						repoFileDTO.setName(""); // virtual root has no name!
 					}
 
-					entityID2RepoFileDTO.put(rf.getEntityID(), repoFileDTO);
+					entityID2RepoFileDTO.put(rf.getId(), repoFileDTO);
 				}
 
 				if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf))
@@ -588,10 +588,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		else // TODO support symlinks!
 			throw new UnsupportedOperationException("RepoFile type not yet supported: " + repoFile);
 
-		repoFileDTO.setEntityID(repoFile.getEntityID());
+		repoFileDTO.setId(repoFile.getId());
 		repoFileDTO.setLocalRevision(repoFile.getLocalRevision());
 		repoFileDTO.setName(repoFile.getName());
-		repoFileDTO.setParentEntityID(repoFile.getParent() == null ? null : repoFile.getParent().getEntityID());
+		repoFileDTO.setParentId(repoFile.getParent() == null ? null : repoFile.getParent().getId());
 		repoFileDTO.setLastModified(repoFile.getLastModified());
 
 		return repoFileDTO;
@@ -710,7 +710,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public void beginPutFile(String path) {
 		path = prefixPath(path);
 		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		File parentFile = file.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
@@ -723,7 +723,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				File localRoot = getLocalRepoManager().getLocalRoot();
-				assertNoDeleteModificationCollision(transaction, clientRepositoryID, path);
+				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 
 				boolean newFile = false;
 				if (!file.isFile()) {
@@ -755,9 +755,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				NormalFile normalFile = (NormalFile) repoFile;
 
 				if (!newFile && !normalFile.isInProgress())
-					detectAndHandleFileCollision(transaction, clientRepositoryID, file, normalFile);
+					detectAndHandleFileCollision(transaction, clientRepositoryId, file, normalFile);
 
-				normalFile.setLastSyncFromRepositoryID(clientRepositoryID);
+				normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
 				normalFile.setInProgress(true);
 			} finally {
 				if (parentFileLastModified != Long.MIN_VALUE)
@@ -771,7 +771,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	/**
 	 * Detect if the file to be copied has been modified locally (or copied from another repository) after the last
-	 * sync from the repository identified by {@code fromRepositoryID}.
+	 * sync from the repository identified by {@code fromRepositoryId}.
 	 * <p>
 	 * If there is a collision - i.e. the destination file has been modified, too - then the destination file is moved
 	 * away by renaming it. The name to which it is renamed is created by {@link IOUtil#createCollisionFile(File)}.
@@ -790,12 +790,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * is ever invoked (the client might crash inbetween). We don't want a locked file to linger forever.
 	 *
 	 * @param transaction the DB transaction. Must not be <code>null</code>.
-	 * @param fromRepositoryID the ID of the source repository from which the file is about to be copied. Must not be <code>null</code>.
+	 * @param fromRepositoryId the ID of the source repository from which the file is about to be copied. Must not be <code>null</code>.
 	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>.
 	 * @param normalFile the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
-	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, File file, NormalFile normalFile) {
-		if (detectFileCollision(transaction, fromRepositoryID, file, normalFile)) {
+	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, NormalFile normalFile) {
+		if (detectFileCollision(transaction, fromRepositoryId, file, normalFile)) {
 			File collisionFile = IOUtil.createCollisionFile(file);
 			file.renameTo(collisionFile);
 			if (file.exists())
@@ -809,9 +809,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private boolean detectFileCollisionRecursively(LocalRepoTransaction transaction, EntityID fromRepositoryID, File fileOrDirectory) {
+	private boolean detectFileCollisionRecursively(LocalRepoTransaction transaction, UUID fromRepositoryId, File fileOrDirectory) {
 		assertNotNull("transaction", transaction);
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("fileOrDirectory", fileOrDirectory);
 
 		if (!fileOrDirectory.exists()) { // Is this correct? If it does not exist, then there is no collision? TODO what if it has been deleted locally and modified remotely and local is destination and that's our collision?!
@@ -824,7 +824,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				return true; // We had a change after the last local sync (normal file => directory)!
 
 			NormalFile normalFile = (NormalFile) repoFile;
-			if (detectFileCollision(transaction, fromRepositoryID, fileOrDirectory, normalFile))
+			if (detectFileCollision(transaction, fromRepositoryId, fileOrDirectory, normalFile))
 				return true;
 			else
 				return false;
@@ -835,7 +835,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			throw new IllegalStateException("listFiles() of directory returned null: " + fileOrDirectory);
 
 		for (File child : children) {
-			if (detectFileCollisionRecursively(transaction, fromRepositoryID, child))
+			if (detectFileCollisionRecursively(transaction, fromRepositoryId, child))
 				return true;
 		}
 
@@ -844,20 +844,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	/**
 	 * Detect if the file to be copied or deleted has been modified locally (or copied from another repository) after the last
-	 * sync from the repository identified by {@code fromRepositoryID}.
+	 * sync from the repository identified by {@code fromRepositoryId}.
 	 * @param transaction
-	 * @param fromRepositoryID
+	 * @param fromRepositoryId
 	 * @param file
 	 * @param normalFile
 	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
 	 */
-	private boolean detectFileCollision(LocalRepoTransaction transaction, EntityID fromRepositoryID, File file, NormalFile normalFile) {
+	private boolean detectFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, NormalFile normalFile) {
 		assertNotNull("transaction", transaction);
-		assertNotNull("fromRepositoryID", fromRepositoryID);
+		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("file", file);
 		assertNotNull("normalFile", normalFile);
 
-		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(fromRepositoryID);
+		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 		if (normalFile.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
 			return false;
@@ -865,7 +865,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		// The file was transferred from the same repository before and was thus not changed locally nor in another repo.
 		// This can only happen, if the sync was interrupted (otherwise the check for the localRevision above
 		// would have already caused this method to abort).
-		if (fromRepositoryID.equals(normalFile.getLastSyncFromRepositoryID()))
+		if (fromRepositoryId.equals(normalFile.getLastSyncFromRepositoryId()))
 			return false;
 
 		return true;
@@ -913,7 +913,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
 		File file = getFile(path);
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 
@@ -942,7 +942,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			file.setLastModified(lastModified.getTime());
 			localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
-			normalFile.setLastSyncFromRepositoryID(clientRepositoryID);
+			normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
 			normalFile.setInProgress(false);
 
 			transaction.commit();
@@ -953,7 +953,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void endSyncFromRepository() {
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			PersistenceManager pm = transaction.getPersistenceManager();
@@ -961,11 +961,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
 			if (lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress() < 0)
-				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", clientRepositoryID));
+				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", clientRepositoryId));
 
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
@@ -984,11 +984,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void endSyncToRepository(long fromLocalRevision) {
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(clientRepositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 			remoteRepository.setRevision(fromLocalRevision);
 
 			transaction.commit();

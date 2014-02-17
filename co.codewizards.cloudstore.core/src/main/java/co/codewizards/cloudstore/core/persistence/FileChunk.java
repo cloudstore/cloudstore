@@ -1,8 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.util.UUID;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
@@ -83,10 +81,10 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 		assertNotNull("other", other);
 
 		if (this.normalFile != other.normalFile) {
-			UUID thisRepoFileID = this.normalFile == null ? new UUID(0, 0) : this.normalFile.getEntityID().toUUID();
-			UUID otherRepoFileID = other.normalFile == null ? new UUID(0, 0) : other.normalFile.getEntityID().toUUID();
+			long thisRepoFileId = this.normalFile == null ? 0 : this.normalFile.getId();
+			long otherRepoFileId = other.normalFile == null ? 0 : other.normalFile.getId();
 
-			int result = thisRepoFileID.compareTo(otherRepoFileID);
+			int result = compare(thisRepoFileId, otherRepoFileId);
 			if (result != 0)
 				return result;
 		}
@@ -95,10 +93,10 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 		if (result != 0)
 			return result;
 
-		UUID thisID = this.getEntityID().toUUID();
-		UUID otherID = other.getEntityID().toUUID();
+		long thisId = this.getId();
+		long otherId = other.getId();
 
-		return thisID.compareTo(otherID);
+		return compare(thisId, otherId);
 	}
 
 	private static int compare(long x, long y) {

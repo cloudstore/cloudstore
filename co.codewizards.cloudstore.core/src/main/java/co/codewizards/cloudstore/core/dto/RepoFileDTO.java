@@ -10,9 +10,9 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class RepoFileDTO {
-	private EntityID entityID;
+	private long id;
 
-	private EntityID parentEntityID;
+	private Long parentId;
 
 	private String name;
 
@@ -20,18 +20,18 @@ public class RepoFileDTO {
 
 	private Date lastModified;
 
-	public EntityID getEntityID() {
-		return entityID;
+	public long getId() {
+		return id;
 	}
-	public void setEntityID(EntityID entityID) {
-		this.entityID = entityID;
+	public void setId(long id) {
+		this.id = id;
 	}
 
-	public EntityID getParentEntityID() {
-		return parentEntityID;
+	public Long getParentId() {
+		return parentId;
 	}
-	public void setParentEntityID(EntityID parentEntityID) {
-		this.parentEntityID = parentEntityID;
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
 	}
 
 	public String getName() {

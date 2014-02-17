@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.CharBuffer;
 import java.util.Arrays;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PathParam;
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.AuthConstants;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
@@ -141,8 +141,8 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	protected String authenticateAndReturnUserName()
 	throws WebApplicationException
 	{
-		EntityID serverRepositoryID = LocalRepoRegistry.getInstance().getRepositoryID(repositoryName);
-		if (serverRepositoryID == null) {
+		UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
+		if (serverRepositoryId == null) {
 			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
 					.type(MediaType.APPLICATION_XML)
 					.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither an alias nor an ID of a known repository!", repositoryName))).build());
@@ -150,9 +150,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 		Auth auth = getAuth();
 		try {
-			EntityID clientRepositoryID = getClientRepositoryIDFromUserName(auth.getUserName());
-			if (clientRepositoryID != null) {
-				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryID, clientRepositoryID, auth.getPassword()))
+			UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
+			if (clientRepositoryId != null) {
+				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
 					return auth.getUserName();
 				else
 					throw newUnauthorizedException();
@@ -163,21 +163,21 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		throw newUnauthorizedException();
 	}
 
-	protected EntityID getClientRepositoryIDFromUserName(String userName) {
+	protected UUID getClientRepositoryIdFromUserName(String userName) {
 		if (assertNotNull("userName", userName).startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
-			String repositoryIDString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
-			EntityID clientRepositoryID = new EntityID(repositoryIDString);
-			return clientRepositoryID;
+			String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
+			UUID clientRepositoryId = UUID.fromString(repositoryIdString);
+			return clientRepositoryId;
 		}
 		return null;
 	}
 
-	protected EntityID getClientRepositoryIDFromUserNameOrFail(String userName) {
-		EntityID clientRepositoryID = getClientRepositoryIDFromUserName(userName);
-		if (clientRepositoryID == null)
+	protected UUID getClientRepositoryIdFromUserNameOrFail(String userName) {
+		UUID clientRepositoryId = getClientRepositoryIdFromUserName(userName);
+		if (clientRepositoryId == null)
 			throw new IllegalArgumentException(String.format("userName='%s' is not a repository!", userName));
 
-		return clientRepositoryID;
+		return clientRepositoryId;
 	}
 
 	private WebApplicationException newUnauthorizedException() {
@@ -186,27 +186,27 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 	protected RepoTransport authenticateAndCreateLocalRepoTransport() {
 		String userName = authenticateAndReturnUserName();
-		EntityID clientRepositoryID = getClientRepositoryIDFromUserNameOrFail(userName);
-		URL localRootURL = getLocalRootURL(clientRepositoryID);
+		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		URL localRootURL = getLocalRootURL(clientRepositoryId);
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryID);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryId);
 		return repoTransport;
 	}
 
 	protected URL authenticateAndGetLocalRootURL() {
 		String userName = authenticateAndReturnUserName();
-		EntityID clientRepositoryID = getClientRepositoryIDFromUserNameOrFail(userName);
-		return getLocalRootURL(clientRepositoryID);
+		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		return getLocalRootURL(clientRepositoryId);
 	}
 
-	protected URL getLocalRootURL(EntityID clientRepositoryID) {
+	protected URL getLocalRootURL(UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
 		String localPathPrefix;
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
-			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(clientRepositoryID);
+			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(clientRepositoryId);
 			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
 			transaction.commit();
 		} finally {

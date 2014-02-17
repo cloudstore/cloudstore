@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.UUID;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -30,7 +31,6 @@ import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
@@ -277,7 +277,7 @@ public class CloudStoreRESTClient {
 
 	public void requestRepoConnection(String repositoryName, String pathPrefix, RepositoryDTO clientRepositoryDTO) {
 		assertNotNull("clientRepositoryDTO", clientRepositoryDTO);
-		assertNotNull("clientRepositoryDTO.entityID", clientRepositoryDTO.getEntityID());
+		assertNotNull("clientRepositoryDTO.repositoryId", clientRepositoryDTO.getRepositoryId());
 		assertNotNull("clientRepositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
 		Client client = acquireClient();
 		try {
@@ -293,11 +293,13 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(String repositoryName, EntityID clientRepositoryID) {
+	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(String repositoryName, UUID clientRepositoryId) {
+		assertNotNull("repositoryName", repositoryName);
+		assertNotNull("clientRepositoryId", clientRepositoryId);
 		Client client = acquireClient();
 		try {
 			EncryptedSignedAuthToken encryptedSignedAuthToken = client.target(getBaseURL())
-			.path(getPath(EncryptedSignedAuthToken.class)).path(repositoryName).path(clientRepositoryID.toString())
+			.path(getPath(EncryptedSignedAuthToken.class)).path(repositoryName).path(clientRepositoryId.toString())
 			.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
 			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {

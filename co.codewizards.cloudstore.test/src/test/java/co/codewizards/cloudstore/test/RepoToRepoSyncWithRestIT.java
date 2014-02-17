@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import junit.framework.Assert;
 
@@ -22,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.client.CloudStoreClient;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
@@ -88,8 +88,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
 	}
 
-	private URL getRemoteRootURLWithPathPrefix(EntityID remoteRepositoryID) throws MalformedURLException {
-		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID + remotePathPrefix);
+	private URL getRemoteRootURLWithPathPrefix(UUID remoteRepositoryId) throws MalformedURLException {
+		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryId + remotePathPrefix);
 		return remoteRootURL;
 	}
 
@@ -111,8 +111,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
-		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
+		UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
+		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
 
 		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
 		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
@@ -170,8 +170,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		EntityID remoteRepositoryID = localRepoManagerRemote.getRepositoryID();
-		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryID);
+		UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
+		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
 
 		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
 		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());

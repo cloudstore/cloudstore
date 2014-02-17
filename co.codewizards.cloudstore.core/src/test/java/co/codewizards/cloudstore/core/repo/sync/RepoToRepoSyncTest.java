@@ -83,8 +83,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryID(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
-		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryID(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
+		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -111,8 +111,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		logger.info("local repo: {}", localRepoManagerLocal.getRepositoryID());
-		logger.info("remote repo: {}", localRepoManagerRemote.getRepositoryID());
+		logger.info("local repo: {}", localRepoManagerLocal.getRepositoryId());
+		logger.info("remote repo: {}", localRepoManagerRemote.getRepositoryId());
 
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));

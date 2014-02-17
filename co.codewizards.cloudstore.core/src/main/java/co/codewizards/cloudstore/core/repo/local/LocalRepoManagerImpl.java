@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -30,7 +31,6 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -82,7 +82,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private final File localRoot;
 	private LockFile lockFile;
-	private EntityID repositoryID;
+	private UUID repositoryId;
 	/**
 	 * The properties read from {@link LocalRepoManager#REPOSITORY_PROPERTIES_FILE_NAME}.
 	 * <p>
@@ -143,7 +143,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (deleteMetaDir)
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
 		}
-		LocalRepoRegistry.getInstance().putRepository(repositoryID, localRoot);
+		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -211,10 +211,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void createRepositoryPropertiesFile() {
+		final int version = 2;
 		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			repositoryProperties = new Properties();
-			repositoryProperties.put(PROP_VERSION, Integer.valueOf(1).toString());
+			repositoryProperties.put(PROP_VERSION, Integer.valueOf(version).toString());
 			PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -246,19 +247,20 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					String.format("Meta-file '%s' contains an illegal value (not a number) for property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
 		}
 
-		// There is only one single version, right now. This is just a sanity check for allowing automatic upgrades, later.
-		// Additionally, this prevents old versions to work with a newer repo (and possibly corrupt it).
-		if (ver != 1)
-			throw new RepositoryCorruptException(localRoot, "Repository is not version 1!");
+		// Because version 1 was used by 0.9.0, we do not provide compatibility, yet. Maybe we add compatibility
+		// code converting version 1 into 2, later.
+		// Further, this check prevents old versions to work with a newer repo (and possibly corrupt it).
+		if (ver != 2)
+			throw new RepositoryCorruptException(localRoot, "Repository is not version 2!");
 	}
 
 	private void updateRepositoryPropertiesFile() {
 		assertNotNull("repositoryProperties", repositoryProperties);
 		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
-			String repositoryID = assertNotNull("repositoryID", getRepositoryID()).toString();
-			if (!repositoryID.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
-				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryID);
+			String repositoryId = assertNotNull("repositoryId", getRepositoryId()).toString();
+			if (!repositoryId.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
+				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryId);
 				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 			}
 			repositoryProperties = null; // not needed anymore => gc
@@ -280,7 +282,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			} else {
 				assertSinglePersistentLocalRepository(pm);
 			}
-			logger.info("[{}]initPersistenceManagerFactory: repositoryID={}", id, repositoryID);
+			logger.info("[{}]initPersistenceManagerFactory: repositoryId={}", id, repositoryId);
 
 			pm.currentTransaction().commit();
 		} finally {
@@ -396,7 +398,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void readRepositoryMainProperties(LocalRepository localRepository) {
 		assertNotNull("localRepository", localRepository);
-		repositoryID = assertNotNull("localRepository.entityID", localRepository.getEntityID());
+		repositoryId = assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
 		publicKey = assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
 		privateKey = assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
 	}
@@ -616,8 +618,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public EntityID getRepositoryID() {
-		return repositoryID;
+	public UUID getRepositoryId() {
+		return repositoryId;
 	}
 
 	@Override
@@ -671,8 +673,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey, String localPathPrefix) {
-		assertNotNull("entityID", repositoryID);
+	public void putRemoteRepository(UUID repositoryId, URL remoteRoot, byte[] publicKey, String localPathPrefix) {
+		assertNotNull("entityID", repositoryId);
 		assertNotNull("publicKey", publicKey);
 		LocalRepoTransaction transaction = beginWriteTransaction();
 		try {
@@ -680,13 +682,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			if (remoteRoot != null) {
 				RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
-				if (otherRepoWithSameRemoteRoot != null && !repositoryID.equals(otherRepoWithSameRemoteRoot.getEntityID()))
-					throw new IllegalStateException(String.format("Duplicate remoteRoot! The RemoteRepository '%s' already has the same remoteRoot '%s'! The remoteRoot must be unique!", otherRepoWithSameRemoteRoot.getEntityID(), remoteRoot));
+				if (otherRepoWithSameRemoteRoot != null && !repositoryId.equals(otherRepoWithSameRemoteRoot.getRepositoryId()))
+					throw new IllegalStateException(String.format("Duplicate remoteRoot! The RemoteRepository '%s' already has the same remoteRoot '%s'! The remoteRoot must be unique!", otherRepoWithSameRemoteRoot.getRepositoryId(), remoteRoot));
 			}
 
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
 			if (remoteRepository == null) {
-				remoteRepository = new RemoteRepository(repositoryID);
+				remoteRepository = new RemoteRepository(repositoryId);
 				remoteRepository.setRevision(-1);
 			}
 			remoteRepository.setRemoteRoot(remoteRoot);
@@ -697,7 +699,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 
 			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(repositoryID);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(repositoryId);
 			if (remoteRepositoryRequest != null)
 				remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
 
@@ -708,12 +710,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void deleteRemoteRepository(EntityID repositoryID) {
-		assertNotNull("entityID", repositoryID);
+	public void deleteRemoteRepository(UUID repositoryId) {
+		assertNotNull("entityID", repositoryId);
 		LocalRepoTransaction transaction = beginWriteTransaction();
 		try {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(repositoryID);
+			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
 			if (remoteRepository != null)
 				remoteRepositoryDAO.deletePersistent(remoteRepository);
 

@@ -12,14 +12,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.jdo.identity.LongIdentity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import co.codewizards.cloudstore.core.dto.EntityID;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
@@ -87,34 +87,32 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	/**
 	 * Get the entity-instance referenced by the specified identifier.
 	 *
-	 * @param entityID the identifier referencing the desired entity. Must not be <code>null</code>.
+	 * @param id the identifier referencing the desired entity. Must not be <code>null</code>.
 	 * @return the entity-instance referenced by the specified identifier. Never <code>null</code>.
 	 * @throws JDOObjectNotFoundException if the entity referenced by the given identifier does not exist.
 	 */
-	public E getObjectByIdOrFail(EntityID entityID)
+	public E getObjectByIdOrFail(long id)
 	throws JDOObjectNotFoundException
 	{
-		return getObjectById(entityID, true);
+		return getObjectById(id, true);
 	}
 
 	/**
 	 * Get the entity-instance referenced by the specified identifier.
 	 *
-	 * @param entityID the identifier referencing the desired entity. Must not be <code>null</code>.
+	 * @param id the identifier referencing the desired entity. Must not be <code>null</code>.
 	 * @return the entity-instance referenced by the specified identifier or <code>null</code>, if no
 	 * such entity exists.
 	 */
-	public E getObjectByIdOrNull(EntityID entityID)
+	public E getObjectByIdOrNull(long id)
 	{
-		return getObjectById(entityID, false);
+		return getObjectById(id, false);
 	}
-
-	private Query queryGetObjectById;
 
 	/**
 	 * Get the entity-instance referenced by the specified identifier.
 	 *
-	 * @param entityID the identifier referencing the desired entity. Must not be <code>null</code>.
+	 * @param id the identifier referencing the desired entity. Must not be <code>null</code>.
 	 * @param throwExceptionIfNotFound <code>true</code> to (re-)throw a {@link JDOObjectNotFoundException},
 	 * if the referenced entity does not exist; <code>false</code> to return <code>null</code> instead.
 	 * @return the entity-instance referenced by the specified identifier or <code>null</code>, if no
@@ -122,39 +120,18 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	 * @throws JDOObjectNotFoundException if the entity referenced by the given identifier does not exist
 	 * and <code>throwExceptionIfNotFound == true</code>.
 	 */
-	private E getObjectById(EntityID entityID, boolean throwExceptionIfNotFound)
+	private E getObjectById(long id, boolean throwExceptionIfNotFound)
 	throws JDOObjectNotFoundException
 	{
-		assertNotNull("entityID", entityID);
-
-//		try {
-//			Object result = pm().getObjectById(entityClass, entityID);
-//			return entityClass.cast(result);
-//		} catch (JDOObjectNotFoundException x) {
-//			if (throwExceptionIfNotFound)
-//				throw x;
-//			else
-//				return null;
-//		}
-
-		// The above currently fails :-(
-		// See: http://www.datanucleus.org/servlet/forum/viewthread_thread,7079
-		// Thus using the workaround below instead. Marco :-)
-
-		Query query = queryGetObjectById;
-		if (query == null) {
-			query = pm().newQuery(entityClass);
-			query.setFilter("this.idHigh == :entityID_idHigh && this.idLow == :entityID_idLow");
-			query.setUnique(true);
-			queryGetObjectById = query;
+		try {
+			Object result = pm().getObjectById(new LongIdentity(entityClass, id));
+			return entityClass.cast(result);
+		} catch (JDOObjectNotFoundException x) {
+			if (throwExceptionIfNotFound)
+				throw x;
+			else
+				return null;
 		}
-		Object result = query.execute(entityID.idHigh, entityID.idLow);
-		if (result == null && throwExceptionIfNotFound)
-			throw new JDOObjectNotFoundException("There is no entity of type " + entityClass.getName() + " with entityID=" + entityID + '!');
-
-		// No idea, if this is still an issue - I copied the stuff from an older project and don't know which DN version...
-
-		return entityClass.cast(result);
 	}
 
 	public Collection<E> getObjects() {
@@ -179,14 +156,14 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	public <P extends E> P makePersistent(P entity)
 	{
 		assertNotNull("entity", entity);
-		logger.debug("makePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
+		logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		return pm().makePersistent(entity);
 	}
 
 	public void deletePersistent(E entity)
 	{
 		assertNotNull("entity", entity);
-		logger.debug("deletePersistent: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
+		logger.debug("deletePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		pm().deletePersistent(entity);
 	}
 
@@ -195,7 +172,7 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		assertNotNull("entities", entities);
 		if (logger.isDebugEnabled()) {
 			for (E entity : entities) {
-				logger.debug("deletePersistentAll: entityID={} idHigh={} idLow={}", entity.getEntityID(), entity.getIdHigh(), entity.getIdLow());
+				logger.debug("deletePersistentAll: entityID={}", JDOHelper.getObjectId(entity));
 			}
 		}
 		pm().deletePersistentAll(entities);
@@ -203,54 +180,45 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 
 	protected Collection<E> load(Collection<E> entities) {
 		Collection<E> result = new ArrayList<>();
-		Map<Class<? extends Entity>, Set<EntityID>> entityClass2EntityIDs = new HashMap<Class<? extends Entity>, Set<EntityID>>();
+		Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		for (E entity : entities) {
-			Set<EntityID> entityIDs = entityClass2EntityIDs.get(entity.getClass());
+			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
 			if (entityIDs == null) {
-				entityIDs = new HashSet<EntityID>();
+				entityIDs = new HashSet<>();
 				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
 			}
-			entityIDs.add(entity.getEntityID());
+			entityIDs.add(entity.getId());
 		}
 
-		Map<String, Object> params = new HashMap<>();
-		for (Map.Entry<Class<? extends Entity>, Set<EntityID>> me : entityClass2EntityIDs.entrySet()) {
+		for (Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
 			Class<? extends Entity> entityClass = me.getKey();
 			Query query = pm().newQuery(pm().getExtent(entityClass, false));
+			query.setFilter(":entityIDs.contains(this.id)");
 
-			Set<EntityID> entityIDs = me.getValue();
-			StringBuilder filter = new StringBuilder();
+			Set<Long> entityIDs = me.getValue();
 			int idx = -1;
-			for (EntityID entityID : entityIDs) {
-				if (++idx != 0)
-					filter.append(" || ");
-
-				String varH = "h" + Integer.toString(idx, 36);
-				String varL = "l" + Integer.toString(idx, 36);
-				filter.append("(this.idHigh == :").append(varH).append(" && this.idLow == :").append(varL).append(")");
-				params.put(varH, entityID.idHigh);
-				params.put(varL, entityID.idLow);
-				if (idx > 300) {
+			Set<Long> entityIDSubSet = new HashSet<>(300);
+			for (Long entityID : entityIDs) {
+				++idx;
+				entityIDSubSet.add(entityID);
+				if (idx > 200) {
 					idx = -1;
-					populateLoadResult(result, query, filter, params);
+					populateLoadResult(result, query, entityIDSubSet);
 				}
 			}
-			populateLoadResult(result, query, filter, params);
+			populateLoadResult(result, query, entityIDSubSet);
 		}
 		return result;
 	}
 
-	private void populateLoadResult(Collection<E> result, Query query, StringBuilder filter, Map<String, Object> params) {
-		if (filter.length() == 0)
+	private void populateLoadResult(Collection<E> result, Query query, Set<Long> entityIDSubSet) {
+		if (entityIDSubSet.isEmpty())
 			return;
 
-		query.setFilter(filter.toString());
-		filter.setLength(0);
-
 		@SuppressWarnings("unchecked")
-		Collection<E> c = (Collection<E>) query.executeWithMap(params);
+		Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
 		result.addAll(c);
-		params.clear();
 		query.closeAll();
+		entityIDSubSet.clear();
 	}
 }

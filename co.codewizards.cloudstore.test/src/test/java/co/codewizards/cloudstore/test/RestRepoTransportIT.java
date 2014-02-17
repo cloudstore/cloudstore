@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.net.URL;
+import java.util.UUID;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,7 +12,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -47,7 +47,7 @@ public class RestRepoTransportIT extends AbstractIT {
 	}
 
 	@Test
-	public void getRepositoryID() throws Exception {
+	public void getRepositoryId() throws Exception {
 		File remoteRoot = newTestRepositoryLocalRoot("");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
@@ -55,14 +55,14 @@ public class RestRepoTransportIT extends AbstractIT {
 
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		EntityID remoteRepositoryID = localRepoManager.getRepositoryID();
+		UUID remoteRepositoryId = localRepoManager.getRepositoryId();
 
-		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryID);
+		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryId);
 
 		RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL).createRepoTransport(remoteRootURL, null);
 		assertThat(repoTransport).isInstanceOf(RestRepoTransport.class);
-		EntityID repositoryID = repoTransport.getRepositoryID();
-		assertThat(repositoryID).isEqualTo(remoteRepositoryID);
+		UUID repositoryId = repoTransport.getRepositoryId();
+		assertThat(repositoryId).isEqualTo(remoteRepositoryId);
 
 		repoTransport.close();
 	}

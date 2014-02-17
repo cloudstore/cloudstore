@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.net.URL;
+import java.util.UUID;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
@@ -14,12 +15,12 @@ import javax.jdo.annotations.InheritanceStrategy;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @PersistenceCapable
@@ -27,7 +28,10 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="RemoteRepository")
 //@Index(name="RemoteRepository_remoteRoot", members="remoteRoot") // Indexing a CLOB with Derby throws an exception :-( [should be a warning, IMHO for portability reasons]
 @Index(name="RemoteRepository_remoteRootSha1", members="remoteRootSha1")
-@Query(name="getRemoteRepository_remoteRootSha1", value="SELECT UNIQUE WHERE this.remoteRootSha1 == :remoteRootSha1")
+@Queries({
+	@Query(name="getRemoteRepository_repositoryId", value="SELECT UNIQUE WHERE this.repositoryId == :repositoryId"),
+	@Query(name="getRemoteRepository_remoteRootSha1", value="SELECT UNIQUE WHERE this.remoteRootSha1 == :remoteRootSha1")
+})
 public class RemoteRepository extends Repository implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RemoteRepository.class);
 
@@ -43,8 +47,8 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 
 	public RemoteRepository() { }
 
-	public RemoteRepository(EntityID entityID) {
-		super(entityID);
+	public RemoteRepository(UUID repositoryId) {
+		super(repositoryId);
 	}
 
 	public URL getRemoteRoot() {
@@ -69,7 +73,7 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 	public void setLocalRevision(long localRevision) {
 		if (this.localRevision != localRevision) {
 			if (logger.isDebugEnabled())
-				logger.debug("setLocalRevision: repositoryID={} old={} new={}", getEntityID(), this.localRevision, localRevision);
+				logger.debug("setLocalRevision: repositoryId={} old={} new={}", getRepositoryId(), this.localRevision, localRevision);
 
 			this.localRevision = localRevision;
 		}

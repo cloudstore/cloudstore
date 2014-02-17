@@ -2,9 +2,9 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.io.File;
 import java.net.URL;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.persistence.LocalRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
@@ -35,7 +35,7 @@ public interface LocalRepoManager {
 	 * This is {@link LocalRepository#getEntityID() LocalRepository.entityID} in the local repository database.
 	 * @return the local repository's unique ID. Never <code>null</code>.
 	 */
-	EntityID getRepositoryID();
+	UUID getRepositoryId();
 
 	/**
 	 * Gets the local repository's private key.
@@ -98,22 +98,22 @@ public interface LocalRepoManager {
 
 	/**
 	 * Adds or relocates a remote repository.
-	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>. This is
+	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>. This is
 	 * {@link LocalRepository#getEntityID() LocalRepository.entityID} in the remote database and will become
 	 * {@link RemoteRepository#getEntityID() RemoteRepository.entityID} in the local database.
 	 * @param remoteRoot the URL of the remote repository. May be <code>null</code> (in the server, a
 	 * {@code RemoteRepository} never has a {@code remoteRoot}).
 	 * @param localPathPrefix TODO
 	 */
-	void putRemoteRepository(EntityID repositoryID, URL remoteRoot, byte[] publicKey, String localPathPrefix);
+	void putRemoteRepository(UUID repositoryId, URL remoteRoot, byte[] publicKey, String localPathPrefix);
 
 	/**
 	 * Deletes a remote repository from the local database.
 	 * <p>
 	 * Does nothing, if the specified repository does not exist.
-	 * @param repositoryID the remote repository's unique ID. Must not be <code>null</code>.
+	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>.
 	 */
-	void deleteRemoteRepository(EntityID repositoryID);
+	void deleteRemoteRepository(UUID repositoryId);
 
 	Lock getLock();
 }

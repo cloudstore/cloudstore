@@ -2,10 +2,10 @@ package co.codewizards.cloudstore.client;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
@@ -27,7 +27,7 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 //	@Option(name="-localOnly", required=false, usage="Do not attempt to unregister the repo-connection on the server-side.")
 //	private boolean localOnly;
 
-	private EntityID remoteRepositoryID;
+	private UUID remoteRepositoryId;
 	private URL remoteRoot;
 
 	@Override
@@ -45,14 +45,14 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		super.prepare();
 
 		try {
-			remoteRepositoryID = new EntityID(remote);
+			remoteRepositoryId = UUID.fromString(remote);
 			remoteRoot = null;
 		} catch (IllegalArgumentException x) {
 			try {
 				remoteRoot = new URL(remote);
-				remoteRepositoryID = null;
+				remoteRepositoryId = null;
 			} catch (MalformedURLException y) {
-				throw new IllegalArgumentException(String.format("<remote> '%s' is neither a valid repositoryID nor a valid URL!", remote));
+				throw new IllegalArgumentException(String.format("<remote> '%s' is neither a valid repositoryId nor a valid URL!", remote));
 			}
 		}
 	}
@@ -60,15 +60,15 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 	@Override
 	public void run() throws Exception {
 		boolean foundSomethingToCancel = false;
-		EntityID localRepositoryID;
+		UUID localRepositoryId;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			localRepositoryID = localRepoManager.getRepositoryID();
+			localRepositoryId = localRepoManager.getRepositoryId();
 			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 			try {
 				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-				if (remoteRepositoryID != null) {
-					RemoteRepository remoteRepository = remoteRepositoryDAO.getObjectByIdOrNull(remoteRepositoryID);
+				if (remoteRepositoryId != null) {
+					RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(remoteRepositoryId);
 					if (remoteRepository != null) {
 						foundSomethingToCancel = true;
 						remoteRoot = remoteRepository.getRemoteRoot();
@@ -77,7 +77,7 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 					}
 
 					RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-					RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryID);
+					RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryId);
 					if (remoteRepositoryRequest != null) {
 						foundSomethingToCancel = true;
 						remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
@@ -89,7 +89,7 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 					RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
 					if (remoteRepository != null) {
 						foundSomethingToCancel = true;
-						remoteRepositoryID = remoteRepository.getEntityID();
+						remoteRepositoryId = remoteRepository.getRepositoryId();
 						remoteRepositoryDAO.deletePersistent(remoteRepository);
 						remoteRepositoryDAO.getPersistenceManager().flush();
 					}
@@ -107,21 +107,21 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		if (foundSomethingToCancel) {
 			System.out.println("Successfully cancelled the connection from the local repository to the remote repository:");
 			System.out.println();
-			System.out.println("  localRepository.repositoryID = " + localRepositoryID);
+			System.out.println("  localRepository.repositoryId = " + localRepositoryId);
 			System.out.println("  localRepository.localRoot = " + localRoot);
 			System.out.println();
-			System.out.println("  remoteRepository.repositoryID = " + remoteRepositoryID);
+			System.out.println("  remoteRepository.repositoryId = " + remoteRepositoryId);
 			System.out.println("  remoteRepository.remoteRoot = " + remoteRoot);
 			System.out.println();
 			System.out.println("Important: This only cancelled the local side of the connection and you should cancel it on the other side, too, using this command (if you didn't do this yet):");
 			System.out.println();
-			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryID, localRepositoryID));
+			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
 		}
 		else {
 			System.out.println("There was nothing to be cancelled here. Maybe it was cancelled already before?!");
 			System.out.println("Or maybe you want to instead run the following command on the other side (i.e. on the other computer - cancelling currently works only on one side):");
 			System.out.println();
-			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryID, localRepositoryID));
+			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
 		}
 	}
 }

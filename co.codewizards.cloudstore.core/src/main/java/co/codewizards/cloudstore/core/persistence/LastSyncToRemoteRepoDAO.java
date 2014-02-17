@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import javax.jdo.Query;
 
@@ -20,7 +20,7 @@ public class LastSyncToRemoteRepoDAO extends DAO<LastSyncToRemoteRepo, LastSyncT
 	public LastSyncToRemoteRepo getLastSyncToRemoteRepoOrFail(RemoteRepository remoteRepository) {
 		LastSyncToRemoteRepo lastSyncToRemoteRepo = getLastSyncToRemoteRepo(remoteRepository);
 		if (lastSyncToRemoteRepo == null)
-			throw new IllegalStateException("There is no LastSyncToRemoteRepo for the RemoteRepository with entityID=" + remoteRepository.getEntityID());
+			throw new IllegalStateException("There is no LastSyncToRemoteRepo for the RemoteRepository with repositoryId=" + remoteRepository.getRepositoryId());
 
 		return lastSyncToRemoteRepo;
 	}

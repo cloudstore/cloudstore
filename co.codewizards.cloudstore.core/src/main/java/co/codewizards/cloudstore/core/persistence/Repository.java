@@ -1,12 +1,13 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import java.util.UUID;
+
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
-
-import co.codewizards.cloudstore.core.dto.EntityID;
+import javax.jdo.annotations.Unique;
 
 /**
  * A {@code Repository} represents a repository inside the database.
@@ -21,17 +22,27 @@ import co.codewizards.cloudstore.core.dto.EntityID;
  */
 @PersistenceCapable
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP)
+@Unique(name="Repository_repositoryId", members="repositoryId")
 public abstract class Repository extends Entity
 {
+	@Persistent(nullValue=NullValue.EXCEPTION)
+	private String repositoryId;
+
 	private long revision;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] publicKey;
 
-	public Repository() { }
+	public Repository() {
+		this(null);
+	}
 
-	protected Repository(EntityID entityID) {
-		super(entityID);
+	protected Repository(UUID repositoryId) {
+		this.repositoryId = repositoryId == null ? UUID.randomUUID().toString() : repositoryId.toString();
+	}
+
+	public UUID getRepositoryId() {
+		return UUID.fromString(repositoryId);
 	}
 
 	public long getRevision() {

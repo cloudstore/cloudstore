@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,8 +10,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import co.codewizards.cloudstore.core.dto.EntityID;
 
 public class AuthRepoPasswordManagerTest {
 	private static final int PASSWORD_VALIDITIY_DURATION_MAX_MILLIS = 10000;
@@ -43,29 +41,29 @@ public class AuthRepoPasswordManagerTest {
 
 	@Test
 	public void getCurrentAuthRepoPasswordForDifferentRepos() {
-		EntityID serverRepositoryID1 = new EntityID(UUID.randomUUID());
-		EntityID clientRepositoryID1 = new EntityID(UUID.randomUUID());
-		EntityID serverRepositoryID2 = new EntityID(UUID.randomUUID());
-		EntityID clientRepositoryID2 = new EntityID(UUID.randomUUID());
+		UUID serverRepositoryId1 = UUID.randomUUID();
+		UUID clientRepositoryId1 = UUID.randomUUID();
+		UUID serverRepositoryId2 = UUID.randomUUID();
+		UUID clientRepositoryId2 = UUID.randomUUID();
 
-		AuthRepoPassword authRepoPassword11a = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID1, clientRepositoryID1);
-		AuthRepoPassword authRepoPassword11b = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID1, clientRepositoryID1);
+		AuthRepoPassword authRepoPassword11a = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId1, clientRepositoryId1);
+		AuthRepoPassword authRepoPassword11b = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId1, clientRepositoryId1);
 		assertThat(authRepoPassword11a).isNotNull();
 		assertThat(authRepoPassword11a.getPassword()).isNotNull();
 		assertThat(authRepoPassword11b).isSameAs(authRepoPassword11a);
 
-		AuthRepoPassword authRepoPassword12 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID1, clientRepositoryID2);
+		AuthRepoPassword authRepoPassword12 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId1, clientRepositoryId2);
 		assertThat(authRepoPassword12).isNotNull();
 		assertThat(authRepoPassword12).isNotSameAs(authRepoPassword11a);
 		assertThat(authRepoPassword12.getPassword()).isNotNull().isNotEqualTo(authRepoPassword11a.getPassword());
 
-		AuthRepoPassword authRepoPassword21 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID2, clientRepositoryID1);
+		AuthRepoPassword authRepoPassword21 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId2, clientRepositoryId1);
 		assertThat(authRepoPassword21).isNotNull();
 		assertThat(authRepoPassword21).isNotSameAs(authRepoPassword11a);
 		assertThat(authRepoPassword21.getPassword()).isNotNull().isNotEqualTo(authRepoPassword11a.getPassword());
 		assertThat(authRepoPassword21.getPassword()).isNotEqualTo(authRepoPassword12.getPassword());
 
-		AuthRepoPassword authRepoPassword22 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID2, clientRepositoryID2);
+		AuthRepoPassword authRepoPassword22 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId2, clientRepositoryId2);
 		assertThat(authRepoPassword22).isNotNull();
 		assertThat(authRepoPassword22).isNotSameAs(authRepoPassword11a);
 		assertThat(authRepoPassword22.getPassword()).isNotNull().isNotEqualTo(authRepoPassword11a.getPassword());
@@ -75,18 +73,18 @@ public class AuthRepoPasswordManagerTest {
 
 	@Test
 	public void getCurrentAuthRepoPasswordForSameReposOverTime() throws Exception {
-		EntityID serverRepositoryID = new EntityID(UUID.randomUUID());
-		EntityID clientRepositoryID = new EntityID(UUID.randomUUID());
+		UUID serverRepositoryId = UUID.randomUUID();
+		UUID clientRepositoryId = UUID.randomUUID();
 		long beginTimestamp = System.currentTimeMillis();
-		AuthRepoPassword authRepoPassword = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID, clientRepositoryID);
+		AuthRepoPassword authRepoPassword = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 		assertThat(authRepoPassword).isNotNull();
 		assertThat(authRepoPassword.getPassword()).isNotNull();
 
 		while (true) {
-			AuthRepoPassword authRepoPassword2 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID, clientRepositoryID);
+			AuthRepoPassword authRepoPassword2 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 			if (System.currentTimeMillis() > beginTimestamp + PASSWORD_VALIDITIY_DURATION_MIN_MILLIS) {
 				// Fetch it again to make sure, we're REALLY after the time - it might have changed just while the if-clause was evaluated.
-				authRepoPassword2 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID, clientRepositoryID);
+				authRepoPassword2 = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 				assertThat(authRepoPassword2).isNotNull();
 				assertThat(authRepoPassword2).isNotSameAs(authRepoPassword);
 				assertThat(authRepoPassword2.getPassword()).isNotNull().isNotEqualTo(authRepoPassword.getPassword());
@@ -101,8 +99,8 @@ public class AuthRepoPasswordManagerTest {
 
 	@Test
 	public void isValidOverTime() throws Exception {
-		EntityID serverRepositoryID = new EntityID(UUID.randomUUID());
-		EntityID clientRepositoryID = new EntityID(UUID.randomUUID());
+		UUID serverRepositoryId = UUID.randomUUID();
+		UUID clientRepositoryId = UUID.randomUUID();
 		Set<AuthRepoPassword> authRepoPasswords = new HashSet<AuthRepoPassword>();
 
 		long beginTimestamp = System.currentTimeMillis();
@@ -111,7 +109,7 @@ public class AuthRepoPasswordManagerTest {
 		int invalidCount = 0;
 		while (System.currentTimeMillis() <= beginTimestamp + 33000) {
 			{
-				AuthRepoPassword authRepoPassword = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryID, clientRepositoryID);
+				AuthRepoPassword authRepoPassword = authRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 				assertThat(authRepoPassword).isNotNull();
 				assertThat(authRepoPassword.getPassword()).isNotNull();
 				authRepoPasswords.add(authRepoPassword);
@@ -120,7 +118,7 @@ public class AuthRepoPasswordManagerTest {
 			validCount = 0;
 			invalidCount = 0;
 			for (AuthRepoPassword authRepoPassword : authRepoPasswords) {
-				if (authRepoPasswordManager.isPasswordValid(serverRepositoryID, clientRepositoryID, authRepoPassword.getPassword()))
+				if (authRepoPasswordManager.isPasswordValid(serverRepositoryId, clientRepositoryId, authRepoPassword.getPassword()))
 					++validCount;
 				else
 					++invalidCount;

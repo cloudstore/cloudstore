@@ -3,9 +3,9 @@ package co.codewizards.cloudstore.core.repo.transport;
 import java.io.File;
 import java.net.URL;
 import java.util.Date;
+import java.util.UUID;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 
@@ -17,8 +17,8 @@ public interface RepoTransport {
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 
-	EntityID getClientRepositoryID();
-	void setClientRepositoryID(EntityID clientRepositoryID);
+	UUID getClientRepositoryId();
+	void setClientRepositoryId(UUID clientRepositoryId);
 
 	URL getRemoteRootWithoutPathPrefix();
 	String getPathPrefix();
@@ -29,14 +29,14 @@ public interface RepoTransport {
 	 * Get the repository's unique ID.
 	 * @return the repository's unique ID.
 	 */
-	EntityID getRepositoryID();
+	UUID getRepositoryId();
 
 	byte[] getPublicKey();
 
 	void close();
 
 	/**
-	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryID}.
+	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryId}.
 	 * @param publicKey the public key of the client-repository which requests the connection.
 	 */
 	void requestRepoConnection(byte[] publicKey);

@@ -1,32 +1,31 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.jdo.Query;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
-
 public class RemoteRepositoryRequestDAO extends DAO<RemoteRepositoryRequest, RemoteRepositoryRequestDAO> {
 
-	public RemoteRepositoryRequest getRemoteRepositoryRequest(EntityID repositoryID) {
-		String repositoryIDString = repositoryID == null ? null : repositoryID.toString();
-		Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepositoryRequest_repositoryID");
+	public RemoteRepositoryRequest getRemoteRepositoryRequest(UUID repositoryId) {
+		String repositoryIdString = repositoryId == null ? null : repositoryId.toString();
+		Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepositoryRequest_repositoryId");
 		try {
-			RemoteRepositoryRequest remoteRepositoryRequest = (RemoteRepositoryRequest) query.execute(repositoryIDString);
+			RemoteRepositoryRequest remoteRepositoryRequest = (RemoteRepositoryRequest) query.execute(repositoryIdString);
 			return remoteRepositoryRequest;
 		} finally {
 			query.closeAll();
 		}
 	}
 
-	public RemoteRepositoryRequest getRemoteRepositoryRequestOrFail(EntityID repositoryID) {
-		RemoteRepositoryRequest remoteRepositoryRequest = getRemoteRepositoryRequest(repositoryID);
+	public RemoteRepositoryRequest getRemoteRepositoryRequestOrFail(UUID repositoryId) {
+		RemoteRepositoryRequest remoteRepositoryRequest = getRemoteRepositoryRequest(repositoryId);
 		if (remoteRepositoryRequest == null)
-			throw new IllegalArgumentException(String.format("There is no RemoteRepositoryRequest with repositoryID='%s'!", repositoryID));
+			throw new IllegalArgumentException(String.format("There is no RemoteRepositoryRequest with repositoryId='%s'!", repositoryId));
 
 		return remoteRepositoryRequest;
 	}

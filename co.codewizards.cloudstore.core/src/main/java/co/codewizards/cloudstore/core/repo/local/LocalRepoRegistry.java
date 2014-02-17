@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,13 +13,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
@@ -29,7 +29,7 @@ public class LocalRepoRegistry
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoRegistry.class);
 
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repoRegistry.properties"; // new name since 0.9.1
-	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryID:";
+	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryId:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
 	private static final String PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP = "evictDeadEntriesLastTimestamp";
 	private static final String PROP_EVICT_DEAD_ENTRIES_PERIOD = "evictDeadEntriesPeriod";
@@ -60,48 +60,48 @@ public class LocalRepoRegistry
 		return registryFile;
 	}
 
-	public synchronized Collection<EntityID> getRepositoryIDs() {
+	public synchronized Collection<UUID> getRepositoryIds() {
 		loadRepoRegistryIfNeeded();
-		List<EntityID> result = new ArrayList<EntityID>();
+		List<UUID> result = new ArrayList<UUID>();
 		for (Entry<Object, Object> me : repoRegistryProperties.entrySet()) {
 			String key = String.valueOf(me.getKey());
 			if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ID)) {
-				EntityID repositoryID = new EntityID(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
-				result.add(repositoryID);
+				UUID repositoryId = UUID.fromString(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
+				result.add(repositoryId);
 			}
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	public synchronized EntityID getRepositoryID(String repositoryName) {
+	public synchronized UUID getRepositoryId(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
 		loadRepoRegistryIfNeeded();
-		String entityIDString = repoRegistryProperties.getProperty(getPropertyKeyForAlias(repositoryName));
-		if (entityIDString != null) {
-			EntityID entityID = new EntityID(entityIDString);
-			return entityID;
+		String repositoryIdString = repoRegistryProperties.getProperty(getPropertyKeyForAlias(repositoryName));
+		if (repositoryIdString != null) {
+			UUID repositoryId = UUID.fromString(repositoryIdString);
+			return repositoryId;
 		}
 
-		EntityID repositoryID;
+		UUID repositoryId;
 		try {
-			repositoryID = new EntityID(repositoryName);
+			repositoryId = UUID.fromString(repositoryName);
 		} catch (IllegalArgumentException x) {
 			return null;
 		}
 
-		String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryID));
+		String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryId));
 		if (localRootString == null)
 			return null;
 
-		return repositoryID;
+		return repositoryId;
 	}
 
-	public EntityID getRepositoryIDOrFail(String repositoryName) {
-		EntityID repositoryID = getRepositoryID(repositoryName);
-		if (repositoryID == null)
+	public UUID getRepositoryIdOrFail(String repositoryName) {
+		UUID repositoryId = getRepositoryId(repositoryName);
+		if (repositoryId == null)
 			throw new IllegalArgumentException("Unknown repositoryName (neither a known ID nor a known alias): " + repositoryName);
 
-		return repositoryID;
+		return repositoryId;
 	}
 
 	public URL getLocalRootURLForRepositoryNameOrFail(String repositoryName) {
@@ -127,33 +127,33 @@ public class LocalRepoRegistry
 	public File getLocalRootForRepositoryNameOrFail(String repositoryName) {
 		File localRoot = getLocalRootForRepositoryName(repositoryName);
 		if (localRoot == null)
-			throw new IllegalArgumentException("Unknown repositoryName (neither a known repositoryAlias, nor a known repositoryID): " + repositoryName);
+			throw new IllegalArgumentException("Unknown repositoryName (neither a known repositoryAlias, nor a known repositoryId): " + repositoryName);
 
 		return localRoot;
 	}
 
 	/**
 	 * Get the local root for the given {@code repositoryName}.
-	 * @param repositoryName the String-representation of the repositoryID or
+	 * @param repositoryName the String-representation of the repositoryId or
 	 * a repositoryAlias. Must not be <code>null</code>.
 	 * @return the repository's local root or <code>null</code>, if the given {@code repositoryName} is neither
-	 * a repositoryID nor a repositoryAlias known to this registry.
+	 * a repositoryId nor a repositoryAlias known to this registry.
 	 */
 	public synchronized File getLocalRootForRepositoryName(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
 
-		// If the repositoryName is an alias, this should find the corresponding repositoryID.
-		EntityID repositoryID = getRepositoryID(repositoryName);
-		if (repositoryID == null)
+		// If the repositoryName is an alias, this should find the corresponding repositoryId.
+		UUID repositoryId = getRepositoryId(repositoryName);
+		if (repositoryId == null)
 			return null;
 
-		return getLocalRoot(repositoryID);
+		return getLocalRoot(repositoryId);
 	}
 
-	public synchronized File getLocalRoot(EntityID repositoryID) {
-		assertNotNull("repositoryID", repositoryID);
+	public synchronized File getLocalRoot(UUID repositoryId) {
+		assertNotNull("repositoryId", repositoryId);
 		loadRepoRegistryIfNeeded();
-		String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryID));
+		String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryId));
 		if (localRootString == null)
 			return null;
 
@@ -161,17 +161,17 @@ public class LocalRepoRegistry
 		return localRoot;
 	}
 
-	public File getLocalRootOrFail(EntityID repositoryID) {
-		File localRoot = getLocalRoot(repositoryID);
+	public File getLocalRootOrFail(UUID repositoryId) {
+		File localRoot = getLocalRoot(repositoryId);
 		if (localRoot == null)
-			throw new IllegalArgumentException("Unknown repositoryID: " + repositoryID);
+			throw new IllegalArgumentException("Unknown repositoryId: " + repositoryId);
 
 		return localRoot;
 	}
 
-	public synchronized void putRepositoryAlias(String repositoryAlias, EntityID repositoryID) {
+	public synchronized void putRepositoryAlias(String repositoryAlias, UUID repositoryId) {
 		assertNotNull("repositoryAlias", repositoryAlias);
-		assertNotNull("repositoryID", repositoryID);
+		assertNotNull("repositoryId", repositoryId);
 
 		if (repositoryAlias.isEmpty())
 			throw new IllegalArgumentException("repositoryAlias must not be empty!");
@@ -188,12 +188,12 @@ public class LocalRepoRegistry
 		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
-			getLocalRootOrFail(repositoryID); // make sure, this is a known repositoryID!
+			getLocalRootOrFail(repositoryId); // make sure, this is a known repositoryId!
 			String propertyKey = getPropertyKeyForAlias(repositoryAlias);
-			String oldRepositoryIDString = repoRegistryProperties.getProperty(propertyKey);
-			String repositoryIDString = repositoryID.toString();
-			if (!repositoryIDString.equals(oldRepositoryIDString))
-				setProperty(propertyKey, repositoryIDString);
+			String oldRepositoryIdString = repoRegistryProperties.getProperty(propertyKey);
+			String repositoryIdString = repositoryId.toString();
+			if (!repositoryIdString.equals(oldRepositoryIdString))
+				setProperty(propertyKey, repositoryIdString);
 
 			storeRepoRegistryIfDirty();
 		} finally {
@@ -208,8 +208,8 @@ public class LocalRepoRegistry
 		try {
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKeyForAlias(repositoryAlias);
-			String repositoryIDString = repoRegistryProperties.getProperty(propertyKey);
-			if (repositoryIDString != null)
+			String repositoryIdString = repoRegistryProperties.getProperty(propertyKey);
+			if (repositoryIdString != null)
 				removeProperty(propertyKey);
 
 			storeRepoRegistryIfDirty();
@@ -218,8 +218,8 @@ public class LocalRepoRegistry
 		}
 	}
 
-	public synchronized void putRepository(EntityID repositoryID, File localRoot) {
-		assertNotNull("repositoryID", repositoryID);
+	public synchronized void putRepository(UUID repositoryId, File localRoot) {
+		assertNotNull("repositoryId", repositoryId);
 		assertNotNull("localRoot", localRoot);
 
 		if (!localRoot.isAbsolute())
@@ -228,7 +228,7 @@ public class LocalRepoRegistry
 		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			loadRepoRegistryIfNeeded();
-			String propertyKey = getPropertyKeyForID(repositoryID);
+			String propertyKey = getPropertyKeyForID(repositoryId);
 			String oldLocalRootPath = repoRegistryProperties.getProperty(propertyKey);
 			String localRootPath = localRoot.getPath();
 			if (!localRootPath.equals(oldLocalRootPath))
@@ -290,13 +290,13 @@ public class LocalRepoRegistry
 		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 		try {
 			List<String> result = new ArrayList<String>();
-			EntityID repositoryID = getRepositoryIDOrFail(repositoryName);
+			UUID repositoryId = getRepositoryIdOrFail(repositoryName);
 			for (Entry<Object, Object> me : repoRegistryProperties.entrySet()) {
 				String key = String.valueOf(me.getKey());
 				if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ALIAS)) {
 					String value = String.valueOf(me.getValue());
-					EntityID mappedRepositoryID = new EntityID(value);
-					if (mappedRepositoryID.equals(repositoryID))
+					UUID mappedRepositoryId = UUID.fromString(value);
+					if (mappedRepositoryId.equals(repositoryId))
 						result.add(key.substring(PROP_KEY_PREFIX_REPOSITORY_ALIAS.length()));
 				}
 			}
@@ -312,8 +312,8 @@ public class LocalRepoRegistry
 		return PROP_KEY_PREFIX_REPOSITORY_ALIAS + assertNotNull("repositoryAlias", repositoryAlias);
 	}
 
-	private String getPropertyKeyForID(EntityID repositoryID) {
-		return PROP_KEY_PREFIX_REPOSITORY_ID + assertNotNull("repositoryID", repositoryID).toString();
+	private String getPropertyKeyForID(UUID repositoryId) {
+		return PROP_KEY_PREFIX_REPOSITORY_ID + assertNotNull("repositoryId", repositoryId).toString();
 	}
 
 	private void loadRepoRegistryIfNeeded() {
@@ -388,15 +388,15 @@ public class LocalRepoRegistry
 		for (Entry<Object, Object> me : new ArrayList<Entry<Object, Object>>(repoRegistryProperties.entrySet())) {
 			String key = String.valueOf(me.getKey());
 			String value = String.valueOf(me.getValue());
-			EntityID repositoryIDFromRegistry;
+			UUID repositoryIdFromRegistry;
 			if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ALIAS)) {
-				repositoryIDFromRegistry = new EntityID(value);
+				repositoryIdFromRegistry = UUID.fromString(value);
 			} else if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ID)) {
-				repositoryIDFromRegistry = new EntityID(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
+				repositoryIdFromRegistry = UUID.fromString(key.substring(PROP_KEY_PREFIX_REPOSITORY_ID.length()));
 			} else
 				continue;
 
-			String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryIDFromRegistry));
+			String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryIdFromRegistry));
 			if (localRootString == null) {
 				evictDeadEntry(key);
 				continue;
@@ -429,8 +429,8 @@ public class LocalRepoRegistry
 				continue;
 			}
 
-			String repositoryIDFromRepo = repositoryProperties.getProperty(LocalRepoManager.PROP_REPOSITORY_ID);
-			if (repositoryIDFromRepo == null) {
+			String repositoryIdFromRepo = repositoryProperties.getProperty(LocalRepoManager.PROP_REPOSITORY_ID);
+			if (repositoryIdFromRepo == null) {
 				logger.warn("evictDeadEntries: repositoryProperties '{}' do not contain key='{}'!", repositoryPropertiesFile, LocalRepoManager.PROP_REPOSITORY_ID);
 				// Old repos don't have the repo-id in the properties, yet.
 				// This is automatically added, when the LocalRepoManager is started up for this repo, the next time.
@@ -438,7 +438,7 @@ public class LocalRepoRegistry
 				continue;
 			}
 
-			if (!repositoryIDFromRegistry.toString().equals(repositoryIDFromRepo)) { // new repo was created at the same location
+			if (!repositoryIdFromRegistry.toString().equals(repositoryIdFromRepo)) { // new repo was created at the same location
 				evictDeadEntry(key);
 				continue;
 			}

@@ -1,21 +1,23 @@
 package co.codewizards.cloudstore.core.dto;
 
+import java.util.UUID;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class RepositoryDTO {
 
-	private EntityID entityID;
+	private UUID repositoryId;
 
 	private byte[] publicKey;
 
 	private long revision = -1;
 
-	public EntityID getEntityID() {
-		return entityID;
+	public UUID getRepositoryId() {
+		return repositoryId;
 	}
-	public void setEntityID(EntityID entityID) {
-		this.entityID = entityID;
+	public void setRepositoryId(UUID repositoryId) {
+		this.repositoryId = repositoryId;
 	}
 
 	public byte[] getPublicKey() {

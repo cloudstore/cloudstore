@@ -1,8 +1,7 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
 import java.net.URL;
-
-import co.codewizards.cloudstore.core.dto.EntityID;
+import java.util.UUID;
 
 
 public abstract class AbstractRepoTransportFactory implements RepoTransportFactory {
@@ -13,14 +12,14 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 	}
 
 	@Override
-	public RepoTransport createRepoTransport(URL remoteRoot, EntityID clientRepositoryID) {
+	public RepoTransport createRepoTransport(URL remoteRoot, UUID clientRepositoryId) {
 		RepoTransport repoTransport = _createRepoTransport(remoteRoot);
 		if (repoTransport == null)
 			throw new IllegalStateException(String.format("Implementation error in class %s: _createRepoTransport(...) returned null!", this.getClass().getName()));
 
 		repoTransport.setRepoTransportFactory(this);
 		repoTransport.setRemoteRoot(remoteRoot);
-		repoTransport.setClientRepositoryID(clientRepositoryID);
+		repoTransport.setClientRepositoryId(clientRepositoryId);
 		return repoTransport;
 	}
 

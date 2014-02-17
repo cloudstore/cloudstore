@@ -1,10 +1,10 @@
 package co.codewizards.cloudstore.client;
 
 import java.net.URL;
+import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
@@ -42,21 +42,20 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 
 	@Override
 	public void run() throws Exception {
-		// TODO support sub-dir-connections to "check-out" only a branch of a repo! Bidirectionally (only upload a sub-branch to a certain server, too)!
-		EntityID localRepositoryID;
-		EntityID remoteRepositoryID;
+		UUID localRepositoryId;
+		UUID remoteRepositoryId;
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			localRepositoryID = localRepoManager.getRepositoryID();
+			localRepositoryId = localRepoManager.getRepositoryId();
 			localPublicKey = localRepoManager.getPublicKey();
-			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL, localRepositoryID);
+			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL, localRepositoryId);
 			try {
-				remoteRepositoryID = repoTransport.getRepositoryID();
+				remoteRepositoryId = repoTransport.getRepositoryId();
 				remotePublicKey = repoTransport.getPublicKey();
 //				String remotePathPrefix = repoTransport.getPathPrefix();
-				localRepoManager.putRemoteRepository(remoteRepositoryID, remoteURL, remotePublicKey, localPathPrefix);
+				localRepoManager.putRemoteRepository(remoteRepositoryId, remoteURL, remotePublicKey, localPathPrefix);
 				repoTransport.requestRepoConnection(localRepoManager.getPublicKey());
 			} finally {
 				repoTransport.close();
@@ -67,16 +66,16 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 
 		System.out.println("Successfully requested to connect the following local and remote repositories:");
 		System.out.println();
-		System.out.println("  localRepository.repositoryID = " + localRepositoryID);
+		System.out.println("  localRepository.repositoryId = " + localRepositoryId);
 		System.out.println("  localRepository.localRoot = " + localRoot);
 		System.out.println("  localRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(localPublicKey));
 		System.out.println();
-		System.out.println("  remoteRepository.repositoryID = " + remoteRepositoryID);
+		System.out.println("  remoteRepository.repositoryId = " + remoteRepositoryId);
 		System.out.println("  remoteRepository.remoteRoot = " + remoteURL);
 		System.out.println("  remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(remotePublicKey));
 		System.out.println();
 		System.out.println("Please verify the 'publicKeySha1' fingerprints! If they do not match the fingerprints shown on the server, someone is attacking you and you must cancel this request immediately! To cancel the request, use this command:");
 		System.out.println();
-		System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", localRepositoryID, remoteRepositoryID));
+		System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", localRepositoryId, remoteRepositoryId));
 	}
 }

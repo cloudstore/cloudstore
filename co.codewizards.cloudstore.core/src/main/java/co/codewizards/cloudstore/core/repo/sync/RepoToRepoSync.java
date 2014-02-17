@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,7 +35,6 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
@@ -73,8 +73,8 @@ public class RepoToRepoSync {
 	private final LocalRepoManager localRepoManager;
 	private final RepoTransport localRepoTransport;
 	private final RepoTransport remoteRepoTransport;
-	private final EntityID localRepositoryID;
-	private final EntityID remoteRepositoryID;
+	private final UUID localRepositoryId;
+	private final UUID remoteRepositoryId;
 
 	private ExecutorService localSyncExecutor;
 	private Future<Void> localSyncFuture;
@@ -94,14 +94,14 @@ public class RepoToRepoSync {
 		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
 		this.localRoot = localRoot = new File(localRoot, getLocalPathPrefix(remoteRoot));
 
-		localRepositoryID = localRepoManager.getRepositoryID();
-		if (localRepositoryID == null)
-			throw new IllegalStateException("localRepoManager.getRepositoryID() returned null!");
+		localRepositoryId = localRepoManager.getRepositoryId();
+		if (localRepositoryId == null)
+			throw new IllegalStateException("localRepoManager.getRepositoryId() returned null!");
 
-		remoteRepositoryID = readRemoteRepositoryIDFromLocalDB();
+		remoteRepositoryId = readRemoteRepositoryIdFromLocalDB();
 
-		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryID);
-		localRepoTransport = createRepoTransport(localRoot, remoteRepositoryID);
+		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
+		localRepoTransport = createRepoTransport(localRoot, remoteRepositoryId);
 	}
 
 	private String getLocalPathPrefix(URL remoteRoot) {
@@ -121,7 +121,7 @@ public class RepoToRepoSync {
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Synchronising...", 201);
 		try {
-			readRemoteRepositoryIDFromRepoTransport();
+			readRemoteRepositoryIdFromRepoTransport();
 			monitor.worked(1);
 
 			if (localSyncExecutor != null)
@@ -133,14 +133,14 @@ public class RepoToRepoSync {
 			localSyncFuture = localSyncExecutor.submit(new Callable<Void>() {
 				@Override
 				public Void call() throws Exception {
-					logger.info("sync: locally syncing {} ('{}')", localRepositoryID, localRoot);
+					logger.info("sync: locally syncing {} ('{}')", localRepositoryId, localRoot);
 					localRepoManager.localSync(new SubProgressMonitor(monitor, 50));
 					return null;
 				}
 			});
 
 			if (!TEST_INVERSE) { // This is the normal sync (NOT test).
-				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
 				sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
 				if (localSyncExecutor != null)
@@ -148,27 +148,27 @@ public class RepoToRepoSync {
 				if (localSyncFuture != null)
 					throw new IllegalStateException("localSyncFuture != null");
 
-				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
 				// Immediately sync back to make sure the changes we caused don't cause problems later
 				// (right now there's very likely no collision and this should be very fast).
-				logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
 				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
 			}
 			else { // THIS IS FOR TESTING ONLY!
-				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryID, localRoot);
+				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryId, localRoot);
 				remoteRepoTransport.getChangeSetDTO(true); // trigger the local sync on the remote side (we don't need the change set)
 
 				waitForAndCheckLocalSyncFuture();
 
-				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 
-				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryID, remoteRoot, localRepositoryID, localRoot);
+				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
 				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
 
-				logger.info("sync: up again: fromID={} from='{}' toID={} to='{}'", localRepositoryID, localRoot, remoteRepositoryID, remoteRoot);
+				logger.info("sync: up again: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
 				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
 			}
 		} finally {
@@ -194,52 +194,42 @@ public class RepoToRepoSync {
 		localSyncExecutor = null;
 	}
 
-	private EntityID readRemoteRepositoryIDFromLocalDB() {
-		EntityID remoteRepositoryID;
+	private UUID readRemoteRepositoryIdFromLocalDB() {
+		UUID remoteRepositoryId;
 		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
-			remoteRepositoryID = remoteRepository.getEntityID();
+			remoteRepositoryId = remoteRepository.getRepositoryId();
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
 		}
-		return remoteRepositoryID;
+		return remoteRepositoryId;
 	}
 
-	private void readRemoteRepositoryIDFromRepoTransport() {
-		EntityID repositoryID = remoteRepoTransport.getRepositoryID();
-		if (repositoryID == null)
-			throw new IllegalStateException("remoteRepoTransport.getRepositoryID() returned null!");
+	private void readRemoteRepositoryIdFromRepoTransport() {
+		UUID repositoryId = remoteRepoTransport.getRepositoryId();
+		if (repositoryId == null)
+			throw new IllegalStateException("remoteRepoTransport.getRepositoryId() returned null!");
 
-		if (!repositoryID.equals(remoteRepositoryID))
+		if (!repositoryId.equals(remoteRepositoryId))
 			throw new IllegalStateException(
-					String.format("remoteRepoTransport.getRepositoryID() does not match repositoryID in local DB! %s != %s", repositoryID, remoteRepositoryID));
+					String.format("remoteRepoTransport.getRepositoryId() does not match repositoryId in local DB! %s != %s", repositoryId, remoteRepositoryId));
 	}
 
-//	private EntityID getRepositoryID(RepoTransport repoTransport) {
-//		if (localRepoTransport == repoTransport)
-//			return localRepositoryID;
-//
-//		if (remoteRepoTransport == repoTransport)
-//			return remoteRepositoryID;
-//
-//		throw new IllegalArgumentException("repoTransport is neither local nor remote!");
-//	}
-
-	private RepoTransport createRepoTransport(File rootFile, EntityID clientRepositoryID) {
+	private RepoTransport createRepoTransport(File rootFile, UUID clientRepositoryId) {
 		URL rootURL;
 		try {
 			rootURL = rootFile.toURI().toURL();
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
-		return createRepoTransport(rootURL, clientRepositoryID);
+		return createRepoTransport(rootURL, clientRepositoryId);
 	}
 
-	private RepoTransport createRepoTransport(URL remoteRoot, EntityID clientRepositoryID) {
+	private RepoTransport createRepoTransport(URL remoteRoot, UUID clientRepositoryId) {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(remoteRoot);
-		return repoTransportFactory.createRepoTransport(remoteRoot, clientRepositoryID);
+		return repoTransportFactory.createRepoTransport(remoteRoot, clientRepositoryId);
 	}
 
 	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {

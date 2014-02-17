@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.util.Collections;
@@ -77,7 +77,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		if (this.localRevision != localRevision) {
 			if (logger.isDebugEnabled()) {
 				LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
-				logger.debug("setLocalRevision: localRepositoryID={} path='{}' old={} new={}", localRepository.getEntityID(), getPath(), this.localRevision, localRevision);
+				logger.debug("setLocalRevision: localRepositoryId={} path='{}' old={} new={}", localRepository.getRepositoryId(), getPath(), this.localRevision, localRevision);
 			}
 			this.localRevision = localRevision;
 		}

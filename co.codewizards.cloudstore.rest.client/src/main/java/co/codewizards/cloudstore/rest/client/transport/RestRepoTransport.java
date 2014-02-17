@@ -9,6 +9,7 @@ import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,6 @@ import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -47,11 +47,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	private long changeSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
 	private long fileChunkSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
 
-	private EntityID repositoryID; // server-repository
+	private UUID repositoryId; // server-repository
 	private byte[] publicKey;
 	private String repositoryName; // server-repository
 	private CloudStoreRESTClient client;
-	private Map<EntityID, AuthToken> clientRepositoryID2AuthToken = new HashMap<EntityID, AuthToken>(1); // should never be more ;-)
+	private Map<UUID, AuthToken> clientRepositoryId2AuthToken = new HashMap<UUID, AuthToken>(1); // should never be more ;-)
 
 	protected DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
 		RestRepoTransportFactory repoTransportFactory = (RestRepoTransportFactory) getRepoTransportFactory();
@@ -70,18 +70,18 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	public RestRepoTransport() { }
 
 	@Override
-	public EntityID getRepositoryID() {
-		if (repositoryID == null) {
+	public UUID getRepositoryId() {
+		if (repositoryId == null) {
 			RepositoryDTO repositoryDTO = getRepositoryDTO();
-			repositoryID = repositoryDTO.getEntityID();
+			repositoryId = repositoryDTO.getRepositoryId();
 			publicKey = repositoryDTO.getPublicKey();
 		}
-		return repositoryID;
+		return repositoryId;
 	}
 
 	@Override
 	public byte[] getPublicKey() {
-		getRepositoryID(); // ensure, the public key is loaded
+		getRepositoryId(); // ensure, the public key is loaded
 		return publicKey;
 	}
 
@@ -93,7 +93,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public void requestRepoConnection(byte[] publicKey) {
 		RepositoryDTO repositoryDTO = new RepositoryDTO();
-		repositoryDTO.setEntityID(getClientRepositoryIDOrFail());
+		repositoryDTO.setRepositoryId(getClientRepositoryIdOrFail());
 		repositoryDTO.setPublicKey(publicKey);
 		getClient().requestRepoConnection(getRepositoryName(), getPathPrefix(), repositoryDTO);
 	}
@@ -108,7 +108,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().getChangeSet(getRepositoryID().toString(), localSync);
+				return getClient().getChangeSet(getRepositoryId().toString(), localSync);
 			} catch (DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
 					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);
@@ -121,27 +121,27 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public void makeDirectory(String path, Date lastModified) {
 		path = prefixPath(path);
-		getClient().makeDirectory(getRepositoryID().toString(), path, lastModified);
+		getClient().makeDirectory(getRepositoryId().toString(), path, lastModified);
 	}
 
 	@Override
 	public void copy(String fromPath, String toPath) {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);
-		getClient().copy(getRepositoryID().toString(), fromPath, toPath);
+		getClient().copy(getRepositoryId().toString(), fromPath, toPath);
 	}
 
 	@Override
 	public void move(String fromPath, String toPath) {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);
-		getClient().move(getRepositoryID().toString(), fromPath, toPath);
+		getClient().move(getRepositoryId().toString(), fromPath, toPath);
 	}
 
 	@Override
 	public void delete(String path) {
 		path = prefixPath(path);
-		getClient().delete(getRepositoryID().toString(), path);
+		getClient().delete(getRepositoryId().toString(), path);
 	}
 
 	@Override
@@ -150,7 +150,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().getRepoFileDTO(getRepositoryID().toString(), path);
+				return getClient().getRepoFileDTO(getRepositoryId().toString(), path);
 			} catch (DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
 					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);
@@ -163,41 +163,41 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public byte[] getFileData(String path, long offset, int length) {
 		path = prefixPath(path);
-		return getClient().getFileData(getRepositoryID().toString(), path, offset, length);
+		return getClient().getFileData(getRepositoryId().toString(), path, offset, length);
 	}
 
 	@Override
 	public void beginPutFile(String path) {
 		path = prefixPath(path);
-		getClient().beginPutFile(getRepositoryID().toString(), path);
+		getClient().beginPutFile(getRepositoryId().toString(), path);
 	}
 
 	@Override
 	public void putFileData(String path, long offset, byte[] fileData) {
 		path = prefixPath(path);
-		getClient().putFileData(getRepositoryID().toString(), path, offset, fileData);
+		getClient().putFileData(getRepositoryId().toString(), path, offset, fileData);
 	}
 
 	@Override
 	public void endPutFile(String path, Date lastModified, long length) {
 		path = prefixPath(path);
-		getClient().endPutFile(getRepositoryID().toString(), path, new DateTime(lastModified),length);
+		getClient().endPutFile(getRepositoryId().toString(), path, new DateTime(lastModified),length);
 	}
 
 	@Override
 	public void endSyncFromRepository() {
-		getClient().endSyncFromRepository(getRepositoryID().toString());
+		getClient().endSyncFromRepository(getRepositoryId().toString());
 	}
 
 	@Override
 	public void endSyncToRepository(long fromLocalRevision) {
-		getClient().endSyncToRepository(getRepositoryID().toString(), fromLocalRevision);
+		getClient().endSyncToRepository(getRepositoryId().toString(), fromLocalRevision);
 	}
 
 	@Override
 	public String getUserName() {
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		return AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX + clientRepositoryID;
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		return AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX + clientRepositoryId;
 	}
 
 	@Override
@@ -207,27 +207,27 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	private AuthToken getAuthToken() {
-		EntityID clientRepositoryID = getClientRepositoryIDOrFail();
-		AuthToken authToken = clientRepositoryID2AuthToken.get(clientRepositoryID);
+		UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		AuthToken authToken = clientRepositoryId2AuthToken.get(clientRepositoryId);
 		if (authToken != null && isAfterRenewalDate(authToken)) {
-			logger.debug("getAuthToken: old AuthToken passed renewal-date: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
-					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
+			logger.debug("getAuthToken: old AuthToken passed renewal-date: clientRepositoryId={} serverRepositoryId={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryId, getRepositoryId(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
 
 			authToken = null;
 		}
 
 		if (authToken == null) {
-			logger.debug("getAuthToken: getting new AuthToken: clientRepositoryID={} serverRepositoryID={}",
-					clientRepositoryID, getRepositoryID());
+			logger.debug("getAuthToken: getting new AuthToken: clientRepositoryId={} serverRepositoryId={}",
+					clientRepositoryId, getRepositoryId());
 
-			File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryID);
+			File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryId);
 			LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 			try {
 				LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 				try {
-					RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjectByIdOrFail(getRepositoryID());
+					RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(getRepositoryId());
 
-					EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryID());
+					EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryId());
 
 					byte[] signedAuthTokenData = new SignedAuthTokenDecrypter(localRepoManager.getPrivateKey()).decrypt(encryptedSignedAuthToken);
 
@@ -244,7 +244,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 								String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
 										authToken.getRenewalDateTime(), authToken.getExpiryDateTime()));
 
-					clientRepositoryID2AuthToken.put(clientRepositoryID, authToken);
+					clientRepositoryId2AuthToken.put(clientRepositoryId, authToken);
 
 					transaction.commit();
 				} finally {
@@ -254,12 +254,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 				localRepoManager.close();
 			}
 
-			logger.info("getAuthToken: got new AuthToken: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
-					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
+			logger.info("getAuthToken: got new AuthToken: clientRepositoryId={} serverRepositoryId={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryId, getRepositoryId(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
 		}
 		else
-			logger.trace("getAuthToken: old AuthToken still valid: clientRepositoryID={} serverRepositoryID={} renewalDateTime={} expiryDateTime={}",
-					clientRepositoryID, getRepositoryID(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
+			logger.trace("getAuthToken: old AuthToken still valid: clientRepositoryId={} serverRepositoryId={} renewalDateTime={} expiryDateTime={}",
+					clientRepositoryId, getRepositoryId(), authToken.getRenewalDateTime(), authToken.getExpiryDateTime());
 
 		return authToken;
 	}

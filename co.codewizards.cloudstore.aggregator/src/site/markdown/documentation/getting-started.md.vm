@@ -150,13 +150,13 @@ is established in two steps: First, the client requests the connection:
 
 <div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection Documents https://myserver.mydomain.tld:8443/myDocuments</pre></div>
 
-Instead of the alias \"myDocuments\", you could use the repository\'s unique ID (so-called *repositoryID*), which was shown when
+Instead of the alias \"myDocuments\", you could use the repository\'s unique ID (so-called *repositoryId*), which was shown when
 you created the repository before.
 
 The same applies to the local side: Instead of \"Documents\" you could specify the local repository\'s ID. Or alternatively, you could
 pass the local repository\'s file-system-path as well.
 
-Here an alternative example (assuming that the *repositoryID* on your server is 2cb46e10-c076-466b-a944-2c1914076fe1):
+Here an alternative example (assuming that the *repositoryId* on your server is 2cb46e10-c076-466b-a944-2c1914076fe1):
 
 <div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection /home/user/Documents https://myserver.mydomain.tld:8443/2cb46e10-c076-466b-a944-2c1914076fe1</pre></div>
 

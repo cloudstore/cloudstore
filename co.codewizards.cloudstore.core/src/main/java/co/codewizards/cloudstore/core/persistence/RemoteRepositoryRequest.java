@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import java.util.UUID;
+
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -7,12 +9,10 @@ import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
-
 @PersistenceCapable
-@Unique(name="RemoteRepositoryRequest_repositoryID", members="repositoryID")
+@Unique(name="RemoteRepositoryRequest_repositoryId", members="repositoryId")
 @Queries({
-	@Query(name="getRemoteRepositoryRequest_repositoryID", value="SELECT UNIQUE WHERE this.repositoryID == :repositoryID"),
+	@Query(name="getRemoteRepositoryRequest_repositoryId", value="SELECT UNIQUE WHERE this.repositoryId == :repositoryId"),
 	@Query(name="getRemoteRepositoryRequestsChangedBefore_changed", value="SELECT WHERE this.changed < :changed")
 })
 public class RemoteRepositoryRequest extends Entity {
@@ -20,7 +20,7 @@ public class RemoteRepositoryRequest extends Entity {
 	public RemoteRepositoryRequest() { }
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
-	private String repositoryID;
+	private String repositoryId;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] publicKey;
@@ -28,11 +28,11 @@ public class RemoteRepositoryRequest extends Entity {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String localPathPrefix;
 
-	public EntityID getRepositoryID() {
-		return repositoryID == null ? null : new EntityID(repositoryID);
+	public UUID getRepositoryId() {
+		return repositoryId == null ? null : UUID.fromString(repositoryId);
 	}
-	public void setRepositoryID(EntityID repositoryID) {
-		this.repositoryID = repositoryID == null ? null : repositoryID.toString();
+	public void setRepositoryId(UUID repositoryId) {
+		this.repositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
 	public byte[] getPublicKey() {

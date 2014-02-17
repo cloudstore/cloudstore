@@ -38,24 +38,24 @@ public class RepoFileDTOTreeNode implements Iterable<RepoFileDTOTreeNode> {
 		if (repoFileDTOs.isEmpty())
 			return null;
 
-		Map<EntityID, RepoFileDTOTreeNode> entityID2RepoFileDTOTreeNode = new HashMap<EntityID, RepoFileDTOTreeNode>();
+		Map<Long, RepoFileDTOTreeNode> id2RepoFileDTOTreeNode = new HashMap<Long, RepoFileDTOTreeNode>();
 		for (RepoFileDTO repoFileDTO : repoFileDTOs) {
-			entityID2RepoFileDTOTreeNode.put(repoFileDTO.getEntityID(), new RepoFileDTOTreeNode(repoFileDTO));
+			id2RepoFileDTOTreeNode.put(repoFileDTO.getId(), new RepoFileDTOTreeNode(repoFileDTO));
 		}
 
 		RepoFileDTOTreeNode rootNode = null;
-		for (RepoFileDTOTreeNode node : entityID2RepoFileDTOTreeNode.values()) {
-			EntityID parentEntityID = node.getRepoFileDTO().getParentEntityID();
-			if (parentEntityID == null) {
+		for (RepoFileDTOTreeNode node : id2RepoFileDTOTreeNode.values()) {
+			Long parentId = node.getRepoFileDTO().getParentId();
+			if (parentId == null) {
 				if (rootNode != null)
 					throw new IllegalArgumentException("Multiple root nodes!");
 
 				rootNode = node;
 			}
 			else {
-				RepoFileDTOTreeNode parentNode = entityID2RepoFileDTOTreeNode.get(parentEntityID);
+				RepoFileDTOTreeNode parentNode = id2RepoFileDTOTreeNode.get(parentId);
 				if (parentNode == null)
-					throw new IllegalArgumentException("parentEntityID unknown: " + parentEntityID);
+					throw new IllegalArgumentException("parentEntityID unknown: " + parentId);
 
 				parentNode.addChild(node);
 			}

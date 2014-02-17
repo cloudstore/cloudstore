@@ -1,8 +1,10 @@
 package co.codewizards.cloudstore.core.persistence;
 
 import java.io.File;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
@@ -15,8 +17,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
-
-import co.codewizards.cloudstore.core.dto.EntityID;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.SUPERCLASS_TABLE)
@@ -36,10 +36,10 @@ public class NormalFile extends RepoFile {
 
 	private boolean inProgress;
 
-	private String lastSyncFromRepositoryID;
+	private String lastSyncFromRepositoryId;
 
 	@Persistent(mappedBy="normalFile", dependentElement="true")
-	private SortedSet<FileChunk> fileChunks;
+	private Set<FileChunk> fileChunks;
 
 	/**
 	 * Gets the file size in bytes.
@@ -80,18 +80,21 @@ public class NormalFile extends RepoFile {
 		this.inProgress = inProgress;
 	}
 
-	public EntityID getLastSyncFromRepositoryID() {
-		return lastSyncFromRepositoryID == null ? null : new EntityID(lastSyncFromRepositoryID);
+	public UUID getLastSyncFromRepositoryId() {
+		return lastSyncFromRepositoryId == null ? null : UUID.fromString(lastSyncFromRepositoryId);
 	}
-	public void setLastSyncFromRepositoryID(EntityID repositoryID) {
-		this.lastSyncFromRepositoryID = repositoryID == null ? null : repositoryID.toString();
+	public void setLastSyncFromRepositoryId(UUID repositoryId) {
+		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
 	public SortedSet<FileChunk> getFileChunks() {
-		if (fileChunks == null)
-			fileChunks = new TreeSet<FileChunk>();
-
 		// TODO this should return a decorator which automatically calls FileChunk.makeReadOnly() when enlisting a new instance!
-		return fileChunks;
+		if (fileChunks == null) {
+			fileChunks = new TreeSet<>();
+		}
+		else if (!(fileChunks instanceof SortedSet<?>)) {
+			fileChunks = new TreeSet<>(fileChunks);
+		}
+		return (SortedSet<FileChunk>)fileChunks;
 	}
 }

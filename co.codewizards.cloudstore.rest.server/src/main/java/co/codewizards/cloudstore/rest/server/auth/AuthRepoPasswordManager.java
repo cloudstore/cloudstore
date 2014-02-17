@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,10 +11,10 @@ import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class AuthRepoPasswordManager {
@@ -44,7 +44,7 @@ public class AuthRepoPasswordManager {
 		return AuthRepoPasswordManagerHolder.instance;
 	}
 
-	private final Map<EntityID, Map<EntityID, SortedSet<AuthRepoPassword>>> serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet = new HashMap<EntityID, Map<EntityID,SortedSet<AuthRepoPassword>>>();
+	private final Map<UUID, Map<UUID, SortedSet<AuthRepoPassword>>> serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet = new HashMap<UUID, Map<UUID,SortedSet<AuthRepoPassword>>>();
 	private final SortedSet<AuthRepoPassword> authRepoPasswords = new TreeSet<AuthRepoPassword>(newestFirstAuthRepoPasswordComparator);
 
 	private final Timer timer = new Timer();
@@ -58,20 +58,20 @@ public class AuthRepoPasswordManager {
 		timer.schedule(removeExpiredAuthRepoPasswordsTimerTask, getRemoveExpiredPasswordsPeriodMillis(), getRemoveExpiredPasswordsPeriodMillis());
 	}
 
-	public synchronized AuthRepoPassword getCurrentAuthRepoPassword(EntityID serverRepositoryID, EntityID clientRepositoryID) {
-		assertNotNull("serverRepositoryID", serverRepositoryID);
-		assertNotNull("clientRepositoryID", clientRepositoryID);
+	public synchronized AuthRepoPassword getCurrentAuthRepoPassword(UUID serverRepositoryId, UUID clientRepositoryId) {
+		assertNotNull("serverRepositoryId", serverRepositoryId);
+		assertNotNull("clientRepositoryId", clientRepositoryId);
 
-		Map<EntityID, SortedSet<AuthRepoPassword>> clientRepositoryID2AuthRepoPasswordSet = serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet.get(serverRepositoryID);
-		if (clientRepositoryID2AuthRepoPasswordSet == null) {
-			clientRepositoryID2AuthRepoPasswordSet = new HashMap<EntityID, SortedSet<AuthRepoPassword>>();
-			serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet.put(serverRepositoryID, clientRepositoryID2AuthRepoPasswordSet);
+		Map<UUID, SortedSet<AuthRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
+		if (clientRepositoryId2AuthRepoPasswordSet == null) {
+			clientRepositoryId2AuthRepoPasswordSet = new HashMap<UUID, SortedSet<AuthRepoPassword>>();
+			serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.put(serverRepositoryId, clientRepositoryId2AuthRepoPasswordSet);
 		}
 
-		SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryID2AuthRepoPasswordSet.get(clientRepositoryID);
+		SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryId2AuthRepoPasswordSet.get(clientRepositoryId);
 		if (authRepoPasswordSet == null) {
 			authRepoPasswordSet = new TreeSet<AuthRepoPassword>(newestFirstAuthRepoPasswordComparator);
-			clientRepositoryID2AuthRepoPasswordSet.put(clientRepositoryID, authRepoPasswordSet);
+			clientRepositoryId2AuthRepoPasswordSet.put(clientRepositoryId, authRepoPasswordSet);
 		}
 
 		AuthRepoPassword authRepoPassword = authRepoPasswordSet.isEmpty() ? null : authRepoPasswordSet.first();
@@ -79,22 +79,22 @@ public class AuthRepoPasswordManager {
 			authRepoPassword = null;
 
 		if (authRepoPassword == null) {
-			authRepoPassword = new AuthRepoPassword(serverRepositoryID, clientRepositoryID, createAuthToken());
+			authRepoPassword = new AuthRepoPassword(serverRepositoryId, clientRepositoryId, createAuthToken());
 			authRepoPasswordSet.add(authRepoPassword);
 			authRepoPasswords.add(authRepoPassword);
 		}
 		return authRepoPassword;
 	}
 
-	public synchronized boolean isPasswordValid(EntityID serverRepositoryID, EntityID clientRepositoryID, char[] password) {
-		assertNotNull("serverRepositoryID", serverRepositoryID);
-		assertNotNull("clientRepositoryID", clientRepositoryID);
+	public synchronized boolean isPasswordValid(UUID serverRepositoryId, UUID clientRepositoryId, char[] password) {
+		assertNotNull("serverRepositoryId", serverRepositoryId);
+		assertNotNull("clientRepositoryId", clientRepositoryId);
 		assertNotNull("password", password);
-		Map<EntityID, SortedSet<AuthRepoPassword>> clientRepositoryID2AuthRepoPasswordSet = serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet.get(serverRepositoryID);
-		if (clientRepositoryID2AuthRepoPasswordSet == null)
+		Map<UUID, SortedSet<AuthRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
+		if (clientRepositoryId2AuthRepoPasswordSet == null)
 			return false;
 
-		SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryID2AuthRepoPasswordSet.get(clientRepositoryID);
+		SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryId2AuthRepoPasswordSet.get(clientRepositoryId);
 		if (authRepoPasswordSet == null)
 			return false;
 
@@ -115,22 +115,22 @@ public class AuthRepoPasswordManager {
 				break;
 
 			authRepoPasswords.remove(oldestAuthRepoPassword);
-			EntityID serverRepositoryID = oldestAuthRepoPassword.getServerRepositoryID();
-			EntityID clientRepositoryID = oldestAuthRepoPassword.getClientRepositoryID();
+			UUID serverRepositoryId = oldestAuthRepoPassword.getServerRepositoryId();
+			UUID clientRepositoryId = oldestAuthRepoPassword.getClientRepositoryId();
 
-			Map<EntityID, SortedSet<AuthRepoPassword>> clientRepositoryID2AuthRepoPasswordSet = serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet.get(serverRepositoryID);
-			assertNotNull("clientRepositoryID2AuthRepoPasswordSet", clientRepositoryID2AuthRepoPasswordSet);
+			Map<UUID, SortedSet<AuthRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
+			assertNotNull("clientRepositoryId2AuthRepoPasswordSet", clientRepositoryId2AuthRepoPasswordSet);
 
-			SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryID2AuthRepoPasswordSet.get(clientRepositoryID);
+			SortedSet<AuthRepoPassword> authRepoPasswordSet = clientRepositoryId2AuthRepoPasswordSet.get(clientRepositoryId);
 			assertNotNull("authRepoPasswordSet", authRepoPasswordSet);
 
 			authRepoPasswordSet.remove(oldestAuthRepoPassword);
 
 			if (authRepoPasswordSet.isEmpty())
-				clientRepositoryID2AuthRepoPasswordSet.remove(clientRepositoryID);
+				clientRepositoryId2AuthRepoPasswordSet.remove(clientRepositoryId);
 
-			if (clientRepositoryID2AuthRepoPasswordSet.isEmpty())
-				serverRepositoryID2ClientRepositoryID2AuthRepoPasswordSet.remove(serverRepositoryID);
+			if (clientRepositoryId2AuthRepoPasswordSet.isEmpty())
+				serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.remove(serverRepositoryId);
 		}
 	}
 
@@ -178,11 +178,11 @@ public class AuthRepoPasswordManager {
 			if (expiryDate1.after(expiryDate2))
 				return -1;
 
-			int result = o1.getServerRepositoryID().toUUID().compareTo(o2.getServerRepositoryID().toUUID());
+			int result = o1.getServerRepositoryId().compareTo(o2.getServerRepositoryId());
 			if (result != 0)
 				return result;
 
-			result = o1.getClientRepositoryID().toUUID().compareTo(o2.getClientRepositoryID().toUUID());
+			result = o1.getClientRepositoryId().compareTo(o2.getClientRepositoryId());
 			return result;
 		}
 	};

@@ -16,7 +16,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			+ "repository-ID or a repository-alias (optionally with a path). If this matches both a locally "
 			+ "existing directory and a repository-ID/-alias, it is assumed to be a repository-ID/-alias. "
 			+ "Note, that it may be a sub-directory inside the repository specified in the form "
-			+ "<repositoryID>/path (this must be a '/' even on Windows).")
+			+ "<repositoryId>/path (this must be a '/' even on Windows).")
 	protected String local;
 
 	protected String localPathPrefix;

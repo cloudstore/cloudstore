@@ -217,7 +217,7 @@ public class LocalRepoSync {
 	}
 
 	public void updateRepoFile(RepoFile repoFile, File file, ProgressMonitor monitor) {
-		logger.debug("updateRepoFile: entityID={} idHigh={} idLow={} file={}", repoFile.getEntityID(), repoFile.getIdHigh(), repoFile.getIdLow(), file);
+		logger.debug("updateRepoFile: id={} file={}", repoFile.getId(), file);
 		monitor.beginTask("Local sync...", 100);
 		try {
 			if (file.isFile()) {
@@ -226,7 +226,7 @@ public class LocalRepoSync {
 
 				NormalFile normalFile = (NormalFile) repoFile;
 				sha(normalFile, file, new SubProgressMonitor(monitor, 100));
-				normalFile.setLastSyncFromRepositoryID(null);
+				normalFile.setLastSyncFromRepositoryId(null);
 			}
 			repoFile.setLastModified(new Date(file.lastModified()));
 		} finally {

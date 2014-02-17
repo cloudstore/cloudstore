@@ -5,14 +5,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class ModificationDTO {
 
-	private EntityID entityID;
+	private long id;
 	private long localRevision;
 
-	public EntityID getEntityID() {
-		return entityID;
+	public long getId() {
+		return id;
 	}
-	public void setEntityID(EntityID entityID) {
-		this.entityID = entityID;
+	public void setId(long id) {
+		this.id = id;
 	}
 
 	public long getLocalRevision() {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -65,7 +65,7 @@ public class RequestRepoConnectionService
 		}
 
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDTO.getEntityID());
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDTO.getRepositoryId());
 		try {
 			repoTransport.requestRepoConnection(clientRepositoryDTO.getPublicKey());
 		} finally {

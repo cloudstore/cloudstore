@@ -68,9 +68,9 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 
 	private void showMainProperties(LocalRepoTransaction transaction) {
 		LocalRepoManager localRepoManager = transaction.getLocalRepoManager();
-		Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryID().toString());
+		Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryId().toString());
 		System.out.println("Local repository:");
-		System.out.println("  repository.repositoryID = " + localRepoManager.getRepositoryID());
+		System.out.println("  repository.repositoryId = " + localRepoManager.getRepositoryId());
 		System.out.println("  repository.localRoot = " + localRepoManager.getLocalRoot());
 		System.out.println("  repository.aliases = " + repositoryAliases);
 		System.out.println("  repository.publicKeySha1 = " + HashUtil.sha1ForHuman(localRepoManager.getPublicKey()));
@@ -79,7 +79,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 
 //	private void showRepositoryAliases(LocalRepoTransaction transaction) {
 //		LocalRepoManager localRepoManager = transaction.getLocalRepoManager();
-//		Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryID().toString());
+//		Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryId().toString());
 //		if (repositoryAliases.isEmpty())
 //			System.out.println("Aliases: {NONE}");
 //		else {
@@ -99,7 +99,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 		else {
 			System.out.println("Remote repositories connected:");
 			for (RemoteRepository remoteRepository : remoteRepositories) {
-				System.out.println("  * remoteRepository.repositoryID = " + remoteRepository.getEntityID());
+				System.out.println("  * remoteRepository.repositoryId = " + remoteRepository.getRepositoryId());
 				System.out.println("    remoteRepository.remoteRoot = " + remoteRepository.getRemoteRoot());
 				System.out.println();
 			}
@@ -115,7 +115,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 		else {
 			System.out.println("Remote repositories requesting connection:");
 			for (RemoteRepositoryRequest remoteRepositoryRequest : remoteRepositoryRequests) {
-				System.out.println("  * remoteRepositoryRequest.repositoryID = " + remoteRepositoryRequest.getRepositoryID());
+				System.out.println("  * remoteRepositoryRequest.repositoryId = " + remoteRepositoryRequest.getRepositoryId());
 				System.out.println("    remoteRepositoryRequest.created = " + new DateTime(remoteRepositoryRequest.getCreated()));
 				System.out.println("    remoteRepositoryRequest.changed = " + new DateTime(remoteRepositoryRequest.getChanged()));
 				System.out.println();

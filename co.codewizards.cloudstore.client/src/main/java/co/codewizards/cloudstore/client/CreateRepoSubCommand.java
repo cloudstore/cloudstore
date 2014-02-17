@@ -2,11 +2,11 @@ package co.codewizards.cloudstore.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
@@ -76,32 +76,32 @@ public class CreateRepoSubCommand extends SubCommand
 			if (!localRootFile.exists())
 				throw new IOException("Could not create directory (permissions?): " + localRoot);
 		}
-		EntityID repositoryID;
+		UUID repositoryId;
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
 		try {
-			repositoryID = localRepoManager.getRepositoryID();
+			repositoryId = localRepoManager.getRepositoryId();
 		} finally {
 			localRepoManager.close();
 		}
 
 		if (!noAlias && alias != null) {
 			LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
-			EntityID oldRepositoryID = localRepoRegistry.getRepositoryID(alias);
+			UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
 
 			File oldLocalRoot = null;
-			if (oldRepositoryID != null) {
-				oldLocalRoot = localRepoRegistry.getLocalRoot(oldRepositoryID);
+			if (oldRepositoryId != null) {
+				oldLocalRoot = localRepoRegistry.getLocalRoot(oldRepositoryId);
 				if (oldLocalRoot == null || !oldLocalRoot.exists()) {
 					// orphaned entry to be ignored (should be cleaned up after a while, anyway)
-					oldRepositoryID = null;
+					oldRepositoryId = null;
 					oldLocalRoot = null;
 				}
 			}
 
-			if (oldRepositoryID != null)
-				System.err.println(String.format("WARNING: There is already a repository registered with the alias '%s'! Skipping automatic alias registration. The existing repository's ID is '%s' and its local-root is '%s'.", alias, oldRepositoryID, oldLocalRoot));
+			if (oldRepositoryId != null)
+				System.err.println(String.format("WARNING: There is already a repository registered with the alias '%s'! Skipping automatic alias registration. The existing repository's ID is '%s' and its local-root is '%s'.", alias, oldRepositoryId, oldLocalRoot));
 			else
-				localRepoRegistry.putRepositoryAlias(alias, repositoryID);
+				localRepoRegistry.putRepositoryAlias(alias, repositoryId);
 		}
 
 		new RepoInfoSubCommand(localRootFile).run();

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.AbstractTest;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
@@ -38,9 +38,9 @@ public class FileRepoTransportTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransportTest.class);
 
 	private File remoteRoot;
-	private EntityID remoteRepositoryID;
+	private UUID remoteRepositoryId;
 	private File localRoot;
-	private EntityID localRepositoryID;
+	private UUID localRepositoryId;
 	private ChangeSetDTO changeSetResponse1;
 
 	@Test
@@ -52,15 +52,15 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		remoteRepositoryID = localRepoManager.getRepositoryID();
+		remoteRepositoryId = localRepoManager.getRepositoryId();
 
 		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		LocalRepoManager toLocalRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
-		localRepoManager.putRemoteRepository(toLocalRepoManager.getRepositoryID(), null, toLocalRepoManager.getPublicKey(), "");
-		toLocalRepoManager.putRemoteRepository(localRepoManager.getRepositoryID(), null, localRepoManager.getPublicKey(), "");
-		localRepositoryID = toLocalRepoManager.getRepositoryID();
+		localRepoManager.putRemoteRepository(toLocalRepoManager.getRepositoryId(), null, toLocalRepoManager.getPublicKey(), "");
+		toLocalRepoManager.putRemoteRepository(localRepoManager.getRepositoryId(), null, localRepoManager.getPublicKey(), "");
+		localRepositoryId = toLocalRepoManager.getRepositoryId();
 		toLocalRepoManager.close();
 
 		File child_1 = createDirectory(remoteRoot, "1");
@@ -90,13 +90,13 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
 		changeSetResponse1 = repoTransport.getChangeSetDTO(false);
 		assertThat(changeSetResponse1).isNotNull();
 		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse1.getRepositoryDTO().getEntityID()).isNotNull();
+		assertThat(changeSetResponse1.getRepositoryDTO().getRepositoryId()).isNotNull();
 
 		// changeSetResponse1 should contain the entire repository - including the root -, because really
 		// every localRevision must be > -1.
@@ -111,7 +111,7 @@ public class FileRepoTransportTest extends AbstractTest {
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
 			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
 			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getObjectByIdOrFail(localRepositoryID);
+			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(localRepositoryId);
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
 			lastSyncToRemoteRepo.setRemoteRepository(toRemoteRepository);
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(localRepository.getRevision());
@@ -140,13 +140,13 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
 		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getEntityID()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
 
 		// We expect the added file and its direct parent, because they are both modified (new localRevision).
 		// Additionally, we expect all parent-directories (recursively) until (including) the root, because they
@@ -179,13 +179,13 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
 		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getEntityID()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
 
 		// We expect the changed file and all parent-directories (recursively) until (including) the
 		// root, because they are required to have a complete relative path for each modified RepoFile.
@@ -222,13 +222,13 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		URL remoteRootURL = remoteRoot.toURI().toURL();
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryID);
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
 		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
 		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getEntityID()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
 
 		// We expect the DeleteModificationDTO
 		assertThat(changeSetResponse2.getModificationDTOs()).hasSize(1);

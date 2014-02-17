@@ -8,7 +8,6 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
 import co.codewizards.cloudstore.core.dto.DirectoryDTO;
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 import co.codewizards.cloudstore.core.dto.FileChunkDTO;
@@ -30,7 +29,6 @@ public class CloudStoreJaxbContext {
 						DeleteModificationDTO.class,
 						DirectoryDTO.class,
 						EncryptedSignedAuthToken.class,
-						EntityID.class,
 						Error.class,
 						ErrorStackTraceElement.class,
 						FileChunkDTO.class,

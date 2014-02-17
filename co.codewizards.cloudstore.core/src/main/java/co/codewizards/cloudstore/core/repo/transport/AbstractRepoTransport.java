@@ -1,10 +1,10 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.net.URL;
+import java.util.UUID;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class AbstractRepoTransport implements RepoTransport {
@@ -13,7 +13,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	private URL remoteRoot;
 	private URL remoteRootWithoutPathPrefix;
 	private String pathPrefix;
-	private EntityID clientRepositoryID;
+	private UUID clientRepositoryId;
 
 	@Override
 	public RepoTransportFactory getRepoTransportFactory() {
@@ -39,21 +39,21 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 		this.remoteRoot = remoteRoot;
 	}
 
-	public EntityID getClientRepositoryIDOrFail() {
-		EntityID clientRepositoryID = getClientRepositoryID();
-		if (clientRepositoryID == null)
-			throw new IllegalStateException("clientRepositoryID == null :: You must invoke setClientRepositoryID(...) before!");
+	public UUID getClientRepositoryIdOrFail() {
+		UUID clientRepositoryId = getClientRepositoryId();
+		if (clientRepositoryId == null)
+			throw new IllegalStateException("clientRepositoryId == null :: You must invoke setClientRepositoryId(...) before!");
 
-		return clientRepositoryID;
+		return clientRepositoryId;
 	}
 
 	@Override
-	public EntityID getClientRepositoryID() {
-		return clientRepositoryID;
+	public UUID getClientRepositoryId() {
+		return clientRepositoryId;
 	}
 	@Override
-	public void setClientRepositoryID(EntityID clientRepositoryID) {
-		this.clientRepositoryID = clientRepositoryID;
+	public void setClientRepositoryId(UUID clientRepositoryId) {
+		this.clientRepositoryId = clientRepositoryId;
 	}
 
 	@Override

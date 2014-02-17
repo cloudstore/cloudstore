@@ -16,6 +16,8 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 
 public class PersistenceTest extends AbstractTest {
 
+	private static final int modificationCount = 10000;
+
 	private static long closeDeferredMillis;
 
 	@BeforeClass
@@ -35,7 +37,6 @@ public class PersistenceTest extends AbstractTest {
 		remoteRoot.mkdirs();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		final int modificationCount = 1000;
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {
 			RemoteRepository remoteRepository = new RemoteRepository();
@@ -80,10 +81,7 @@ public class PersistenceTest extends AbstractTest {
 		} finally {
 			transaction.rollbackIfActive();
 		}
-	}
 
-//	@Test
-//	public void getModification2s() throws Exception {
-//
-//	}
+		localRepoManager.close();
+	}
 }

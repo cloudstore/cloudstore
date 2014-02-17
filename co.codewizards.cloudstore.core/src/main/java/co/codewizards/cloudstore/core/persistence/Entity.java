@@ -1,8 +1,9 @@
 package co.codewizards.cloudstore.core.persistence;
 
 import java.util.Date;
-import java.util.UUID;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
@@ -11,24 +12,17 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
-import co.codewizards.cloudstore.core.dto.EntityID;
-
 /**
  * Base class of all persistence-capable (a.k.a. entity) classes.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-@PersistenceCapable(
-		identityType=IdentityType.APPLICATION,
-		objectIdClass=EntityID.class
-)
+@PersistenceCapable(identityType=IdentityType.APPLICATION)
 @Inheritance(strategy=InheritanceStrategy.SUBCLASS_TABLE)
-public class Entity implements AutoTrackChanged {
-
+public class Entity implements AutoTrackChanged
+{
 	@PrimaryKey
-	private long idHigh;
-
-	@PrimaryKey
-	private long idLow;
+	@Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
+	private long id;
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private Date created = new Date();
@@ -36,99 +30,44 @@ public class Entity implements AutoTrackChanged {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private Date changed = new Date();
 
-	public long getIdHigh() {
-		return idHigh;
+	public long getId() {
+		return id;
 	}
-
-	public long getIdLow() {
-		return idLow;
-	}
-
-	public EntityID getEntityID()
-	{
-		return new EntityID(idHigh, idLow);
-	}
-
-	public Entity()
-	{
-		this(null);
-	}
-
-	protected Entity(EntityID entityID)
-	{
-		if (entityID == null) {
-			UUID uuid = UUID.randomUUID();
-			idHigh = uuid.getMostSignificantBits();
-			idLow = uuid.getLeastSignificantBits();
-		}
-		else {
-			idHigh = entityID.idHigh;
-			idLow = entityID.idLow;
-		}
+	public void setId(long id) {
+		this.id = id;
 	}
 
 	@Override
-	public boolean equals(Object other)
-	{
-		if (other == this)
+	public boolean equals(Object obj) {
+		if (this == obj) {
 			return true;
-
-		if (other == null)
+		}
+		if (obj == null) {
 			return false;
+		}
 
-		if (this.getClass() != other.getClass())
+		Object thisOid = JDOHelper.getObjectId(this);
+		if (thisOid == null) {
 			return false;
+		}
 
-		Entity o = (Entity) other;
-		return this.idHigh == o.idHigh && this.idLow == o.idLow;
+		Object otherOid = JDOHelper.getObjectId(obj);
+		return thisOid.equals(otherOid);
 	}
 
 	@Override
-	public int hashCode()
-	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (idHigh ^ (idHigh >>> 32));
-		result = prime * result + (int) (idLow ^ (idLow >>> 32));
-		return result;
+	public int hashCode() {
+		Object thisOid = JDOHelper.getObjectId(this);
+		if (thisOid == null) {
+			return super.hashCode();
+		}
+		return thisOid.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return super.toString() + '[' + new UUID(idHigh, idLow) + ']';
+		return String.format("%s[%s]", getClass().getSimpleName(), JDOHelper.getObjectId(this));
 	}
-
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (this == obj) {
-//			return true;
-//		}
-//		if (obj == null) {
-//			return false;
-//		}
-//
-//		Object thisOid = JDOHelper.getObjectId(this);
-//		if (thisOid == null) {
-//			return false;
-//		}
-//
-//		Object otherOid = JDOHelper.getObjectId(obj);
-//		return thisOid.equals(otherOid);
-//	}
-//
-//	@Override
-//	public int hashCode() {
-//		Object thisOid = JDOHelper.getObjectId(this);
-//		if (thisOid == null) {
-//			return super.hashCode();
-//		}
-//		return thisOid.hashCode();
-//	}
-//
-//	@Override
-//	public String toString() {
-//		return String.format("%s[%s]", getClass().getSimpleName(), JDOHelper.getObjectId(this));
-//	}
 
 	/**
 	 * Gets the timestamp of the creation of this entity.

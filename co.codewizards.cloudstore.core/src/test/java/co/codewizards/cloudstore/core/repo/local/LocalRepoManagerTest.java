@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -242,7 +242,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 		File localRoot2 = newTestRepositoryLocalRoot();
 		localRoot2.mkdir();
 		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
-		localRepoManager.putRemoteRepository(localRepoManager2.getRepositoryID(), null, localRepoManager2.getPublicKey(), "");
+		localRepoManager.putRemoteRepository(localRepoManager2.getRepositoryId(), null, localRepoManager2.getPublicKey(), "");
 
 		File child_1 = new File(localRoot, "1");
 		assertThat(child_1).isDirectory();
@@ -278,7 +278,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 			assertThat(deleteModification).isNotNull();
 			assertThat(deleteModification.getPath()).isEqualTo("/1/b");
 			assertThat(deleteModification.getRemoteRepository()).isNotNull();
-			assertThat(deleteModification.getRemoteRepository().getEntityID()).isEqualTo(localRepoManager2.getRepositoryID());
+			assertThat(deleteModification.getRemoteRepository().getRepositoryId()).isEqualTo(localRepoManager2.getRepositoryId());
 		} finally {
 			transaction.rollbackIfActive();
 		}
