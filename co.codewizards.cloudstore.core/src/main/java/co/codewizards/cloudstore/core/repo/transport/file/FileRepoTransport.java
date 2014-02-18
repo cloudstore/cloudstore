@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -577,7 +578,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			normalFileDTO.setLength(normalFile.getLength());
 			normalFileDTO.setSha1(normalFile.getSha1());
 			if (depth > 0) {
-				for (FileChunk fileChunk : normalFile.getFileChunks()) {
+				// TODO this should actually be a SortedSet, but for whatever reason, I started
+				// getting ClassCastExceptions and had to switch to a normal Set :-(
+				List<FileChunk> fileChunks = new ArrayList<>(normalFile.getFileChunks());
+				Collections.sort(fileChunks);
+				for (FileChunk fileChunk : fileChunks) {
 					normalFileDTO.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
 				}
 			}

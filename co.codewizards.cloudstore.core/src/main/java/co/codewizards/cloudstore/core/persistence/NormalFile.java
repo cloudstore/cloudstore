@@ -1,9 +1,8 @@
 package co.codewizards.cloudstore.core.persistence;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.jdo.annotations.Discriminator;
@@ -87,14 +86,14 @@ public class NormalFile extends RepoFile {
 		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
-	public SortedSet<FileChunk> getFileChunks() {
-		// TODO this should return a decorator which automatically calls FileChunk.makeReadOnly() when enlisting a new instance!
-		if (fileChunks == null) {
-			fileChunks = new TreeSet<>();
-		}
-		else if (!(fileChunks instanceof SortedSet<?>)) {
-			fileChunks = new TreeSet<>(fileChunks);
-		}
-		return (SortedSet<FileChunk>)fileChunks;
+	public Set<FileChunk> getFileChunks() {
+		// TODO (1) This should be a SortedSet (a TreeSet), but for whatever reason, this does not work anymore
+		// and causes ClassCastExceptions :-(
+		// TODO (2) this should return a decorator which automatically calls FileChunk.makeReadOnly() when
+		// enlisting a new instance!
+		if (fileChunks == null)
+			fileChunks = new HashSet<>();
+
+		return fileChunks;
 	}
 }
