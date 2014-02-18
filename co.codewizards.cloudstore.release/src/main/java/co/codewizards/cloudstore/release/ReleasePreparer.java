@@ -26,11 +26,11 @@ public class ReleasePreparer {
 	// switched between release and snapshot versions!
 	//
 	// Don't forget:
-	//   * to register the new version in "whats-new.apt" and "releases/index.apt",
+	//   * to register the new version in "whats-new.apt" and "releases/index.md.vm",
 	//   * to create a tag in SVN after check-in!
 	//   * to update the symlinks on the web-server after the release was successful.
-//	protected String newMavenVersion = "0.9.1";
-	protected String newMavenVersion = "0.9.1-SNAPSHOT";
+	protected String newMavenVersion = "0.9.1";
+//	protected String newMavenVersion = "0.9.2-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.
