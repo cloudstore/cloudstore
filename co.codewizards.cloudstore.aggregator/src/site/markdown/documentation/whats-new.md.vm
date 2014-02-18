@@ -10,24 +10,26 @@ $H$H$H What\'s new in 0.9.1?
 Compared to version 0.9.0, there are the following changes:
 
 * Enhancement: Huge performance improvement with very large repositories (more than 100 thousand files).
-It turned out that Derby is pretty slow with a composite primary key (2 *long* fields modelling a *UUID*)
-when there are about 1 million records in a table. This happened in a test environment with many small
-redundant files (causing nearly one million *CopyModification* instances to be persisted). The *UUID*
-was thus replaced by an ordinary single field PK of type *long*.
+	It turned out that Derby is pretty slow with a composite primary key (2 *long* fields modelling a *UUID*)
+	when there are about 1 million records in a table. This happened in a test environment with many small
+	redundant files (causing nearly one million *CopyModification* instances to be persisted). The *UUID*
+	was thus replaced by an ordinary single field PK of type *long*.
 
 	**Important: The new database version (2) is not compatible with the old one (1) anymore!**
-There is no automatic upgrade (yet?)! Please remove the *.cloudstore-repo* directory in your repositories and re-create them!
-We consider 0.9.* to be experimental and don\'t think that anyone (except the developers) is already using it.
-So please [let us know](../../tracker), if you require automatic upgrades of the repositories.
+	There is no automatic upgrade! Please remove the *.cloudstore-repo* directory in every repository
+	manually and re-create it! We consider 0.9.* to be experimental and don\'t think that anyone
+	(except for the developers) is already using it.
+
+	So please [let us know](../../tracker), if you already require an automatic upgrade of the repositories.
 
 * Enhancement: The new [copy/rename/move detection](https://github.com/cloudstore/main/issues/5) makes
-sure a file is not copied across the network unnecessarily.
+	sure a file is not copied across the network unnecessarily.
 
 * Enhancement: Faster sync especially when suffering high latencies due to
-[multi-threaded transfers](https://github.com/cloudstore/main/issues/9).
+	[multi-threaded transfers](https://github.com/cloudstore/main/issues/9).
 
 * Enhancement: Improved security by preventing denial of service attacks by
-[limiting pending connection requests](https://github.com/cloudstore/main/issues/8) and by
-[cleaning up expired requests](https://github.com/cloudstore/main/issues/7).
+	[limiting pending connection requests](https://github.com/cloudstore/main/issues/8) and by
+	[cleaning up expired requests](https://github.com/cloudstore/main/issues/7).
 
 * [More enhancements and bug fixes.](https://github.com/cloudstore/main/issues?milestone=1&page=1&state=closed)
