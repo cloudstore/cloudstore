@@ -205,7 +205,11 @@ public class LocalRepoSync {
 				NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
-				logger.warn("File is neither a directory nor a normal file! Skipping: {}", file);
+				if (file.exists())
+					logger.warn("File exists, but is neither a directory nor a normal file! Skipping: {}", file);
+				else
+					logger.info("File does not exist! Skipping: {}", file);
+
 				return null;
 			}
 
