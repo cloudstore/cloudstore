@@ -41,11 +41,6 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 	private UUID remoteRepositoryId;
 
 	@Override
-	public String getSubCommandName() {
-		return "acceptRepoConnection";
-	}
-
-	@Override
 	public String getSubCommandDescription() {
 		return "Accept a connection request from a remote repository.";
 	}
@@ -107,6 +102,6 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		System.out.println();
 		System.out.println("Please verify the 'publicKeySha1' fingerprints! If they do not match the fingerprints shown on the client, someone is attacking you and you must cancel this request immediately! To cancel the request, use this command:");
 		System.out.println();
-		System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", localRepositoryId, remoteRepositoryId));
+		System.out.println(String.format("  cloudstore dropRepoConnection %s %s", localRepositoryId, remoteRepositoryId));
 	}
 }

@@ -26,11 +26,6 @@ public class VersionSubCommand extends SubCommand {
 	}
 
 	@Override
-	public String getSubCommandName() {
-		return "version";
-	}
-
-	@Override
 	public String getSubCommandDescription() {
 		return "Display the version of this JAR.";
 	}

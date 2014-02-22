@@ -17,11 +17,33 @@ import java.io.Console;
  */
 public abstract class SubCommand
 {
+	private String subCommandName;
+
 	/**
 	 * Get the name of the sub-command, i.e. what the user has to write in the command line.
 	 * @return the name of the sub-command.
 	 */
-	public abstract String getSubCommandName();
+	public String getSubCommandName() {
+		if (subCommandName == null) {
+			final String suffix = "SubCommand";
+			String simpleName = this.getClass().getSimpleName();
+			if (!simpleName.endsWith(suffix))
+				throw new IllegalStateException(
+						String.format("Class name '%s' does not end with suffix '%s'! Rename the class or override the 'getSubCommand()' method!",
+								simpleName, suffix));
+
+			StringBuilder sb = new StringBuilder();
+			sb.append(simpleName.substring(0, simpleName.length() - suffix.length()));
+			if (sb.length() == 0)
+				throw new IllegalStateException(
+						String.format("Class name '%s' equals suffix '%s'! There should be sth. before the suffix! Rename the class or override the 'getSubCommand()' method!",
+								simpleName, suffix));
+
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+			subCommandName = sb.toString();
+		}
+		return subCommandName;
+	}
 
 	/**
 	 * Get the description for this sub-command.

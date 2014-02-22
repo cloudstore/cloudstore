@@ -14,11 +14,6 @@ package co.codewizards.cloudstore.client;
 public class HelpSubCommand extends SubCommand {
 
 	@Override
-	public String getSubCommandName() {
-		return "help";
-	}
-
-	@Override
 	public String getSubCommandDescription() {
 		return "Get help.";
 	}

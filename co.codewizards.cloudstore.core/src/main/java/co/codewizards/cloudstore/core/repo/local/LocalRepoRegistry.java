@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,6 +70,7 @@ public class LocalRepoRegistry
 				result.add(repositoryId);
 			}
 		}
+		Collections.sort(result); // guarantee a stable order to prevent Heisenbugs
 		return Collections.unmodifiableList(result);
 	}
 

@@ -34,13 +34,15 @@ public class CloudStoreClient {
 
 	public static final List<Class<? extends SubCommand>> subCommandClasses;
 	static {
-		@SuppressWarnings("unchecked")
 		List<Class<? extends SubCommand>> l = Arrays.asList(
 				AcceptRepoConnectionSubCommand.class,
-				CancelRepoConnectionSubCommand.class,
 				CreateRepoSubCommand.class,
+				CreateRepoAliasSubCommand.class,
+				DropRepoAliasSubCommand.class,
+				DropRepoConnectionSubCommand.class,
 				HelpSubCommand.class,
 				RepoInfoSubCommand.class,
+				RepoListSubCommand.class,
 				RequestRepoConnectionSubCommand.class,
 				SyncSubCommand.class,
 				VersionSubCommand.class
@@ -70,13 +72,6 @@ public class CloudStoreClient {
 	}
 
 	private static final String CMD_PREFIX = "cloudstore"; // shell script (or windoof batch file)
-//	static {
-//		try {
-//			CMD_PREFIX = "java -jar co.codewizards.cloudstore.client-" + VersionSubCommand.getVersion() + ".jar";
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
 
 	public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override

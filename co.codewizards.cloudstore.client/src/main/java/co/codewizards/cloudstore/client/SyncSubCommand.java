@@ -37,11 +37,6 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	private boolean localOnly;
 
 	@Override
-	public String getSubCommandName() {
-		return "sync";
-	}
-
-	@Override
 	public String getSubCommandDescription() {
 		return "Synchronise a local repository. Depending on the parameters, it synchronises only locally or with one or more remote repositories.";
 	}

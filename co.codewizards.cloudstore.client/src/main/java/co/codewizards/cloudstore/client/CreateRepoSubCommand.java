@@ -34,11 +34,6 @@ public class CreateRepoSubCommand extends SubCommand
 	private String alias;
 
 	@Override
-	public String getSubCommandName() {
-		return "createRepo";
-	}
-
-	@Override
 	public String getSubCommandDescription() {
 		return "Create a new repository.";
 	}

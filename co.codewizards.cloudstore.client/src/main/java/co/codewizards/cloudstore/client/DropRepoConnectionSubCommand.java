@@ -19,7 +19,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
+public class DropRepoConnectionSubCommand extends SubCommandWithExistingLocalRepo
 {
 	@Argument(metaVar="<remote>", index=1, required=true, usage="An ID or URL of a remote repository.")
 	private String remote;
@@ -29,11 +29,6 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 
 	private UUID remoteRepositoryId;
 	private URL remoteRoot;
-
-	@Override
-	public String getSubCommandName() {
-		return "cancelRepoConnection";
-	}
 
 	@Override
 	public String getSubCommandDescription() {
@@ -115,13 +110,13 @@ public class CancelRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 			System.out.println();
 			System.out.println("Important: This only cancelled the local side of the connection and you should cancel it on the other side, too, using this command (if you didn't do this yet):");
 			System.out.println();
-			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
+			System.out.println(String.format("  cloudstore dropRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
 		}
 		else {
 			System.out.println("There was nothing to be cancelled here. Maybe it was cancelled already before?!");
 			System.out.println("Or maybe you want to instead run the following command on the other side (i.e. on the other computer - cancelling currently works only on one side):");
 			System.out.println();
-			System.out.println(String.format("  cloudstore cancelRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
+			System.out.println(String.format("  cloudstore dropRepoConnection %s %s", remoteRepositoryId, localRepositoryId));
 		}
 	}
 }

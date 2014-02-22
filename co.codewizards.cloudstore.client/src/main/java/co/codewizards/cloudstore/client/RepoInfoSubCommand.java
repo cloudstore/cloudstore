@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -33,11 +33,6 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 		this.localRoot = assertNotNull("localRoot", localRoot);
 		this.localFile = this.localRoot;
 		this.local = localRoot.getPath();
-	}
-
-	@Override
-	public String getSubCommandName() {
-		return "repoInfo";
 	}
 
 	@Override
