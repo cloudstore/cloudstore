@@ -92,17 +92,17 @@ into the user\'s home:
 
 <div><pre>cd /tmp
 tar xzf co.codewizards.cloudstore.server-${cloudstore_version}-bin.tar.gz
-mv cloudstore-server ~/</pre></div>
+mv cloudstore ~/</pre></div>
 
 
 $H$H$H$H Create a repository on the server
 
-There is the directory named *cloudstore-server* in your user\'s home containing both server and client with its CLI
+There is the directory named *cloudstore* in your user\'s home containing both server and client with its CLI
 (command line interface).
 We use this CLI to create a new directory and make it a CloudStore repository:
 
 <div><pre>cd ~
-~/cloudstore-server/bin/cloudstore createRepo cloudstore-repos/myDocuments -createDir</pre></div>
+~/cloudstore/bin/cloudstore createRepo cloudstore-repos/myDocuments -createDir</pre></div>
 
 Note, that this creates all parent-directories as needed. Hence the folder *~/cloudstore-repos*, which likely didn\'t exist yet,
 is created together with the actual repository "myDocuments".
@@ -112,10 +112,10 @@ Additionally, this command automatically creates an alias named \"myDocuments\" 
 
 $H$H$H$H Start the CloudStore server
 
-There is the directory named *cloudstore-server* in your user\'s home containing the server. Inside this directory,
+There is the directory named *cloudstore* in your user\'s home containing the server. Inside this directory,
 there\'s a shell script which can be used to start the server:
 
-<div><pre>~/cloudstore-server/bin/cloudstore-server</pre></div>
+<div>cloudstore/bin/cloudstore-server</pre></div>
 
 By default, the server listens on port 8443. Please make sure, this port is accessible. You may need to modify your firewall\'s rules. 
 
@@ -126,7 +126,7 @@ Locally, on your workstation, you have to extract the client and move it to your
 
 <div><pre>cd ~/Downloads
 tar xzf co.codewizards.cloudstore.client-${cloudstore_version}-bin.tar.gz
-mv cloudstore-client ~/</pre></div>
+mv cloudstore ~/</pre></div>
 
 
 $H$H$H$H Create a repository on the client
@@ -135,7 +135,7 @@ Let\'s assume you want to synchronise your existing *~/Documents* folder with th
 created on the server. You have to convert the existing directory into a CloudStore repository:
 
 <div><pre>cd ~
-~/cloudstore-client/bin/cloudstore createRepo Documents</pre></div>
+~/cloudstore/bin/cloudstore createRepo Documents</pre></div>
 
 Since the directory already exists, the *-createDir* option is not needed (it would not do any harm, though).
 
@@ -148,7 +148,7 @@ $H$H$H$H Connect the repositories - step 1 of 2
 The repositories do not know each other, yet. We have to connect them in order to be able to synchronise them. A connection
 is established in two steps: First, the client requests the connection:
 
-<div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection Documents https://myserver.mydomain.tld:8443/myDocuments</pre></div>
+<div><pre>~/cloudstore/bin/cloudstore requestRepoConnection Documents https://myserver.mydomain.tld:8443/myDocuments</pre></div>
 
 Instead of the alias \"myDocuments\", you could use the repository\'s unique ID (so-called *repositoryId*), which was shown when
 you created the repository before.
@@ -158,7 +158,7 @@ pass the local repository\'s file-system-path as well.
 
 Here an alternative example (assuming that the *repositoryId* on your server is 2cb46e10-c076-466b-a944-2c1914076fe1):
 
-<div><pre>~/cloudstore-client/bin/cloudstore requestRepoConnection /home/user/Documents https://myserver.mydomain.tld:8443/2cb46e10-c076-466b-a944-2c1914076fe1</pre></div>
+<div><pre>~/cloudstore/bin/cloudstore requestRepoConnection /home/user/Documents https://myserver.mydomain.tld:8443/2cb46e10-c076-466b-a944-2c1914076fe1</pre></div>
 
 **Important:** You are asked to verify the server\'s SSL certificate, because this is the first time that your client connects
 to this server. The server\'s certificate is verified by comparing the SHA1 fingerprint which is printed to the console whenever
@@ -176,17 +176,17 @@ access to the repository is granted.
 
 You can accept this request via the following command, executed on the server-side (via SSH):
 
-<div><pre>~/cloudstore-server/bin/cloudstore acceptRepoConnection myDocuments</pre></div>
+<div><pre>~/cloudstore/bin/cloudstore acceptRepoConnection myDocuments</pre></div>
 
 
 $H$H$H$H Synchronise
 
 All is set up. You can synchronise now. Execute the following command on the client-side:
 
-<div><pre>~/cloudstore-client/bin/cloudstore sync Documents</pre></div>
+<div><pre>~/cloudstore/bin/cloudstore sync Documents</pre></div>
 
 This synchronises the local repository with the alias \"Documents\".
 
 To synchronise all known local repositories, use \"ALL\" instead:
 
-<div><pre>~/cloudstore-client/bin/cloudstore sync ALL</pre></div>
+<div><pre>~/cloudstore/bin/cloudstore sync ALL</pre></div>
