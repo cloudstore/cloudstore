@@ -115,7 +115,7 @@ $H$H$H$H Start the CloudStore server
 There is the directory named *cloudstore* in your user\'s home containing the server. Inside this directory,
 there\'s a shell script which can be used to start the server:
 
-<div>cloudstore/bin/cloudstore-server</pre></div>
+<div><pre>cloudstore/bin/cloudstore-server</pre></div>
 
 By default, the server listens on port 8443. Please make sure, this port is accessible. You may need to modify your firewall\'s rules. 
 
