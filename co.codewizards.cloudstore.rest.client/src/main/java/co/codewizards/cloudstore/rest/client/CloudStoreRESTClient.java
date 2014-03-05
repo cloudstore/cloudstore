@@ -1,10 +1,12 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
@@ -120,7 +123,7 @@ public class CloudStoreRESTClient {
 	 * For example, if the server's base-URL is "https://host.domain:8443/", then the test-service is
 	 * available via "https://host.domain:8443/_test" and the repository with the alias "myrepo" is
 	 * "https://host.domain:8443/myrepo".
-	 * @return
+	 * @return the base-URL. This URL always ends with "/".
 	 */
 	public synchronized String getBaseURL() {
 		if (baseURL == null) {
@@ -156,8 +159,9 @@ public class CloudStoreRESTClient {
 	}
 
 	private void determineBaseURL() {
-		Client client = acquireClient();
+		acquireClient();
 		try {
+			Client client = getClientOrFail();
 			String url = appendFinalSlashIfNeeded(this.url);
 			while (true) {
 				String testUrl = url + "_test";
@@ -179,16 +183,16 @@ public class CloudStoreRESTClient {
 					throw new IllegalStateException("baseURL not found!");
 			}
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	private static final void doNothing() { }
 
 	public void testSuccess() {
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			String response = client.target(getBaseURL()).path("_test").request(MediaType.TEXT_PLAIN).get(String.class);
+			String response = createWebTarget("_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			if (!"SUCCESS".equals(response)) {
 				throw new IllegalStateException("Server response invalid: " + response);
 			}
@@ -196,21 +200,21 @@ public class CloudStoreRESTClient {
 			handleException(x);
 			throw x; // we do not expect null
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void testException() {
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = client.target(getBaseURL()).path("_test").queryParam("exception", true).request().get();
+			Response response = createWebTarget("_test").queryParam("exception", true).request().get();
 			assertResponseIndicatesSuccess(response);
 			throw new IllegalStateException("Server sent response instead of exception: " + response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // we do not expect null
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -235,18 +239,16 @@ public class CloudStoreRESTClient {
 
 	public RepositoryDTO getRepositoryDTO(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			RepositoryDTO repositoryDTO = client.target(getBaseURL())
-					.path(getPath(RepositoryDTO.class))
-					.path(repositoryName)
+			RepositoryDTO repositoryDTO = createWebTarget(getPath(RepositoryDTO.class), urlEncode(repositoryName))
 					.request().get(RepositoryDTO.class);
 			return repositoryDTO;
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // we do not expect null
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -256,11 +258,9 @@ public class CloudStoreRESTClient {
 
 	public ChangeSetDTO getChangeSet(String repositoryName, boolean localSync) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			WebTarget webTarget = client.target(getBaseURL())
-					.path(getPath(ChangeSetDTO.class))
-					.path(repositoryName);
+			WebTarget webTarget = createWebTarget(getPath(ChangeSetDTO.class), urlEncode(repositoryName));
 
 			if (localSync)
 				webTarget = webTarget.queryParam("localSync", localSync);
@@ -271,7 +271,7 @@ public class CloudStoreRESTClient {
 			handleException(x);
 			throw x; // we do not expect null
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -279,88 +279,80 @@ public class CloudStoreRESTClient {
 		assertNotNull("clientRepositoryDTO", clientRepositoryDTO);
 		assertNotNull("clientRepositoryDTO.repositoryId", clientRepositoryDTO.getRepositoryId());
 		assertNotNull("clientRepositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = client.target(getBaseURL())
-			.path("_requestRepoConnection").path(repositoryName).path(pathPrefix)
-			.request().post(Entity.entity(clientRepositoryDTO, MediaType.APPLICATION_XML));
+			Response response = createWebTarget("_requestRepoConnection", urlEncode(repositoryName), pathPrefix)
+					.request().post(Entity.entity(clientRepositoryDTO, MediaType.APPLICATION_XML));
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(String repositoryName, UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("clientRepositoryId", clientRepositoryId);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			EncryptedSignedAuthToken encryptedSignedAuthToken = client.target(getBaseURL())
-			.path(getPath(EncryptedSignedAuthToken.class)).path(repositoryName).path(clientRepositoryId.toString())
-			.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
+			EncryptedSignedAuthToken encryptedSignedAuthToken = createWebTarget(
+					getPath(EncryptedSignedAuthToken.class), urlEncode(repositoryName), clientRepositoryId.toString())
+					.request(MediaType.APPLICATION_XML).get(EncryptedSignedAuthToken.class);
 			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public RepoFileDTO getRepoFileDTO(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			WebTarget webTarget = client.target(getBaseURL())
-					.path(getPath(RepoFileDTO.class))
-					.path(repositoryName)
-					.path(removeLeadingAndTrailingSlashes(path));
-
+			WebTarget webTarget = createWebTarget(getPath(RepoFileDTO.class), urlEncode(repositoryName), encodePath(path));
 			RepoFileDTO repoFileDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(RepoFileDTO.class);
 			return repoFileDTO;
 		} catch (RuntimeException x) {
 			handleException(x);
 			return null;
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void beginPutFile(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-			.path("_beginPutFile")
-			.path(repositoryName)
-			.path(removeLeadingAndTrailingSlashes(path))
-			.request()).post(null);
+			Response response = assignCredentials(
+					createWebTarget("_beginPutFile", urlEncode(repositoryName), encodePath(path))
+					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void endSyncFromRepository(String repositoryName) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-			.path("_endSyncFromRepository")
-			.path(repositoryName)
-			.request()).post(null);
+			Response response = assignCredentials(
+					createWebTarget("_endSyncFromRepository", urlEncode(repositoryName))
+					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -369,39 +361,36 @@ public class CloudStoreRESTClient {
 		if (fromLocalRevision < 0)
 			throw new IllegalArgumentException("fromLocalRevision < 0");
 
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-			.path("_endSyncToRepository")
-			.path(repositoryName)
-			.queryParam("fromLocalRevision", fromLocalRevision)
-			.request()).post(null);
-			assertResponseIndicatesSuccess(response);
-		} catch (RuntimeException x) {
-			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
-		} finally {
-			releaseClient(client);
-		}
-	}
-
-	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
-		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
-		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-					.path("_endPutFile")
-					.path(repositoryName)
-					.path(removeLeadingAndTrailingSlashes(path))
-					.queryParam("lastModified", lastModified.toString())
-					.queryParam("length",length)
+			Response response = assignCredentials(
+					createWebTarget("_endSyncToRepository", urlEncode(repositoryName))
+					.queryParam("fromLocalRevision", fromLocalRevision)
 					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
+		}
+	}
+
+	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
+		assertNotNull("repositoryName", repositoryName);
+		acquireClient();
+		try {
+			Response response = assignCredentials(
+					createWebTarget("_endPutFile", urlEncode(repositoryName), encodePath(path))
+					.queryParam("lastModified", lastModified.toString())
+					.queryParam("length", length)
+					.request()).post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x; // delete should never throw an exception, if it didn't have a real problem
+		} finally {
+			releaseClient();
 		}
 	}
 
@@ -414,9 +403,9 @@ public class CloudStoreRESTClient {
 
 	public byte[] getFileData(String repositoryName, String path, long offset, int length) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
+			WebTarget webTarget = createWebTarget(urlEncode(repositoryName), encodePath(path));
 
 			if (offset > 0) // defaults to 0
 				webTarget = webTarget.queryParam("offset", offset);
@@ -429,7 +418,7 @@ public class CloudStoreRESTClient {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -437,9 +426,9 @@ public class CloudStoreRESTClient {
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("path", path);
 		assertNotNull("fileData", fileData);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
+			WebTarget webTarget = createWebTarget(urlEncode(repositoryName), encodePath(path));
 
 			if (offset > 0)
 				webTarget = webTarget.queryParam("offset", offset);
@@ -450,59 +439,54 @@ public class CloudStoreRESTClient {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void delete(String repositoryName, String path) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path))
-					.request()).delete();
+			Response response = assignCredentials(
+					createWebTarget(urlEncode(repositoryName), encodePath(path)).request()).delete();
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void copy(String repositoryName, String fromPath, String toPath) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-					.path("_copy")
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(fromPath))
-					.queryParam("to", toPath)
+			Response response = assignCredentials(createWebTarget("_copy", urlEncode(repositoryName), encodePath(fromPath))
+					.queryParam("to", encodePath(toPath))
 					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
 	public void move(String repositoryName, String fromPath, String toPath) {
 		assertNotNull("repositoryName", repositoryName);
-		Client client = acquireClient();
+		acquireClient();
 		try {
-			Response response = assignCredentials(client.target(getBaseURL())
-					.path("_move")
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(fromPath))
-					.queryParam("to", toPath)
+			Response response = assignCredentials(createWebTarget("_move", urlEncode(repositoryName), encodePath(fromPath))
+					.queryParam("to", encodePath(toPath))
 					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
@@ -523,7 +507,7 @@ public class CloudStoreRESTClient {
 	public void makeDirectory(String repositoryName, String path, Date lastModified) {
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("path", path);
-		Client client = acquireClient();
+		acquireClient();
 		try {
 //			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlash(path));
 //
@@ -537,9 +521,7 @@ public class CloudStoreRESTClient {
 			// by default. We first have to add this. This will be done later (for the WebDAV support). For
 			// now, we'll use the alternative MakeDirectoryService.
 
-			WebTarget webTarget = client.target(getBaseURL())
-					.path("_makeDirectory")
-					.path(repositoryName).path(removeLeadingAndTrailingSlashes(path));
+			WebTarget webTarget = createWebTarget("_makeDirectory", urlEncode(repositoryName), encodePath(path));
 
 			if (lastModified != null)
 				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
@@ -550,22 +532,81 @@ public class CloudStoreRESTClient {
 			handleException(x);
 			throw x; // delete should never throw an exception, if it didn't have a real problem
 		} finally {
-			releaseClient(client);
+			releaseClient();
 		}
 	}
 
-	private String removeLeadingAndTrailingSlashes(String path) {
+	/**
+	 * Create a {@link WebTarget} from the given path segments.
+	 * <p>
+	 * This method prefixes the path with the {@link #getBaseURL() base-URL} and appends
+	 * all path segments separated via slashes ('/').
+	 * <p>
+	 * We do not use <code>client.target(getBaseURL()).path("...")</code>, because the
+	 * {@link WebTarget#path(String) path(...)} method does not encode curly braces
+	 * (which might be part of a file name!).
+	 * Instead it resolves them using {@linkplain WebTarget#matrixParam(String, Object...) matrix-parameters}.
+	 * The matrix-parameters need to be encoded manually, too (at least I tried it and it failed, if I didn't).
+	 * Because of these reasons and in order to make the calls more compact, we assemble the path
+	 * ourselves here.
+	 * @param pathSegments the parts of the path. May be <code>null</code>. The path segments are
+	 * appended to the path as they are. They are not encoded at all! If you require encoding,
+	 * use {@link #encodePath(String)} or {@link #urlEncode(String)} before! Furthermore, all path segments
+	 * are separated with a slash inbetween them, but <i>not</i> at the end. If a single path segment
+	 * already contains a slash, duplicate slashes might occur.
+	 * @return the target. Never <code>null</code>.
+	 */
+	private WebTarget createWebTarget(String ... pathSegments) {
+		Client client = getClientOrFail();
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(getBaseURL());
+
+		boolean first = true;
+		if (pathSegments != null && pathSegments.length != 0) {
+			for (String pathSegment : pathSegments) {
+				if (!first) // the base-URL already ends with a slash!
+					sb.append('/');
+				first = false;
+				sb.append(pathSegment);
+			}
+		}
+
+		WebTarget webTarget = client.target(sb.toString());
+		return webTarget;
+	}
+
+	/**
+	 * Encodes the path (using {@link URLEncoder}) and removes leading &amp; trailing slashes.
+	 * @param path the path to be encoded. May be <code>null</code>.
+	 * @return the encoded path. <code>null</code>, if {@code path} is <code>null</code>; otherwise
+	 * never <code>null</code>.
+	 */
+	private String encodePath(String path) {
 		if (path == null)
 			return null;
 
-		String result = path;
-		while (result.startsWith("/"))
-			result = result.substring(1);
+		StringBuilder sb = new StringBuilder();
+		String[] segments = path.split("/");
+		for (String segment : segments) {
+			if (segment.isEmpty())
+				continue;
 
-		while (result.endsWith("/"))
-			result = result.substring(0, result.length() - 1);
+			if (sb.length() != 0)
+				sb.append('/');
 
-		return result;
+			sb.append(urlEncode(segment));
+		}
+
+		return sb.toString();
+	}
+
+	private static String urlEncode(String string) {
+		try {
+			return URLEncoder.encode(string, IOUtil.CHARSET_NAME_UTF_8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public synchronized HostnameVerifier getHostnameVerifier() {
@@ -588,8 +629,32 @@ public class CloudStoreRESTClient {
 		this.sslContext = sslContext;
 	}
 
-	private synchronized Client acquireClient()
+	private ThreadLocal<ClientRef> clientThreadLocal = new ThreadLocal<ClientRef>();
+
+	private static class ClientRef {
+		public final Client client;
+		public int refCount = 1;
+
+		public ClientRef(Client client) {
+			this.client = assertNotNull("client", client);
+		}
+	}
+
+	/**
+	 * Acquire a {@link Client} and bind it to the current thread.
+	 * <p>
+	 * <b>Important: You must {@linkplain #releaseClient() release} the client!</b> Use a try/finally block!
+	 * @see #releaseClient()
+	 * @see #getClientOrFail()
+	 */
+	private synchronized void acquireClient()
 	{
+		ClientRef clientRef = clientThreadLocal.get();
+		if (clientRef != null) {
+			++clientRef.refCount;
+			return;
+		}
+
 		Client client = clientCache.poll();
 		if (client == null) {
 			SSLContext sslContext = this.sslContext;
@@ -620,12 +685,37 @@ public class CloudStoreRESTClient {
 
 			configFrozen = true;
 		}
-		return client;
+		clientThreadLocal.set(new ClientRef(client));
 	}
 
-	private synchronized void releaseClient(Client client)
-	{
-		clientCache.add(client);
+	/**
+	 * Get the {@link Client} which was previously {@linkplain #acquireClient() acquired} (and not yet
+	 * {@linkplain #releaseClient() released}) on the same thread.
+	 * @return the {@link Client}. Never <code>null</code>.
+	 * @throws IllegalStateException if there is no {@link Client} bound to the current thread.
+	 * @see #acquireClient()
+	 */
+	private Client getClientOrFail() {
+		ClientRef clientRef = clientThreadLocal.get();
+		if (clientRef == null)
+			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() already called)!");
+
+		return clientRef.client;
+	}
+
+	/**
+	 * Release a {@link Client} which was previously {@linkplain #acquireClient() acquired}.
+	 * @see #acquireClient()
+	 */
+	private void releaseClient() {
+		ClientRef clientRef = clientThreadLocal.get();
+		if (clientRef == null)
+			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() called more often than acquireClient())!");
+
+		if (--clientRef.refCount < 1) {
+			clientThreadLocal.remove();
+			clientCache.add(clientRef.client);
+		}
 	}
 
 	private void handleException(RuntimeException x)
