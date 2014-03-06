@@ -620,7 +620,8 @@ public class CloudStoreRESTClient {
 	private static String urlEncode(String string) {
 		assertNotNull("string", string);
 		// This UriComponent method is safe. It does not try to handle the '{' and '}'
-		// special and with type PATH_SEGMENT, it encodes spaces using '%20' instead of '+'.
+		// specially and with type PATH_SEGMENT, it encodes spaces using '%20' instead of '+'.
+		// It can therefore be used for *both* path segments *and* query parameters.
 		return UriComponent.encode(string, UriComponent.Type.PATH_SEGMENT);
 	}
 
