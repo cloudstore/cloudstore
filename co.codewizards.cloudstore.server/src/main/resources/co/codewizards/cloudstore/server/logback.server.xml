@@ -13,7 +13,7 @@
 		<file>${cloudstore.logDir}/cloudstore.server.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>cloudstore.server.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+			<fileNamePattern>${cloudstore.logDir}/cloudstore.server.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
 
 			<!-- keep 30 days -->
 			<maxHistory>30</maxHistory>
