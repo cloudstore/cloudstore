@@ -576,14 +576,21 @@ public class CloudStoreRESTClient {
 	}
 
 	/**
-	 * Encodes the path (using {@link #urlEncode(String)}) and removes leading &amp; trailing slashes.
-	 * @param path the path to be encoded. May be <code>null</code>.
-	 * @return the encoded path. <code>null</code>, if {@code path} is <code>null</code>; otherwise
-	 * never <code>null</code>.
+	 * Encodes the given {@code path} (using {@link #urlEncode(String)}) and removes leading &amp; trailing slashes.
+	 * <p>
+	 * Slashes are not encoded, but retained as they are; only the path segments (the strings between the slashes) are
+	 * encoded.
+	 * <p>
+	 * Duplicate slashes are removed.
+	 * <p>
+	 * The result of this method can be used in both URL-paths and URL-query-parameters.
+	 * <p>
+	 * For example the input "/some//ex ample///path/" becomes "some/ex%20ample/path".
+	 * @param path the path to be encoded. Must not be <code>null</code>.
+	 * @return the encoded path. Never <code>null</code>.
 	 */
 	private String encodePath(String path) {
-		if (path == null)
-			return null;
+		assertNotNull("path", path);
 
 		StringBuilder sb = new StringBuilder();
 		String[] segments = path.split("/");
@@ -605,6 +612,8 @@ public class CloudStoreRESTClient {
 	 * <p>
 	 * This method does <i>not</i> use {@link java.net.URLEncoder URLEncoder}, because of
 	 * <a href="https://java.net/jira/browse/JERSEY-417">JERSEY-417</a>.
+	 * <p>
+	 * The result of this method can be used in both URL-paths and URL-query-parameters.
 	 * @param string the {@code String} to be encoded. Must not be <code>null</code>.
 	 * @return the encoded {@code String}.
 	 */
