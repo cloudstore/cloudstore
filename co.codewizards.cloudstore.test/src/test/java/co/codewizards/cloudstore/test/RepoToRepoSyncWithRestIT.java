@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,7 +117,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
 		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
 
-		File child_1 = createDirectory(remoteRoot, "1");
+		File child_1 = createDirectory(remoteRoot, "1 {11 11ä11} 1");
 
 		createFileWithRandomContent(child_1, "a");
 		createFileWithRandomContent(child_1, "b");
@@ -127,7 +127,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		createFileWithRandomContent(child_2, "a");
 
-		File child_2_1 = createDirectory(child_2, "1");
+		File child_2_1 = createDirectory(child_2, "1 {11 11ä11} 1");
 		createFileWithRandomContent(child_2_1, "a");
 		createFileWithRandomContent(child_2_1, "b");
 
@@ -176,7 +176,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
 		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
 
-		File child_1 = createDirectory(localRoot, "1");
+		File child_1 = createDirectory(localRoot, "1 {11 11ä11} 1");
 
 		createFileWithRandomContent(child_1, "a");
 		createFileWithRandomContent(child_1, "b");
@@ -186,7 +186,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		createFileWithRandomContent(child_2, "a");
 
-		File child_2_1 = createDirectory(child_2, "1");
+		File child_2_1 = createDirectory(child_2, "1 {11 11ä11} 1");
 		createFileWithRandomContent(child_2_1, "a");
 		createFileWithRandomContent(child_2_1, "b");
 
@@ -225,7 +225,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		File l_child_2 = new File(localRoot, "2");
 		assertThat(l_child_2).isDirectory();
 
-		File l_child_2_1 = new File(l_child_2, "1");
+		File l_child_2_1 = new File(l_child_2, "1 {11 11ä11} 1");
 		assertThat(l_child_2_1).isDirectory();
 
 		File l_child_2_1_a = new File(l_child_2_1, "a");
@@ -262,7 +262,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		File r_child_2_1 = new File(r_child_2, "1");
+		File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		File r_child_2_1_a = new File(r_child_2_1, "a");
@@ -341,7 +341,6 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	}
 
 
-
 	@Test
 	public void syncMovedFile() throws Exception {
 		syncFromRemoteToLocal();
@@ -349,7 +348,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		File r_child_2_1 = new File(r_child_2, "1");
+		File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		File r_child_2_1_b = new File(r_child_2_1, "b");
@@ -379,7 +378,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		File r_child_2_1 = new File(r_child_2, "1");
+		File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		File r_child_2_1_b = new File(r_child_2_1, "b");

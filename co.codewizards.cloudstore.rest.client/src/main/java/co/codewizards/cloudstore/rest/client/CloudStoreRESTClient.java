@@ -2,11 +2,10 @@ package co.codewizards.cloudstore.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -26,6 +25,7 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.uri.UriComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,6 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
-import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
@@ -572,12 +571,12 @@ public class CloudStoreRESTClient {
 			}
 		}
 
-		WebTarget webTarget = client.target(sb.toString());
+		WebTarget webTarget = client.target(URI.create(sb.toString()));
 		return webTarget;
 	}
 
 	/**
-	 * Encodes the path (using {@link URLEncoder}) and removes leading &amp; trailing slashes.
+	 * Encodes the path (using {@link #urlEncode(String)}) and removes leading &amp; trailing slashes.
 	 * @param path the path to be encoded. May be <code>null</code>.
 	 * @return the encoded path. <code>null</code>, if {@code path} is <code>null</code>; otherwise
 	 * never <code>null</code>.
@@ -601,12 +600,19 @@ public class CloudStoreRESTClient {
 		return sb.toString();
 	}
 
+	/**
+	 * Encodes the given {@code string}.
+	 * <p>
+	 * This method does <i>not</i> use {@link java.net.URLEncoder URLEncoder}, because of
+	 * <a href="https://java.net/jira/browse/JERSEY-417">JERSEY-417</a>.
+	 * @param string the {@code String} to be encoded. Must not be <code>null</code>.
+	 * @return the encoded {@code String}.
+	 */
 	private static String urlEncode(String string) {
-		try {
-			return URLEncoder.encode(string, IOUtil.CHARSET_NAME_UTF_8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		assertNotNull("string", string);
+		// This UriComponent method is safe. It does not try to handle the '{' and '}'
+		// special and with type PATH_SEGMENT, it encodes spaces using '%20' instead of '+'.
+		return UriComponent.encode(string, UriComponent.Type.PATH_SEGMENT);
 	}
 
 	public synchronized HostnameVerifier getHostnameVerifier() {
