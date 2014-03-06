@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,11 +96,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
-	private Timer closeDeferredTimer = new Timer("closeDeferredTimer", true);
+	private int closeDeferredTimerSerial;
+	private Timer closeDeferredTimer;
 	private TimerTask closeDeferredTimerTask;
 	private final Lock lock = new ReentrantLock();
 
-	private final Timer deleteExpiredRemoteRepositoryRequestsTimer = new Timer("deleteExpiredRemoteRepositoryRequestsTimer", true);
+	private final Timer deleteExpiredRemoteRepositoryRequestsTimer = new Timer("deleteExpiredRemoteRepositoryRequestsTimer-" + id, true);
 	private final TimerTask deleteExpiredRemoteRepositoryRequestsTimeTask = new TimerTask() {
 		@Override
 		public void run() {
@@ -514,6 +515,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					closeDeferredTimerTask.cancel();
 					closeDeferredTimerTask = null;
 				}
+				if (closeDeferredTimer != null) {
+					closeDeferredTimer.cancel();
+					closeDeferredTimer = null;
+				}
 			}
 		}
 		if (result)
@@ -541,22 +546,19 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		if (closeDeferredMillis > 0) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
 			synchronized(this) {
+// Because of this error:
+//		Caused by: java.lang.IllegalStateException: Timer already cancelled.
+//	       at java.util.Timer.sched(Timer.java:397) ~[na:1.7.0_45]
+//	       at java.util.Timer.schedule(Timer.java:193) ~[na:1.7.0_45]
+//	       at co.codewizards.cloudstore.core.repo.local.LocalRepoManagerImpl.close(LocalRepoManagerImpl.java:403) ~[co.codewizards.cloudstore.core-1.0.0-SNAPSHOT.jar:na]
+// and because even when recreating the timer in a catch clause still did not prevent
+// sometimes tasks to not be called, anymore, we now create a new timer every time.
+				if (closeDeferredTimer == null)
+					closeDeferredTimer = new Timer("closeDeferredTimer-" + id + '-' + Integer.toString(++closeDeferredTimerSerial, 36), true);
+
 				if (closeDeferredTimerTask == null) {
 					closeDeferredTimerTask = new CloseTimerTask();
-
-					try {
-						closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
-					} catch (IllegalStateException x) {
-						logger.warn("closeDeferredTimer.schedule(...) failed: " + x, x);
-						// WORKAROUND: Creating a new timer.
-//						Caused by: java.lang.IllegalStateException: Timer already cancelled.
-//				        at java.util.Timer.sched(Timer.java:397) ~[na:1.7.0_45]
-//				        at java.util.Timer.schedule(Timer.java:193) ~[na:1.7.0_45]
-//				        at co.codewizards.cloudstore.core.repo.local.LocalRepoManagerImpl.close(LocalRepoManagerImpl.java:403) ~[co.codewizards.cloudstore.core-1.0.0-SNAPSHOT.jar:na]
-						closeDeferredTimer.cancel();
-						closeDeferredTimer = new Timer(true);
-						closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
-					}
+					closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
 				}
 			}
 		}
