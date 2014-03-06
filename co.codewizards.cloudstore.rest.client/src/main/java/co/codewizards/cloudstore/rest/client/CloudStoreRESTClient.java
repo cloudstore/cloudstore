@@ -285,7 +285,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -302,7 +302,7 @@ public class CloudStoreRESTClient {
 			return encryptedSignedAuthToken;
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x; // we should never receive (and return) null.
 		} finally {
 			releaseClient();
 		}
@@ -333,7 +333,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -349,7 +349,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -369,7 +369,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -387,7 +387,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -415,7 +415,7 @@ public class CloudStoreRESTClient {
 			return assignCredentials(webTarget.request(MediaType.APPLICATION_OCTET_STREAM)).get(byte[].class);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x; // we should never receive (and return) null.
 		} finally {
 			releaseClient();
 		}
@@ -436,7 +436,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -467,7 +467,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -483,7 +483,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
@@ -529,7 +529,7 @@ public class CloudStoreRESTClient {
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {
 			handleException(x);
-			throw x; // delete should never throw an exception, if it didn't have a real problem
+			throw x;
 		} finally {
 			releaseClient();
 		}
