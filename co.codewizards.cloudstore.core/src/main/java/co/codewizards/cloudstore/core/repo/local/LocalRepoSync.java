@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -109,14 +109,17 @@ public class LocalRepoSync {
 		try {
 			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 
-			// If the type changed - e.g. from normal file to directory - we must delete
-			// the old instance.
+			// If the type changed - e.g. from normal file to directory - or if the file was deleted
+			// we must delete the old instance.
 			if (repoFile != null && !isRepoFileTypeCorrect(repoFile, file)) {
 				deleteRepoFile(repoFile, false);
 				repoFile = null;
 			}
 
 			if (repoFile == null) {
+				if (!file.exists())
+					return;
+
 				repoFile = createRepoFile(parentRepoFile, file, new SubProgressMonitor(monitor, 50));
 				if (repoFile == null) { // ignoring non-normal files.
 					return;
@@ -149,7 +152,19 @@ public class LocalRepoSync {
 		}
 	}
 
+	/**
+	 * Determines, if the type of the given {@code repoFile} matches the type
+	 * of the file in the file system referenced by the given {@code file}.
+	 * @param repoFile the {@link RepoFile} currently representing the given {@code file} in the database.
+	 * Must not be <code>null</code>.
+	 * @param file the file in the file system. Must not be <code>null</code>.
+	 * @return <code>true</code>, if both types correspond to each other; <code>false</code> otherwise. If
+	 * the file does not exist (anymore) in the file system, <code>false</code> is returned, too.
+	 */
 	private boolean isRepoFileTypeCorrect(RepoFile repoFile, File file) {
+		assertNotNull("repoFile", repoFile);
+		assertNotNull("file", file);
+
 		// TODO support symlinks!
 		if (file.isFile())
 			return repoFile instanceof NormalFile;
@@ -206,9 +221,9 @@ public class LocalRepoSync {
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				if (file.exists())
-					logger.warn("File exists, but is neither a directory nor a normal file! Skipping: {}", file);
+					logger.warn("createRepoFile: File exists, but is neither a directory nor a normal file! Skipping: {}", file);
 				else
-					logger.info("File does not exist! Skipping: {}", file);
+					logger.warn("createRepoFile: File does not exist! Skipping: {}", file);
 
 				return null;
 			}
