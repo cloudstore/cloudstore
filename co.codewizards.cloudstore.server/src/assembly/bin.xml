@@ -14,6 +14,12 @@
       <includes><include>*</include></includes>
     </fileSet>
     <fileSet>
+      <directory>${basedir}/src/etc/init.d</directory>
+      <outputDirectory>/etc/init.d</outputDirectory>
+      <includes><include>*</include></includes>
+      <fileMode>0777</fileMode>
+    </fileSet>
+    <fileSet>
       <directory>${project.build.directory}/dependency</directory>
       <outputDirectory>/lib</outputDirectory>
       <includes><include>*</include></includes>

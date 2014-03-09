@@ -19,10 +19,10 @@
 ## the script will restart the CloudStore server, if it finishes itself (or crashes) until
 ## the script was called with "stop" as first argument.
 ##
-## To use this script run it as root - it will switch to the specified user.
+## To use this script run it as root - it will switch to the specified user (if specified).
 ##
 ## This script assumes that CloudStore is installed in the directory "/opt/cloudstore" and
-## it's run by user 'cloudstore'.
+## it's run by user 'root'.
 ##
 ## All settings can be changed in the script itself or by setting an environment variable before
 ## starting this script. For example, to override the user, you could use the following commands:
@@ -43,29 +43,13 @@
 ### END INIT INFO
 
 ## define the user under which cloudstore will run, or use 'RUNASIS' to run as the current user
-CLOUDSTORE_USER=${CLOUDSTORE_USER:-"cloudstore"}
+CLOUDSTORE_USER=${CLOUDSTORE_USER:-"RUNASIS"}
 
-## define where cloudstore is installed
-CLOUDSTORE_HOME=${CLOUDSTORE_HOME:-"/home/$CLOUDSTORE_USER/cloudstore-server"}
+## define where cloudstore is installed - note, that this env var is *not* needed for cloudstore - only for this script.
+CLOUDSTORE_HOME=${CLOUDSTORE_HOME:-"/opt/cloudstore"}
 
-## if JAVA_HOME is not set, we initialise it to /usr/lib/jvm/java-6-sun
-JAVA_HOME=${JAVA_HOME:-"/usr/lib/jvm/java-6-sun"}
-
-## make sure java is in your path
-JAVAPTH=${JAVAPTH:-"$JAVA_HOME/bin"}
-
-## configuration to use, usually one of 'minimal', 'default', 'all'
-CLOUDSTORE_CONF=${CLOUDSTORE_CONF:-"default"}
-
-## host name or ip address of the server or leave empty for localhost.
-CLOUDSTORE_HOST="cloudstore.nightlabs.de"
-CLOUDSTORE_CONSOLE="/tmp/cloudstore-server-stdout.log"
-
-## if CLOUDSTORE_HOST specified, use -b to bind cloudstore services to that address
-CLOUDSTORE_BIND_ADDR=${CLOUDSTORE_HOST:+"-b $CLOUDSTORE_HOST"}
-
-## define the script to use to start cloudstore
-CLOUDSTORESH=${CLOUDSTORESH:-"$CLOUDSTORE_HOME/bin/run.sh -c $CLOUDSTORE_CONF $CLOUDSTORE_BIND_ADDR"}
+## define the script to use to run the cloudstore server
+CLOUDSTORESH=${CLOUDSTORESH:-"$CLOUDSTORE_HOME/bin/cloudstore-server"}
 
 ## How many seconds shall we wait after sending SIGTERM (before sending SIGKILL).
 SHUTDOWN_TIMEOUT_SIGTERM=${SHUTDOWN_TIMEOUT_SIGTERM:-"120"}
@@ -73,11 +57,6 @@ SHUTDOWN_TIMEOUT_SIGTERM=${SHUTDOWN_TIMEOUT_SIGTERM:-"120"}
 ## How many seconds shall we wait after sending SIGKILL (before exiting this script
 ## with a timeout-error).
 SHUTDOWN_TIMEOUT_SIGKILL=${SHUTDOWN_TIMEOUT_SIGKILL:-"120"}
-
-if [ ! -d $JAVA_HOME ]; then
-    echo "Directory defined by JAVA_HOME does not exist: $JAVA_HOME"
-    exit 1
-fi
 
 if [ "$CLOUDSTORE_USER" = "RUNASIS" ]; then
   SUBIT=""
@@ -104,12 +83,7 @@ CLOUDSTORE_CONSOLE=${CLOUDSTORE_CONSOLE:-"/dev/null"}
 
 CLOUDSTORE_SHOULD_RUN_FILE="/var/run/cloudstore-server.should-run"
 
-CLOUDSTORE_CMD_START="cd $CLOUDSTORE_HOME/bin; while [ -f "$CLOUDSTORE_SHOULD_RUN_FILE" ]; do $CLOUDSTORESH; done"
-#CLOUDSTORE_CMD_START="cd $CLOUDSTORE_HOME/bin; $CLOUDSTORESH"
-
-if [ -z "`echo $PATH | grep $JAVAPTH`" ]; then
-  export PATH=$PATH:$JAVAPTH
-fi
+CLOUDSTORE_CMD_START="while [ -f "$CLOUDSTORE_SHOULD_RUN_FILE" ]; do $CLOUDSTORESH; done"
 
 if [ ! -d "$CLOUDSTORE_HOME" ]; then
   echo CLOUDSTORE_HOME does not exist as a valid directory : $CLOUDSTORE_HOME
@@ -223,7 +197,6 @@ start)
     
     
     touch "$CLOUDSTORE_SHOULD_RUN_FILE"
-    cd $CLOUDSTORE_HOME/bin
     if [ -z "$SUBIT" ]; then
         eval $CLOUDSTORE_CMD_START >${CLOUDSTORE_CONSOLE} 2>&1 &
     else
