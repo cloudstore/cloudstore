@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -31,6 +32,7 @@ import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback
 import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
 
 public class CloudStoreClient {
+	private static final Logger logger = LoggerFactory.getLogger(CloudStoreClient.class);
 
 	public static final List<Class<? extends SubCommand>> subCommandClasses;
 	static {
@@ -136,11 +138,16 @@ public class CloudStoreClient {
 	 */
 	public static void main(String... args) throws Exception
 	{
-		RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
-		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
 		initLogging();
-		int programExitStatus = new CloudStoreClient().execute(args);
-		System.exit(programExitStatus);
+		try {
+			RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
+			int programExitStatus = new CloudStoreClient().execute(args);
+			System.exit(programExitStatus);
+		} catch (Throwable x) {
+			logger.error(x.toString(), x);
+			System.exit(999);
+		}
 	}
 
 	public int execute(String... args) throws Exception {
