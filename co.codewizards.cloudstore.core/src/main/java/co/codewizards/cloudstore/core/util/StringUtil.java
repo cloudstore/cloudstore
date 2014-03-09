@@ -17,4 +17,8 @@ public final class StringUtil {
 		indexes.trimToSize();
 		return Collections.unmodifiableList(indexes);
 	}
+
+	public static boolean isEmpty(String string) {
+		return string == null || string.isEmpty();
+	}
 }

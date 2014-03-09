@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.URL;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public void setRepoTransportFactory(RepoTransportFactory repoTransportFactory) {
-		this.repoTransportFactory = repoTransportFactory;
+		this.repoTransportFactory = assertNotNull("repoTransportFactory", repoTransportFactory);
 	}
 
 	@Override

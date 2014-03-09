@@ -1,0 +1,244 @@
+#!/bin/bash
+##
+## CloudStore-Server Control Script
+##
+## version 1.0 (2014-03-09)
+##
+## authors:
+##   * jboss.org - unascribed
+##   * Marco Schulze
+##   * Alexander Bieber
+##
+## This init script should work with most GNU/Linux distros, but has been tested
+## with Ubuntu 13.10 only. Note, though, that Ubuntu uses upstart and you should
+## prefer the 'etc/init/cloudstore-server.conf' upstart config file on every system
+## using upstart!!!
+##
+## This script has been derived from JBoss' RedHat-start/stop-script. Some
+## bugs were fixed and some additional functionality added. For example,
+## the script will restart the CloudStore server, if it finishes itself (or crashes) until
+## the script was called with "stop" as first argument.
+##
+## To use this script run it as root - it will switch to the specified user.
+##
+## This script assumes that CloudStore is installed in the directory "/opt/cloudstore" and
+## it's run by user 'cloudstore'.
+##
+## All settings can be changed in the script itself or by setting an environment variable before
+## starting this script. For example, to override the user, you could use the following commands:
+##
+##    # export CLOUDSTORE_USER="someone"
+##    # /etc/init.d/cloudstore-server start
+##
+## Either modify this script for your requirements or just ensure that
+## the following variables are set correctly before calling the script.
+
+### BEGIN INIT INFO
+# Provides:          cloudstore-server
+# Required-Start:    $local_fs $remote_fs $network
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start CloudStore server.
+### END INIT INFO
+
+## define the user under which cloudstore will run, or use 'RUNASIS' to run as the current user
+CLOUDSTORE_USER=${CLOUDSTORE_USER:-"cloudstore"}
+
+## define where cloudstore is installed
+CLOUDSTORE_HOME=${CLOUDSTORE_HOME:-"/home/$CLOUDSTORE_USER/cloudstore-server"}
+
+## if JAVA_HOME is not set, we initialise it to /usr/lib/jvm/java-6-sun
+JAVA_HOME=${JAVA_HOME:-"/usr/lib/jvm/java-6-sun"}
+
+## make sure java is in your path
+JAVAPTH=${JAVAPTH:-"$JAVA_HOME/bin"}
+
+## configuration to use, usually one of 'minimal', 'default', 'all'
+CLOUDSTORE_CONF=${CLOUDSTORE_CONF:-"default"}
+
+## host name or ip address of the server or leave empty for localhost.
+CLOUDSTORE_HOST="cloudstore.nightlabs.de"
+CLOUDSTORE_CONSOLE="/tmp/cloudstore-server-stdout.log"
+
+## if CLOUDSTORE_HOST specified, use -b to bind cloudstore services to that address
+CLOUDSTORE_BIND_ADDR=${CLOUDSTORE_HOST:+"-b $CLOUDSTORE_HOST"}
+
+## define the script to use to start cloudstore
+CLOUDSTORESH=${CLOUDSTORESH:-"$CLOUDSTORE_HOME/bin/run.sh -c $CLOUDSTORE_CONF $CLOUDSTORE_BIND_ADDR"}
+
+## How many seconds shall we wait after sending SIGTERM (before sending SIGKILL).
+SHUTDOWN_TIMEOUT_SIGTERM=${SHUTDOWN_TIMEOUT_SIGTERM:-"120"}
+
+## How many seconds shall we wait after sending SIGKILL (before exiting this script
+## with a timeout-error).
+SHUTDOWN_TIMEOUT_SIGKILL=${SHUTDOWN_TIMEOUT_SIGKILL:-"120"}
+
+if [ ! -d $JAVA_HOME ]; then
+    echo "Directory defined by JAVA_HOME does not exist: $JAVA_HOME"
+    exit 1
+fi
+
+if [ "$CLOUDSTORE_USER" = "RUNASIS" ]; then
+  SUBIT=""
+else
+  SUBIT="su - $CLOUDSTORE_USER -c "
+fi
+
+if [ -n "$CLOUDSTORE_CONSOLE" -a ! -d "$CLOUDSTORE_CONSOLE" ]; then
+  # ensure the file exists
+  touch $CLOUDSTORE_CONSOLE
+  if [ ! -z "$SUBIT" ]; then
+    chown $CLOUDSTORE_USER $CLOUDSTORE_CONSOLE
+  fi 
+fi
+
+if [ -n "$CLOUDSTORE_CONSOLE" -a ! -f "$CLOUDSTORE_CONSOLE" ]; then
+  echo "WARNING: location for saving console log invalid: $CLOUDSTORE_CONSOLE"
+  echo "WARNING: ignoring it and using /dev/null"
+  CLOUDSTORE_CONSOLE="/dev/null"
+fi
+
+# define what will be done with the console log
+CLOUDSTORE_CONSOLE=${CLOUDSTORE_CONSOLE:-"/dev/null"}
+
+CLOUDSTORE_SHOULD_RUN_FILE="/var/run/cloudstore-server.should-run"
+
+CLOUDSTORE_CMD_START="cd $CLOUDSTORE_HOME/bin; while [ -f "$CLOUDSTORE_SHOULD_RUN_FILE" ]; do $CLOUDSTORESH; done"
+#CLOUDSTORE_CMD_START="cd $CLOUDSTORE_HOME/bin; $CLOUDSTORESH"
+
+if [ -z "`echo $PATH | grep $JAVAPTH`" ]; then
+  export PATH=$PATH:$JAVAPTH
+fi
+
+if [ ! -d "$CLOUDSTORE_HOME" ]; then
+  echo CLOUDSTORE_HOME does not exist as a valid directory : $CLOUDSTORE_HOME
+  exit 1
+fi
+
+#echo CLOUDSTORE_CMD_START = $CLOUDSTORE_CMD_START
+
+function procrunning() {
+   procid=0
+   #CLOUDSTORESCRIPT=$(echo $CLOUDSTORESH | awk '{print $1}' | sed 's/\//\\\//g')
+   CLOUDSTORESCRIPT=$(echo $CLOUDSTORESH | awk '{print $1}')
+   for procid in `pidof -x "$CLOUDSTORESCRIPT"`; do
+       ps -fp $procid | grep "${CLOUDSTORESH% *}" > /dev/null && pid=$procid
+   done
+}
+
+
+stop() {
+    if [ -f "$CLOUDSTORE_SHOULD_RUN_FILE" ]; then
+      rm "$CLOUDSTORE_SHOULD_RUN_FILE"
+    fi
+
+    pid=0
+    procrunning
+    if [ $pid = '0' ]; then
+        echo -n -e "\nNo CloudStore server is currently running\n"
+        exit 0
+    fi
+
+    RETVAL=1
+
+    # If process is still running
+
+    # First, try to kill it nicely (SIGTERM)
+    for id in `ps --ppid $pid | awk '{print $1}' | grep -v "^PID$"`; do
+       if [ -z "$SUBIT" ]; then
+           kill -15 $id
+       else
+           $SUBIT "kill -15 $id"
+       fi
+    done
+
+    sleep=0
+    while [ $sleep -lt $SHUTDOWN_TIMEOUT_SIGTERM -a $RETVAL -eq 1 ]; do
+        echo -n -e "\nwaiting for processes to stop";
+        sleep 10
+        sleep=`expr $sleep + 10`
+        pid=0
+        procrunning
+        if [ $pid == '0' ]; then
+            RETVAL=0
+        fi
+    done
+
+
+    pid=0
+    procrunning
+    if [ $pid = '0' ]; then
+        echo -e "\nCloudStore server stopped nicely.";
+        exit 0
+    fi
+
+
+    # Still not dead... kill it (SIGKILL)
+    for id in `ps --ppid $pid | awk '{print $1}' | grep -v "^PID$"`; do
+       echo -n -e "\nCloudStore server did not finish normally - killing process $id via SIGKILL!"
+       if [ -z "$SUBIT" ]; then
+           kill -9 $id
+       else
+           $SUBIT "kill -9 $id"
+       fi
+    done
+
+    sleep=0
+    while [ $sleep -lt $SHUTDOWN_TIMEOUT_SIGKILL -a $RETVAL -eq 1 ]; do
+        echo -n -e "\nwaiting for processes to stop";
+        sleep 10
+        sleep=`expr $sleep + 10`
+        pid=0
+        procrunning
+        if [ $pid == '0' ]; then
+            RETVAL=0
+        fi
+    done
+
+
+    pid=0
+    procrunning
+
+    if [ $pid != '0' ] ; then
+        echo -e "\nTimeout: Shutdown command was sent, but process is still running with PID $pid"
+        exit 1
+    fi
+
+    echo -e "\nCloudStore server killed.";
+    exit 0
+}
+
+case "$1" in
+start)
+    echo -e "\nStarting CloudStore server."
+    
+    pid=0
+    procrunning
+
+    if [ $pid != '0' ] ; then
+        echo -e "\nCloudStore Server is already running: PID $pid"
+        exit 0
+    fi
+    
+    
+    touch "$CLOUDSTORE_SHOULD_RUN_FILE"
+    cd $CLOUDSTORE_HOME/bin
+    if [ -z "$SUBIT" ]; then
+        eval $CLOUDSTORE_CMD_START >${CLOUDSTORE_CONSOLE} 2>&1 &
+    else
+        $SUBIT "$CLOUDSTORE_CMD_START >${CLOUDSTORE_CONSOLE} 2>&1 &" 
+    fi
+    ;;
+stop)
+    echo -e "\nStopping CloudStore server."
+    stop
+    ;;
+restart)
+    $0 stop
+    $0 start
+    ;;
+*)
+    echo "usage: $0 (start|stop|restart|help)"
+esac
+

@@ -9,11 +9,53 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 
+/**
+ * Transport abstraction.
+ * <p>
+ * The naming in this interface assumes a local client talking to a remote repository. But the
+ * repository accessed via this transport does not need to be remote - it might be in the local
+ * file system!
+ * <p>
+ * The synchronisation logic accesses all repositories through this abstraction layer. Therefore,
+ * the synchronisation logic does not need to know any details about how to communicate with
+ * a repository.
+ * <p>
+ * There are currently two implementations:
+ * <ul>
+ * <li>file-system-based (for local repositories)
+ * <li>REST-based (for remote repositories)
+ * </ul>
+ * Further implementations might be written later.
+ * <p>
+ * An instance of an implementation of {@code RepoTransport} is obtained via the
+ * {@link co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory RepoTransportFactory}.
+ * <p>
+ * <b>Important:</b> Implementors should <i>not</i> directly implement this interface, but instead sub-class
+ * {@link AbstractRepoTransport}!
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public interface RepoTransport {
 
+	/**
+	 * Gets the factory which created this instance.
+	 * @return the factory which created this instance. Should never be <code>null</code>, if properly initialised.
+	 */
 	RepoTransportFactory getRepoTransportFactory();
+	/**
+	 * Sets the factory which created this instance.
+	 * @param repoTransportFactory the factory which created this instance. Must not be <code>null</code>.
+	 */
 	void setRepoTransportFactory(RepoTransportFactory repoTransportFactory);
 
+	/**
+	 * Gets the remote repository's root URL, maybe including a {@linkplain #getPathPrefix() path-prefix}.
+	 * <p>
+	 * This is thus the remote repository's root URL as used to synchronise a certain local repository.
+	 * The word "remote" should not be misunderstood as actually on another computer. It just means behind
+	 * this transport abstraction.
+	 * @return the remote repository's root URL, maybe including a {@linkplain #getPathPrefix() path-prefix}.
+	 * Never <code>null</code>, if properly initialised.
+	 */
 	URL getRemoteRoot();
 	void setRemoteRoot(URL remoteRoot);
 

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.URL;
 
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransportFactory;
@@ -21,7 +23,7 @@ public class FileRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(URL remoteRoot) {
-		return PROTOCOL_FILE.equals(remoteRoot.getProtocol());
+		return PROTOCOL_FILE.equals(assertNotNull("remoteRoot", remoteRoot).getProtocol());
 	}
 
 	@Override

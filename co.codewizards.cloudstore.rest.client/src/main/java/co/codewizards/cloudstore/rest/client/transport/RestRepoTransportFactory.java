@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.URL;
 
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransportFactory;
@@ -32,7 +34,8 @@ public class RestRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(URL remoteRoot) {
-		return PROTOCOL_HTTP.equals(remoteRoot.getProtocol()) || PROTOCOL_HTTPS.equals(remoteRoot.getProtocol());
+		return PROTOCOL_HTTP.equals(assertNotNull("remoteRoot", remoteRoot).getProtocol())
+				|| PROTOCOL_HTTPS.equals(remoteRoot.getProtocol());
 	}
 
 	@Override

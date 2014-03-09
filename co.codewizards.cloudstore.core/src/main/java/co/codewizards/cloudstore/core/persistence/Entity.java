@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.util.Date;
 
 import javax.jdo.JDOHelper;
@@ -18,23 +20,34 @@ import javax.jdo.annotations.PrimaryKey;
  */
 @PersistenceCapable(identityType=IdentityType.APPLICATION)
 @Inheritance(strategy=InheritanceStrategy.SUBCLASS_TABLE)
-public class Entity implements AutoTrackChanged
+public abstract class Entity implements AutoTrackChanged
 {
 	@PrimaryKey
 	@Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
-	private long id;
+	private long id = -1;
 
+	// We always initialise this, though the value might be overwritten when DataNucleus loads
+	// the object's data from the DB. There's no need to defer the Date instantiation.
+	// Creating 1 million instances of Date costs less than 68 ms (I tested creating them and
+	// putting them into a LinkedList (preventing optimizer short-cuts), so the LinkedList
+	// overhead is included in this time).
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private Date created = new Date();
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private Date changed = new Date();
 
+	/**
+	 * Get the unique identifier of this object.
+	 * <p>
+	 * This identifier is unique per entity type (the first sub-class of this class
+	 * having an own table - which is usually the direct sub-class of {@link Entity}).
+	 * <p>
+	 * This identifier is assigned when the object is persisted into the DB.
+	 * @return the unique identifier of this object.
+	 */
 	public long getId() {
 		return id;
-	}
-	public void setId(long id) {
-		this.id = id;
 	}
 
 	@Override
@@ -71,24 +84,32 @@ public class Entity implements AutoTrackChanged
 
 	/**
 	 * Gets the timestamp of the creation of this entity.
-	 * @return the timestamp of the creation of this entity. Never <code>null</code> in persistence.
+	 * @return the timestamp of the creation of this entity. Never <code>null</code>.
 	 */
 	public Date getCreated() {
 		return created;
 	}
-	public void setCreated(Date created) {
+	/**
+	 * Sets the timestamp of the creation of this entity.
+	 * <p>
+	 * <b>Important: You should normally never invoke this method!</b> The {@code created} property
+	 * is supposed to be read-only (assigned once during object creation and never again).
+	 * This setter merely exists for extraordinary, unforeseen use cases as well as tests.
+	 * @param created the timestamp of the creation of this entity. Must not be <code>null</code>.
+	 */
+	protected void setCreated(Date created) {
+		assertNotNull("created", created);
 		this.created = created;
 	}
-	/**
-	 * Gets the timestamp of when this entity was last changed.
-	 * @return the timestamp of when this entity was last changed. Never <code>null</code> in persistence.
-	 */
+
 	@Override
 	public Date getChanged() {
 		return changed;
 	}
 	@Override
 	public void setChanged(Date changed) {
+		assertNotNull("created", created);
 		this.changed = changed;
 	}
+
 }

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -22,6 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Base class for all data access objects (DAOs).
+ * <p>
+ * Usually an instance of a DAO is obtained using
+ * {@link co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction#getDAO(Class) LocalRepoTransaction.getDAO(...)}.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
 public abstract class DAO<E extends Entity, D extends DAO<E, D>>
@@ -30,6 +34,16 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 	private final Class<E> entityClass;
 	private final Class<D> daoClass;
 
+	/**
+	 * Instantiate the DAO.
+	 * <p>
+	 * It is recommended <b>not</b> to invoke this constructor directly, but instead use
+	 * {@link co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction#getDAO(Class) LocalRepoTransaction.getDAO(...)},
+	 * if a {@code LocalRepoTransaction} is available (which should be in most situations).
+	 * <p>
+	 * After constructing, you must {@linkplain #persistenceManager(PersistenceManager) assign a <code>PersistenceManager</code>},
+	 * before you can use the DAO. This is already done when using the {@code LocalRepoTransaction}'s factory method.
+	 */
 	public DAO() {
 		ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
 		Type[] actualTypeArguments = superclass.getActualTypeArguments();
@@ -53,9 +67,20 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 
 	private PersistenceManager pm;
 
+	/**
+	 * Gets the {@code PersistenceManager} assigned to this DAO.
+	 * @return the {@code PersistenceManager} assigned to this DAO. May be <code>null</code>, if none
+	 * was assigned, yet.
+	 * @see #setPersistenceManager(PersistenceManager)
+	 * @see #persistenceManager(PersistenceManager)
+	 */
 	public PersistenceManager getPersistenceManager() {
 		return pm;
 	}
+	/**
+	 *
+	 * @param persistenceManager
+	 */
 	public void setPersistenceManager(PersistenceManager persistenceManager) {
 		this.pm = persistenceManager;
 	}
