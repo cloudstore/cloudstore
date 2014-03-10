@@ -29,8 +29,9 @@ public class ReleasePreparer {
 	//   * to register the new version in "whats-new.apt" and "releases/index.md.vm",
 	//   * to create a tag in SVN after check-in!
 	//   * to update the symlinks on the web-server after the release was successful.
-	protected String newMavenVersion = "0.9.2";
-//	protected String newMavenVersion = "0.9.3-SNAPSHOT";
+
+//	protected String newMavenVersion = "0.9.3";
+	protected String newMavenVersion = "0.9.3-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.
