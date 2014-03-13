@@ -53,7 +53,8 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	public void postDirty(InstanceLifecycleEvent event) {
 		// We must use postDirty(...), because preDirty(...) causes a StackOverflowError. preDirty(...) seems to be
 		// called again for the same object until it is dirty (IIUC). Thus, our onWrite(...) recursively calls preDirty(...)
-		// and itself again.
+		// and itself again. We could - of course - work around this by tracking the recursion using a ThreadLocal, but
+		// using postDirty(...) instead is far easier - and there's no difference for our use case, anyway.
 		onWrite(event.getPersistentInstance());
 	}
 
@@ -79,7 +80,7 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	private void onWrite(Object pc) {
 		// We always obtain the localRevision - no matter, if the current write operation is on
 		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
-		// localRevision in the database.
+		// localRevision in the database (once per transaction).
 		long localRevision = transaction.getLocalRevision();
 
 		if (pc instanceof AutoTrackChanged) {
