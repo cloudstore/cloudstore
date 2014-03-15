@@ -78,11 +78,18 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		return pm;
 	}
 	/**
-	 *
-	 * @param persistenceManager
+	 * Assigns the given {@code PersistenceManager} to this DAO.
+	 * <p>
+	 * The DAO cannot be used, before a non-<code>null</code> value was set using this method.
+	 * @param persistenceManager the {@code PersistenceManager} to be used by this DAO. May be <code>null</code>,
+	 * but a non-<code>null</code> value must be set to make this DAO usable.
+	 * @see #persistenceManager(PersistenceManager)
 	 */
 	public void setPersistenceManager(PersistenceManager persistenceManager) {
-		this.pm = persistenceManager;
+		if (this.pm != persistenceManager) {
+			daoClass2DaoInstance.clear();
+			this.pm = persistenceManager;
+		}
 	}
 
 	protected PersistenceManager pm() {
@@ -92,6 +99,15 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		return pm;
 	}
 
+	/**
+	 * Assigns the given {@code PersistenceManager} to this DAO and returns {@code this}.
+	 * <p>
+	 * This method delegates to {@link #setPersistenceManager(PersistenceManager)}.
+	 * @param persistenceManager the {@code PersistenceManager} to be used by this DAO. May be <code>null</code>,
+	 * but a non-<code>null</code> value must be set to make this DAO usable.
+	 * @return {@code this} for a fluent API.
+	 * @see #setPersistenceManager(PersistenceManager)
+	 */
 	public D persistenceManager(PersistenceManager persistenceManager) {
 		setPersistenceManager(persistenceManager);
 		return thisDAO();
@@ -245,5 +261,23 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		result.addAll(c);
 		query.closeAll();
 		entityIDSubSet.clear();
+	}
+
+	private final Map<Class<? extends DAO<?,?>>, DAO<?,?>> daoClass2DaoInstance = new HashMap<>(3);
+
+	protected <T extends DAO<?, ?>> T getDAO(Class<T> daoClass) {
+		T dao = daoClass.cast(daoClass2DaoInstance.get(assertNotNull("daoClass", daoClass)));
+		if (dao == null) {
+			try {
+				dao = daoClass.newInstance();
+			} catch (InstantiationException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+			dao.persistenceManager(pm);
+			daoClass2DaoInstance.put(daoClass, dao);
+		}
+		return dao;
 	}
 }

@@ -194,7 +194,7 @@ public class CloudStoreClient {
 						System.err.println();
 					} catch (Exception x) {
 						programExitStatus = 3;
-						x.printStackTrace();
+						logger.error(x.toString(), x);
 					}
 				}
 			}

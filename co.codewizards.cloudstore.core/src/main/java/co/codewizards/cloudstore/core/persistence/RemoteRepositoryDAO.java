@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.UUID;
 
 import javax.jdo.Query;
@@ -53,6 +54,36 @@ public class RemoteRepositoryDAO extends DAO<RemoteRepository, RemoteRepositoryD
 					UrlUtil.canonicalizeURL(remoteRoot)));
 
 		return remoteRepository;
+	}
+
+	@Override
+	public void deletePersistent(RemoteRepository entity) {
+		assertNotNull("entity", entity);
+		deleteDependentObjects(entity);
+		pm().flush();
+		super.deletePersistent(entity);
+	}
+
+	@Override
+	public void deletePersistentAll(Collection<? extends RemoteRepository> entities) {
+		assertNotNull("entities", entities);
+		for (RemoteRepository remoteRepository : entities) {
+			deleteDependentObjects(remoteRepository);
+		}
+		pm().flush();
+		super.deletePersistentAll(entities);
+	}
+
+	protected void deleteDependentObjects(RemoteRepository remoteRepository) {
+		assertNotNull("remoteRepository", remoteRepository);
+
+		final ModificationDAO modificationDAO = getDAO(ModificationDAO.class);
+		modificationDAO.deletePersistentAll(modificationDAO.getModifications(remoteRepository));
+
+		final LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = getDAO(LastSyncToRemoteRepoDAO.class);
+		LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(remoteRepository);
+		if (lastSyncToRemoteRepo != null)
+			lastSyncToRemoteRepoDAO.deletePersistent(lastSyncToRemoteRepo);
 	}
 
 }

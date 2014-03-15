@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.persistence;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -66,7 +66,7 @@ public class PersistenceTest extends AbstractTest {
 		try {
 			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjects().iterator().next();
 			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
-			Collection<Modification> modifications = modificationDAO.getModificationsAfter(remoteRepository, -1);
+			Collection<Modification> modifications = modificationDAO.getModifications(remoteRepository);
 			assertThat(modifications).hasSize(modificationCount);
 			System.out.println("*** Accessing fromPath and toPath ***");
 			for (Modification modification : modifications) {
