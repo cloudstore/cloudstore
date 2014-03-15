@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport.file;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,8 +73,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public void close() {
-		if (localRepoManager != null)
+		if (localRepoManager != null) {
+			logger.debug("close: Closing localRepoManager.");
 			localRepoManager.close();
+		} else
+			logger.debug("close: There is no localRepoManager.");
 	}
 
 	@Override
@@ -425,6 +428,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	protected LocalRepoManager getLocalRepoManager() {
 		if (localRepoManager == null) {
+			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
 			File remoteRootFile;
 			try {
 				remoteRootFile = new File(getRemoteRootWithoutPathPrefix().toURI());
