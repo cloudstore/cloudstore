@@ -71,13 +71,26 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private LocalRepoManager localRepoManager;
 
+	// Don't know, if fillInStackTrace() is necessary, but better do it.
+	// I did a small test: 1 million invocations of new Exception() vs. new Exception() with fillInStackTrace(): 3 s vs 2.2 s
+	private volatile Throwable repoTransportCreatedStackTraceException = new Exception("repoTransportCreatedStackTraceException").fillInStackTrace();
+
 	@Override
 	public void close() {
+		repoTransportCreatedStackTraceException = null;
 		if (localRepoManager != null) {
 			logger.debug("close: Closing localRepoManager.");
 			localRepoManager.close();
 		} else
 			logger.debug("close: There is no localRepoManager.");
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		if (repoTransportCreatedStackTraceException != null) {
+			logger.warn("finalize: Detected forgotten close() invocation!", repoTransportCreatedStackTraceException);
+		}
+		super.finalize();
 	}
 
 	@Override
@@ -1005,4 +1018,5 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			transaction.rollbackIfActive();
 		}
 	}
+
 }

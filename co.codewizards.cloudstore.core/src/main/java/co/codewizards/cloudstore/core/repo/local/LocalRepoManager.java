@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
 import java.io.File;
+import java.lang.reflect.InvocationHandler;
 import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
@@ -116,4 +117,12 @@ public interface LocalRepoManager {
 	void deleteRemoteRepository(UUID repositoryId);
 
 	Lock getLock();
+
+	/**
+	 * @deprecated <b>Do not invoke this method directly!</b> It is declared in this interface to make sure the
+	 * proxy's {@link InvocationHandler} is invoked when the garbage-collector collects the proxy.
+	 */
+	@Deprecated
+	void finalize() throws Throwable;
+
 }

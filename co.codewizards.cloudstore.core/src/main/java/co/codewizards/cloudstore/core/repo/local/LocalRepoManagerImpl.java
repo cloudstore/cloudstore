@@ -749,4 +749,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	public Lock getLock() {
 		return lock;
 	}
+
+	@Override
+	public void finalize() throws Throwable {
+		super.finalize();
+	}
+
 }

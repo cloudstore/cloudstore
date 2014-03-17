@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -204,33 +204,37 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		String localPathPrefix;
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
-		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
-			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(clientRepositoryId);
-			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
-		URL localRootURL;
-		try {
-			localRootURL = localRoot.toURI().toURL();
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		if (!localPathPrefix.isEmpty()) {
-			String localRootURLString = localRootURL.toExternalForm();
-			if (localRootURLString.endsWith("/"))
-				localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
-
-			// localPathPrefix is guaranteed to start with a '/'.
-			localRootURLString += localPathPrefix;
+			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {
-				localRootURL = new URL(localRootURLString);
+				RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(clientRepositoryId);
+				localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
+				transaction.commit();
+			} finally {
+				transaction.rollbackIfActive();
+			}
+			URL localRootURL;
+			try {
+				localRootURL = localRoot.toURI().toURL();
 			} catch (MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
+			if (!localPathPrefix.isEmpty()) {
+				String localRootURLString = localRootURL.toExternalForm();
+				if (localRootURLString.endsWith("/"))
+					localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
+
+				// localPathPrefix is guaranteed to start with a '/'.
+				localRootURLString += localPathPrefix;
+				try {
+					localRootURL = new URL(localRootURLString);
+				} catch (MalformedURLException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			return localRootURL;
+		} finally {
+			localRepoManager.close();
 		}
-		return localRootURL;
 	}
 }

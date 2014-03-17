@@ -11,14 +11,20 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class LocalRepoManagerInvocationHandler implements InvocationHandler {
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerInvocationHandler.class);
 
 	final LocalRepoManagerImpl localRepoManagerImpl; // package-protected for our test
 	private final AtomicBoolean open = new AtomicBoolean(true);
 	private final List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
+	private volatile Throwable proxyCreatedStackTraceException = new Exception("proxyCreatedStackTraceException").fillInStackTrace();
 
 	private static final Set<String> methodsAllowedOnClosedProxy = new HashSet<String>(Arrays.asList(
 			"close",
+			"finalize",
 			"isOpen",
 			"equals",
 			"hashCode",
@@ -47,6 +53,10 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			addLocalRepoManagerCloseListener(localRepoManagerProxy, method, args);
 		else if ("removeLocalRepoManagerCloseListener".equals(method.getName()))
 			removeLocalRepoManagerCloseListener(localRepoManagerProxy, method, args);
+		else if ("finalize".equals(method.getName())) {
+			finalize(localRepoManagerProxy, method, args);
+			return null; // NEVER delegating finalize
+		}
 
 		Object result = method.invoke(localRepoManagerImpl, args);
 
@@ -63,11 +73,18 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 	}
 
 	private boolean close(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+		proxyCreatedStackTraceException = null;
 		if (open.compareAndSet(true, false)) {
 			firePreClose(localRepoManagerProxy);
 			return true;
 		}
 		return false;
+	}
+
+	private void finalize(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+		if (proxyCreatedStackTraceException != null) {
+			logger.warn("finalize: Detected forgotten close() invocation!", proxyCreatedStackTraceException);
+		}
 	}
 
 	private void firePreClose(LocalRepoManager localRepoManagerProxy) {
