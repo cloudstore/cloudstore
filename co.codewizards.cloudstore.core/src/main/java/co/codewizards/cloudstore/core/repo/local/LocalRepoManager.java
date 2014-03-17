@@ -12,18 +12,18 @@ import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public interface LocalRepoManager {
 
-	String META_DIR_NAME = ".cloudstore-repo";
 	String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
 	int DEFAULT_KEY_SIZE = 4096;
 
+	String SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS = "cloudstore.localRepoManager.closeDeferredMillis";
+	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20000;
+
+	String META_DIR_NAME = ".cloudstore-repo";
 	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
 	String PROP_REPOSITORY_ID = "repository.id";
 	String PROP_VERSION = "repository.version";
 
 	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
-
-	String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
-	String CONNECTION_URL_KEY_ORIGINAL = "__ORIGINAL_javax.jdo.option.ConnectionURL";
 
 	String VAR_LOCAL_ROOT = "repository.localRoot";
 	String VAR_META_DIR = "repository.metaDir";

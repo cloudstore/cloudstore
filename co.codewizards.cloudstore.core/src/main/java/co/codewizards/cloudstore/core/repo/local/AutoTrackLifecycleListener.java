@@ -3,7 +3,11 @@ package co.codewizards.cloudstore.core.repo.local;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManager;
 import javax.jdo.listener.AttachLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
 import javax.jdo.listener.DirtyLifecycleListener;
@@ -30,6 +34,8 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 
 	private final LocalRepoTransaction transaction;
 
+	private final Map<Object, Date> oid2LastChanged = new HashMap<>();
+
 	public AutoTrackLifecycleListener(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 	}
@@ -39,18 +45,18 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	}
 
 	@Override
-	public void preStore(InstanceLifecycleEvent event) {
+	public void preStore(final InstanceLifecycleEvent event) {
 		onWrite(event.getPersistentInstance());
 	}
 
 	@Override
-	public void postStore(InstanceLifecycleEvent event) { }
+	public void postStore(final InstanceLifecycleEvent event) { }
 
 	@Override
-	public void preDirty(InstanceLifecycleEvent event) { }
+	public void preDirty(final InstanceLifecycleEvent event) { }
 
 	@Override
-	public void postDirty(InstanceLifecycleEvent event) {
+	public void postDirty(final InstanceLifecycleEvent event) {
 		// We must use postDirty(...), because preDirty(...) causes a StackOverflowError. preDirty(...) seems to be
 		// called again for the same object until it is dirty (IIUC). Thus, our onWrite(...) recursively calls preDirty(...)
 		// and itself again. We could - of course - work around this by tracking the recursion using a ThreadLocal, but
@@ -59,40 +65,71 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	}
 
 	@Override
-	public void preAttach(InstanceLifecycleEvent event) { }
+	public void preAttach(final InstanceLifecycleEvent event) { }
 
 	@Override
-	public void postAttach(InstanceLifecycleEvent event) {
+	public void postAttach(final InstanceLifecycleEvent event) {
 		// We must write it after attaching, because the affected fields might not be detached.
 		onWrite(event.getPersistentInstance());
 	}
 
 	@Override
-	public void preDelete(InstanceLifecycleEvent event) {
+	public void preDelete(final InstanceLifecycleEvent event) {
 		// We want to ensure that the revision is incremented, even if we do not have any remote repository connected
 		// (and thus no DeleteModification being created).
 		transaction.getLocalRevision();
+
+		final Object oid = JDOHelper.getObjectId(event.getPersistentInstance());
+		oid2LastChanged.remove(oid);
 	}
 
 	@Override
-	public void postDelete(InstanceLifecycleEvent event) { }
+	public void postDelete(final InstanceLifecycleEvent event) { }
 
-	private void onWrite(Object pc) {
+	private void onWrite(final Object pc) {
 		// We always obtain the localRevision - no matter, if the current write operation is on
 		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
 		// localRevision in the database (once per transaction).
-		long localRevision = transaction.getLocalRevision();
+		final long localRevision = transaction.getLocalRevision();
+
+		final Date changed = new Date();
+		final Object oid = JDOHelper.getObjectId(pc);
+		if (oid != null) { // in preStore(...), there is no OID, yet.
+			final Date oldLastChanged = oid2LastChanged.get(oid);
+			oid2LastChanged.put(oid, changed); // always keep the newest changed-timestamp.
+
+			if (oldLastChanged != null) {
+				logger.debug("onWrite: skipping (already processed in this transaction): {}", pc);
+				return; // already processed in this transaction.
+			}
+		}
 
 		if (pc instanceof AutoTrackChanged) {
-			Date changed = new Date();
 			logger.debug("onWrite: setChanged({}) for {}", changed, pc);
-			AutoTrackChanged entity = (AutoTrackChanged) pc;
+			final AutoTrackChanged entity = (AutoTrackChanged) pc;
 			entity.setChanged(changed);
 		}
 		if (pc instanceof AutoTrackLocalRevision) {
 			logger.debug("onWrite: setLocalRevision({}) for {}", localRevision, pc);
-			AutoTrackLocalRevision entity = (AutoTrackLocalRevision) pc;
+			final AutoTrackLocalRevision entity = (AutoTrackLocalRevision) pc;
 			entity.setLocalRevision(localRevision);
 		}
+	}
+
+	public void flush() {
+		final long start = System.currentTimeMillis();
+		final PersistenceManager pm = transaction.getPersistenceManager();
+		for (final Map.Entry<Object, Date> me : oid2LastChanged.entrySet()) {
+			final Object pc = pm.getObjectById(me.getKey());
+			if (pc instanceof AutoTrackChanged) {
+				final Date changed = me.getValue();
+				logger.debug("flush: setChanged({}) for {}", changed, pc);
+				final AutoTrackChanged entity = (AutoTrackChanged) pc;
+				entity.setChanged(changed);
+			}
+		}
+		final int oid2LastChangedSize = oid2LastChanged.size();
+		oid2LastChanged.clear();
+		logger.info("flush: took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
 	}
 }

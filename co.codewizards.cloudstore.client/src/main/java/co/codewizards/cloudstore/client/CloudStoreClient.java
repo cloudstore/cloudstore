@@ -43,6 +43,7 @@ public class CloudStoreClient {
 				DropRepoAliasSubCommand.class,
 				DropRepoConnectionSubCommand.class,
 				HelpSubCommand.class,
+				RepairDatabaseSubCommand.class,
 				RepoInfoSubCommand.class,
 				RepoListSubCommand.class,
 				RequestRepoConnectionSubCommand.class,
@@ -74,6 +75,7 @@ public class CloudStoreClient {
 	}
 
 	private static final String CMD_PREFIX = "cloudstore"; // shell script (or windoof batch file)
+	private boolean throwException = true;
 
 	public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override
@@ -142,12 +144,23 @@ public class CloudStoreClient {
 		try {
 			RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
 			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
-			int programExitStatus = new CloudStoreClient().execute(args);
+			int programExitStatus = new CloudStoreClient().throwException(false).execute(args);
 			System.exit(programExitStatus);
 		} catch (Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
 		}
+	}
+
+	public boolean isThrowException() {
+		return throwException;
+	}
+	public void setThrowException(boolean throwException) {
+		this.throwException = throwException;
+	}
+	public CloudStoreClient throwException(boolean throwException) {
+		setThrowException(throwException);
+		return this;
 	}
 
 	public int execute(String... args) throws Exception {
@@ -192,9 +205,13 @@ public class CloudStoreClient {
 						displayHelp = true;
 						System.err.println("Error: " + e.getMessage());
 						System.err.println();
+						if (throwException)
+							throw e;
 					} catch (Exception x) {
 						programExitStatus = 3;
 						logger.error(x.toString(), x);
+						if (throwException)
+							throw x;
 					}
 				}
 			}

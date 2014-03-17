@@ -69,7 +69,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	protected final String id = Integer.toHexString(System.identityHashCode(this));
 
-	protected static volatile long closeDeferredMillis = 20 * 1000L; // TODO make properly configurable!
+	private long closeDeferredMillis = Long.MIN_VALUE;
 	private static final long lockTimeoutMillis = 30000; // TODO make configurable!
 
 	private static final long remoteRepositoryRequestExpiryAge = 24 * 60 * 60 * 1000L;
@@ -426,7 +426,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private Map<String, String> getPersistenceProperties(boolean createRepository) {
 		Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(createRepository);
-		connectionURL = persistenceProperties.get(CONNECTION_URL_KEY_ORIGINAL);
+		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL_ORIGINAL.key);
 		return persistenceProperties;
 	}
 
@@ -493,13 +493,28 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		return result;
 	}
 
+	protected long getCloseDeferredMillis() {
+		if (closeDeferredMillis < 0) {
+			long closeDeferredMillis = PropertiesUtil.getSystemPropertyValueAsLong(
+					SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, DEFAULT_CLOSE_DEFERRED_MILLIS);
+
+			if (closeDeferredMillis < 0) {
+				logger.warn("System property '{}': closeDeferredMillis {} is less than 0! Using default {} instead!",
+						SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, closeDeferredMillis, DEFAULT_CLOSE_DEFERRED_MILLIS);
+				closeDeferredMillis = DEFAULT_CLOSE_DEFERRED_MILLIS;
+			}
+			this.closeDeferredMillis = closeDeferredMillis;
+		}
+		return closeDeferredMillis;
+	}
+
 	@Override
 	public void close() {
 		synchronized(this) {
 			closing = true;
 		}
 
-		int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
+		final int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
 		if (openReferenceCounterValue > 0) {
 			logger.debug("[{}]close: leaving with openReferenceCounterValue={}", id, openReferenceCounterValue);
 			return;
@@ -508,7 +523,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			throw new IllegalStateException("openReferenceCounterValue < 0");
 		}
 
-		long closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
+		final long closeDeferredMillis = getCloseDeferredMillis();
 		if (closeDeferredMillis > 0) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
 			synchronized(this) {
@@ -694,21 +709,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	protected int getKeySize() {
-		String keySizeString = System.getProperty(SYSTEM_PROPERTY_KEY_SIZE);
-		if (keySizeString == null) {
+		int keySize = PropertiesUtil.getSystemPropertyValueAsInt(SYSTEM_PROPERTY_KEY_SIZE, DEFAULT_KEY_SIZE);
+		if (keySize < 1024) {
+			logger.warn("System property '{}': keySize {} is out of range! Using default {} instead!", SYSTEM_PROPERTY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
 			return DEFAULT_KEY_SIZE;
 		}
-		try {
-			int keySize = Integer.parseInt(keySizeString);
-			if (keySize < 1024) {
-				logger.warn("System property '{}': keySize {} is out of range! Using default {} instead!", SYSTEM_PROPERTY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
-				return DEFAULT_KEY_SIZE;
-			}
-			return keySize;
-		} catch (NumberFormatException x) {
-			logger.warn("System property '{}': keySize '{}' is not a valid number!" + x, SYSTEM_PROPERTY_KEY_SIZE, keySizeString);
-			return DEFAULT_KEY_SIZE;
-		}
+		return keySize;
 	}
 
 	@Override

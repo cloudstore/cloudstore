@@ -11,24 +11,20 @@ import org.junit.Test;
 
 import co.codewizards.cloudstore.core.AbstractTest;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerImplHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 
 public class PersistenceTest extends AbstractTest {
 
 	private static final int modificationCount = 10000;
 
-	private static long closeDeferredMillis;
-
 	@BeforeClass
-	public static void beforePersistenceTest() {
-		closeDeferredMillis = LocalRepoManagerImplHelper.getCloseDeferredMillis();
-		LocalRepoManagerImplHelper.setCloseDeferredMillis(0);
+	public static void beforeClass() {
+		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, "0");
 	}
 
 	@AfterClass
-	public static void afterPersistenceTest() {
-		LocalRepoManagerImplHelper.setCloseDeferredMillis(closeDeferredMillis);
+	public static void afterClass() {
+		System.clearProperty(LocalRepoManager.SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS);
 	}
 
 	@Test

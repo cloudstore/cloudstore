@@ -14,17 +14,14 @@ import co.codewizards.cloudstore.core.AbstractTest;
 
 public class LocalRepoManagerFactoryTest extends AbstractTest {
 
-	private static long closeDeferredMillis;
-
 	@BeforeClass
 	public static void beforeClass() {
-		closeDeferredMillis = LocalRepoManagerImpl.closeDeferredMillis;
-		LocalRepoManagerImpl.closeDeferredMillis = 0;
+		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, "0");
 	}
 
 	@AfterClass
 	public static void afterClass() {
-		LocalRepoManagerImpl.closeDeferredMillis = closeDeferredMillis;
+		System.clearProperty(LocalRepoManager.SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS);
 	}
 
 	@Test

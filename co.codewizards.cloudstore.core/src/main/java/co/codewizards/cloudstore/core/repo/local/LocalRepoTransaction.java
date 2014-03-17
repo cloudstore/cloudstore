@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.concurrent.locks.Lock;
 
@@ -21,6 +21,8 @@ public class LocalRepoTransaction {
 	private Transaction jdoTransaction;
 	private Lock lock;
 	private long localRevision = -1;
+
+	private final AutoTrackLifecycleListener autoTrackLifecycleListener = new AutoTrackLifecycleListener(this);
 
 	public LocalRepoTransaction(LocalRepoManagerImpl localRepoManager, boolean write) {
 		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
@@ -43,13 +45,14 @@ public class LocalRepoTransaction {
 	}
 
 	private void hookLifecycleListeners() {
-		persistenceManager.addInstanceLifecycleListener(new AutoTrackLifecycleListener(this), (Class[]) null);
+		persistenceManager.addInstanceLifecycleListener(autoTrackLifecycleListener, (Class[]) null);
 	}
 
 	public synchronized void commit() {
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		autoTrackLifecycleListener.flush();
 		persistenceManager.flush();
 		jdoTransaction.commit();
 		persistenceManager.close();
