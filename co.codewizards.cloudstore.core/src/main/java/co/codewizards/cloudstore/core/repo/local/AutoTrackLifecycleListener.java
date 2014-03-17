@@ -141,7 +141,12 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		}
 		final int oid2LastChangedSize = oid2LastChanged.size();
 		oid2LastChanged.clear();
-		logger.info("onCommit: Deferred operations took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
+
+		final long duration = System.currentTimeMillis() - start;
+		if (duration >= 500)
+			logger.info("onCommit: Deferred operations took {} ms for {} entities.", duration, oid2LastChangedSize);
+		else
+			logger.debug("onCommit: Deferred operations took {} ms for {} entities.", duration, oid2LastChangedSize);
 	}
 
 	public void onRollback() {
