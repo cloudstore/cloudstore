@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -101,6 +101,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public void close() {
 		client = null;
+		super.close();
 	}
 
 	@Override

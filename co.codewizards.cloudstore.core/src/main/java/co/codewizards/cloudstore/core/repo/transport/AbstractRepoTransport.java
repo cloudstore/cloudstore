@@ -5,15 +5,23 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.net.URL;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class AbstractRepoTransport implements RepoTransport {
+	private static final Logger logger = LoggerFactory.getLogger(AbstractRepoTransport.class);
 
 	private RepoTransportFactory repoTransportFactory;
 	private URL remoteRoot;
 	private URL remoteRootWithoutPathPrefix;
 	private String pathPrefix;
 	private UUID clientRepositoryId;
+
+	// Don't know, if fillInStackTrace() is necessary, but better do it.
+	// I did a small test: 1 million invocations of new Exception() vs. new Exception() with fillInStackTrace(): 3 s vs 2.2 s
+	private volatile Throwable repoTransportCreatedStackTraceException = new Exception("repoTransportCreatedStackTraceException").fillInStackTrace();
 
 	@Override
 	public RepoTransportFactory getRepoTransportFactory() {
@@ -135,5 +143,18 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 			return true;
 
 		return path.startsWith(pathPrefix);
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		if (repoTransportCreatedStackTraceException != null) {
+			logger.warn("finalize: Detected forgotten close() invocation!", repoTransportCreatedStackTraceException);
+		}
+		super.finalize();
+	}
+
+	@Override
+	public void close() {
+		repoTransportCreatedStackTraceException = null;
 	}
 }
