@@ -85,6 +85,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 		if (proxyCreatedStackTraceException != null) {
 			logger.warn("finalize: Detected forgotten close() invocation!", proxyCreatedStackTraceException);
 		}
+		close(localRepoManagerProxy, method, args);
 	}
 
 	private void firePreClose(LocalRepoManager localRepoManagerProxy) {
