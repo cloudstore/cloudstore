@@ -45,7 +45,7 @@ public class CloudStoreRESTClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRESTClient.class);
 
-	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 60 * 1000;
+	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 120 * 1000;
 	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 15 * 60 * 1000;
 
 	public static final String SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT = "cloudstore.socketConnectTimeout";
