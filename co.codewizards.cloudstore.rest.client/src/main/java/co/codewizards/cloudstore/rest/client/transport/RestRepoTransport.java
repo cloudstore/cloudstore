@@ -39,7 +39,7 @@ import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
-import co.codewizards.cloudstore.rest.client.ssl.SSLContextUtil;
+import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
 
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
@@ -275,7 +275,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			CloudStoreRESTClient c = new CloudStoreRESTClient(getRemoteRoot());
 			c.setHostnameVerifier(new HostnameVerifierAllowingAll());
 			try {
-				c.setSslContext(SSLContextUtil.getSSLContext(getRemoteRoot(), getDynamicX509TrustManagerCallback()));
+				c.setSslContext(SSLContextBuilder.create()
+						.remoteURL(getRemoteRoot())
+						.callback(getDynamicX509TrustManagerCallback()).build());
 			} catch (GeneralSecurityException e) {
 				throw new RuntimeException(e);
 			}
