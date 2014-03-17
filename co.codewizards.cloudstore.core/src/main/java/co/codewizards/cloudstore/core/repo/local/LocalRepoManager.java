@@ -22,6 +22,12 @@ public interface LocalRepoManager {
 
 	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
+	String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
+	String CONNECTION_URL_KEY_ORIGINAL = "__ORIGINAL_javax.jdo.option.ConnectionURL";
+
+	String VAR_LOCAL_ROOT = "repository.localRoot";
+	String VAR_META_DIR = "repository.metaDir";
+
 	/**
 	 * Gets the repository's local root directory.
 	 * <p>

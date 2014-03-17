@@ -12,7 +12,6 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -74,11 +73,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private static final long lockTimeoutMillis = 30000; // TODO make configurable!
 
 	private static final long remoteRepositoryRequestExpiryAge = 24 * 60 * 60 * 1000L;
-
-	private static final String VAR_LOCAL_ROOT = "repository.localRoot";
-	private static final String VAR_META_DIR = "repository.metaDir";
-
-	private static final String CONNECTION_URL_KEY = "javax.jdo.option.ConnectionURL";
 
 	private final File localRoot;
 	private LockFile lockFile;
@@ -431,37 +425,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private Map<String, String> getPersistenceProperties(boolean createRepository) {
-		File metaDirectory = getMetaDir();
-		File persistencePropertiesFile = new File(metaDirectory, PERSISTENCE_PROPERTIES_FILE_NAME);
-
-		Map<String, String> variablesMap = new HashMap<String, String>();
-		variablesMap.put(VAR_LOCAL_ROOT, localRoot.getPath());
-		variablesMap.put(VAR_META_DIR, getMetaDir().getPath());
-
-		Properties rawProperties;
-		try {
-			rawProperties = PropertiesUtil.load(persistencePropertiesFile);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		Map<String, String> persistenceProperties = PropertiesUtil.filterProperties(rawProperties, variablesMap);
-		connectionURL = persistenceProperties.get(CONNECTION_URL_KEY);
-
-		if (createRepository) {
-			modifyConnectionURLForCreate(persistenceProperties);
-		}
+		Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(createRepository);
+		connectionURL = persistenceProperties.get(CONNECTION_URL_KEY_ORIGINAL);
 		return persistenceProperties;
-	}
-
-	private void modifyConnectionURLForCreate(Map<String, String> persistenceProperties) {
-		String value = connectionURL;
-		if (value == null || value.trim().isEmpty()) {
-			throw new RepositoryCorruptException(localRoot,
-					String.format("Property '%s' missing in '%s'.", CONNECTION_URL_KEY, PERSISTENCE_PROPERTIES_FILE_NAME));
-		}
-
-		String newValue = value.trim() + ";create=true";
-		persistenceProperties.put(CONNECTION_URL_KEY, newValue);
 	}
 
 	@Override
