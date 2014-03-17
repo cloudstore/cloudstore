@@ -131,17 +131,17 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 				final Object pc = pm.getObjectById(me.getKey());
 				if (pc instanceof AutoTrackChanged) {
 					final Date changed = me.getValue();
-					logger.debug("flush: setChanged({}) for {}", changed, pc);
+					logger.debug("onCommit: setChanged({}) for {}", changed, pc);
 					final AutoTrackChanged entity = (AutoTrackChanged) pc;
 					entity.setChanged(changed);
 				}
 			} catch (JDOObjectNotFoundException x) {
-				logger.warn("close: " + x, x);
+				logger.warn("onCommit: " + x, x);
 			}
 		}
 		final int oid2LastChangedSize = oid2LastChanged.size();
 		oid2LastChanged.clear();
-		logger.info("close: Deferred operations took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
+		logger.info("onCommit: Deferred operations took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
 	}
 
 	public void onRollback() {
