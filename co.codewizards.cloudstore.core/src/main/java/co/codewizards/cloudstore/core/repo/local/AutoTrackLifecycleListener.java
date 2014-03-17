@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.listener.AttachLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
@@ -35,6 +36,7 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 	private final LocalRepoTransaction transaction;
 
 	private final Map<Object, Date> oid2LastChanged = new HashMap<>();
+	private boolean defer;
 
 	public AutoTrackLifecycleListener(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -94,7 +96,7 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 
 		final Date changed = new Date();
 		final Object oid = JDOHelper.getObjectId(pc);
-		if (oid != null) { // in preStore(...), there is no OID, yet.
+		if (!defer && oid != null) { // in preStore(...), there is no OID, yet.
 			final Date oldLastChanged = oid2LastChanged.get(oid);
 			oid2LastChanged.put(oid, changed); // always keep the newest changed-timestamp.
 
@@ -116,20 +118,34 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		}
 	}
 
-	public void flush() {
+	public void onBegin() {
+		defer = true;
+	}
+
+	public void onCommit() {
+		defer = false;
 		final long start = System.currentTimeMillis();
 		final PersistenceManager pm = transaction.getPersistenceManager();
 		for (final Map.Entry<Object, Date> me : oid2LastChanged.entrySet()) {
-			final Object pc = pm.getObjectById(me.getKey());
-			if (pc instanceof AutoTrackChanged) {
-				final Date changed = me.getValue();
-				logger.debug("flush: setChanged({}) for {}", changed, pc);
-				final AutoTrackChanged entity = (AutoTrackChanged) pc;
-				entity.setChanged(changed);
+			try {
+				final Object pc = pm.getObjectById(me.getKey());
+				if (pc instanceof AutoTrackChanged) {
+					final Date changed = me.getValue();
+					logger.debug("flush: setChanged({}) for {}", changed, pc);
+					final AutoTrackChanged entity = (AutoTrackChanged) pc;
+					entity.setChanged(changed);
+				}
+			} catch (JDOObjectNotFoundException x) {
+				logger.warn("close: " + x, x);
 			}
 		}
 		final int oid2LastChangedSize = oid2LastChanged.size();
 		oid2LastChanged.clear();
-		logger.info("flush: took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
+		logger.info("close: Deferred operations took {} ms for {} entities.", System.currentTimeMillis() - start, oid2LastChangedSize);
+	}
+
+	public void onRollback() {
+		defer = false;
+		oid2LastChanged.clear();
 	}
 }

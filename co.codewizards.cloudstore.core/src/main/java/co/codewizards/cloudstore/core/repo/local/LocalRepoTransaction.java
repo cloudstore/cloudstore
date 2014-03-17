@@ -42,6 +42,7 @@ public class LocalRepoTransaction {
 		hookLifecycleListeners();
 		jdoTransaction = persistenceManager.currentTransaction();
 		jdoTransaction.begin();
+		autoTrackLifecycleListener.onBegin();
 	}
 
 	private void hookLifecycleListeners() {
@@ -52,7 +53,7 @@ public class LocalRepoTransaction {
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
-		autoTrackLifecycleListener.flush();
+		autoTrackLifecycleListener.onCommit();
 		persistenceManager.flush();
 		jdoTransaction.commit();
 		persistenceManager.close();
@@ -70,6 +71,7 @@ public class LocalRepoTransaction {
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		autoTrackLifecycleListener.onRollback();
 		jdoTransaction.rollback();
 		persistenceManager.close();
 		jdoTransaction = null;
