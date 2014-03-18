@@ -127,7 +127,11 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 				System.out.println(String.format("Syncing %s ('%s') with %s ('%s').", repositoryId, localRoot, remoteRepositoryId, remoteRoot));
 				System.out.println("********************************************************************************");
 				RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot);
-				repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+				try {
+					repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+				} finally {
+					repoToRepoSync.close();
+				}
 			}
 		}
 	}

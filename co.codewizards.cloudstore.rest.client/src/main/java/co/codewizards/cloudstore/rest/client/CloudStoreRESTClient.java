@@ -728,7 +728,7 @@ public class CloudStoreRESTClient {
 		if (clientRef == null)
 			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() called more often than acquireClient())!");
 
-		if (--clientRef.refCount < 1) {
+		if (--clientRef.refCount == 0) {
 			clientThreadLocal.remove();
 			clientCache.add(clientRef.client);
 		}
