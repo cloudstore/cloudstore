@@ -343,6 +343,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 						try { Thread.sleep(500 + tryCount * 1000); } catch (InterruptedException ie) { doNothing(); }
 						System.gc();
 					}
+
+					logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
+					try {
+						new RepairDatabase(getLocalRoot()).run();
+					} catch (Exception repairDatabaseException) {
+						logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
+					}
 				}
 			} finally {
 				if (pm != null)
