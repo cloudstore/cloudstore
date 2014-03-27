@@ -301,7 +301,7 @@ public final class IOUtil {
 	public static long transferStreamData(InputStream in, OutputStream out, long inputOffset, long inputLen, ProgressMonitor monitor)
 	throws java.io.IOException
 	{
-		byte[] buf = new byte[4096];
+		final byte[] buf = new byte[4 * 4096];
 
 		if (monitor!= null) {
 			if (inputLen < 0)

@@ -79,7 +79,7 @@ public final class HashUtil {
 	}
 
 	public static byte[] hash(String algorithm, InputStream in, ProgressMonitor monitor) throws NoSuchAlgorithmException, IOException {
-		monitor.beginTask("SHA1", Math.max(1, in.available()));
+		monitor.beginTask(algorithm, Math.max(1, in.available()));
 		try {
 			MessageDigest md = MessageDigest.getInstance(algorithm);
 			byte[] data = new byte[10240];

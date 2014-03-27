@@ -312,7 +312,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	}
 
-	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(boolean createRepository) {
+	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(final boolean createRepository) {
 		final int maxRetryCount = 10;
 		int tryCount = 0;
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
@@ -344,11 +344,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 						System.gc();
 					}
 
-					logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
-					try {
-						new RepairDatabase(getLocalRoot()).run();
-					} catch (Exception repairDatabaseException) {
-						logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
+					if (createRepository)
+						deleteDerbyDatabaseDirectory();
+					else {
+						logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
+						try {
+							new RepairDatabase(getLocalRoot()).run();
+						} catch (Exception repairDatabaseException) {
+							logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
+						}
 					}
 				}
 			} finally {
@@ -356,6 +360,23 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					pm.close();
 			}
 		} while (persistenceManagerFactory == null);
+	}
+
+	/**
+	 * @deprecated temporary workaround for https://github.com/cloudstore/main/issues/10
+	 */
+	@Deprecated
+	private void deleteDerbyDatabaseDirectory() {
+		final String connectionURL = this.connectionURL;
+		if (connectionURL == null)
+			throw new IllegalStateException("connectionURL == null");
+
+		if (!connectionURL.startsWith("jdbc:derby:"))
+			throw new IllegalStateException("connectionURL does not start with 'jdbc:': " + connectionURL);
+
+		final File dir = new File(connectionURL.substring(5));
+		logger.info("[%s]deleteDerbyDatabaseDirectory: {}", id, dir);
+		IOUtil.deleteDirectoryRecursively(dir);
 	}
 
 	private static final void doNothing() { }

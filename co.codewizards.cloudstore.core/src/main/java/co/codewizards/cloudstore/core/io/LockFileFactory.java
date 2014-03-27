@@ -8,6 +8,12 @@ import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Factory creating {@link LockFile} instances.
+ * <p>
+ * All methods of this class are thread-safe.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class LockFileFactory {
 
 	private static class LockFileFactoryHolder {
@@ -28,7 +34,14 @@ public class LockFileFactory {
 	 * Acquire an exclusive lock on the specified file.
 	 * <p>
 	 * <b>Important:</b> You <i>must</i> invoke {@link LockFile#release()} on the returned object! Use a try-finally-block
-	 * to ensure it. If the JVM is interrupted or shut down before {@code release()}, the file-lock is released by the
+	 * to ensure it:
+	 * <pre>  LockFile lockFile = LockFileFactory.acquire(theFile, theTimeout);
+	 *  try {
+	 *    // do something
+	 *  } finally {
+	 *    lockFile.release();
+	 *  }</pre>
+	 * If the JVM is interrupted or shut down before {@code release()}, the file-lock is released by the
 	 * operating system, but a missing {@code release()} causes the file to be locked for the entire remaining runtime
 	 * of the JVM!
 	 * <p>
@@ -36,12 +49,19 @@ public class LockFileFactory {
 	 * Multiple {@link LockFile}s on the same {@link File} are possible within the same JVM! This locking mechanism
 	 * only locks against separate processes! Since this implementation is based on {@link FileLock}, please consult
 	 * its Javadoc for further information.
-	 * @param file the file to be locked. Must not be <code>null</code>.
+	 * <p>
+	 * Multiple invocations of this method on the same given {@code file} return multiple different {@code LockFile} instances.
+	 * The actual lock is held until the last {@code LockFile} instance was {@linkplain LockFile#release() released}.
+	 * <p>
+	 * This method is thread-safe.
+	 * @param file the file to be locked. Must not be <code>null</code>. If this file does not exist in the file system,
+	 * it is created by this method.
 	 * @param timeoutMillis the timeout to wait for the lock to be acquired in milliseconds. The value 0 means to
 	 * wait forever.
 	 * @return the {@code LockFile}. Never <code>null</code>. This <i>must</i> be {@linkplain FileLock#release() released}
 	 * (use a try-finally-block)!
 	 * @throws TimeoutException if the {@code LockFile} could not be acquired within the timeout specified by {@code timeoutMillis}.
+	 * @see LockFile#release()
 	 */
 	public LockFile acquire(File file, long timeoutMillis) throws TimeoutException {
 		assertNotNull("file", file);

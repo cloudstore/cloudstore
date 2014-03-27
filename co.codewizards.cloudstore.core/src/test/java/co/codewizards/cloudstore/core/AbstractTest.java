@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -57,6 +58,10 @@ public abstract class AbstractTest {
 	@Before
 	public void before() {
 		localRoot2FilesInRepo.clear();
+	}
+
+	@After
+	public void after() {
 	}
 
 	protected File createDirectory(File parent, String name) throws IOException {

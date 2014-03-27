@@ -84,6 +84,14 @@ class LockFileImpl implements LockFile {
 		}
 	}
 
+	/**
+	 * Releases the lock.
+	 * <p>
+	 * <b>Important:</b> In contrast to the documentation of the API method {@link LockFile#release()}, the
+	 * implementation of this method in {@link LockFileImpl} is invoked multiple times: Once
+	 * for every {@link LockFile}-API-instance (i.e. {@link LockFileProxy} instance). The actual implementation
+	 * uses reference-counting to know when to release the real, underlying lock.
+	 */
 	@Override
 	public void release() {
 		logger.trace("[{}]release: entered. lockCounter={}", thisID, lockCounter);

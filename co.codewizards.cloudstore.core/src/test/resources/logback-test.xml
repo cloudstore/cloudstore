@@ -22,12 +22,13 @@
 	<logger name="DataNucleus.Datastore.Schema" level="INFO" />
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	<logger name="DataNucleus.Query" level="INFO" />
-	-->
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
+	-->
 	<!-- END DataNucleus -->
 
 	<logger name="co.codewizards.cloudstore.core.repo.sync" level="ALL" />
 	<logger name="co.codewizards.cloudstore.core.persistence" level="ALL" />
+	<logger name="co.codewizards.cloudstore.core.repo.transport.file.FileRepoTransport" level="ALL" />
 
 	<!-- The level of the root logger is set to DEBUG by default. But we want to be able to change it here. -->
 	<!--

@@ -15,6 +15,8 @@ public class NormalFileDTO extends RepoFileDTO {
 
 	private List<FileChunkDTO> fileChunkDTOs;
 
+	private List<FileChunkDTO> tempFileChunkDTOs;
+
 	/**
 	 * Gets the file size in bytes.
 	 * <p>
@@ -46,5 +48,15 @@ public class NormalFileDTO extends RepoFileDTO {
 	}
 	public void setFileChunkDTOs(List<FileChunkDTO> fileChunkDTOs) {
 		this.fileChunkDTOs = fileChunkDTOs;
+	}
+
+	public List<FileChunkDTO> getTempFileChunkDTOs() {
+		if (tempFileChunkDTOs == null)
+			tempFileChunkDTOs = new ArrayList<FileChunkDTO>();
+
+		return tempFileChunkDTOs;
+	}
+	public void setTempFileChunkDTOs(List<FileChunkDTO> tempFileChunkDTOs) {
+		this.tempFileChunkDTOs = tempFileChunkDTOs;
 	}
 }

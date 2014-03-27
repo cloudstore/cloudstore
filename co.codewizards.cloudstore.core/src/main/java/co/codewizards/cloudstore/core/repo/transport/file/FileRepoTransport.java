@@ -2,14 +2,23 @@ package co.codewizards.cloudstore.core.repo.transport.file;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +26,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
@@ -25,6 +36,7 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
@@ -62,6 +74,8 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoSync;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
+import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
+import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class FileRepoTransport extends AbstractRepoTransport {
@@ -421,10 +435,24 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	private FileChunkDTO toFileChunkDTO(FileChunk fileChunk) {
-		FileChunkDTO fileChunkDTO = new FileChunkDTO();
+		final FileChunkDTO fileChunkDTO = new FileChunkDTO();
 		fileChunkDTO.setOffset(fileChunk.getOffset());
 		fileChunkDTO.setLength(fileChunk.getLength());
 		fileChunkDTO.setSha1(fileChunk.getSha1());
+		return fileChunkDTO;
+	}
+
+	private FileChunkDTO toTempFileChunkDTO(final long offset, final File tempChunkFile, final File sha1File) {
+		final FileChunkDTO fileChunkDTO = new FileChunkDTO();
+		fileChunkDTO.setOffset(offset);
+
+		final long tempChunkFileLength = tempChunkFile.length();
+		if (tempChunkFileLength > Integer.MAX_VALUE)
+			throw new IllegalStateException("tempChunkFile.length > Integer.MAX_VALUE");
+
+		fileChunkDTO.setLength((int) tempChunkFileLength);
+		final String sha1 = readSha1File(sha1File);
+		fileChunkDTO.setSha1(sha1);
 		return fileChunkDTO;
 	}
 
@@ -591,6 +619,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				for (FileChunk fileChunk : fileChunks) {
 					normalFileDTO.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
 				}
+
+				final File file = repoFile.getFile(getLocalRepoManager().getLocalRoot());
+				final Map<Long, File> offset2TempChunkFileMap = getOffset2TempChunkFileMap(file);
+				for (Map.Entry<Long, File> me : offset2TempChunkFileMap.entrySet()) {
+					final File tempChunkFile = me.getValue();
+					final File sha1File = getSha1File(tempChunkFile);
+					if (sha1File.exists())
+						normalFileDTO.getTempFileChunkDTOs().add(toTempFileChunkDTO(me.getKey(), tempChunkFile, sha1File));
+				}
 			}
 		}
 		else if (repoFile instanceof Directory) {
@@ -720,12 +757,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void beginPutFile(String path) {
 		path = prefixPath(path);
-		File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		File parentFile = file.getParentFile();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final File parentFile = file.getParentFile();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 			try {
 				if (file.exists() && !file.isFile())
 					file.renameTo(IOUtil.createCollisionFile(file));
@@ -733,7 +770,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				if (file.exists() && !file.isFile())
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
-				File localRoot = getLocalRepoManager().getLocalRoot();
+				final File localRoot = getLocalRepoManager().getLocalRoot();
 				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 
 				boolean newFile = false;
@@ -752,18 +789,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				// A complete sync run might take very long. Therefore, we better update our local meta-data
 				// *immediately* before beginning the sync of this file and before detecting a collision.
 				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.
-				RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+				final RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
 				transaction.getPersistenceManager().flush();
 
-				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				deleteTempChunkFilesWithoutSha1File(getOffset2TempChunkFileMap(file).values());
+
+				final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 				if (repoFile == null)
 					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
 
 				if (!(repoFile instanceof NormalFile))
 					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a NormalFile for file: " + file);
 
-				NormalFile normalFile = (NormalFile) repoFile;
+				final NormalFile normalFile = (NormalFile) repoFile;
 
 				if (!newFile && !normalFile.isInProgress())
 					detectAndHandleFileCollision(transaction, clientRepositoryId, file, normalFile);
@@ -883,82 +922,455 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void putFileData(String path, long offset, byte[] fileData) {
+	public void putFileData(String path, final long offset, final byte[] fileData) {
 		path = prefixPath(path);
-		File file = getFile(path);
-		File localRoot = getLocalRepoManager().getLocalRoot();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); // It writes into the file system, but it only reads from the DB.
+		final File file = getFile(path);
+		final File parentFile = file.getParentFile();
+		final File localRoot = getLocalRepoManager().getLocalRoot();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); // It writes into the file system, but it only reads from the DB.
 		try {
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
-			if (repoFile == null)
-				throw new IllegalStateException("No RepoFile found for file: " + file);
-
-			if (!(repoFile instanceof NormalFile))
-				throw new IllegalStateException("RepoFile is not an instance of NormalFile for file: " + file);
-
-			NormalFile normalFile = (NormalFile) repoFile;
-			if (!normalFile.isInProgress())
-				throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
-						repoFile, file));
-
+			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 			try {
-				RandomAccessFile raf = new RandomAccessFile(file, "rw");
-				try {
-					raf.seek(offset);
-					raf.write(fileData);
-				} finally {
-					raf.close();
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+				RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
+				if (repoFile == null)
+					throw new IllegalStateException("No RepoFile found for file: " + file);
 
+				if (!(repoFile instanceof NormalFile))
+					throw new IllegalStateException("RepoFile is not an instance of NormalFile for file: " + file);
+
+				NormalFile normalFile = (NormalFile) repoFile;
+				if (!normalFile.isInProgress())
+					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+							repoFile, file));
+
+				final FileWriteStrategy fileWriteStrategy = getFileWriteStrategy(file);
+				switch (fileWriteStrategy) {
+					case directDuringTransfer:
+						writeFileDataToDestFile(file, offset, fileData);
+						break;
+					case directAfterTransfer:
+					case replaceAfterTransfer:
+						writeFileDataToTempChunkFile(file, offset, fileData);
+						break;
+					default:
+						throw new IllegalStateException("Unknown fileWriteStrategy: " + fileWriteStrategy);
+				}
+			} finally {
+				if (parentFileLastModified != Long.MIN_VALUE)
+					parentFile.setLastModified(parentFileLastModified);
+			}
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
 		}
 	}
 
+	private void writeTempChunkFileToDestFile(final File destFile, final long offset, final File tempChunkFile) {
+		assertNotNull("destFile", destFile);
+		assertNotNull("tempChunkFile", tempChunkFile);
+		final byte[] fileData = new byte[(int) tempChunkFile.length()];
+		try {
+			final InputStream in = new FileInputStream(tempChunkFile);
+			try {
+				int off = 0;
+				while (off < fileData.length) {
+					final int bytesRead = in.read(fileData, off, fileData.length - off);
+					if (bytesRead > 0) {
+						off += bytesRead;
+					}
+					else if (bytesRead < 0) {
+						throw new IllegalStateException("InputStream ended before expected file length!");
+					}
+				}
+				if (off > fileData.length || in.read() != -1)
+					throw new IllegalStateException("InputStream contained more data than expected file length!");
+			} finally {
+				in.close();
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		final File sha1File = getSha1File(tempChunkFile);
+		if (!sha1File.exists())
+			throw new IllegalStateException("There is no SHA1-file for temporary chunk-file: " + tempChunkFile.getAbsolutePath());
+
+		final String sha1FromSha1File = readSha1File(sha1File);
+		final String sha1FromFileData = sha1(fileData);
+
+		logger.trace("writeTempChunkFileToDestFile: Read {} bytes with SHA1 '{}' from '{}'.", fileData.length, sha1FromFileData, tempChunkFile.getAbsolutePath());
+
+		if (!sha1FromFileData.equals(sha1FromSha1File))
+			throw new IllegalStateException("SHA1 mismatch! Corrupt temporary chunk file or corresponding SHA1 file: " + tempChunkFile.getAbsolutePath());
+
+		writeFileDataToDestFile(destFile, offset, fileData);
+	}
+
+	private void writeFileDataToDestFile(final File destFile, final long offset, final byte[] fileData) {
+		assertNotNull("destFile", destFile);
+		assertNotNull("fileData", fileData);
+		try {
+			final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+			try {
+				raf.seek(offset);
+				raf.write(fileData);
+			} finally {
+				raf.close();
+			}
+			logger.trace("writeFileDataToDestFile: Wrote {} bytes at offset {} to '{}'.", fileData.length, offset, destFile.getAbsolutePath());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void writeFileDataToTempChunkFile(final File destFile, final long offset, final byte[] fileData) {
+		assertNotNull("destFile", destFile);
+		assertNotNull("fileData", fileData);
+		final File sha1File;
+		try {
+			final File tempChunkFile = createTempChunkFile(destFile, offset);
+			sha1File = getSha1File(tempChunkFile);
+			final FileOutputStream out = new FileOutputStream(tempChunkFile);
+			try {
+				out.write(fileData);
+			} finally {
+				out.close();
+			}
+			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes to '{}'.", fileData.length, tempChunkFile.getAbsolutePath());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		final String sha1 = sha1(fileData);
+		writeSha1File(sha1File, sha1);
+		logger.trace("writeFileDataToTempChunkFile: Wrote SHA1 '{}' to '{}'.", sha1, sha1File.getAbsolutePath());
+	}
+
+	private void writeSha1File(final File sha1File, final String sha1) {
+		try {
+			final Writer w = new OutputStreamWriter(new FileOutputStream(sha1File), "UTF-8");
+			try {
+				w.write(sha1);
+			} finally {
+				w.close();
+			}
+			logger.trace("writeSha1File: sha1='{}' sha1File='{}'", sha1, sha1File.getAbsolutePath());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private String readSha1File(final File sha1File) {
+		try {
+			final String sha1;
+			final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(sha1File), "UTF-8"));
+			try {
+				sha1 = r.readLine();
+			} finally {
+				r.close();
+			}
+			logger.trace("readSha1File: sha1='{}' sha1File='{}'", sha1, sha1File.getAbsolutePath());
+			return sha1;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void deleteTempChunkFilesWithoutSha1File(Collection<File> tempChunkFiles) {
+		for (File tempChunkFile : tempChunkFiles) {
+			if (!getSha1File(tempChunkFile).exists()) {
+				logger.warn("getOffset2TempFileMap: No SHA1-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
+				deleteOrFail(tempChunkFile);
+				continue;
+			}
+		}
+	}
+
+	private Map<Long, File> getOffset2TempChunkFileMap(final File destFile) {
+		final File[] tempFiles = getTempDir(destFile).listFiles();
+		if (tempFiles == null)
+			return Collections.emptyMap();
+
+		final String destFileName = destFile.getName();
+		final Map<Long, File> result = new TreeMap<Long, File>();
+		for (final File tempFile : tempFiles) {
+			final String tempFileName = tempFile.getName();
+			if (!tempFileName.startsWith(TEMP_CHUNK_FILE_PREFIX) || tempFileName.endsWith(TEMP_SHA1_FILE_SUFFIX))
+				continue;
+
+			final int lastUnderscoreIndex = tempFileName.lastIndexOf('_');
+			if (lastUnderscoreIndex < 0)
+				throw new IllegalStateException("lastUnderscoreIndex < 0 :: tempFileName='" + tempFileName + '\'');
+
+			final String tempFileDestFileName = tempFileName.substring(TEMP_CHUNK_FILE_PREFIX.length(), lastUnderscoreIndex);
+			if (!destFileName.equals(tempFileDestFileName))
+				continue;
+
+			final String offsetStr = tempFileName.substring(lastUnderscoreIndex + 1);
+			final Long offset = Long.valueOf(offsetStr);
+			result.put(offset, tempFile);
+		}
+		return Collections.unmodifiableMap(result);
+	}
+
+	private File getSha1File(File file) {
+		return new File(file.getParentFile(), file.getName() + TEMP_SHA1_FILE_SUFFIX);
+	}
+
+	private String sha1(byte[] data) {
+		assertNotNull("data", data);
+		try {
+			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
+			return HashUtil.encodeHexStr(hash);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private synchronized File createTempChunkFile(final File destFile, final long offset) {
+		final File tempDir = getTempDir(destFile);
+		tempDir.mkdir();
+		if (!tempDir.isDirectory())
+			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
+
+		final File tempFile = new File(tempDir, String.format("%s%s_%d", TEMP_CHUNK_FILE_PREFIX, destFile.getName(), offset));
+		try {
+			tempFile.createNewFile();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return tempFile;
+	}
+
+	private static final String TEMP_CHUNK_FILE_PREFIX = "chunk_";
+	private static final String TEMP_SHA1_FILE_SUFFIX = ".sha1";
+
+	/**
+	 * Deletes the {@linkplain #getTempDir(File) temporary directory} for the given {@code destFile},
+	 * if this directory is empty.
+	 * <p>
+	 * This method is synchronized to prevent it from colliding with {@link #createTempChunkFile(File, long)}
+	 * which first creates the temporary directory and then the file in it. Without synchronisation, the
+	 * newly created directory might be deleted by this method, before the temporary file in it is created.
+	 * @param destFile the destination file for which to resolve and delete the temporary directory.
+	 * Must not be <code>null</code>.
+	 */
+	private synchronized void deleteTempDirIfEmpty(final File destFile) {
+		final File tempDir = getTempDir(destFile);
+		tempDir.delete(); // deletes only empty directories ;-)
+	}
+
+	private File getTempDir(final File destFile) {
+		assertNotNull("destFile", destFile);
+		final File parentDir = destFile.getParentFile();
+		return new File(parentDir, LocalRepoManager.TEMP_DIR_NAME);
+	}
+
+	private final Map<File, FileWriteStrategy> file2FileWriteStrategy = new WeakHashMap<>();
+
+	private FileWriteStrategy getFileWriteStrategy(File file) {
+		assertNotNull("file", file);
+		synchronized (file2FileWriteStrategy) {
+			FileWriteStrategy fileWriteStrategy = file2FileWriteStrategy.get(file);
+			if (fileWriteStrategy == null) {
+				fileWriteStrategy = Config.getInstanceForFile(file).getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.CONFIG_DEFAULT_VALUE);
+				file2FileWriteStrategy.put(file, fileWriteStrategy);
+			}
+			return fileWriteStrategy;
+		}
+	}
+
 	@Override
-	public void endPutFile(String path, Date lastModified, long length) {
+	public void endPutFile(String path, final Date lastModified, final long length) {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
-		File file = getFile(path);
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final File file = getFile(path);
+		final File parentFile = file.getParentFile();
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
-			if (!(repoFile instanceof NormalFile)) {
-				throw new IllegalStateException(String.format("RepoFile is not an instance of NormalFile! repoFile=%s file=%s",
-						repoFile, file));
-			}
-
-			NormalFile normalFile = (NormalFile) repoFile;
-			if (!normalFile.isInProgress())
-				throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
-						repoFile, file));
-
+			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 			try {
-				RandomAccessFile raf = new RandomAccessFile(file, "rw");
-				try {
-					raf.setLength(length);
-				} finally {
-					raf.close();
+				final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+				if (!(repoFile instanceof NormalFile)) {
+					throw new IllegalStateException(String.format("RepoFile is not an instance of NormalFile! repoFile=%s file=%s",
+							repoFile, file));
 				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+
+				final NormalFile normalFile = (NormalFile) repoFile;
+				if (!normalFile.isInProgress())
+					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+							repoFile, file));
+
+				final File destFile = (getFileWriteStrategy(file) == FileWriteStrategy.replaceAfterTransfer
+						? new File(file.getParentFile(), ".cloudstore-new_" + file.getName()) : file);
+
+				final InputStream fileIn;
+				if (destFile != file) {
+					try {
+						fileIn = new FileInputStream(file);
+						destFile.createNewFile();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				else
+					fileIn = null;
+
+				long destFileWriteOffset = 0;
+				final Map<Long, File> offset2TempChunkFileMap = getOffset2TempChunkFileMap(file);
+				for (final Map.Entry<Long, File> me : offset2TempChunkFileMap.entrySet()) { // they are sorted by offset (ascending)
+					final long offset = me.getKey();
+					final File tempChunkFile = me.getValue();
+
+					if (fileIn != null) {
+						// The following might fail, if *file* was truncated during the transfer. In this case,
+						// throwing an exception now is probably the best choice as the next sync run will
+						// continue cleanly.
+						writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, offset - destFileWriteOffset);
+						final long tempChunkFileLength = tempChunkFile.length();
+						skipOrFail(fileIn, tempChunkFileLength); // skipping beyond the EOF is supported by the FileInputStream according to Javadoc.
+						destFileWriteOffset = offset + tempChunkFileLength;
+					}
+					writeTempChunkFileToDestFile(destFile, offset, tempChunkFile);
+				}
+
+				if (fileIn != null && destFileWriteOffset < length)
+					writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, length - destFileWriteOffset);
+
+				try {
+					final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+					try {
+						raf.setLength(length);
+					} finally {
+						raf.close();
+					}
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+				if (destFile != file) {
+					deleteOrFail(file);
+					destFile.renameTo(file);
+					if (!file.exists())
+						throw new IllegalStateException(String.format("Renaming the file from '%s' to '%s' failed: The destination file does not exist.", destFile.getAbsolutePath(), file.getAbsolutePath()));
+
+					if (destFile.exists())
+						throw new IllegalStateException(String.format("Renaming the file from '%s' to '%s' failed: The source file still exists.", destFile.getAbsolutePath(), file.getAbsolutePath()));
+				}
+
+				deleteTempChunkFiles(offset2TempChunkFileMap.values());
+				deleteTempDirIfEmpty(file);
+
+				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				file.setLastModified(lastModified.getTime());
+				localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
+				normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
+				normalFile.setInProgress(false);
+
+				logger.trace("endPutFile: Committing: sha1='{}' file='{}'", normalFile.getSha1(), file);
+			} finally {
+				if (parentFileLastModified != Long.MIN_VALUE)
+					parentFile.setLastModified(parentFileLastModified);
 			}
-
-			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-			file.setLastModified(lastModified.getTime());
-			localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
-			normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
-			normalFile.setInProgress(false);
-
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
+		}
+	}
+
+	private void deleteTempChunkFiles(Collection<File> tempChunkFiles) {
+		for (File tempChunkFile : tempChunkFiles) {
+			final File sha1File = getSha1File(tempChunkFile);
+			deleteOrFail(sha1File);
+			deleteOrFail(tempChunkFile);
+		}
+	}
+
+	private void deleteOrFail(File file) {
+		file.delete();
+		if (file.exists())
+			throw new IllegalStateException("Could not delete file (it still exists after deletion): " + file);
+	}
+
+	/**
+	 * Skip the given {@code length} number of bytes.
+	 * <p>
+	 * Because {@link InputStream#skip(long)} and {@link FileInputStream#skip(long)} are both documented to skip
+	 * over less than the requested number of bytes "for a number of reasons", this method invokes the underlying
+	 * skip(...) method multiple times until either EOF is reached or the requested number of bytes was skipped.
+	 * In case of EOF, an
+	 * @param in the {@link InputStream} to be skipped. Must not be <code>null</code>.
+	 * @param length the number of bytes to be skipped. Must not be negative (i.e. <code>length &gt;= 0</code>).
+	 */
+	private void skipOrFail(InputStream in, long length) {
+		assertNotNull("in", in);
+		if (length < 0)
+			throw new IllegalArgumentException("length < 0");
+
+		long skipped = 0;
+		int skippedNowWas0Counter = 0;
+		while (skipped < length) {
+			final long toSkip = length - skipped;
+			try {
+				final long skippedNow = in.skip(toSkip);
+				if (skippedNow < 0)
+					throw new IOException("in.skip(" + toSkip + ") returned " + skippedNow);
+
+				if (skippedNow == 0) {
+					if (++skippedNowWas0Counter >= 5) {
+						throw new IOException(String.format(
+								"Could not skip %s consecutive times!", skippedNowWas0Counter));
+					}
+				}
+				else
+					skippedNowWas0Counter = 0;
+
+				skipped += skippedNow;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private void writeFileDataToDestFile(final File destFile, final long offset, final InputStream in, final long length) {
+		assertNotNull("destFile", destFile);
+		assertNotNull("in", in);
+		if (offset < 0)
+			throw new IllegalArgumentException("offset < 0");
+
+		if (length == 0)
+			return;
+
+		if (length < 0)
+			throw new IllegalArgumentException("length < 0");
+
+		long lengthDone = 0;
+
+		try {
+			final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+			try {
+				raf.seek(offset);
+
+				final byte[] buf = new byte[200 * 1024];
+
+				while (lengthDone < length) {
+					final long len = Math.min(length - lengthDone, buf.length);
+					final int bytesRead = in.read(buf, 0, (int)len);
+					if (bytesRead > 0) {
+						raf.write(buf, 0, bytesRead);
+						lengthDone += bytesRead;
+					}
+					else if (bytesRead < 0)
+						throw new IOException("Premature end of stream!");
+				}
+			} finally {
+				raf.close();
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

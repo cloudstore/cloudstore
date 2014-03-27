@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.equal;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -446,10 +445,10 @@ public class RepoToRepoSync {
 	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			String path = repoFileDTOTreeNode.getPath();
+			final String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
 
-			RepoFileDTO fromRepoFileDTO = fromRepoTransport.getRepoFileDTO(path);
+			final RepoFileDTO fromRepoFileDTO = fromRepoTransport.getRepoFileDTO(path);
 			if (fromRepoFileDTO == null) {
 				logger.warn("File was deleted during sync on source side: {}", path);
 				return;
@@ -462,14 +461,18 @@ public class RepoToRepoSync {
 
 			NormalFileDTO fromNormalFileDTO = (NormalFileDTO) fromRepoFileDTO;
 
-			RepoFileDTO toRepoFileDTO = toRepoTransport.getRepoFileDTO(path);
+			final RepoFileDTO toRepoFileDTO = toRepoTransport.getRepoFileDTO(path);
 			if (areFilesExistingAndEqual(fromRepoFileDTO, toRepoFileDTO)) {
-				logger.info("File is already equal on destination side: {}", path);
+				logger.info("File is already equal on destination side (sha1='{}'): {}", fromNormalFileDTO.getSha1(), path);
 				return;
 			}
 			monitor.worked(10);
 
-			NormalFileDTO toNormalFileDTO;
+			logger.info("Beginning to copy file (from.sha1='{}' to.sha1='{}'): {}", fromNormalFileDTO.getSha1(),
+					toRepoFileDTO instanceof NormalFileDTO ? ((NormalFileDTO)toRepoFileDTO).getSha1() : "<NoInstanceOf_NormalFileDTO>",
+							path);
+
+			final NormalFileDTO toNormalFileDTO;
 			if (toRepoFileDTO instanceof NormalFileDTO)
 				toNormalFileDTO = (NormalFileDTO) toRepoFileDTO;
 			else
@@ -486,12 +489,16 @@ public class RepoToRepoSync {
 			}
 			monitor.worked(1);
 
+			final Map<Long, FileChunkDTO> offset2ToTempFileChunkDTO = new HashMap<>(toNormalFileDTO.getTempFileChunkDTOs().size());
+			for (FileChunkDTO toTempFileChunkDTO : toNormalFileDTO.getTempFileChunkDTOs())
+				offset2ToTempFileChunkDTO.put(toTempFileChunkDTO.getOffset(), toTempFileChunkDTO);
+
 			logger.debug("Comparing {} FileChunkDTOs. path='{}'", fromNormalFileDTO.getFileChunkDTOs().size(), path);
-			List<FileChunkDTO> fromFileChunkDTOsDirty = new ArrayList<FileChunkDTO>();
-			Iterator<FileChunkDTO> toFileChunkDTOIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
+			final List<FileChunkDTO> fromFileChunkDTOsDirty = new ArrayList<FileChunkDTO>();
+			final Iterator<FileChunkDTO> toFileChunkDTOIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
 			int fileChunkIndex = -1;
-			for (FileChunkDTO fromFileChunkDTO : fromNormalFileDTO.getFileChunkDTOs()) {
-				FileChunkDTO toFileChunkDTO = toFileChunkDTOIterator.hasNext() ? toFileChunkDTOIterator.next() : null;
+			for (final FileChunkDTO fromFileChunkDTO : fromNormalFileDTO.getFileChunkDTOs()) {
+				final FileChunkDTO toFileChunkDTO = toFileChunkDTOIterator.hasNext() ? toFileChunkDTOIterator.next() : null;
 				++fileChunkIndex;
 				if (toFileChunkDTO != null
 						&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
@@ -503,6 +510,19 @@ public class RepoToRepoSync {
 					}
 					continue;
 				}
+
+				final FileChunkDTO toTempFileChunkDTO = offset2ToTempFileChunkDTO.get(fromFileChunkDTO.getOffset());
+				if (toTempFileChunkDTO != null
+						&& equal(fromFileChunkDTO.getOffset(), toTempFileChunkDTO.getOffset())
+						&& equal(fromFileChunkDTO.getLength(), toTempFileChunkDTO.getLength())
+						&& equal(fromFileChunkDTO.getSha1(), toTempFileChunkDTO.getSha1())) {
+					if (logger.isTraceEnabled()) {
+						logger.trace("Skipping clean temporary FileChunkDTO. index={} offset={} sha1='{}'",
+								fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+					}
+					continue;
+				}
+
 				if (logger.isTraceEnabled()) {
 					logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
 							fileChunkIndex, fromFileChunkDTO.getOffset(),
