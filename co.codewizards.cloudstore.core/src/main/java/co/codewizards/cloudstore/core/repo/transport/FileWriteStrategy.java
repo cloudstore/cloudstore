@@ -42,6 +42,6 @@ public enum FileWriteStrategy {
 	/**
 	 * The {@code defaultValue} used with {@link Config#getPropertyAsEnum(String, Enum)}.
 	 */
-	public static final FileWriteStrategy CONFIG_DEFAULT_VALUE = replaceAfterTransfer;
+	public static final FileWriteStrategy CONFIG_DEFAULT_VALUE = directAfterTransfer;
 
 }
