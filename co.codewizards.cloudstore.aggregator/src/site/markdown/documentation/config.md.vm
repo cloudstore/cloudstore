@@ -14,7 +14,7 @@ Many settings can be specified on multiple levels:
 * per directory
 * per file
 
-The more specific level can override individual settings otherwise inherited from the parent's configuration.
+The more specific level can override individual settings otherwise inherited from the parent\'s configuration.
 
 Every property file is optional. If it does not exist, all settings are inherited. If it does exist,
 only those properties contained in the file are overriden. All properties not contained in the file
