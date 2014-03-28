@@ -50,13 +50,13 @@ public class ConfigTest extends AbstractTest {
 
 		setGlobalProperty(testKey1, "testValueAAA");
 		value = globalConfig.getProperty(testKey1, null);
-		assertThat(value).isEqualTo("testValue1");
+		assertThat(value).isEqualTo("testValueAAA");
 
 		waitForDifferentLastModifiedTimestamp();
 
 		setGlobalProperty(testKey1, "testValueBBB");
 		value = globalConfig.getProperty(testKey1, null);
-		assertThat(value).isEqualTo("testValue2");
+		assertThat(value).isEqualTo("testValueBBB");
 	}
 
 	@Test
