@@ -500,27 +500,29 @@ public class RepoToRepoSync {
 			for (final FileChunkDTO fromFileChunkDTO : fromNormalFileDTO.getFileChunkDTOs()) {
 				final FileChunkDTO toFileChunkDTO = toFileChunkDTOIterator.hasNext() ? toFileChunkDTOIterator.next() : null;
 				++fileChunkIndex;
-				if (toFileChunkDTO != null
-						&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
-						&& equal(fromFileChunkDTO.getLength(), toFileChunkDTO.getLength())
-						&& equal(fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1())) {
-					if (logger.isTraceEnabled()) {
-						logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
-								fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
-					}
-					continue;
-				}
-
 				final FileChunkDTO toTempFileChunkDTO = offset2ToTempFileChunkDTO.get(fromFileChunkDTO.getOffset());
-				if (toTempFileChunkDTO != null
-						&& equal(fromFileChunkDTO.getOffset(), toTempFileChunkDTO.getOffset())
-						&& equal(fromFileChunkDTO.getLength(), toTempFileChunkDTO.getLength())
-						&& equal(fromFileChunkDTO.getSha1(), toTempFileChunkDTO.getSha1())) {
-					if (logger.isTraceEnabled()) {
-						logger.trace("Skipping clean temporary FileChunkDTO. index={} offset={} sha1='{}'",
-								fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+				if (toTempFileChunkDTO == null) {
+					if (toFileChunkDTO != null
+							&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
+							&& equal(fromFileChunkDTO.getLength(), toFileChunkDTO.getLength())
+							&& equal(fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1())) {
+						if (logger.isTraceEnabled()) {
+							logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
+									fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+						}
+						continue;
 					}
-					continue;
+				}
+				else {
+					if (equal(fromFileChunkDTO.getOffset(), toTempFileChunkDTO.getOffset())
+							&& equal(fromFileChunkDTO.getLength(), toTempFileChunkDTO.getLength())
+							&& equal(fromFileChunkDTO.getSha1(), toTempFileChunkDTO.getSha1())) {
+						if (logger.isTraceEnabled()) {
+							logger.trace("Skipping clean temporary FileChunkDTO. index={} offset={} sha1='{}'",
+									fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+						}
+						continue;
+					}
 				}
 
 				if (logger.isTraceEnabled()) {
