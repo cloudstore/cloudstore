@@ -7,17 +7,20 @@ Configuration
 
 $H$H$H Introduction
 
-CloudStore uses a properties-files-based, inheritable configuration. Many settings there can be configured on multiple levels:
+CloudStore can be configured using multiple [properties-files](http://en.wikipedia.org/wiki/.properties).
+Many settings can be specified on multiple levels:
 
 * globally (per user)
 * per directory
 * per file
 
+The more specific level can override individual settings otherwise inherited from the parent's configuration.
+
 Every property file is optional. If it does not exist, all settings are inherited. If it does exist,
 only those properties contained in the file are overriden. All properties not contained in the file
 are still inherited. Inheritance is thus applicable on every individual property.
 
-Modifications, deletions, creations of properties files are detected during runtime (pretty immediately).
+Creations, modifications and deletions of properties files are detected during runtime (pretty immediately).
 Note, that this detection is based on the files\' timestamps. Since most file systems have a granularity
 of 1 second (some even 2) for the last-modified-timestamp, multiple modifications in the same second might
 not be detected.
