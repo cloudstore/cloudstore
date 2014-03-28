@@ -24,7 +24,12 @@ Any question? Please check our [FAQ](./faq.html)! Maybe it\'s already answered t
 
 $H$H$H Security
 
-The [Security](./security.html) documentation explains how CloudStore secures your data. 
+The [Security](./security.html) documentation explains how CloudStore secures your data.
+
+
+$H$H$H Configuration
+
+On the page [Configuration](./config.html) you can find out how to fine-tune the behaviour of CloudStore.
 
 
 $H$H$H Development

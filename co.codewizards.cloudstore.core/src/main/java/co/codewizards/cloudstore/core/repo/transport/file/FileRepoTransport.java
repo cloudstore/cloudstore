@@ -2,17 +2,13 @@ package co.codewizards.cloudstore.core.repo.transport.file;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
-import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,6 +42,8 @@ import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
+import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDTOIO;
 import co.codewizards.cloudstore.core.persistence.CopyModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModification;
 import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
@@ -278,7 +276,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		File toParentFile = toFile.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
 			try {
 				try {
 					if (!toParentFile.isDirectory())
@@ -292,8 +290,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 				localRepoSync.sync(toFile, new NullProgressMonitor());
 			} finally {
-				if (toParentFileLastModified != Long.MIN_VALUE)
-					toParentFile.setLastModified(toParentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -319,8 +316,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		File toParentFile = toFile.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			long fromParentFileLastModified = fromParentFile.exists() ? fromParentFile.lastModified() : Long.MIN_VALUE;
-			long toParentFileLastModified = toParentFile.exists() ? toParentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(fromParentFile);
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
 			try {
 				try {
 					if (!toParentFile.isDirectory())
@@ -338,11 +335,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					localRepoSync.deleteRepoFile(repoFile);
 
 			} finally {
-				if (fromParentFileLastModified != Long.MIN_VALUE)
-					fromParentFile.setLastModified(fromParentFileLastModified);
-
-				if (toParentFileLastModified != Long.MIN_VALUE)
-					toParentFile.setLastModified(toParentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(fromParentFile);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -359,7 +353,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		File parentFile = file.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 				localRepoSync.sync(file, new NullProgressMonitor());
@@ -382,8 +376,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					delete(transaction, localRepoSync, clientRepositoryId, file);
 
 			} finally {
-				if (parentFileLastModified != Long.MIN_VALUE)
-					parentFile.setLastModified(parentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -442,7 +435,19 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return fileChunkDTO;
 	}
 
-	private FileChunkDTO toTempFileChunkDTO(final long offset, final File tempChunkFile, final File sha1File) {
+	/**
+	 * @param offset the offset in the (real) destination file (<i>not</i> in {@code tempChunkFile}! there the offset is always 0).
+	 * @param tempChunkFile the tempChunkFile containing the chunk's data. Must not be <code>null</code>.
+	 * @param sha1 the sha1 of the single chunk (in {@code tempChunkFile}). Must not be <code>null</code>.
+	 * @return the DTO. Never <code>null</code>.
+	 */
+	private TempChunkFileDTO createTempChunkFileDTO(final long offset, final File tempChunkFile, final String sha1) {
+		assertNotNull("tempChunkFile", tempChunkFile);
+		assertNotNull("sha1", sha1);
+
+		if (!tempChunkFile.exists())
+			throw new IllegalArgumentException("The tempChunkFile does not exist: " + tempChunkFile.getAbsolutePath());
+
 		final FileChunkDTO fileChunkDTO = new FileChunkDTO();
 		fileChunkDTO.setOffset(offset);
 
@@ -451,9 +456,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			throw new IllegalStateException("tempChunkFile.length > Integer.MAX_VALUE");
 
 		fileChunkDTO.setLength((int) tempChunkFileLength);
-		final String sha1 = readSha1File(sha1File);
 		fileChunkDTO.setSha1(sha1);
-		return fileChunkDTO;
+
+		final TempChunkFileDTO tempChunkFileDTO = new TempChunkFileDTO();
+		tempChunkFileDTO.setFileChunkDTO(fileChunkDTO);
+		return tempChunkFileDTO;
 	}
 
 	protected LocalRepoManager getLocalRepoManager() {
@@ -619,14 +626,23 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				for (FileChunk fileChunk : fileChunks) {
 					normalFileDTO.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
 				}
-
+			}
+			if (depth > 1) {
+				final TempChunkFileDTOIO tempChunkFileDTOIO = new TempChunkFileDTOIO();
 				final File file = repoFile.getFile(getLocalRepoManager().getLocalRoot());
-				final Map<Long, File> offset2TempChunkFileMap = getOffset2TempChunkFileMap(file);
-				for (Map.Entry<Long, File> me : offset2TempChunkFileMap.entrySet()) {
-					final File tempChunkFile = me.getValue();
-					final File sha1File = getSha1File(tempChunkFile);
-					if (sha1File.exists())
-						normalFileDTO.getTempFileChunkDTOs().add(toTempFileChunkDTO(me.getKey(), tempChunkFile, sha1File));
+				for (TempChunkFileWithDTOFile tempChunkFileWithDTOFile : getOffset2TempChunkFileWithDTOFile(file).values()) {
+					File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+					if (tempChunkFileDTOFile == null)
+						continue; // incomplete: meta-data not yet written => ignore
+
+					final TempChunkFileDTO tempChunkFileDTO;
+					try {
+						tempChunkFileDTO = tempChunkFileDTOIO.deserialize(tempChunkFileDTOFile);
+					} catch (Exception x) {
+						logger.warn("toRepoFileDTO: Ignoring corrupt tempChunkFileDTOFile '" + tempChunkFileDTOFile.getAbsolutePath() + "': " + x, x);
+						continue;
+					}
+					normalFileDTO.getTempFileChunkDTOs().add(assertNotNull("tempChunkFileDTO.fileChunkDTO", tempChunkFileDTO.getFileChunkDTO()));
 				}
 			}
 		}
@@ -649,13 +665,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		assertNotNull("transaction", transaction);
 		assertNotNull("file", file);
 
-		File localRoot = getLocalRepoManager().getLocalRoot();
+		final File localRoot = getLocalRepoManager().getLocalRoot();
 		if (localRoot.equals(file)) {
 			return;
 		}
 
-		File parentFile = file.getParentFile();
-		long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+		final File parentFile = file.getParentFile();
+		ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 		try {
 			RepoFile parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
 
@@ -702,8 +718,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			else if (repoFile.getLastModified().getTime() != file.lastModified())
 				repoFile.setLastModified(new Date(file.lastModified()));
 		} finally {
-			if (parentFileLastModified != Long.MIN_VALUE)
-				parentFile.setLastModified(parentFileLastModified);
+			ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 		}
 	}
 
@@ -762,7 +777,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		final File parentFile = file.getParentFile();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				if (file.exists() && !file.isFile())
 					file.renameTo(IOUtil.createCollisionFile(file));
@@ -793,7 +808,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
 				transaction.getPersistenceManager().flush();
 
-				deleteTempChunkFilesWithoutSha1File(getOffset2TempChunkFileMap(file).values());
+				deleteTempChunkFilesWithoutDTOFile(getOffset2TempChunkFileWithDTOFile(file).values());
 
 				final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 				if (repoFile == null)
@@ -810,8 +825,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
 				normalFile.setInProgress(true);
 			} finally {
-				if (parentFileLastModified != Long.MIN_VALUE)
-					parentFile.setLastModified(parentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -834,9 +848,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * it.
 	 * <p>
 	 * In the future (this is NOT YET IMPLEMENTED), we might lock it in {@link #beginPutFile(String)} and
-	 * keep the lock until {@link #endPutFile(String, Date, long)} or a timeout occurs - and refresh the lock
+	 * keep the lock until {@link #endPutFile(String, Date, long, String)} or a timeout occurs - and refresh the lock
 	 * (i.e. postpone the timeout) with every {@link #putFileData(String, long, byte[])}. The reason for this
-	 * quite complicated strategy is that we cannot guarantee that the {@link #endPutFile(String, Date, long)}
+	 * quite complicated strategy is that we cannot guarantee that the {@link #endPutFile(String, Date, long, String)}
 	 * is ever invoked (the client might crash inbetween). We don't want a locked file to linger forever.
 	 *
 	 * @param transaction the DB transaction. Must not be <code>null</code>.
@@ -929,7 +943,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		final File localRoot = getLocalRepoManager().getLocalRoot();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); // It writes into the file system, but it only reads from the DB.
 		try {
-			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
 				if (repoFile == null)
@@ -944,6 +958,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 							repoFile, file));
 
 				final FileWriteStrategy fileWriteStrategy = getFileWriteStrategy(file);
+				logger.debug("putFileData: fileWriteStrategy={}", fileWriteStrategy);
 				switch (fileWriteStrategy) {
 					case directDuringTransfer:
 						writeFileDataToDestFile(file, offset, fileData);
@@ -956,8 +971,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						throw new IllegalStateException("Unknown fileWriteStrategy: " + fileWriteStrategy);
 				}
 			} finally {
-				if (parentFileLastModified != Long.MIN_VALUE)
-					parentFile.setLastModified(parentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -965,9 +979,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void writeTempChunkFileToDestFile(final File destFile, final long offset, final File tempChunkFile) {
+	private void writeTempChunkFileToDestFile(final File destFile, final File tempChunkFile, final TempChunkFileDTO tempChunkFileDTO) {
 		assertNotNull("destFile", destFile);
 		assertNotNull("tempChunkFile", tempChunkFile);
+		assertNotNull("tempChunkFileDTO", tempChunkFileDTO);
+		final long offset = assertNotNull("tempChunkFileDTO.fileChunkDTO", tempChunkFileDTO.getFileChunkDTO()).getOffset();
 		final byte[] fileData = new byte[(int) tempChunkFile.length()];
 		try {
 			final InputStream in = new FileInputStream(tempChunkFile);
@@ -991,17 +1007,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			throw new RuntimeException(e);
 		}
 
-		final File sha1File = getSha1File(tempChunkFile);
-		if (!sha1File.exists())
-			throw new IllegalStateException("There is no SHA1-file for temporary chunk-file: " + tempChunkFile.getAbsolutePath());
-
-		final String sha1FromSha1File = readSha1File(sha1File);
+		final String sha1FromDTOFile = tempChunkFileDTO.getFileChunkDTO().getSha1();
 		final String sha1FromFileData = sha1(fileData);
 
 		logger.trace("writeTempChunkFileToDestFile: Read {} bytes with SHA1 '{}' from '{}'.", fileData.length, sha1FromFileData, tempChunkFile.getAbsolutePath());
 
-		if (!sha1FromFileData.equals(sha1FromSha1File))
-			throw new IllegalStateException("SHA1 mismatch! Corrupt temporary chunk file or corresponding SHA1 file: " + tempChunkFile.getAbsolutePath());
+		if (!sha1FromFileData.equals(sha1FromDTOFile))
+			throw new IllegalStateException("SHA1 mismatch! Corrupt temporary chunk file or corresponding DTO file: " + tempChunkFile.getAbsolutePath());
 
 		writeFileDataToDestFile(destFile, offset, fileData);
 	}
@@ -1026,77 +1038,55 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	private void writeFileDataToTempChunkFile(final File destFile, final long offset, final byte[] fileData) {
 		assertNotNull("destFile", destFile);
 		assertNotNull("fileData", fileData);
-		final File sha1File;
 		try {
 			final File tempChunkFile = createTempChunkFile(destFile, offset);
-			sha1File = getSha1File(tempChunkFile);
+			final File tempChunkFileDTOFile = getTempChunkFileDTOFile(tempChunkFile);
 			final FileOutputStream out = new FileOutputStream(tempChunkFile);
 			try {
 				out.write(fileData);
 			} finally {
 				out.close();
 			}
-			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes to '{}'.", fileData.length, tempChunkFile.getAbsolutePath());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		final String sha1 = sha1(fileData);
-		writeSha1File(sha1File, sha1);
-		logger.trace("writeFileDataToTempChunkFile: Wrote SHA1 '{}' to '{}'.", sha1, sha1File.getAbsolutePath());
-	}
-
-	private void writeSha1File(final File sha1File, final String sha1) {
-		try {
-			final Writer w = new OutputStreamWriter(new FileOutputStream(sha1File), "UTF-8");
-			try {
-				w.write(sha1);
-			} finally {
-				w.close();
-			}
-			logger.trace("writeSha1File: sha1='{}' sha1File='{}'", sha1, sha1File.getAbsolutePath());
+			final String sha1 = sha1(fileData);
+			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes with SHA1 '{}' to '{}'.", fileData.length, sha1, tempChunkFile.getAbsolutePath());
+			final TempChunkFileDTO tempChunkFileDTO = createTempChunkFileDTO(offset, tempChunkFile, sha1);
+			new TempChunkFileDTOIO().serialize(tempChunkFileDTO, tempChunkFileDTOFile);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private String readSha1File(final File sha1File) {
-		try {
-			final String sha1;
-			final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(sha1File), "UTF-8"));
-			try {
-				sha1 = r.readLine();
-			} finally {
-				r.close();
-			}
-			logger.trace("readSha1File: sha1='{}' sha1File='{}'", sha1, sha1File.getAbsolutePath());
-			return sha1;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private void deleteTempChunkFilesWithoutSha1File(Collection<File> tempChunkFiles) {
-		for (File tempChunkFile : tempChunkFiles) {
-			if (!getSha1File(tempChunkFile).exists()) {
-				logger.warn("getOffset2TempFileMap: No SHA1-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
+	private void deleteTempChunkFilesWithoutDTOFile(Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
+		for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
+			final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+			if (tempChunkFileDTOFile == null || !tempChunkFileDTOFile.exists()) {
+				File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile();
+				logger.warn("deleteTempChunkFilesWithoutDTOFile: No DTO-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
 				deleteOrFail(tempChunkFile);
 				continue;
 			}
 		}
 	}
 
-	private Map<Long, File> getOffset2TempChunkFileMap(final File destFile) {
+	private Map<Long, TempChunkFileWithDTOFile> getOffset2TempChunkFileWithDTOFile(final File destFile) {
 		final File[] tempFiles = getTempDir(destFile).listFiles();
 		if (tempFiles == null)
 			return Collections.emptyMap();
 
 		final String destFileName = destFile.getName();
-		final Map<Long, File> result = new TreeMap<Long, File>();
+		final Map<Long, TempChunkFileWithDTOFile> result = new TreeMap<Long, TempChunkFileWithDTOFile>();
 		for (final File tempFile : tempFiles) {
-			final String tempFileName = tempFile.getName();
-			if (!tempFileName.startsWith(TEMP_CHUNK_FILE_PREFIX) || tempFileName.endsWith(TEMP_SHA1_FILE_SUFFIX))
+			String tempFileName = tempFile.getName();
+			if (!tempFileName.startsWith(TEMP_CHUNK_FILE_PREFIX))
 				continue;
+
+			final boolean dtoFile;
+			if (tempFileName.endsWith(TEMP_CHUNK_FILE_DTO_FILE_SUFFIX)) {
+				dtoFile = true;
+				tempFileName = tempFileName.substring(0, tempFileName.length() - TEMP_CHUNK_FILE_DTO_FILE_SUFFIX.length());
+			}
+			else
+				dtoFile = false;
 
 			final int lastUnderscoreIndex = tempFileName.lastIndexOf('_');
 			if (lastUnderscoreIndex < 0)
@@ -1108,13 +1098,21 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			final String offsetStr = tempFileName.substring(lastUnderscoreIndex + 1);
 			final Long offset = Long.valueOf(offsetStr);
-			result.put(offset, tempFile);
+			TempChunkFileWithDTOFile tempChunkFileWithDTOFile = result.get(offset);
+			if (tempChunkFileWithDTOFile == null) {
+				tempChunkFileWithDTOFile = new TempChunkFileWithDTOFile();
+				result.put(offset, tempChunkFileWithDTOFile);
+			}
+			if (dtoFile)
+				tempChunkFileWithDTOFile.setTempChunkFileDTOFile(tempFile);
+			else
+				tempChunkFileWithDTOFile.setTempChunkFile(tempFile);
 		}
 		return Collections.unmodifiableMap(result);
 	}
 
-	private File getSha1File(File file) {
-		return new File(file.getParentFile(), file.getName() + TEMP_SHA1_FILE_SUFFIX);
+	private File getTempChunkFileDTOFile(File file) {
+		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_DTO_FILE_SUFFIX);
 	}
 
 	private String sha1(byte[] data) {
@@ -1145,7 +1143,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	private static final String TEMP_CHUNK_FILE_PREFIX = "chunk_";
-	private static final String TEMP_SHA1_FILE_SUFFIX = ".sha1";
+	private static final String TEMP_CHUNK_FILE_DTO_FILE_SUFFIX = ".TempChunkFileDTO.xml";
 
 	/**
 	 * Deletes the {@linkplain #getTempDir(File) temporary directory} for the given {@code destFile},
@@ -1183,15 +1181,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endPutFile(String path, final Date lastModified, final long length) {
+	public void endPutFile(String path, final Date lastModified, final long length, String sha1) {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
+		assertNotNull("sha1", sha1);
 		final File file = getFile(path);
 		final File parentFile = file.getParentFile();
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			final long parentFileLastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
 				if (!(repoFile instanceof NormalFile)) {
@@ -1204,8 +1203,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
 							repoFile, file));
 
-				final File destFile = (getFileWriteStrategy(file) == FileWriteStrategy.replaceAfterTransfer
-						? new File(file.getParentFile(), ".cloudstore-new_" + file.getName()) : file);
+				final FileWriteStrategy fileWriteStrategy = getFileWriteStrategy(file);
+				logger.debug("endPutFile: fileWriteStrategy={}", fileWriteStrategy);
+
+				final File destFile = (fileWriteStrategy == FileWriteStrategy.replaceAfterTransfer
+						? new File(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
 
 				final InputStream fileIn;
 				if (destFile != file) {
@@ -1219,22 +1221,33 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				else
 					fileIn = null;
 
+				final TempChunkFileDTOIO tempChunkFileDTOIO = new TempChunkFileDTOIO();
 				long destFileWriteOffset = 0;
-				final Map<Long, File> offset2TempChunkFileMap = getOffset2TempChunkFileMap(file);
-				for (final Map.Entry<Long, File> me : offset2TempChunkFileMap.entrySet()) { // they are sorted by offset (ascending)
-					final long offset = me.getKey();
-					final File tempChunkFile = me.getValue();
+				// tempChunkFileWithDTOFiles are sorted by offset (ascending)
+				final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles = getOffset2TempChunkFileWithDTOFile(file).values();
+				for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
+					final File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile(); // tempChunkFile may be null!!!
+					final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+					if (tempChunkFileDTOFile == null)
+						throw new IllegalStateException("No meta-data (tempChunkFileDTOFile) for file: " + (tempChunkFile == null ? null : tempChunkFile.getAbsolutePath()));
+
+					final TempChunkFileDTO tempChunkFileDTO = tempChunkFileDTOIO.deserialize(tempChunkFileDTOFile);
+					final long offset = assertNotNull("tempChunkFileDTO.fileChunkDTO", tempChunkFileDTO.getFileChunkDTO()).getOffset();
 
 					if (fileIn != null) {
 						// The following might fail, if *file* was truncated during the transfer. In this case,
 						// throwing an exception now is probably the best choice as the next sync run will
 						// continue cleanly.
 						writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, offset - destFileWriteOffset);
-						final long tempChunkFileLength = tempChunkFile.length();
+						final long tempChunkFileLength = tempChunkFileDTO.getFileChunkDTO().getLength();
 						skipOrFail(fileIn, tempChunkFileLength); // skipping beyond the EOF is supported by the FileInputStream according to Javadoc.
 						destFileWriteOffset = offset + tempChunkFileLength;
 					}
-					writeTempChunkFileToDestFile(destFile, offset, tempChunkFile);
+
+					if (tempChunkFile != null && tempChunkFile.exists()) {
+						writeTempChunkFileToDestFile(destFile, tempChunkFile, tempChunkFileDTO);
+						deleteOrFail(tempChunkFile);
+					}
 				}
 
 				if (fileIn != null && destFileWriteOffset < length)
@@ -1261,7 +1274,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						throw new IllegalStateException(String.format("Renaming the file from '%s' to '%s' failed: The source file still exists.", destFile.getAbsolutePath(), file.getAbsolutePath()));
 				}
 
-				deleteTempChunkFiles(offset2TempChunkFileMap.values());
+				deleteTempChunkFiles(tempChunkFileWithDTOFiles);
 				deleteTempDirIfEmpty(file);
 
 				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
@@ -1271,9 +1284,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				normalFile.setInProgress(false);
 
 				logger.trace("endPutFile: Committing: sha1='{}' file='{}'", normalFile.getSha1(), file);
+				if (!sha1.equals(normalFile.getSha1())) {
+					logger.warn("endPutFile: File was modified during transport (either on source or destination side): expectedSha1='{}' foundSha1='{}' file='{}'",
+							sha1, normalFile.getSha1(), file);
+				}
+
 			} finally {
-				if (parentFileLastModified != Long.MIN_VALUE)
-					parentFile.setLastModified(parentFileLastModified);
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
 		} finally {
@@ -1281,11 +1298,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void deleteTempChunkFiles(Collection<File> tempChunkFiles) {
-		for (File tempChunkFile : tempChunkFiles) {
-			final File sha1File = getSha1File(tempChunkFile);
-			deleteOrFail(sha1File);
-			deleteOrFail(tempChunkFile);
+	private void deleteTempChunkFiles(final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
+		for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
+			final File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile(); // tempChunkFile may be null!!!
+			final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+
+			if (tempChunkFile != null && tempChunkFile.exists())
+				deleteOrFail(tempChunkFile);
+
+			if (tempChunkFileDTOFile != null && tempChunkFileDTOFile.exists())
+				deleteOrFail(tempChunkFileDTOFile);
 		}
 	}
 

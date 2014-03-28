@@ -572,7 +572,7 @@ public class RepoToRepoSync {
 
 			toRepoTransport.endPutFile(
 					path, fromNormalFileDTO.getLastModified(),
-					fromNormalFileDTO.getLength());
+					fromNormalFileDTO.getLength(), fromNormalFileDTO.getSha1());
 
 			monitor.worked(6);
 		} finally {

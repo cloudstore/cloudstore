@@ -16,6 +16,7 @@ import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOList;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
 
 public class CloudStoreJaxbContext {
 
@@ -36,7 +37,8 @@ public class CloudStoreJaxbContext {
 						NormalFileDTO.class,
 						RepoFileDTO.class,
 						RepoFileDTOList.class,
-						RepositoryDTO.class
+						RepositoryDTO.class,
+						TempChunkFileDTO.class
 						);
 			} catch (JAXBException x) {
 				throw new RuntimeException(x);

@@ -180,9 +180,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void endPutFile(String path, Date lastModified, long length) {
+	public void endPutFile(String path, Date lastModified, long length, String sha1) {
 		path = prefixPath(path);
-		getClient().endPutFile(getRepositoryId().toString(), path, new DateTime(lastModified),length);
+		getClient().endPutFile(getRepositoryId().toString(), path, new DateTime(lastModified), length, sha1);
 	}
 
 	@Override

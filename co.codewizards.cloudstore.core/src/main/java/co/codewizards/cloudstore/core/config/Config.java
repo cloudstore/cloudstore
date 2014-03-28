@@ -20,7 +20,46 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
+/**
+ * Configuration of CloudStore supporting inheritance of settings.
+ * <p>
+ * There is one {@code Config} instance available (lazily created, cached temporarily) for every
+ * directory and every file in a repository. Each {@code Config} inherits the settings from the
+ * parent-directory, if not explicitly overwritten.
+ * <p>
+ * The configuration is based on {@link Properties} files. Every property file is optional. If it
+ * does not exist, all settings are inherited. If it does exist, only those properties contained in
+ * the file are overriden. All properties not contained in the file are still inherited. Inheritance
+ * is thus applicable on every individual property.
+ * <p>
+ * Modifications, deletions, creations of properties files are detected during runtime (pretty immediately).
+ * Note, that this detection is based on the files' timestamps. Since most file systems have a granularity
+ * of 1 second (some even 2) for the last-modified-timestamp, multiple modifications in the same second might
+ * not be detected.
+ * <p>
+ * There is a global properties file in the user's home directory (or wherever {@link ConfigDir}
+ * points to): <code>${user.home}/.cloudstore/cloudstore.properties</code>
+ * <p>
+ * Additionally, every directory can optionally contain the following files:
+ * <ol>
+ * <li><code>.cloudstore.properties</code>
+ * <li><code>cloudstore.properties</code>
+ * <li><code>.${anyFileName}.cloudstore.properties</code>
+ * <li><code>${anyFileName}.cloudstore.properties</code>
+ * </ol>
+ * <p>
+ * The files 1. and 2. are applicable to the entire directory and all sub-directories and files in it.
+ * Usually, on GNU/Linux people will prefer 1., but when using Windows, files starting with a "." are
+ * sometimes a bit hard to deal with. Therefore, we support both. The file 2. overrides the settings of file 1..
+ * <p>
+ * The files 3. and 4. are applicable only to the file <code>${anyFileName}</code>. Thus, if you want
+ * to set special behaviour for the file <code>example.db</code> only, you can create the file
+ * <code>.example.db.cloudstore.properties</code> in the same directory.
+ *
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class Config {
 	private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
@@ -74,6 +113,15 @@ public class Config {
 		properties = new Properties(parentConfig == null ? null : parentConfig.properties);
 		propertiesFilesLastModified = new long[propertiesFiles.length];
 		instanceMutex = properties;
+
+		// Create the default global configuration (it's an empty template with some comments).
+		if (parentConfig == null && !propertiesFiles[0].exists()) {
+			try {
+				IOUtil.copyResource(Config.class, "/" + PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE, propertiesFiles[0]);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 	/**
@@ -194,10 +242,12 @@ public class Config {
 
 	private void read() {
 		synchronized (instanceMutex) {
+			logger.trace("read: Entered instanceMutex.");
 			try {
 				properties.clear();
 				for (int i = 0; i < propertiesFiles.length; i++) {
 					final File propertiesFile = propertiesFiles[i];
+					logger.info("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
 					final long lastModified = propertiesFile.lastModified(); // is 0 for non-existing file
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
 						LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); // TODO maybe system property for timeout?

@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.core.repo.transport;
 import co.codewizards.cloudstore.core.config.Config;
 
 /**
- * Strategy controlling how and when the destination file is written.
+ * Strategy controlling how and when a destination file is written.
  * <p>
  * This is merely a setting in the {@link Config}. The actual implementation is in the
  * {@link co.codewizards.cloudstore.core.repo.transport.file.FileRepoTransport FileRepoTransport}.
@@ -16,7 +16,7 @@ public enum FileWriteStrategy {
 	 * During transfer, the destination file is not touched.
 	 * <p>
 	 * This strategy requires as much temporary space in the destination file system as
-	 * blocks are transferred: In the worst case the total space requirement is thus twice
+	 * blocks are transferred: The maximum total space requirement is thus twice
 	 * the file size (old file + all blocks).
 	 */
 	directAfterTransfer,
@@ -29,17 +29,21 @@ public enum FileWriteStrategy {
 	 * inconsistent state for hours or even days - as long as the transfer takes.
 	 * <p>
 	 * However, this strategy requires the least space in the file system: Only once the file size.
-	 * There are no temporary files involved and thus no temporary space required.
+	 * There are no temporary files involved and thus no additional temporary space required.
 	 */
 	directDuringTransfer,
 
 	/**
-	 * Same as {@link #directAfterTransfer}, but write a completely new file and then switch
+	 * Similar to {@link #directAfterTransfer}, but write a new file and then switch
 	 * the files (delete the old file and rename the new file).
 	 * <p>
 	 * This strategy is the safest concerning consistency, but requires the most temporary space in
-	 * the destination file system: In the worst case the total space requirement is thus 3 times
-	 * the file size (old file + all blocks + new file).
+	 * the destination file system: The maximum total space requirement is a bit more than twice
+	 * the file size (old file + blocks not yet written to new file + partial new file).
+	 * Because the blocks are immediately deleted when written to the (partial) new file
+	 * and the new file is growing while blocks are deleted (it doesn't have the final size immediately),
+	 * the required space is <i>not</i> 3 times the size, but - as said - only a bit more than twice
+	 * the size.
 	 */
 	replaceAfterTransfer
 	;

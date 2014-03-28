@@ -375,14 +375,18 @@ public class CloudStoreRESTClient {
 		}
 	}
 
-	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length) {
+	public void endPutFile(String repositoryName, String path, DateTime lastModified, long length, String sha1) {
 		assertNotNull("repositoryName", repositoryName);
+		assertNotNull("path", path);
+		assertNotNull("lastModified", lastModified);
+		assertNotNull("sha1", sha1);
 		acquireClient();
 		try {
 			Response response = assignCredentials(
 					createWebTarget("_endPutFile", urlEncode(repositoryName), encodePath(path))
 					.queryParam("lastModified", lastModified.toString())
 					.queryParam("length", length)
+					.queryParam("sha1", sha1)
 					.request()).post(null);
 			assertResponseIndicatesSuccess(response);
 		} catch (RuntimeException x) {

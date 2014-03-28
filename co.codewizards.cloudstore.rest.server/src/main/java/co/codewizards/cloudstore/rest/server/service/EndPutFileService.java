@@ -33,14 +33,15 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 	public void endPutFile(
 			@PathParam("path") String path,
 			@QueryParam("lastModified") DateTime lastModified,
-			@QueryParam("length") long length)
+			@QueryParam("length") long length,
+			@QueryParam("sha1") String sha1)
 	{
 		assertNotNull("path", path);
 		assertNotNull("lastModified", lastModified);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
-			repoTransport.endPutFile(path, lastModified.toDate(), length);
+			repoTransport.endPutFile(path, lastModified.toDate(), length, sha1);
 		} finally {
 			repoTransport.close();
 		}

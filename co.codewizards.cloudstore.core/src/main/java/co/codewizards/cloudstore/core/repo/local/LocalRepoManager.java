@@ -20,6 +20,8 @@ public interface LocalRepoManager {
 
 	String META_DIR_NAME = ".cloudstore-repo";
 	String TEMP_DIR_NAME = ".cloudstore-temp";
+	String TEMP_NEW_FILE_PREFIX = ".cloudstore-new_";
+
 	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
 	String PROP_REPOSITORY_ID = "repository.id";
 	String PROP_VERSION = "repository.version";

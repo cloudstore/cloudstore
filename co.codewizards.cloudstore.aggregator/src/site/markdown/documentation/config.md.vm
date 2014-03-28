@@ -1,0 +1,99 @@
+<head><title>Configuration</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+Configuration
+-------
+
+$H$H$H Introduction
+
+CloudStore uses a properties-files-based, inheritable configuration. Many settings there can be configured on multiple levels:
+
+* globally (per user)
+* per directory
+* per file
+
+Every property file is optional. If it does not exist, all settings are inherited. If it does exist,
+only those properties contained in the file are overriden. All properties not contained in the file
+are still inherited. Inheritance is thus applicable on every individual property.
+
+Modifications, deletions, creations of properties files are detected during runtime (pretty immediately).
+Note, that this detection is based on the files\' timestamps. Since most file systems have a granularity
+of 1 second (some even 2) for the last-modified-timestamp, multiple modifications in the same second might
+not be detected.
+
+$H$H$H$H Global configuration
+
+The global configuration is named *cloudstore.properties* and it is normally located in
+*\$\{user.home\}/.cloudstore/* but this path might be overridden using the system property *cloudstore.configDir*.
+
+$H$H$H$H Configuration per directory or per file
+
+Additionally, every directory can optionally contain the following files:
+
+1. *.cloudstore.properties*
+2. *cloudstore.properties*
+3. *.\$\{anyFileName\}.cloudstore.properties*
+4. *\$\{anyFileName\}.cloudstore.properties*
+
+The files 1. and 2. are applicable to the entire directory and all sub-directories and files in it.
+Usually, on GNU/Linux people will prefer 1., but when using Windows, files starting with a \".\" are
+sometimes a bit hard to deal with. Therefore, we support both. The file 2. overrides the settings of file 1..
+
+The files 3. and 4. are applicable only to the file ${anyFileName}. Thus, if you want to set special
+behaviour for the file *example.db* only, you can create the file *.example.db.cloudstore.properties* in
+the same directory.
+
+
+$H$H$H Configuration settings
+
+The following property keys can be used to configure the behaviour of CloudStore:
+
+
+$H$H$H$H fileWriteStrategy
+
+This strategy controls how and when a destination file is written. There are the following possible values:
+
+* directAfterTransfer
+* directDuringTransfer
+* replaceAfterTransfer
+
+So, if you want to switch to the strategy *replaceAfterTransfer*, you have to write the following into one of
+the *.cloudstore.properties* files:
+
+	fileWriteStrategy = replaceAfterTransfer
+
+And here\'s what these strategies actually mean:
+
+$H$H$H$H$H directAfterTransfer
+
+Write directly into the destination file after all blocks have been transferred.
+During transfer, the destination file is not touched.
+
+This strategy requires as much temporary space in the destination file system as
+blocks are transferred: The maximum total space requirement is thus twice
+the file size (old file + all blocks).
+	
+$H$H$H$H$H directDuringTransfer
+
+Write each block directly into the destination file immediately when it was transferred.
+Don\'t wait for all other blocks.
+
+In contrast to *directAfterTransfer* this may leave the destination file in an
+inconsistent state for hours or even days - as long as the transfer takes.
+
+However, this strategy requires the least space in the file system: Only once the file size.
+There are no temporary files involved and thus no additional temporary space required.
+
+$H$H$H$H$H replaceAfterTransfer
+
+Similar to *directAfterTransfer*, but write a new file and then switch the files
+(delete the old file and rename the new file).
+
+This strategy is the safest concerning consistency, but requires the most temporary space in
+the destination file system: The maximum total space requirement is a bit more than twice
+the file size (old file + blocks not yet written to new file + partial new file).
+Because the blocks are immediately deleted when written to the (partial) new file
+and the new file is growing while blocks are deleted (it doesn\'t have the final size immediately),
+the required space is <i>not</i> 3 times the size, but - as said - only a bit more than twice
+the size.
