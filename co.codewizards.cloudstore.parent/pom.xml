@@ -4,7 +4,7 @@
 
 	<groupId>co.codewizards.cloudstore</groupId>
 	<artifactId>co.codewizards.cloudstore.parent</artifactId>
-	<version>0.9.3</version>
+	<version>0.9.4-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<url>http://cloudstore.codewizards.co</url>
