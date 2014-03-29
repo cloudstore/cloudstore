@@ -19,7 +19,7 @@ public interface LocalRepoManager {
 	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20000;
 
 	String META_DIR_NAME = ".cloudstore-repo";
-	String TEMP_DIR_NAME = ".cloudstore-temp";
+	String TEMP_DIR_NAME = ".cloudstore-tmp";
 	String TEMP_NEW_FILE_PREFIX = ".cloudstore-new_";
 
 	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";

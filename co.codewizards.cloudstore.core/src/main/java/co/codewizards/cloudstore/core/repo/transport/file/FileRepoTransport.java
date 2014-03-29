@@ -81,6 +81,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private static final long MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY = 100; // TODO make configurable!
 
+	private static final String TEMP_CHUNK_FILE_PREFIX = "chunk_";
+	private static final String TEMP_CHUNK_FILE_DTO_FILE_SUFFIX = ".xml";
+
 	private LocalRepoManager localRepoManager;
 
 	@Override
@@ -1041,6 +1044,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		try {
 			final File tempChunkFile = createTempChunkFile(destFile, offset);
 			final File tempChunkFileDTOFile = getTempChunkFileDTOFile(tempChunkFile);
+
+			// Delete the meta-data-file, in case we overwrite an older temp-chunk-file. This way it
+			// is guaranteed, that if the meta-data-file exists, it is consistent with either
+			// the temp-chunk-file or the chunk was already written into the final destination.
+			deleteOrFail(tempChunkFileDTOFile);
+
 			final FileOutputStream out = new FileOutputStream(tempChunkFile);
 			try {
 				out.write(fileData);
@@ -1097,7 +1106,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				continue;
 
 			final String offsetStr = tempFileName.substring(lastUnderscoreIndex + 1);
-			final Long offset = Long.valueOf(offsetStr);
+			final Long offset = Long.valueOf(offsetStr, 36);
 			TempChunkFileWithDTOFile tempChunkFileWithDTOFile = result.get(offset);
 			if (tempChunkFileWithDTOFile == null) {
 				tempChunkFileWithDTOFile = new TempChunkFileWithDTOFile();
@@ -1127,13 +1136,32 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	/**
+	 * Create the temporary file for the given {@code destFile} and {@code offset}.
+	 * <p>
+	 * The returned file is created, if it does not yet exist; but it is <i>not</i> overwritten,
+	 * if it already exists.
+	 * <p>
+	 * The {@linkplain #getTempDir(File) temporary directory} in which the temporary file is located
+	 * is created, if necessary. In order to prevent collisions with code trying to delete the empty
+	 * temporary directory, this method and the corresponding {@link #deleteTempDirIfEmpty(File)} are
+	 * both synchronized.
+	 * @param destFile the destination file for which to resolve and create the temporary file.
+	 * Must not be <code>null</code>.
+	 * @param offset the offset (inside the final destination file and the source file) of the block to
+	 * be temporarily stored in the temporary file created by this method. The temporary file will hold
+	 * solely this block (thus the offset in the temporary file is 0).
+	 * @return the temporary file. Never <code>null</code>. The file is already created in the file system
+	 * (empty), if it did not yet exist.
+	 */
 	private synchronized File createTempChunkFile(final File destFile, final long offset) {
 		final File tempDir = getTempDir(destFile);
 		tempDir.mkdir();
 		if (!tempDir.isDirectory())
 			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
 
-		final File tempFile = new File(tempDir, String.format("%s%s_%d", TEMP_CHUNK_FILE_PREFIX, destFile.getName(), offset));
+		final File tempFile = new File(tempDir, String.format("%s%s_%s",
+				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
 		try {
 			tempFile.createNewFile();
 		} catch (IOException e) {
@@ -1141,9 +1169,6 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 		return tempFile;
 	}
-
-	private static final String TEMP_CHUNK_FILE_PREFIX = "chunk_";
-	private static final String TEMP_CHUNK_FILE_DTO_FILE_SUFFIX = ".TempChunkFileDTO.xml";
 
 	/**
 	 * Deletes the {@linkplain #getTempDir(File) temporary directory} for the given {@code destFile},
