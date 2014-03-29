@@ -5,6 +5,22 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.3?
+
+Compared to version 0.9.2, there are the following changes:
+
+* Bugfix: Fixed *dropRepoConnection* sub-command ([issue 16](https://github.com/cloudstore/main/issues/16)).
+
+* Bugfix: Fixed resource allocation leak causing the repos to stay locked ([issue 17](https://github.com/cloudstore/main/issues/17)).
+
+* Enhancement: New inheritable configuration ([issue 19](https://github.com/cloudstore/main/issues/19)).
+
+* Enhancement: Support multiple different file-write-stategies and switch to the default strategy *directAfterTransfer*
+	([issue 19](https://github.com/cloudstore/main/issues/19)).
+
+* Enhancement: Improve security by switching to [TLS 1.2](http://en.wikipedia.org/wiki/Secure_Sockets_Layer#Cipher) ([issue 20](https://github.com/cloudstore/main/issues/20)).
+
+
 $H$H$H What\'s new in 0.9.2?
 
 Compared to version 0.9.1, there are the following changes:

@@ -57,7 +57,7 @@ $H$H$H$H fileWriteStrategy
 
 This strategy controls how and when a destination file is written. There are the following possible values:
 
-* directAfterTransfer
+* directAfterTransfer (default)
 * directDuringTransfer
 * replaceAfterTransfer
 
@@ -76,7 +76,9 @@ During transfer, the destination file is not touched.
 This strategy requires as much temporary space in the destination file system as
 blocks are transferred: The maximum total space requirement is thus twice
 the file size (old file + all blocks).
-	
+
+This is the default strategy (since CloudStore version 0.9.3).
+
 $H$H$H$H$H directDuringTransfer
 
 Write each block directly into the destination file immediately when it was transferred.
@@ -86,7 +88,7 @@ In contrast to *directAfterTransfer* this may leave the destination file in an
 inconsistent state for hours or even days - as long as the transfer takes.
 
 However, this strategy requires the least space in the file system: Only once the file size.
-There are no temporary files involved and thus no additional temporary space required.
+There are no temporary files involved and thus no additional temporary space is required. 
 
 $H$H$H$H$H replaceAfterTransfer
 
