@@ -9,9 +9,7 @@ import java.util.Map;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.listener.AttachLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
-import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.StoreLifecycleListener;
 
@@ -30,7 +28,7 @@ import co.codewizards.cloudstore.core.persistence.AutoTrackLocalRevision;
  * interfaces are implemented by the persistence-capable object.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class AutoTrackLifecycleListener implements AttachLifecycleListener, StoreLifecycleListener, DirtyLifecycleListener, DeleteLifecycleListener {
+public class AutoTrackLifecycleListener implements StoreLifecycleListener, DeleteLifecycleListener {
 	private static final Logger logger = LoggerFactory.getLogger(AutoTrackLifecycleListener.class);
 
 	private final LocalRepoTransaction transaction;
@@ -48,32 +46,16 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 
 	@Override
 	public void preStore(final InstanceLifecycleEvent event) {
+		// It seems, this method is always invoked whenever something is about to be written
+		// into the database - no matter, if it's a new object being persisted, a detached
+		// object being attached or a persistent object having been modified and being flushed.
+		// Therefore, we do not need AttachLifecycleListener and DirtyLifecycleListener.
+		// Marco :-)
 		onWrite(event.getPersistentInstance());
 	}
 
 	@Override
 	public void postStore(final InstanceLifecycleEvent event) { }
-
-	@Override
-	public void preDirty(final InstanceLifecycleEvent event) { }
-
-	@Override
-	public void postDirty(final InstanceLifecycleEvent event) {
-		// We must use postDirty(...), because preDirty(...) causes a StackOverflowError. preDirty(...) seems to be
-		// called again for the same object until it is dirty (IIUC). Thus, our onWrite(...) recursively calls preDirty(...)
-		// and itself again. We could - of course - work around this by tracking the recursion using a ThreadLocal, but
-		// using postDirty(...) instead is far easier - and there's no difference for our use case, anyway.
-		onWrite(event.getPersistentInstance());
-	}
-
-	@Override
-	public void preAttach(final InstanceLifecycleEvent event) { }
-
-	@Override
-	public void postAttach(final InstanceLifecycleEvent event) {
-		// We must write it after attaching, because the affected fields might not be detached.
-		onWrite(event.getPersistentInstance());
-	}
 
 	@Override
 	public void preDelete(final InstanceLifecycleEvent event) {
@@ -96,7 +78,7 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 
 		final Date changed = new Date();
 		final Object oid = JDOHelper.getObjectId(pc);
-		if (!defer && oid != null) { // in preStore(...), there is no OID, yet.
+		if (!defer && oid != null) { // there is no OID, yet, if the object is NEW (not yet persisted).
 			final Date oldLastChanged = oid2LastChanged.get(oid);
 			oid2LastChanged.put(oid, changed); // always keep the newest changed-timestamp.
 
@@ -118,10 +100,20 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 		}
 	}
 
+	/**
+	 * Notifies this instance about the {@linkplain #getTransaction() transaction} being begun.
+	 * @see #onCommit()
+	 * @see #onRollback()
+	 */
 	public void onBegin() {
 		defer = true;
 	}
 
+	/**
+	 * Notifies this instance about the {@linkplain #getTransaction() transaction} being committed.
+	 * @see #onBegin()
+	 * @see #onRollback()
+	 */
 	public void onCommit() {
 		defer = false;
 		final long start = System.currentTimeMillis();
@@ -149,6 +141,11 @@ public class AutoTrackLifecycleListener implements AttachLifecycleListener, Stor
 			logger.debug("onCommit: Deferred operations took {} ms for {} entities.", duration, oid2LastChangedSize);
 	}
 
+	/**
+	 * Notifies this instance about the {@linkplain #getTransaction() transaction} being rolled back.
+	 * @see #onBegin()
+	 * @see #onCommit()
+	 */
 	public void onRollback() {
 		defer = false;
 		oid2LastChanged.clear();

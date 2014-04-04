@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -54,7 +53,7 @@ public class ChangeSetDTOService extends AbstractServiceWithRepoToRepoAuth
 								}
 							};
 						}
-					}, 60, TimeUnit.SECONDS); // TODO make configurable! or maybe from query-param?! or both?!
+					});
 		} finally {
 			if (repoTransport[0] != null)
 				repoTransport[0].close();

@@ -347,6 +347,20 @@ public class Config {
 		}
 	}
 
+	public int getPropertyAsInt(final String key, final int defaultValue) {
+		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		if (sval == null)
+			return defaultValue;
+
+		try {
+			final int ival = Integer.parseInt(sval);
+			return ival;
+		} catch (NumberFormatException x) {
+			logger.warn("getPropertyAsInt: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
+			return defaultValue;
+		}
+	}
+
 	/**
 	 * Gets the property identified by the given key.
 	 * @param key the key identifying the property. Must not be <code>null</code>.

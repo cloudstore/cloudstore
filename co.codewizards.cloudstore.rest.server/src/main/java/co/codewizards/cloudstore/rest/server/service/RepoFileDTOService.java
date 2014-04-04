@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.rest.server.service;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -66,7 +65,7 @@ public class RepoFileDTOService extends AbstractServiceWithRepoToRepoAuth
 								}
 							};
 						}
-					}, 60, TimeUnit.SECONDS); // TODO make configurable! or maybe from query-param?! or both?!
+					});
 		} finally {
 			if (repoTransport[0] != null)
 				repoTransport[0].close();

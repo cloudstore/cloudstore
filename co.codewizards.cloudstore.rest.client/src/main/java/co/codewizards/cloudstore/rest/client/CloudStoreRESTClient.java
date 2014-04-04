@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.Error;
@@ -48,9 +49,23 @@ public class CloudStoreRESTClient {
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 120 * 1000;
 	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 15 * 60 * 1000;
 
-	public static final String SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT = "cloudstore.socketConnectTimeout";
+	/**
+	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
+	 * <p>
+	 * The configuration can be overridden by the system property {@link #SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT}.
+	 */
+	public static final String CONFIG_KEY_SOCKET_CONNECT_TIMEOUT = "socket.connectTimeout"; //$NON-NLS-1$
 
-	public static final String SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT = "cloudstore.socketReadTimeout";
+	/**
+	 * The {@code key} for the read timeout used with {@link Config#getPropertyAsInt(String, int)}.
+	 * <p>
+	 * The configuration can be overridden by the system property {@link #SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT}.
+	 */
+	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "socket.readTimeout"; //$NON-NLS-1$
+
+	public static final String SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT = "cloudstore.socket.connectTimeout"; //$NON-NLS-1$
+
+	public static final String SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT = "cloudstore.socket.readTimeout"; //$NON-NLS-1$
 
 	private Integer socketConnectTimeout;
 
@@ -70,7 +85,10 @@ public class CloudStoreRESTClient {
 
 	public Integer getSocketConnectTimeout() {
 		if (socketConnectTimeout == null)
-			socketConnectTimeout = getTimeoutFromConfig(SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT, DEFAULT_SOCKET_CONNECT_TIMEOUT);
+			socketConnectTimeout = getConfigPropertyAsPositiveInt(
+					SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT,
+					CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
+					DEFAULT_SOCKET_CONNECT_TIMEOUT);
 
 		return socketConnectTimeout;
 	}
@@ -83,7 +101,10 @@ public class CloudStoreRESTClient {
 
 	public Integer getSocketReadTimeout() {
 		if (socketReadTimeout == null)
-			socketReadTimeout = getTimeoutFromConfig(SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT, DEFAULT_SOCKET_READ_TIMEOUT);
+			socketReadTimeout = getConfigPropertyAsPositiveInt(
+					SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT,
+					CONFIG_KEY_SOCKET_READ_TIMEOUT,
+					DEFAULT_SOCKET_READ_TIMEOUT);
 
 		return socketReadTimeout;
 	}
@@ -94,20 +115,31 @@ public class CloudStoreRESTClient {
 		this.socketReadTimeout = socketReadTimeout;
 	}
 
-	private Integer getTimeoutFromConfig(String systemProperty, int defaultValue) {
-		// TODO read properties file in ~/.cloudstore/ with sys-prop as override, prop-file as normal and default as third-level-fallback.
+	private int getConfigPropertyAsPositiveInt(String systemProperty, String configKey, int defaultValue) {
 		String value = System.getProperty(systemProperty);
 		if (value == null || value.isEmpty()) {
-			logger.warn("System property '{}' is undefined! Using default value {}.", systemProperty, defaultValue);
-			return defaultValue;
+			logger.info("System property '{}' is undefined! Looking for key '{}' in global config.", systemProperty, configKey);
+			return _getConfigPropertyAsPositiveInt(configKey, defaultValue);
 		}
 		try {
-			Integer result = Integer.valueOf(value);
+			int result = Integer.parseInt(value);
+			if (result < 0)
+				throw new NumberFormatException("Only values greater than or equal to 0 are allowed!");
+
 			return result;
 		} catch (NumberFormatException x) {
-			logger.warn("System property '{}' is set to the illegal value '{}'! Falling back to default value {}.", systemProperty, value, defaultValue);
+			logger.warn("System property '{}' is set to the illegal value '{}'!  Looking for key '{}' in global config.", systemProperty, value, configKey);
+			return _getConfigPropertyAsPositiveInt(configKey, defaultValue);
+		}
+	}
+
+	private int _getConfigPropertyAsPositiveInt(String configKey, int defaultValue) {
+		int value = Config.getInstance().getPropertyAsInt(configKey, defaultValue);
+		if (value < 0) {
+			logger.warn("Config property '{}' is set to the illegal value '{}'!  Falling back to default value: {}", configKey, value, defaultValue);
 			return defaultValue;
 		}
+		return value;
 	}
 
 	/**

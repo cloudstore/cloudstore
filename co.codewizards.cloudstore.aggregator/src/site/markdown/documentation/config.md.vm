@@ -102,3 +102,47 @@ Because the blocks are immediately deleted when written to the (partial) new fil
 and the new file is growing while blocks are deleted (it doesn\'t have the final size immediately),
 the required space is <i>not</i> 3 times the size, but - as said - only a bit more than twice
 the size.
+
+
+$H$H$H$H socket.connectTimeout
+
+This is the maximum time in milliseconds allowed for establishing a socket connection. If the TCP handshake is not done
+within this time, an exception is thrown.
+
+The default value is "120000" (2 minutes).
+
+This property can only be set in the global configuration (in *\$\{user.home\}/.cloudstore/cloudstore.properties*).
+
+It is possible to override the setting using the system property *cloudstore.socket.connectTimeout*.
+
+
+$H$H$H$H socket.readTimeout
+
+This is the maximum time in milliseconds the socket waits for incoming data. Thus, the server must be capable of
+processing and replying within this time.
+
+Note, though, that there are long-running operations, which the server cannot guarantee to be done
+in a short time (e.g. re-indexing an extremely huge repository). For these, the server will throw a
+*DeferredCompletionException* which is transferred to the client instead of the real response. The
+client can (and should) then repeat the request.
+
+How long the server waits before throwing this *DeferredCompletionException*, is configurable via the
+*deferrableExecutor.timeout* (see below). The *socket.readTimeout* must be longer than this *deferrableExecutor.timeout*! 
+
+The default value is "900000" (15 minutes).
+
+This property can only be set in the global configuration (in *\$\{user.home\}/.cloudstore/cloudstore.properties*).
+
+It is possible to override the setting using the system property *cloudstore.socket.readTimeout*.
+
+
+$H$H$H$H deferrableExecutor.timeout
+
+TODO document this!
+
+
+$H$H$H$H deferrableExecutor.expiryPeriod
+
+TODO document this!
+
+
