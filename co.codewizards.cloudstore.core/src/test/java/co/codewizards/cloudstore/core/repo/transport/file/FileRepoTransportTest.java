@@ -93,6 +93,9 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
 		changeSetResponse1 = repoTransport.getChangeSetDTO(false);
+		
+		repoTransport.close();
+		
 		assertThat(changeSetResponse1).isNotNull();
 		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
 		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();

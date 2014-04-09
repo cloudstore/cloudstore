@@ -114,8 +114,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
 		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
 
-		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
-		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
+		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
+		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
 		File child_1 = createDirectory(remoteRoot, "1 {11 11ä11} 1");
 
@@ -173,8 +173,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
 		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
 
-		new CloudStoreClient().execute("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm());
-		new CloudStoreClient().execute("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath());
+		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
+		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
 		File child_1 = createDirectory(localRoot, "1 {11 11ä11} 1");
 

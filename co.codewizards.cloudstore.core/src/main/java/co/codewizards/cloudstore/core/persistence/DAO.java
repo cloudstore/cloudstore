@@ -194,21 +194,27 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		return result;
 	}
 
-	public <P extends E> P makePersistent(P entity)
+	public <P extends E> P makePersistent(final P entity)
 	{
 		assertNotNull("entity", entity);
-		logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(entity));
-		return pm().makePersistent(entity);
+		try {
+			final P result = pm().makePersistent(entity);
+			logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(result));
+			return result;
+		} catch (final RuntimeException x) {
+			logger.warn("makePersistent: FAILED for entityID={}: {}", JDOHelper.getObjectId(entity), x);
+			throw x;
+		}
 	}
 
-	public void deletePersistent(E entity)
+	public void deletePersistent(final E entity)
 	{
 		assertNotNull("entity", entity);
 		logger.debug("deletePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		pm().deletePersistent(entity);
 	}
 
-	public void deletePersistentAll(Collection<? extends E> entities)
+	public void deletePersistentAll(final Collection<? extends E> entities)
 	{
 		assertNotNull("entities", entities);
 		if (logger.isDebugEnabled()) {
@@ -219,9 +225,9 @@ public abstract class DAO<E extends Entity, D extends DAO<E, D>>
 		pm().deletePersistentAll(entities);
 	}
 
-	protected Collection<E> load(Collection<E> entities) {
-		Collection<E> result = new ArrayList<>();
-		Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+	protected Collection<E> load(final Collection<E> entities) {
+		final Collection<E> result = new ArrayList<>();
+		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		for (E entity : entities) {
 			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
 			if (entityIDs == null) {

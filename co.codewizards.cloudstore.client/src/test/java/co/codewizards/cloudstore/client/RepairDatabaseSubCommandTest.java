@@ -23,8 +23,8 @@ public class RepairDatabaseSubCommandTest extends AbstractTest {
 	@Test
 	public void repairDatabase() throws Exception {
 		File localRoot = newTestRepositoryLocalRoot("");
-		new CloudStoreClient().execute("createRepo", localRoot.getPath(), "-createDir");
-		new CloudStoreClient().execute("repairDatabase", localRoot.getPath());
+		new CloudStoreClient("createRepo", localRoot.getPath(), "-createDir").execute();
+		new CloudStoreClient("repairDatabase", localRoot.getPath()).execute();
 	}
 
 }
