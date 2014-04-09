@@ -47,11 +47,6 @@
 		</dependency>
 		<!-- END logging -->
 
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-		</dependency>
-
 		<!-- <dependency> <!- Indirect dependency which must not end up inside 
 			the WAR (the classes provided by the container must be used). => Overriding 
 			scope with 'provided'. -> <groupId>javax.transaction</groupId> <artifactId>transaction-api</artifactId> 

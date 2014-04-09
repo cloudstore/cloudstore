@@ -190,7 +190,7 @@
 			
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
-				<artifactId>bcprov-ext-jdk16</artifactId>
+				<artifactId>bcprov-jdk16</artifactId>
 				<version>1.46</version>
 			</dependency>
 
@@ -243,12 +243,6 @@
 				<version>${datanucleus-rdbms.version}</version>
 			</dependency>
 			<!-- END datanucleus -->
-
-			<dependency>
-				<groupId>commons-beanutils</groupId>
-				<artifactId>commons-beanutils</artifactId>
-				<version>1.8.3</version>
-			</dependency>
 
 			<!-- END third party -->
 		</dependencies>
