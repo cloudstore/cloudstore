@@ -74,7 +74,7 @@
 		<plugins>
 			<plugin>
 				<groupId>org.datanucleus</groupId>
-				<artifactId>maven-datanucleus-plugin</artifactId>
+				<artifactId>datanucleus-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

@@ -36,11 +36,11 @@
 		<maven.compiler.source>7</maven.compiler.source>
 		<maven.compiler.target>7</maven.compiler.target>
 
-		<maven-datanucleus-plugin.version>3.2.0-m1</maven-datanucleus-plugin.version>
-		<datanucleus-api-jdo.version>3.2.6</datanucleus-api-jdo.version>
-		<datanucleus-core.version>3.2.11</datanucleus-core.version>
-		<datanucleus-rdbms.version>3.2.10</datanucleus-rdbms.version>
-		<datanucleus.javadoc.version>3.2</datanucleus.javadoc.version>
+		<datanucleus-maven-plugin.version>4.0.0-m2</datanucleus-maven-plugin.version>
+		<datanucleus-core.version>4.0.0-m2</datanucleus-core.version>
+		<datanucleus-api-jdo.version>4.0.0-m2</datanucleus-api-jdo.version>
+		<datanucleus-rdbms.version>4.0.0-m2</datanucleus-rdbms.version>
+		<datanucleus.javadoc.version>4.0</datanucleus.javadoc.version>
 	</properties>
 
 	<distributionManagement>
@@ -411,8 +411,8 @@
 
 				<plugin>
 					<groupId>org.datanucleus</groupId>
-					<artifactId>maven-datanucleus-plugin</artifactId>
-					<version>${maven-datanucleus-plugin.version}</version>
+					<artifactId>datanucleus-maven-plugin</artifactId>
+					<version>${datanucleus-maven-plugin.version}</version>
 					<inherited>true</inherited>
 					<extensions>true</extensions>
 					<configuration>
