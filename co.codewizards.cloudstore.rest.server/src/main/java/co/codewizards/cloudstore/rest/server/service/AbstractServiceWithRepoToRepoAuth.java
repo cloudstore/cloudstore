@@ -27,12 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -201,18 +198,10 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 	protected URL getLocalRootURL(UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
-		String localPathPrefix;
-		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-			try {
-				RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(clientRepositoryId);
-				localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
-				transaction.commit();
-			} finally {
-				transaction.rollbackIfActive();
-			}
+			final String localPathPrefix = localRepoManager.getLocalPathPrefixOrFail(clientRepositoryId);
 			URL localRootURL;
 			try {
 				localRootURL = localRoot.toURI().toURL();

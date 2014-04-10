@@ -24,13 +24,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.persistence.RepoFile;
-import co.codewizards.cloudstore.core.persistence.RepoFileDAO;
-import co.codewizards.cloudstore.core.repo.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
+import co.codewizards.cloudstore.local.persistence.RepoFile;
+import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.server.CloudStoreServer;
 
 public abstract class AbstractIT {
@@ -113,7 +113,7 @@ public abstract class AbstractIT {
 		}
 	}
 
-	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
+	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.Helper.getInstance();
 	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
 
 	protected File newTestRepositoryLocalRoot(String suffix) throws IOException {
@@ -213,7 +213,7 @@ public abstract class AbstractIT {
 	}
 
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
 		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {

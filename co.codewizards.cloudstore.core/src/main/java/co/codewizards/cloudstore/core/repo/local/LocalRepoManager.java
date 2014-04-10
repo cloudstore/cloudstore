@@ -6,8 +6,6 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
-import co.codewizards.cloudstore.core.persistence.LocalRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public interface LocalRepoManager {
@@ -62,6 +60,16 @@ public interface LocalRepoManager {
 	 * @return the local repository's public key. Never <code>null</code>.
 	 */
 	byte[] getPublicKey();
+
+	/**
+	 * Gets the remote repository's public key.
+	 * <p>
+	 * This is always an RSA key - other key types are not (yet) supported.
+	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>.
+	 * @return the remote repository's public key. Never <code>null</code>.
+	 * @throws IllegalArgumentException if there is no remote-repository with the given {@code repositoryId}.
+	 */
+	byte[] getRemoteRepositoryPublicKeyOrFail(UUID repositoryId);
 
 	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
 
@@ -124,6 +132,34 @@ public interface LocalRepoManager {
 	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>.
 	 */
 	void deleteRemoteRepository(UUID repositoryId);
+
+	/**
+	 * Gets the local path-prefix (of the local repository managed by this {@code LocalRepoManager}) when syncing with
+	 * the remote repository identified by the given {@code remoteRoot}.
+	 * @param remoteRoot the remote repository's root-URL (not necessarily its real root, but the root URL connected
+	 * to the local repository). Must not be <code>null</code>.
+	 * @return the local path-prefix. Never <code>null</code>, but maybe empty.
+	 * @throws IllegalArgumentException if there is no remote-repository with the given {@code remoteRoot}.
+	 */
+	String getLocalPathPrefixOrFail(URL remoteRoot);
+
+	/**
+	 * Gets the local path-prefix (of the local repository managed by this {@code LocalRepoManager}) when syncing with
+	 * the remote repository identified by the given {@code remoteRoot}.
+	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>.
+	 * @return the local path-prefix. Never <code>null</code>, but maybe empty.
+	 * @throws IllegalArgumentException if there is no remote-repository with the given {@code remoteRoot}.
+	 */
+	String getLocalPathPrefixOrFail(UUID repositoryId);
+
+	/**
+	 * Gets the unique ID of the remote repository identified by the given {@code remoteRoot}.
+	 * @param remoteRoot the remote repository's root-URL (not necessarily its real root, but the root URL connected
+	 * to the local repository). Must not be <code>null</code>.
+	 * @return the remote repository's unique ID. Never <code>null</code>.
+	 * @throws IllegalArgumentException if there is no remote-repository with the given {@code remoteRoot}.
+	 */
+	UUID getRemoteRepositoryIdOrFail(URL remoteRoot);
 
 	Lock getLock();
 

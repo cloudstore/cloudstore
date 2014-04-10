@@ -39,14 +39,11 @@ import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -87,33 +84,20 @@ public class RepoToRepoSync {
 	 * If a sub-directory of the remote repository is connected to the local repository, this sub-directory
 	 * must be referenced here.
 	 */
-	public RepoToRepoSync(File localRoot, URL remoteRoot) {
+	public RepoToRepoSync(File localRoot, final URL remoteRoot) {
 		File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
 		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
-		localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
-		this.localRoot = localRoot = new File(localRoot, getLocalPathPrefix(remoteRoot));
+		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
+		this.localRoot = localRoot = new File(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
 		localRepositoryId = localRepoManager.getRepositoryId();
 		if (localRepositoryId == null)
 			throw new IllegalStateException("localRepoManager.getRepositoryId() returned null!");
 
-		remoteRepositoryId = readRemoteRepositoryIdFromLocalDB();
+		remoteRepositoryId = localRepoManager.getRemoteRepositoryIdOrFail(remoteRoot);
 
 		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
 		localRepoTransport = createRepoTransport(localRoot, remoteRepositoryId);
-	}
-
-	private String getLocalPathPrefix(URL remoteRoot) {
-		String localPathPrefix;
-		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
-			localPathPrefix = remoteRepository.getLocalPathPrefix();
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
-		return localPathPrefix;
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -191,19 +175,6 @@ public class RepoToRepoSync {
 		assertNotNull("localSyncExecutor", localSyncExecutor).shutdown();
 		localSyncFuture = null;
 		localSyncExecutor = null;
-	}
-
-	private UUID readRemoteRepositoryIdFromLocalDB() {
-		UUID remoteRepositoryId;
-		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
-			remoteRepositoryId = remoteRepository.getRepositoryId();
-			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
-		}
-		return remoteRepositoryId;
 	}
 
 	private void readRemoteRepositoryIdFromRepoTransport() {

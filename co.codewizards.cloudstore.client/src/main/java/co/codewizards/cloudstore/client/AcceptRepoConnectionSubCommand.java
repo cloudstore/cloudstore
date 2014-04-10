@@ -21,12 +21,12 @@ import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
 
 /**
  * {@link SubCommand} implementation for requesting a connection at a remote repository.
@@ -57,7 +57,7 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
 		String localPathPrefix;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryId = localRepoManager.getRepositoryId();
 			localPublicKey = localRepoManager.getPublicKey();

@@ -1,67 +1,30 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public interface LocalRepoManagerFactory {
+	class Helper {
+		private static LocalRepoManagerFactory instance;
 
-/**
- * Registry of {@link LocalRepoManager}s.
- * <p>
- * There is one single instance of this registry. It serves as the central point to obtain
- * {@code LocalRepoManager}s.
- * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
- */
-public class LocalRepoManagerFactory
-{
-	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerFactory.class);
+		public static synchronized LocalRepoManagerFactory getInstance() {
+			if (instance == null) {
+				final ServiceLoader<LocalRepoManagerFactory> serviceLoader = ServiceLoader.load(LocalRepoManagerFactory.class);
+				final Iterator<LocalRepoManagerFactory> iterator = serviceLoader.iterator();
+				if (!iterator.hasNext())
+					throw new IllegalStateException("There is no LocalRepoManagerFactory implementation registered! Maybe the JAR 'co.codewizards.cloudstore.local' is missing in the classpath?!");
 
-	private Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();
-	private Set<LocalRepoManagerImpl> nonReOpenableLocalRepoManagerImpls = new HashSet<LocalRepoManagerImpl>();
+				final LocalRepoManagerFactory localRepoManagerFactory = iterator.next();
 
-	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
+				if (iterator.hasNext())
+					throw new IllegalStateException("There are multiple LocalRepoManagerFactory implementations registered! Maybe there are multiple versions of JAR 'co.codewizards.cloudstore.local' in the classpath?!");
 
-	private LocalRepoManagerCloseListener localRepoManagerCloseListener = new LocalRepoManagerCloseListener() {
-		@Override
-		public void preClose(LocalRepoManagerCloseEvent event) {
-			if (!event.isBackend())
-				throw new IllegalStateException("Why are we notified by the proxy?!?");
-
-			preLocalRepoManagerBackendClose(event.getLocalRepoManager());
+				instance = localRepoManagerFactory;
+			}
+			return instance;
 		}
-		@Override
-		public void postClose(LocalRepoManagerCloseEvent event) {
-			if (!event.isBackend())
-				throw new IllegalStateException("Why are we notified by the proxy?!?");
-
-			postLocalRepoManagerBackendClose((LocalRepoManagerImpl) event.getLocalRepoManager());
-		}
-	};
-
-	private LocalRepoManagerFactory() {}
-
-	private static class LocalRepoManagerFactoryHolder {
-		public static final LocalRepoManagerFactory INSTANCE = new LocalRepoManagerFactory();
-	}
-
-	public static LocalRepoManagerFactory getInstance() {
-		return LocalRepoManagerFactoryHolder.INSTANCE;
-	}
-
-	public synchronized Set<File> getLocalRoots() {
-		return Collections.unmodifiableSet(new HashSet<File>(localRoot2LocalRepoManagerImpl.keySet()));
 	}
 
 	/**
@@ -88,29 +51,7 @@ public class LocalRepoManagerFactory
 	 * @throws LocalRepoManagerException if the given {@code localRoot} does not denote the root-directory
 	 * of an existing repository.
 	 */
-	public synchronized LocalRepoManager createLocalRepoManagerForExistingRepository(File localRoot) throws LocalRepoManagerException {
-		localRoot = canonicalize(localRoot);
-
-		LocalRepoManagerImpl localRepoManagerImpl = localRoot2LocalRepoManagerImpl.get(localRoot);
-		if (localRepoManagerImpl != null && !localRepoManagerImpl.open()) {
-			localRoot2LocalRepoManagerImpl.remove(localRoot);
-			nonReOpenableLocalRepoManagerImpls.add(localRepoManagerImpl);
-			while (localRepoManagerImpl.isOpen()) {
-				logger.info("createLocalRepoManagerForExistingRepository: Existing LocalRepoManagerImpl is currently closing and could not be re-opened. Waiting for it to be completely closed.");
-				try { Thread.sleep(100); } catch (InterruptedException x) { doNothing(); }
-			}
-			localRepoManagerImpl = null;
-		}
-
-		if (localRepoManagerImpl == null) {
-			localRepoManagerImpl = new LocalRepoManagerImpl(localRoot, false);
-			if (!localRepoManagerImpl.open())
-				throw new IllegalStateException("localRepoManagerImpl.open() of *new* instance returned false!");
-
-			enlist(localRepoManagerImpl);
-		}
-		return createProxy(localRepoManagerImpl);
-	}
+	LocalRepoManager createLocalRepoManagerForExistingRepository(File localRoot) throws LocalRepoManagerException;
 
 	/**
 	 * Creates a {@link LocalRepoManager} for the given {@code localRoot}.
@@ -133,83 +74,14 @@ public class LocalRepoManagerFactory
 	 * @throws LocalRepoManagerException if the given {@code localRoot} does not denote an existing directory
 	 * or if it is a directory inside an existing repository.
 	 */
-	public synchronized LocalRepoManager createLocalRepoManagerForNewRepository(File localRoot) throws LocalRepoManagerException {
-		localRoot = canonicalize(localRoot);
+	LocalRepoManager createLocalRepoManagerForNewRepository(File localRoot) throws LocalRepoManagerException;
 
-		LocalRepoManagerImpl localRepoManagerImpl = localRoot2LocalRepoManagerImpl.get(localRoot);
-		if (localRepoManagerImpl != null) {
-			throw new FileAlreadyRepositoryException(localRoot);
-		}
+	void close();
 
-		localRepoManagerImpl = new LocalRepoManagerImpl(localRoot, true);
-		if (!localRepoManagerImpl.open())
-			throw new IllegalStateException("localRepoManagerImpl.open() of *new* instance returned false!");
+	void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
 
-		enlist(localRepoManagerImpl);
-		return createProxy(localRepoManagerImpl);
-	}
+	void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener);
 
-	private LocalRepoManager createProxy(LocalRepoManagerImpl localRepoManagerImpl) {
-		return (LocalRepoManager) Proxy.newProxyInstance(
-				this.getClass().getClassLoader(),
-				new Class<?>[] { LocalRepoManager.class },
-				new LocalRepoManagerInvocationHandler(localRepoManagerImpl));
-	}
+	Set<File> getLocalRoots();
 
-	public synchronized void close() {
-		for (LocalRepoManagerImpl localRepoManagerImpl : new ArrayList<LocalRepoManagerImpl>(localRoot2LocalRepoManagerImpl.values())) {
-			localRepoManagerImpl.close();
-		}
-	}
-
-	public void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
-		localRepoManagerCloseListeners.add(listener);
-	}
-
-	public void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
-		localRepoManagerCloseListeners.remove(listener);
-	}
-
-	private void enlist(LocalRepoManagerImpl localRepoManager) {
-		localRoot2LocalRepoManagerImpl.put(localRepoManager.getLocalRoot(), localRepoManager);
-		localRepoManager.addLocalRepoManagerCloseListener(localRepoManagerCloseListener);
-	}
-
-	private File canonicalize(File localRoot) {
-		assertNotNull("localRoot", localRoot);
-		try {
-			localRoot = localRoot.getCanonicalFile();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return localRoot;
-	}
-
-	private void preLocalRepoManagerBackendClose(LocalRepoManager localRepoManager) {
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
-			listener.preClose(event);
-		}
-	}
-
-	private void postLocalRepoManagerBackendClose(LocalRepoManagerImpl localRepoManager) {
-		assertNotNull("localRepoManager", localRepoManager);
-		synchronized (this) {
-			LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
-			if (localRepoManager != localRepoManager2) {
-				if (nonReOpenableLocalRepoManagerImpls.remove(localRepoManager))
-					logger.info("localRepoManager[{}] could not be re-opened and was unlisted before.", localRepoManager.id);
-				else
-					throw new IllegalStateException(String.format("localRepoManager[%s] is unknown!", localRepoManager.id));
-
-				localRoot2LocalRepoManagerImpl.put(localRepoManager2.getLocalRoot(), localRepoManager2); // re-add!
-			}
-		}
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
-			listener.postClose(event);
-		}
-	}
-
-	private static final void doNothing() { }
 }

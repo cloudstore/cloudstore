@@ -6,7 +6,7 @@ import co.codewizards.cloudstore.core.config.Config;
  * Strategy controlling how and when a destination file is written.
  * <p>
  * This is merely a setting in the {@link Config}. The actual implementation is in the
- * {@link co.codewizards.cloudstore.core.repo.transport.file.FileRepoTransport FileRepoTransport}.
+ * {@link co.codewizards.cloudstore.local.transport.file.FileRepoTransport FileRepoTransport}.
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */

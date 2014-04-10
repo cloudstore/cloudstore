@@ -41,7 +41,7 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 		UUID remoteRepositoryId;
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryId = localRepoManager.getRepositoryId();
 			localPublicKey = localRepoManager.getPublicKey();

@@ -72,7 +72,7 @@ public class CreateRepoSubCommand extends SubCommand
 				throw new IOException("Could not create directory (permissions?): " + localRoot);
 		}
 		UUID repositoryId;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
 		try {
 			repositoryId = localRepoManager.getRepositoryId();
 		} finally {

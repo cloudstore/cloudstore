@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import co.codewizards.cloudstore.core.repo.local.RepairDatabase;
+import co.codewizards.cloudstore.local.RepairDatabase;
 
 /**
  * {@link SubCommand} implementation for repairing a database.

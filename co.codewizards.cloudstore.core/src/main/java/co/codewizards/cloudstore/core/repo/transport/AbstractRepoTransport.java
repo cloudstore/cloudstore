@@ -157,4 +157,5 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	public void close() {
 		repoTransportCreatedStackTraceException = null;
 	}
+
 }

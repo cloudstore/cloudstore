@@ -6,19 +6,19 @@ import java.io.File;
 import java.util.Collection;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.persistence.CopyModificationDAO;
-import co.codewizards.cloudstore.core.persistence.DeleteModificationDAO;
-import co.codewizards.cloudstore.core.persistence.DirectoryDAO;
-import co.codewizards.cloudstore.core.persistence.NormalFileDAO;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.local.persistence.CopyModificationDAO;
+import co.codewizards.cloudstore.local.persistence.DeleteModificationDAO;
+import co.codewizards.cloudstore.local.persistence.DirectoryDAO;
+import co.codewizards.cloudstore.local.persistence.NormalFileDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepository;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.
@@ -42,7 +42,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 
 	@Override
 	public void run() throws Exception {
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {

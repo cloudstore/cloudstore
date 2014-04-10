@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.Random;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.repo.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 
 public abstract class AbstractTest {
 

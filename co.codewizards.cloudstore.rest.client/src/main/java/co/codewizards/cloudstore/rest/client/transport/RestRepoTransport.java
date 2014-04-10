@@ -28,12 +28,9 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
 import co.codewizards.cloudstore.core.io.TimeoutException;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.rest.client.CloudStoreRESTClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
@@ -222,35 +219,26 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 					clientRepositoryId, getRepositoryId());
 
 			File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryId);
-			LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+			LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 			try {
-				LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-				try {
-					RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(getRepositoryId());
+				EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryId());
 
-					EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().getEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryId());
+				byte[] signedAuthTokenData = new SignedAuthTokenDecrypter(localRepoManager.getPrivateKey()).decrypt(encryptedSignedAuthToken);
 
-					byte[] signedAuthTokenData = new SignedAuthTokenDecrypter(localRepoManager.getPrivateKey()).decrypt(encryptedSignedAuthToken);
+				SignedAuthToken signedAuthToken = new SignedAuthTokenIO().deserialise(signedAuthTokenData);
 
-					SignedAuthToken signedAuthToken = new SignedAuthTokenIO().deserialise(signedAuthTokenData);
+				AuthTokenVerifier verifier = new AuthTokenVerifier(localRepoManager.getRemoteRepositoryPublicKeyOrFail(getRepositoryId()));
+				verifier.verify(signedAuthToken);
 
-					AuthTokenVerifier verifier = new AuthTokenVerifier(remoteRepository.getPublicKey());
-					verifier.verify(signedAuthToken);
+				authToken = new AuthTokenIO().deserialise(signedAuthToken.getAuthTokenData());
+				Date expiryDate = assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime()).toDate();
+				Date renewalDate = assertNotNull("authToken.renewalDateTime", authToken.getRenewalDateTime()).toDate();
+				if (!renewalDate.before(expiryDate))
+					throw new IllegalArgumentException(
+							String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
+									authToken.getRenewalDateTime(), authToken.getExpiryDateTime()));
 
-					authToken = new AuthTokenIO().deserialise(signedAuthToken.getAuthTokenData());
-					Date expiryDate = assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime()).toDate();
-					Date renewalDate = assertNotNull("authToken.renewalDateTime", authToken.getRenewalDateTime()).toDate();
-					if (!renewalDate.before(expiryDate))
-						throw new IllegalArgumentException(
-								String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
-										authToken.getRenewalDateTime(), authToken.getExpiryDateTime()));
-
-					clientRepositoryId2AuthToken.put(clientRepositoryId, authToken);
-
-					transaction.commit();
-				} finally {
-					transaction.rollbackIfActive();
-				}
+				clientRepositoryId2AuthToken.put(clientRepositoryId, authToken);
 			} finally {
 				localRepoManager.close();
 			}

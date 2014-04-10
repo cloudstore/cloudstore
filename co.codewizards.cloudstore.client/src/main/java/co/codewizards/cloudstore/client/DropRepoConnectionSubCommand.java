@@ -6,13 +6,13 @@ import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.local.persistence.RemoteRepository;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
 
 /**
  * {@link SubCommand} implementation for cancelling a connection with a remote repository.
@@ -56,7 +56,7 @@ public class DropRepoConnectionSubCommand extends SubCommandWithExistingLocalRep
 	public void run() throws Exception {
 		boolean foundSomethingToCancel = false;
 		UUID localRepositoryId;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			localRepositoryId = localRepoManager.getRepositoryId();
 			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();

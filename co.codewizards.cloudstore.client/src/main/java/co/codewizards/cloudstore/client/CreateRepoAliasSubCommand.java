@@ -29,7 +29,7 @@ public class CreateRepoAliasSubCommand extends SubCommandWithExistingLocalRepo
 	@Override
 	public void run() throws Exception {
 		LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
 

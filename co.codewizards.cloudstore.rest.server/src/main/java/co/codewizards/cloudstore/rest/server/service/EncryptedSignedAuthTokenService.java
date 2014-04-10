@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.util.UUID;
@@ -23,12 +23,9 @@ import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenEncrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
-import co.codewizards.cloudstore.core.persistence.RemoteRepository;
-import co.codewizards.cloudstore.core.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.rest.server.auth.AuthRepoPassword;
 import co.codewizards.cloudstore.rest.server.auth.AuthRepoPasswordManager;
 
@@ -52,20 +49,12 @@ public class EncryptedSignedAuthTokenService
 		assertNotNull("repositoryName", repositoryName);
 		assertNotNull("remoteRepositoryId", clientRepositoryId);
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-			try {
-				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-				RemoteRepository clientRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
-				EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
-						localRepoManager.getRepositoryId(), clientRepositoryId,
-						localRepoManager.getPrivateKey(), clientRemoteRepository.getPublicKey());
-				transaction.commit();
-				return result;
-			} finally {
-				transaction.rollbackIfActive();
-			}
+			EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
+					localRepoManager.getRepositoryId(), clientRepositoryId,
+					localRepoManager.getPrivateKey(), localRepoManager.getRemoteRepositoryPublicKeyOrFail(clientRepositoryId));
+			return result;
 		} finally {
 			localRepoManager.close();
 		}
