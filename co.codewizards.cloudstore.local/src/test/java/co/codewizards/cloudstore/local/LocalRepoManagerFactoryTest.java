@@ -48,6 +48,9 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		LocalRepoManagerInvocationHandler invocationHandler2 = (LocalRepoManagerInvocationHandler) Proxy.getInvocationHandler(localRepoManager2);
 		assertThat(invocationHandler).isNotSameAs(invocationHandler2);
 		assertThat(invocationHandler.localRepoManagerImpl).isSameAs(invocationHandler2.localRepoManagerImpl);
+
+		localRepoManager.close();
+		localRepoManager2.close();
 	}
 
 	@Test
@@ -64,6 +67,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(new File(new File(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
+
+		localRepoManager2.close();
 	}
 
 	@Test(expected=FileNotFoundException.class)
@@ -92,7 +97,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		File localRoot = newTestRepositoryLocalRoot();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
-		localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		localRepoManager.close();
 	}
 
 	@Test(expected=FileNotFoundException.class)
@@ -110,6 +116,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		assertThat(localRoot).isDirectory();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
+		localRepoManager.close();
+
 		localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 	}
 
@@ -142,6 +150,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 		sub1SubAaaDir.mkdirs();
 		assertThat(sub1SubAaaDir).isDirectory();
+
+		localRepoManager.close();
 
 		localRepoManagerFactory.createLocalRepoManagerForNewRepository(sub1SubAaaDir);
 	}
