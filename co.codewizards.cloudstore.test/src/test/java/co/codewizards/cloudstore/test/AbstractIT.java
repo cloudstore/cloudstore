@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,8 +32,11 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
+import co.codewizards.cloudstore.local.persistence.Directory;
+import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.server.CloudStoreServer;
 
 public abstract class AbstractIT {
@@ -185,6 +191,18 @@ public abstract class AbstractIT {
 		return file;
 	}
 
+	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
+		assertThat(symlink).doesNotExist();
+		final Path symlinkParentPath = symlink.getParentFile().toPath();
+		final Path symlinkPath = symlink.toPath();
+		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
+		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
+		assertThat(symbolicLink.toFile().getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		addToFilesInRepo(symlink);
+		return symlink;
+	}
+
 	protected void deleteFile(File file) throws IOException {
 		file = file.getAbsoluteFile();
 		assertThat(file).exists();
@@ -226,6 +244,12 @@ public abstract class AbstractIT {
 				if (repoFile == null) {
 					Assert.fail("Corresponding RepoFile missing in repository for file: " + file);
 				}
+				if (Files.isSymbolicLink(file.toPath()))
+					assertThat(repoFile).isInstanceOf(Symlink.class);
+				else if (file.isFile())
+					assertThat(repoFile).isInstanceOf(NormalFile.class);
+				else if (file.isDirectory())
+					assertThat(repoFile).isInstanceOf(Directory.class);
 			}
 
 			filesInRepo = new HashSet<File>(filesInRepo);
@@ -250,6 +274,18 @@ public abstract class AbstractIT {
 		assertThat(dir1).isDirectory();
 		assertThat(dir2).isDirectory();
 
+		boolean dir1IsSymbolicLink = Files.isSymbolicLink(dir1.toPath());
+		boolean dir2IsSymbolicLink = Files.isSymbolicLink(dir2.toPath());
+
+		assertThat(dir1IsSymbolicLink).isEqualTo(dir2IsSymbolicLink);
+
+		if (dir1IsSymbolicLink) {
+			Path target1 = Files.readSymbolicLink(dir1.toPath());
+			Path target2 = Files.readSymbolicLink(dir2.toPath());
+			assertThat(target1).isEqualTo(target2);
+			return;
+		}
+
 		String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
 		assertThat(children1).isNotNull();
 
@@ -265,12 +301,21 @@ public abstract class AbstractIT {
 			File child1 = new File(dir1, childName);
 			File child2 = new File(dir2, childName);
 
-			if (child1.isFile()) {
+			boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
+			boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());
+
+			assertThat(child1IsSymbolicLink).isEqualTo(child2IsSymbolicLink);
+
+			if (child1IsSymbolicLink) {
+				Path target1 = Files.readSymbolicLink(child1.toPath());
+				Path target2 = Files.readSymbolicLink(child2.toPath());
+				assertThat(target1).isEqualTo(target2);
+			}
+			else if (child1.isFile()) {
 				assertThat(child2.isFile());
 				assertThat(IOUtil.compareFiles(child1, child2)).isTrue();
 			}
-
-			if (child1.isDirectory())
+			else if (child1.isDirectory())
 				assertDirectoriesAreEqualRecursively(child1, child2);
 		}
 	}

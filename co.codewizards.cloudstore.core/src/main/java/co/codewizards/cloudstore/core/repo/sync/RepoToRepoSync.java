@@ -39,6 +39,7 @@ import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
+import co.codewizards.cloudstore.core.dto.SymlinkDTO;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -303,6 +304,8 @@ public class RepoToRepoSync {
 								repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
 						syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
 					}
+					else if (repoFileDTO instanceof SymlinkDTO)
+						syncSymlink(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (SymlinkDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
 					else
 						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
 
@@ -378,10 +381,12 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private void syncDirectory(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, DirectoryDTO directoryDTO, ProgressMonitor monitor) {
+	private void syncDirectory(
+			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDTOTreeNode repoFileDTOTreeNode, final DirectoryDTO directoryDTO, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			String path = repoFileDTOTreeNode.getPath();
+			final String path = repoFileDTOTreeNode.getPath();
 			logger.info("syncDirectory: path='{}'", path);
 			try {
 				toRepoTransport.makeDirectory(path, directoryDTO.getLastModified());
@@ -397,8 +402,28 @@ public class RepoToRepoSync {
 		}
 	}
 
+	private void syncSymlink(
+			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDTOTreeNode repoFileDTOTreeNode, final SymlinkDTO symlinkDTO, final SubProgressMonitor monitor) {
+		monitor.beginTask("Synchronising...", 100);
+		try {
+			final String path = repoFileDTOTreeNode.getPath();
+			try {
+				toRepoTransport.makeSymlink(path, symlinkDTO.getTarget(), symlinkDTO.getLastModified());
+			} catch (DeleteModificationCollisionException x) {
+				logger.info("DeleteModificationCollisionException during makeSymlink: {}", path);
+				if (logger.isDebugEnabled())
+					logger.debug(x.toString(), x);
+
+				return;
+			}
+		} finally {
+			monitor.done();
+		}
+	}
+
 	private Future<Void> syncFileAsynchronously(
-			ThreadPoolExecutor syncFileAsynchronouslyExecutor,
+			final ThreadPoolExecutor syncFileAsynchronouslyExecutor,
 			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final RepoFileDTOTreeNode repoFileDTOTreeNode, final RepoFileDTO normalFileDTO, final ProgressMonitor monitor) {
 

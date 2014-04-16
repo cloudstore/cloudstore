@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.Symlink;
 
 public class LocalRepoSync {
 
@@ -88,7 +91,7 @@ public class LocalRepoSync {
 				// happens during the deletion of a directory which is the connection-point
 				// of a remote-repository. The following re-up-sync then leads us here.
 				// To speed up things, we simply quit as this is a valid state.
-				if (!file.exists() && repoFileDAO.getRepoFile(localRoot, file) == null)
+				if (!Files.isSymbolicLink(file.toPath()) && !file.exists() && repoFileDAO.getRepoFile(localRoot, file) == null)
 					return;
 
 				// In the unlikely event, that this is not a valid state, we simply sync all
@@ -105,7 +108,7 @@ public class LocalRepoSync {
 		}
 	}
 
-	private void sync(RepoFile parentRepoFile, File file, ProgressMonitor monitor) {
+	private void sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
@@ -117,8 +120,9 @@ public class LocalRepoSync {
 				repoFile = null;
 			}
 
+			final boolean fileIsSymlink = Files.isSymbolicLink(file.toPath());
 			if (repoFile == null) {
-				if (!file.exists())
+				if (!fileIsSymlink && !file.exists())
 					return;
 
 				repoFile = createRepoFile(parentRepoFile, file, new SubProgressMonitor(monitor, 50));
@@ -130,24 +134,27 @@ public class LocalRepoSync {
 			else
 				monitor.worked(50);
 
-			SubProgressMonitor childSubProgressMonitor = new SubProgressMonitor(monitor, 50);
-			Set<String> childNames = new HashSet<String>();
-			File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
-			if (children != null && children.length > 0) {
-				childSubProgressMonitor.beginTask("Local sync...", children.length);
-				for (File child : children) {
-					childNames.add(child.getName());
-					sync(repoFile, child, new SubProgressMonitor(childSubProgressMonitor, 1));
+			final Set<String> childNames = new HashSet<String>();
+			if (!fileIsSymlink) {
+				final SubProgressMonitor childSubProgressMonitor = new SubProgressMonitor(monitor, 50);
+				final File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
+				if (children != null && children.length > 0) {
+					childSubProgressMonitor.beginTask("Local sync...", children.length);
+					for (final File child : children) {
+						childNames.add(child.getName());
+						sync(repoFile, child, new SubProgressMonitor(childSubProgressMonitor, 1));
+					}
 				}
+				childSubProgressMonitor.done();
 			}
-			childSubProgressMonitor.done();
 
-			Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
-			for (RepoFile childRepoFile : childRepoFiles) {
+			final Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
+			for (final RepoFile childRepoFile : childRepoFiles) {
 				if (!childNames.contains(childRepoFile.getName())) {
 					deleteRepoFile(childRepoFile);
 				}
 			}
+
 			transaction.flush();
 		} finally {
 			monitor.done();
@@ -163,11 +170,13 @@ public class LocalRepoSync {
 	 * @return <code>true</code>, if both types correspond to each other; <code>false</code> otherwise. If
 	 * the file does not exist (anymore) in the file system, <code>false</code> is returned, too.
 	 */
-	private boolean isRepoFileTypeCorrect(RepoFile repoFile, File file) {
+	private boolean isRepoFileTypeCorrect(final RepoFile repoFile, final File file) {
 		assertNotNull("repoFile", repoFile);
 		assertNotNull("file", file);
 
-		// TODO support symlinks!
+		if (Files.isSymbolicLink(file.toPath()))
+			return repoFile instanceof Symlink;
+
 		if (file.isFile())
 			return repoFile instanceof NormalFile;
 
@@ -177,7 +186,7 @@ public class LocalRepoSync {
 		return false;
 	}
 
-	public boolean isModified(RepoFile repoFile, File file) {
+	public boolean isModified(final RepoFile repoFile, final File file) {
 		if (repoFile.getLastModified().getTime() != file.lastModified()) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("isModified: repoFile.lastModified != file.lastModified: repoFile.lastModified={} file.lastModified={} file={}",
@@ -186,11 +195,20 @@ public class LocalRepoSync {
 			return true;
 		}
 
-		if (file.isFile()) {
+		final Path filePath = file.toPath();
+		if (Files.isSymbolicLink(filePath)) {
+			if (!(repoFile instanceof Symlink))
+				throw new IllegalArgumentException("repoFile is not an instance of Symlink! file=" + file);
+
+			final Symlink symlink = (Symlink) repoFile;
+			final String fileSymlinkTarget = readSymbolicLink(filePath);
+			return fileSymlinkTarget.equals(symlink.getTarget());
+		}
+		else if (file.isFile()) {
 			if (!(repoFile instanceof NormalFile))
 				throw new IllegalArgumentException("repoFile is not an instance of NormalFile! file=" + file);
 
-			NormalFile normalFile = (NormalFile) repoFile;
+			final NormalFile normalFile = (NormalFile) repoFile;
 			if (normalFile.getLength() != file.length()) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("isModified: normalFile.length != file.length: repoFile.length={} file.length={} file={}",
@@ -206,20 +224,30 @@ public class LocalRepoSync {
 		return false;
 	}
 
+	private String readSymbolicLink(Path path) {
+		try {
+			final Path targetPath = Files.readSymbolicLink(path);
+			return targetPath.toString().replace(File.separatorChar, '/');
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private RepoFile createRepoFile(RepoFile parentRepoFile, File file, ProgressMonitor monitor) {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
 
 		monitor.beginTask("Local sync...", 100);
 		try {
-			// TODO support symlinks!
-
 			RepoFile repoFile;
-
-			if (file.isDirectory()) {
+			final Path filePath = file.toPath();
+			if (Files.isSymbolicLink(filePath)) {
+				final Symlink symlink = (Symlink) (repoFile = new Symlink());
+				symlink.setTarget(readSymbolicLink(filePath));
+			} else if (file.isDirectory()) {
 				repoFile = new Directory();
 			} else if (file.isFile()) {
-				NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
+				final NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				if (file.exists())
@@ -243,11 +271,19 @@ public class LocalRepoSync {
 		}
 	}
 
-	public void updateRepoFile(RepoFile repoFile, File file, ProgressMonitor monitor) {
+	public void updateRepoFile(final RepoFile repoFile, final File file, final ProgressMonitor monitor) {
 		logger.debug("updateRepoFile: id={} file={}", repoFile.getId(), file);
 		monitor.beginTask("Local sync...", 100);
 		try {
-			if (file.isFile()) {
+			final Path filePath = file.toPath();
+			if (Files.isSymbolicLink(filePath)) {
+				if (!(repoFile instanceof Symlink))
+					throw new IllegalArgumentException("repoFile is not an instance of Symlink! file=" + file);
+
+				Symlink symlink = (Symlink) repoFile;
+				symlink.setTarget(readSymbolicLink(filePath));
+			}
+			else if (file.isFile()) {
 				if (!(repoFile instanceof NormalFile))
 					throw new IllegalArgumentException("repoFile is not an instance of NormalFile!");
 

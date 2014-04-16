@@ -123,6 +123,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
+	public void makeSymlink(String path, String target, Date lastModified) {
+		path = prefixPath(path);
+		getClient().makeSymlink(getRepositoryId().toString(), path, target, lastModified);
+	}
+
+	@Override
 	public void copy(String fromPath, String toPath) {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);

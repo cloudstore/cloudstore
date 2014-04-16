@@ -170,4 +170,6 @@ public interface RepoTransport {
 	void endSyncToRepository(long fromLocalRevision);
 	String prefixPath(String path);
 	String unprefixPath(String path);
+
+	void makeSymlink(String path, String target, Date lastModified);
 }

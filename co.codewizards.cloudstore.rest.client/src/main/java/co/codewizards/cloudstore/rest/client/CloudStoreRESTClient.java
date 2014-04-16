@@ -571,6 +571,28 @@ public class CloudStoreRESTClient {
 		}
 	}
 
+	public void makeSymlink(String repositoryName, String path, String target, Date lastModified) {
+		assertNotNull("repositoryName", repositoryName);
+		assertNotNull("path", path);
+		assertNotNull("target", target);
+		acquireClient();
+		try {
+			WebTarget webTarget = createWebTarget("_makeSymlink", urlEncode(repositoryName), encodePath(path))
+					.queryParam("target", encodePath(target));
+
+			if (lastModified != null)
+				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
+
+			Response response = assignCredentials(webTarget.request()).post(null);
+			assertResponseIndicatesSuccess(response);
+		} catch (RuntimeException x) {
+			handleException(x);
+			throw x;
+		} finally {
+			releaseClient();
+		}
+	}
+
 	/**
 	 * Create a {@link WebTarget} from the given path segments.
 	 * <p>

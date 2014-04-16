@@ -13,6 +13,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import co.codewizards.cloudstore.core.dto.ModificationDTO;
 import co.codewizards.cloudstore.core.dto.NormalFileDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.SymlinkDTO;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDTOIO;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
@@ -76,6 +79,7 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.Symlink;
 
 public class FileRepoTransport extends AbstractRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
@@ -247,6 +251,45 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	@Override
+	public void makeSymlink(String path, String target, Date lastModified) {
+		path = prefixPath(path);
+		final File file = getFile(path);
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		try {
+			final File parentFile = file.getParentFile();
+			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
+			try {
+				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
+
+				if (file.exists() && !isSymlink(file))
+					file.renameTo(IOUtil.createCollisionFile(file));
+
+				if (file.exists() && !isSymlink(file))
+					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
+
+				if (file.exists()) {
+					// TODO detect + handle collision! then delete + recreate the symlink
+					file.delete();
+				}
+
+				final Path symlinkPath = file.toPath();
+				try {
+					Files.createSymbolicLink(symlinkPath, Paths.get(target));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+			} finally {
+				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
+			}
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
 	private void assertNoDeleteModificationCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
 		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
@@ -277,8 +320,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
 			return;
 
-		File toParentFile = toFile.getParentFile();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final File toParentFile = toFile.getParentFile();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
 			try {
@@ -615,19 +658,19 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO, int depth) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFile", repoFile);
-		RepoFileDTO repoFileDTO;
+		final RepoFileDTO repoFileDTO;
 		if (repoFile instanceof NormalFile) {
-			NormalFile normalFile = (NormalFile) repoFile;
-			NormalFileDTO normalFileDTO;
+			final NormalFile normalFile = (NormalFile) repoFile;
+			final NormalFileDTO normalFileDTO;
 			repoFileDTO = normalFileDTO = new NormalFileDTO();
 			normalFileDTO.setLength(normalFile.getLength());
 			normalFileDTO.setSha1(normalFile.getSha1());
 			if (depth > 0) {
 				// TODO this should actually be a SortedSet, but for whatever reason, I started
 				// getting ClassCastExceptions and had to switch to a normal Set :-(
-				List<FileChunk> fileChunks = new ArrayList<>(normalFile.getFileChunks());
+				final List<FileChunk> fileChunks = new ArrayList<>(normalFile.getFileChunks());
 				Collections.sort(fileChunks);
-				for (FileChunk fileChunk : fileChunks) {
+				for (final FileChunk fileChunk : fileChunks) {
 					normalFileDTO.getFileChunkDTOs().add(toFileChunkDTO(fileChunk));
 				}
 			}
@@ -635,7 +678,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				final TempChunkFileDTOIO tempChunkFileDTOIO = new TempChunkFileDTOIO();
 				final File file = repoFile.getFile(getLocalRepoManager().getLocalRoot());
 				for (TempChunkFileWithDTOFile tempChunkFileWithDTOFile : getOffset2TempChunkFileWithDTOFile(file).values()) {
-					File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+					final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
 					if (tempChunkFileDTOFile == null)
 						continue; // incomplete: meta-data not yet written => ignore
 
@@ -653,7 +696,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		else if (repoFile instanceof Directory) {
 			repoFileDTO = new DirectoryDTO();
 		}
-		else // TODO support symlinks!
+		else if (repoFile instanceof Symlink) {
+			final Symlink symlink = (Symlink) repoFile;
+			final SymlinkDTO symlinkDTO;
+			repoFileDTO = symlinkDTO = new SymlinkDTO();
+			symlinkDTO.setTarget(symlink.getTarget());
+		}
+		else
 			throw new UnsupportedOperationException("RepoFile type not yet supported: " + repoFile);
 
 		repoFileDTO.setId(repoFile.getId());
@@ -781,10 +830,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				if (file.exists() && !file.isFile())
+				if (isSymlink(file) || (file.exists() && !file.isFile())) // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
 					file.renameTo(IOUtil.createCollisionFile(file));
 
-				if (file.exists() && !file.isFile())
+				if (isSymlink(file) || (file.exists() && !file.isFile()))
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				final File localRoot = getLocalRepoManager().getLocalRoot();
@@ -834,6 +883,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
+	private boolean isSymlink(final File file) {
+		return Files.isSymbolicLink(file.toPath());
+	}
+
 	/**
 	 * Detect if the file to be copied has been modified locally (or copied from another repository) after the last
 	 * sync from the repository identified by {@code fromRepositoryId}.
@@ -878,6 +931,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		assertNotNull("transaction", transaction);
 		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("fileOrDirectory", fileOrDirectory);
+
+		// TODO handle symlinks! note, that exists(), isFile() and all other File methods resolve symlinks!
 
 		if (!fileOrDirectory.exists()) { // Is this correct? If it does not exist, then there is no collision? TODO what if it has been deleted locally and modified remotely and local is destination and that's our collision?!
 			return false;
@@ -1336,7 +1391,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private void deleteOrFail(File file) {
 		file.delete();
-		if (file.exists())
+		if (isSymlink(file) || file.exists())
 			throw new IllegalStateException("Could not delete file (it still exists after deletion): " + file);
 	}
 
