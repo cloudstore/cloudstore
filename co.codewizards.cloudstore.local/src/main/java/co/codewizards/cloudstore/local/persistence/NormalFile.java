@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.local.persistence;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
@@ -34,8 +33,6 @@ public class NormalFile extends RepoFile {
 	private String sha1;
 
 	private boolean inProgress;
-
-	private String lastSyncFromRepositoryId;
 
 	@Persistent(mappedBy="normalFile", dependentElement="true")
 	private Set<FileChunk> fileChunks;
@@ -77,13 +74,6 @@ public class NormalFile extends RepoFile {
 	}
 	public void setInProgress(boolean inProgress) {
 		this.inProgress = inProgress;
-	}
-
-	public UUID getLastSyncFromRepositoryId() {
-		return lastSyncFromRepositoryId == null ? null : UUID.fromString(lastSyncFromRepositoryId);
-	}
-	public void setLastSyncFromRepositoryId(UUID repositoryId) {
-		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
 	public Set<FileChunk> getFileChunks() {

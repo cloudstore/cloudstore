@@ -280,7 +280,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
 		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
 		long beginTimestamp = System.currentTimeMillis();
-		initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(createRepository);
+//		initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(createRepository);
+		initPersistenceManagerFactoryAndPersistenceCapableClasses(createRepository);
+
 		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
 			pm.currentTransaction().begin();
@@ -325,72 +327,91 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	}
 
-	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(final boolean createRepository) {
-		final int maxRetryCount = 10;
-		int tryCount = 0;
+	private void initPersistenceManagerFactoryAndPersistenceCapableClasses(final boolean createRepository) {
 		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
-		do {
-			++tryCount;
-			persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
-			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
+		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		try {
 			try {
-				try {
-					initPersistenceCapableClasses(pm);
-				} catch (Exception x) {
-					if (tryCount > maxRetryCount) {
-						if (x instanceof RuntimeException)
-							throw (RuntimeException)x;
-						else
-							throw new RuntimeException(x);
-					}
-
-					logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
-					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
-					shutdownDerbyDatabase(connectionURL);
-
-// https://github.com/cloudstore/main/issues/10 :: java.sql.SQLNonTransientConnectionException: No current connection.
-// http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
-// Forcing garbage collection.
-					System.gc();
-					for (int i = 0; i < 3; ++i) {
-						try { Thread.sleep(500 + tryCount * 1000); } catch (InterruptedException ie) { doNothing(); }
-						System.gc();
-					}
-
-					if (createRepository)
-						deleteDerbyDatabaseDirectory();
-					else {
-						logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
-						try {
-							new RepairDatabase(getLocalRoot()).run();
-						} catch (Exception repairDatabaseException) {
-							logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
-						}
-					}
-				}
-			} finally {
-				if (pm != null)
-					pm.close();
+				initPersistenceCapableClasses(pm);
+			} catch (Exception x) {
+				if (x instanceof RuntimeException)
+					throw (RuntimeException)x;
+				else
+					throw new RuntimeException(x);
 			}
-		} while (persistenceManagerFactory == null);
+		} finally {
+			if (pm != null)
+				pm.close();
+		}
 	}
 
-	/**
-	 * @deprecated temporary workaround for https://github.com/cloudstore/main/issues/10
-	 */
-	@Deprecated
-	private void deleteDerbyDatabaseDirectory() {
-		final String connectionURL = this.connectionURL;
-		if (connectionURL == null)
-			throw new IllegalStateException("connectionURL == null");
-
-		if (!connectionURL.startsWith("jdbc:derby:"))
-			throw new IllegalStateException("connectionURL does not start with 'jdbc:': " + connectionURL);
-
-		final File dir = new File(connectionURL.substring(5));
-		logger.info("[%s]deleteDerbyDatabaseDirectory: {}", id, dir);
-		IOUtil.deleteDirectoryRecursively(dir);
-	}
+//	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(final boolean createRepository) {
+//		final int maxRetryCount = 10;
+//		int tryCount = 0;
+//		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
+//		do {
+//			++tryCount;
+//			persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
+//			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+//			try {
+//				try {
+//					initPersistenceCapableClasses(pm);
+//				} catch (Exception x) {
+//					if (tryCount > maxRetryCount) {
+//						if (x instanceof RuntimeException)
+//							throw (RuntimeException)x;
+//						else
+//							throw new RuntimeException(x);
+//					}
+//
+//					logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
+//					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
+//					shutdownDerbyDatabase(connectionURL);
+//
+//// https://github.com/cloudstore/main/issues/10 :: java.sql.SQLNonTransientConnectionException: No current connection.
+//// http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
+//// Forcing garbage collection.
+//					System.gc();
+//					for (int i = 0; i < 3; ++i) {
+//						try { Thread.sleep(500 + tryCount * 1000); } catch (InterruptedException ie) { doNothing(); }
+//						System.gc();
+//					}
+//
+//					if (createRepository)
+//						deleteDerbyDatabaseDirectory();
+//					else {
+//						logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
+//						try {
+//							new RepairDatabase(getLocalRoot()).run();
+//						} catch (Exception repairDatabaseException) {
+//							logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
+//						}
+//					}
+//				}
+//			} finally {
+//				if (pm != null)
+//					pm.close();
+//			}
+//		} while (persistenceManagerFactory == null);
+//	}
+//
+//	/**
+//	 * @deprecated temporary workaround for https://github.com/cloudstore/main/issues/10
+//	 */
+//	@Deprecated
+//	private void deleteDerbyDatabaseDirectory() {
+//		final String connectionURL = this.connectionURL;
+//		if (connectionURL == null)
+//			throw new IllegalStateException("connectionURL == null");
+//
+//		if (!connectionURL.startsWith("jdbc:derby:"))
+//			throw new IllegalStateException("connectionURL does not start with 'jdbc:': " + connectionURL);
+//
+//		final File dir = new File(connectionURL.substring(5));
+//		logger.info("[%s]deleteDerbyDatabaseDirectory: {}", id, dir);
+//		IOUtil.deleteDirectoryRecursively(dir);
+//	}
 
 	private static final void doNothing() { }
 

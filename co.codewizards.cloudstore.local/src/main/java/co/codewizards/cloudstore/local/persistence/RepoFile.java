@@ -1,12 +1,13 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.annotations.Discriminator;
@@ -47,6 +48,8 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private Date lastModified;
+
+	private String lastSyncFromRepositoryId;
 
 	public RepoFile getParent() {
 		return parent;
@@ -147,5 +150,12 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	}
 	public void setLastModified(Date lastModified) {
 		this.lastModified = lastModified;
+	}
+
+	public UUID getLastSyncFromRepositoryId() {
+		return lastSyncFromRepositoryId == null ? null : UUID.fromString(lastSyncFromRepositoryId);
+	}
+	public void setLastSyncFromRepositoryId(UUID repositoryId) {
+		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 }

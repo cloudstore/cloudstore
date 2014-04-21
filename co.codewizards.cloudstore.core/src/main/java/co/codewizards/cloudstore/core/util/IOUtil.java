@@ -1,5 +1,8 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -17,7 +20,17 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -25,6 +38,7 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.childprocess.DumpStreamThread;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public final class IOUtil {
@@ -1464,15 +1478,14 @@ public final class IOUtil {
     }
 
 	public static File createCollisionFile(File file) {
-		File parentFile = file.getParentFile();
-		String fileName = file.getName();
+		final File parentFile = file.getParentFile();
+		final String fileName = file.getName();
 
-//		String fileNameWithoutExtension = nullToEmptyString(getFileNameWithoutExtension(fileName));
 		String fileExtension = nullToEmptyString(getFileExtension(fileName));
 		if (!fileExtension.isEmpty())
 			fileExtension = '.' + fileExtension;
 
-		File result = new File(parentFile,
+		final File result = new File(parentFile,
 				String.format("%s.%s%s%s",
 						fileName,
 						Long.toString(System.currentTimeMillis(), 36),
@@ -1483,5 +1496,81 @@ public final class IOUtil {
 
 	private static String nullToEmptyString(String s) {
 		return s == null ? "" : s;
+	}
+
+	public static String toPathString(final Path path) {
+		assertNotNull("path", path);
+		return path.toString().replace(File.separatorChar, '/');
+	}
+
+	public static long getLastModifiedNoFollow(final File file) {
+		return getLastModifiedNoFollow(file.toPath());
+	}
+
+	public static long getLastModifiedNoFollow(final Path path) {
+		try {
+			BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+			return attributes.lastModifiedTime().toMillis();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void setLastModifiedNoFollow(final File file, final long lastModified) {
+		setLastModifiedNoFollow(file.toPath(), lastModified);
+	}
+
+	public static void setLastModifiedNoFollow(Path path, final long lastModified) {
+		path = path.toAbsolutePath();
+		final List<Throwable> errors = new ArrayList<>();
+
+		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
+		try {
+			Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS)
+			.setTimes(lastModifiedTime, null, null);
+
+			return;
+		} catch (IOException e) {
+			errors.add(e);
+		}
+
+		// It's currently impossible to modify the 'lastModified' timestamp of a symlink :-(
+		// http://stackoverflow.com/questions/17308363/symlink-lastmodifiedtime-in-java-1-7
+		// Therefore, we fall back to the touch command, if the above code failed.
+
+		final String timestamp = new SimpleDateFormat("YYYYMMddHHmm.ss").format(new Date(lastModified));
+		final ProcessBuilder processBuilder = new ProcessBuilder("touch", "-c", "-h", "-m", "-t", timestamp, path.toString());
+		processBuilder.redirectErrorStream(true);
+		try {
+			final Process process = processBuilder.start();
+			final ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+			final int processExitCode;
+			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, null);
+			try {
+				dumpInputStreamThread.start();
+				processExitCode = process.waitFor();
+			} finally {
+				dumpInputStreamThread.flushBuffer();
+				dumpInputStreamThread.interrupt();
+			}
+
+			if (processExitCode != 0) {
+				final String stdOutString = new String(stdOut.toByteArray());
+				throw new IOException(String.format(
+						"Command 'touch' failed with exitCode=%s and the following message: %s",
+						processExitCode, stdOutString));
+			}
+
+			return;
+		} catch (IOException | InterruptedException e) {
+			errors.add(e);
+		}
+
+		if (!errors.isEmpty()) {
+			logger.error("Setting the lastModified timestamp of '{}' failed with the following errors:", path);
+			for (Throwable error : errors) {
+				logger.error("" + error, error);
+			}
+		}
 	}
 }

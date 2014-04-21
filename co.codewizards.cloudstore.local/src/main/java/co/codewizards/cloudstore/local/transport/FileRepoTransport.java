@@ -244,7 +244,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
-			mkDir(transaction, file, lastModified);
+			mkDir(transaction, clientRepositoryId, file, lastModified);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -254,10 +254,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void makeSymlink(String path, String target, Date lastModified) {
 		path = prefixPath(path);
+		assertNotNull("target", target);
 		final File file = getFile(path);
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
+			final RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+
 			final File parentFile = file.getParentFile();
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
@@ -269,21 +272,66 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				if (file.exists() && !isSymlink(file))
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
-				if (file.exists()) {
-					// TODO detect + handle collision! then delete + recreate the symlink
-					file.delete();
-				}
+				final File localRoot = getLocalRepoManager().getLocalRoot();
 
-				final Path symlinkPath = file.toPath();
 				try {
-					Files.createSymbolicLink(symlinkPath, Paths.get(target));
+					final boolean currentTargetEqualsNewTarget;
+					final Path symlinkPath = file.toPath();
+					if (file.exists()) {
+						final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
+						final String currentTarget = IOUtil.toPathString(currentTargetPath);
+						currentTargetEqualsNewTarget = currentTarget.equals(target);
+						if (!currentTargetEqualsNewTarget) {
+							final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+							if (repoFile == null) {
+								File collisionFile = IOUtil.createCollisionFile(file);
+								file.renameTo(collisionFile);
+								if (file.exists())
+									throw new IllegalStateException("Could not rename file to resolve collision: " + file);
+							}
+							else
+								detectAndHandleFileCollision(transaction, clientRepositoryId, parentFile, repoFile);
+
+							file.delete();
+						}
+					}
+					else
+						currentTargetEqualsNewTarget = false;
+
+					if (!currentTargetEqualsNewTarget)
+						Files.createSymbolicLink(symlinkPath, Paths.get(target));
+
+					if (lastModified != null)
+						IOUtil.setLastModifiedNoFollow(file, lastModified.getTime());
+
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 
+				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
+
+				Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles = getOffset2TempChunkFileWithDTOFile(file).values();
+				for (TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
+					if (tempChunkFileWithDTOFile.getTempChunkFileDTOFile() != null)
+						deleteOrFail(tempChunkFileWithDTOFile.getTempChunkFileDTOFile());
+
+					if (tempChunkFileWithDTOFile.getTempChunkFile() != null)
+						deleteOrFail(tempChunkFileWithDTOFile.getTempChunkFile());
+				}
+
+				final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				if (repoFile == null)
+					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
+
+				if (!(repoFile instanceof Symlink))
+					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a Symlink for file: " + file);
+
+				repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
+
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -714,7 +762,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repoFileDTO;
 	}
 
-	private void mkDir(LocalRepoTransaction transaction, File file, Date lastModified) {
+	private void mkDir(LocalRepoTransaction transaction, UUID clientRepositoryId, File file, Date lastModified) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("file", file);
 
@@ -729,7 +777,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			RepoFile parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
 
 			if (!localRoot.equals(parentFile) && (!parentFile.isDirectory() || parentRepoFile == null))
-				mkDir(transaction, parentFile, null);
+				mkDir(transaction, clientRepositoryId, parentFile, null);
 
 			if (parentRepoFile == null)
 				parentRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, parentFile);
@@ -768,6 +816,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			}
 			else if (repoFile.getLastModified().getTime() != file.lastModified())
 				repoFile.setLastModified(new Date(file.lastModified()));
+
+			repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
 		} finally {
 			ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 		}
@@ -910,10 +960,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * @param transaction the DB transaction. Must not be <code>null</code>.
 	 * @param fromRepositoryId the ID of the source repository from which the file is about to be copied. Must not be <code>null</code>.
 	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>.
-	 * @param normalFile the DB entity corresponding to {@code file}. Must not be <code>null</code>.
+	 * @param normalFileOrSymlink the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
-	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, NormalFile normalFile) {
-		if (detectFileCollision(transaction, fromRepositoryId, file, normalFile)) {
+	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, RepoFile normalFileOrSymlink) {
+		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
 			File collisionFile = IOUtil.createCollisionFile(file);
 			file.renameTo(collisionFile);
 			if (file.exists())
@@ -932,7 +982,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("fileOrDirectory", fileOrDirectory);
 
-		// TODO handle symlinks! note, that exists(), isFile() and all other File methods resolve symlinks!
+		// we handle symlinks before invoking exists() below, because this method and most other File methods resolve symlinks!
+		if (Files.isSymbolicLink(fileOrDirectory.toPath())) {
+			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
+			if (!(repoFile instanceof Symlink))
+				return true; // We had a change after the last local sync (symlink => directory or normal file)!
+
+			return detectFileCollision(transaction, fromRepositoryId, fileOrDirectory, repoFile);
+		}
 
 		if (!fileOrDirectory.exists()) { // Is this correct? If it does not exist, then there is no collision? TODO what if it has been deleted locally and modified remotely and local is destination and that's our collision?!
 			return false;
@@ -941,13 +998,9 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		if (fileOrDirectory.isFile()) {
 			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
 			if (!(repoFile instanceof NormalFile))
-				return true; // We had a change after the last local sync (normal file => directory)!
+				return true; // We had a change after the last local sync (normal file => directory or symlink)!
 
-			NormalFile normalFile = (NormalFile) repoFile;
-			if (detectFileCollision(transaction, fromRepositoryId, fileOrDirectory, normalFile))
-				return true;
-			else
-				return false;
+			return detectFileCollision(transaction, fromRepositoryId, fileOrDirectory, repoFile);
 		}
 
 		File[] children = fileOrDirectory.listFiles();
@@ -968,24 +1021,24 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * @param transaction
 	 * @param fromRepositoryId
 	 * @param file
-	 * @param normalFile
+	 * @param normalFileOrSymlink
 	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
 	 */
-	private boolean detectFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, NormalFile normalFile) {
+	private boolean detectFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, RepoFile normalFileOrSymlink) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("file", file);
-		assertNotNull("normalFile", normalFile);
+		assertNotNull("normalFileOrSymlink", normalFileOrSymlink);
 
 		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
-		if (normalFile.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
+		if (normalFileOrSymlink.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
 			return false;
 
 		// The file was transferred from the same repository before and was thus not changed locally nor in another repo.
 		// This can only happen, if the sync was interrupted (otherwise the check for the localRevision above
 		// would have already caused this method to abort).
-		if (fromRepositoryId.equals(normalFile.getLastSyncFromRepositoryId()))
+		if (fromRepositoryId.equals(normalFileOrSymlink.getLastSyncFromRepositoryId()))
 			return false;
 
 		return true;

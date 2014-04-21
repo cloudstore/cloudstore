@@ -8,6 +8,7 @@ import java.util.UUID;
 import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
 import co.codewizards.cloudstore.core.dto.RepoFileDTO;
 import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * Transport abstraction.
@@ -95,7 +96,8 @@ public interface RepoTransport {
 	 * @param path the path of the directory. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
-	 * @param lastModified the {@link File#lastModified() File.lastModified} the newly created directory will be set to.
+	 * @param lastModified the {@linkplain IOUtil#getLastModifiedNoFollow(File) last-modified-timestamp} the newly created
+	 * directory will be set to.
 	 * May be <code>null</code> (in which case the {@code lastModified} property is not touched). This applies only to the
 	 * actual directory and not to the parent-directories! The parent-directories' {@code lastModified} properties are never
 	 * touched - even if the parent-directories are newly created.

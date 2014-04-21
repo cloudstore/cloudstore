@@ -29,6 +29,7 @@ import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDAO;
@@ -187,10 +188,11 @@ public class LocalRepoSync {
 	}
 
 	public boolean isModified(final RepoFile repoFile, final File file) {
-		if (repoFile.getLastModified().getTime() != file.lastModified()) {
+		final long fileLastModified = IOUtil.getLastModifiedNoFollow(file);
+		if (repoFile.getLastModified().getTime() != fileLastModified) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("isModified: repoFile.lastModified != file.lastModified: repoFile.lastModified={} file.lastModified={} file={}",
-						repoFile.getLastModified(), new Date(file.lastModified()), file);
+						repoFile.getLastModified(), new Date(fileLastModified), file);
 			}
 			return true;
 		}
@@ -227,7 +229,7 @@ public class LocalRepoSync {
 	private String readSymbolicLink(Path path) {
 		try {
 			final Path targetPath = Files.readSymbolicLink(path);
-			return targetPath.toString().replace(File.separatorChar, '/');
+			return IOUtil.toPathString(targetPath);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -260,7 +262,7 @@ public class LocalRepoSync {
 
 			repoFile.setParent(parentRepoFile);
 			repoFile.setName(file.getName());
-			repoFile.setLastModified(new Date(file.lastModified()));
+			repoFile.setLastModified(new Date(IOUtil.getLastModifiedNoFollow(file)));
 
 			if (repoFile instanceof NormalFile)
 				createCopyModificationsIfPossible((NormalFile)repoFile);
@@ -289,9 +291,9 @@ public class LocalRepoSync {
 
 				NormalFile normalFile = (NormalFile) repoFile;
 				sha(normalFile, file, new SubProgressMonitor(monitor, 100));
-				normalFile.setLastSyncFromRepositoryId(null);
 			}
-			repoFile.setLastModified(new Date(file.lastModified()));
+			repoFile.setLastSyncFromRepositoryId(null);
+			repoFile.setLastModified(new Date(IOUtil.getLastModifiedNoFollow(file)));
 		} finally {
 			monitor.done();
 		}

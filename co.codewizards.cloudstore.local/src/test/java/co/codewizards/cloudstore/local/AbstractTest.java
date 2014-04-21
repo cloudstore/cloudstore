@@ -235,7 +235,8 @@ public abstract class AbstractTest {
 		Arrays.sort(children1);
 		Arrays.sort(children2);
 
-		assertThat(children1).containsOnly(children2);
+//		assertThat(children1).containsOnly(children2);
+		assertThat(children1).isEqualTo(children2);
 
 		for (String childName : children1) {
 			File child1 = new File(dir1, childName);
@@ -245,6 +246,9 @@ public abstract class AbstractTest {
 			boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());
 
 			assertThat(child1IsSymbolicLink).isEqualTo(child2IsSymbolicLink);
+
+			if (IOUtil.getLastModifiedNoFollow(child1) != IOUtil.getLastModifiedNoFollow(child2))
+				fail("Different 'lastModified' timestamps: " + child1 + " vs. " + child2);
 
 			if (child1IsSymbolicLink) {
 				Path target1 = Files.readSymbolicLink(child1.toPath());

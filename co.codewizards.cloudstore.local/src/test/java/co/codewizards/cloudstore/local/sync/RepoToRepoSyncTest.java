@@ -582,9 +582,25 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		File child_1 = createDirectory(remoteRoot, "1");
 
 		File child_1_a = createFileWithRandomContent(child_1, "a");
-		createRelativeSymlink(new File(child_1, "b"), child_1_a);
+		File b = createRelativeSymlink(new File(child_1, "b"), child_1_a);
 
-		createRelativeSymlink(new File(child_1, "broken"), new File(child_1, "doesNotExist"));
+		File broken = createRelativeSymlink(new File(child_1, "broken"), new File(child_1, "doesNotExist"));
+
+		long child_1_a_lastModified = System.currentTimeMillis() - (24L * 3600);
+		long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
+		long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
+
+		IOUtil.setLastModifiedNoFollow(child_1_a, child_1_a_lastModified);
+		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+
+		IOUtil.setLastModifiedNoFollow(b, symlink_b_lastModified);
+		assertThat(IOUtil.getLastModifiedNoFollow(b)).isBetween(symlink_b_lastModified - 2000, symlink_b_lastModified + 2000);
+
+		// Assert that changing the symlink's timestamp did not affect the real file.
+		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+
+		IOUtil.setLastModifiedNoFollow(broken, symlink_broken_lastModified);
+		assertThat(IOUtil.getLastModifiedNoFollow(broken)).isBetween(symlink_broken_lastModified - 2000, symlink_broken_lastModified + 2000);
 
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);
@@ -592,6 +608,11 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
+
+		localRepoManagerRemote.close();
+
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
