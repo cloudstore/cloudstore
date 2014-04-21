@@ -277,7 +277,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				try {
 					final boolean currentTargetEqualsNewTarget;
 					final Path symlinkPath = file.toPath();
-					if (file.exists()) {
+					if (Files.isSymbolicLink(file.toPath()) || file.exists()) {
 						final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
 						final String currentTarget = IOUtil.toPathString(currentTargetPath);
 						currentTargetEqualsNewTarget = currentTarget.equals(target);
