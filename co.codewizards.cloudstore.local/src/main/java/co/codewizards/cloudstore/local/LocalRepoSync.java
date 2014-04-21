@@ -204,7 +204,7 @@ public class LocalRepoSync {
 
 			final Symlink symlink = (Symlink) repoFile;
 			final String fileSymlinkTarget = readSymbolicLink(filePath);
-			return fileSymlinkTarget.equals(symlink.getTarget());
+			return !fileSymlinkTarget.equals(symlink.getTarget());
 		}
 		else if (file.isFile()) {
 			if (!(repoFile instanceof NormalFile))
