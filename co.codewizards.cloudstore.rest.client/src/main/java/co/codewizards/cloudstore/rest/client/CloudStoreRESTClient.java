@@ -46,8 +46,8 @@ public class CloudStoreRESTClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRESTClient.class);
 
-	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 120 * 1000;
-	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 15 * 60 * 1000;
+	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 60 * 1000;
+	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
 
 	/**
 	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
