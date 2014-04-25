@@ -136,10 +136,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				// would be written to the RemoteRepository. This requires really lucky timing, but
 				// if the attacker surveils the user, this might be feasable.
 				if (!Arrays.equals(remoteRepositoryRequest.getPublicKey(), publicKey))
-					throw new IllegalStateException("Cannot modify the public key! Is this an attack?!");
+					throw new IllegalStateException("Cannot modify the public key! Use 'dropRepoConnection' to drop the old request or wait until it expired.");
+
+				// For the same reasons stated above, we do not allow changing the local path-prefix, too.
+				if (!remoteRepositoryRequest.getLocalPathPrefix().equals(localPathPrefix))
+					throw new IllegalStateException("Cannot modify the local path-prefix! Use 'dropRepoConnection' to drop the old request or wait until it expired.");
 
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
-				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 			}
 			else {
 				long remoteRepositoryRequestsCount = remoteRepositoryRequestDAO.getObjectsCount();
