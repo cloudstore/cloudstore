@@ -4,6 +4,16 @@ import java.util.UUID;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * DTO for {@code LocalRepository} and {@code RemoteRepository}.
+ * <p>
+ * <b>Important:</b> This object can be read anonymously without authentication! It therefore
+ * does currently not contain any sensitive information.
+ * <p>
+ * Future refactorings must take this into account and never add any secret data here! The world
+ * can read it! See {@code RepositoryDTOService}.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 @XmlRootElement
 public class RepositoryDTO {
 

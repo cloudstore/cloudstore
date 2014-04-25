@@ -33,7 +33,7 @@ public class ChangeSetDTOService extends AbstractServiceWithRepoToRepoAuth
 	public ChangeSetDTO getChangeSetDTO(final @QueryParam("localSync") boolean localSync) {
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			String callIdentifier = ChangeSetDTOService.class.getName() + ".getChangeSet|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
+			String callIdentifier = ChangeSetDTOService.class.getName() + ".getChangeSetDTO|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
 					new CallableProvider<ChangeSetDTO>() {

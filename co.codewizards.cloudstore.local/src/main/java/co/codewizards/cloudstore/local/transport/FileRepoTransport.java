@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -128,8 +129,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryId);
 			if (remoteRepositoryRequest != null) {
 				logger.info("RemoteRepository already requested to be connected. repositoryId={}", clientRepositoryId);
+
+				// For security reasons, we do not allow to modify the public key! If we did,
+				// an attacker might replace the public key while the user is verifying the public key's
+				// fingerprint. The user would see & confirm the old public key, but the new public key
+				// would be written to the RemoteRepository. This requires really lucky timing, but
+				// if the attacker surveils the user, this might be feasable.
+				if (!Arrays.equals(remoteRepositoryRequest.getPublicKey(), publicKey))
+					throw new IllegalStateException("Cannot modify the public key! Is this an attack?!");
+
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
-				remoteRepositoryRequest.setPublicKey(publicKey);
 				remoteRepositoryRequest.setLocalPathPrefix(localPathPrefix);
 			}
 			else {

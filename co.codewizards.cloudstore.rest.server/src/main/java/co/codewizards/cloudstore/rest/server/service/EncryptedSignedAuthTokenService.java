@@ -47,7 +47,7 @@ public class EncryptedSignedAuthTokenService
 	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") UUID clientRepositoryId)
 	{
 		assertNotNull("repositoryName", repositoryName);
-		assertNotNull("remoteRepositoryId", clientRepositoryId);
+		assertNotNull("clientRepositoryId", clientRepositoryId);
 		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
