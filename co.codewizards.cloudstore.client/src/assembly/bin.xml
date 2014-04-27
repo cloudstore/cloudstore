@@ -35,5 +35,10 @@
     	<outputDirectory>/bin</outputDirectory>
     	<filtered>true</filtered>
     </file>
+    <file>
+    	<source>${basedir}/src/assembly/installation.properties</source>
+    	<outputDirectory>/</outputDirectory>
+    	<filtered>true</filtered>
+    </file>
   </files>
 </assembly>

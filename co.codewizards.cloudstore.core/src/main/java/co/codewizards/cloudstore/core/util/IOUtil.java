@@ -312,7 +312,7 @@ public final class IOUtil {
 		return transferStreamData(in, out, inputOffset, inputLen, null);
 	}
 
-	public static long transferStreamData(InputStream in, OutputStream out, long inputOffset, long inputLen, ProgressMonitor monitor)
+	public static long transferStreamData(final InputStream in, final OutputStream out, final long inputOffset, final long inputLen, final ProgressMonitor monitor)
 	throws java.io.IOException
 	{
 		final byte[] buf = new byte[4 * 4096];

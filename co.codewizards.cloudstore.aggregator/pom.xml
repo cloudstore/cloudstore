@@ -23,6 +23,7 @@
 		<module>../co.codewizards.cloudstore.rest.shared</module>
 		<module>../co.codewizards.cloudstore.server</module>
 		<module>../co.codewizards.cloudstore.test</module>
+		<module>../co.codewizards.cloudstore.updater</module>
 		<module>../co.codewizards.cloudstore.webapp</module>
 	</modules>
 
