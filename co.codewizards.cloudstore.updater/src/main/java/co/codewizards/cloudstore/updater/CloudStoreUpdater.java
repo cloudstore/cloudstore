@@ -2,8 +2,11 @@ package co.codewizards.cloudstore.updater;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -119,17 +125,69 @@ public class CloudStoreUpdater {
 	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 	}
 
-	private void run() {
+	private void run() throws Exception {
 		try {
 			final File downloadFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].downloadURL");
 			final File signatureFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].signatureURL");
 
 			new PGPVerifier().verify(downloadFile, signatureFile);
 
+			// TODO backup the installation directory.
 
+			// TODO delete the entire old installation (or alternatively delete every file not being overwritten by the next step).
+
+			// TODO overwrite the installation directory instead of this test dir "extract".
+			final File extractRootDir = new File(getTempDownloadDir(), "extract");
+			extractTarGz(downloadFile, extractRootDir);
 		} finally {
 			if (tempDownloadDir != null)
 				IOUtil.deleteDirectoryRecursively(tempDownloadDir);
+		}
+	}
+
+	private void extractTarGz(final File tarGzFile, final File extractRootDir) throws IOException {
+		extractRootDir.mkdir();
+
+		final FileInputStream fin = new FileInputStream(tarGzFile);
+		try {
+			final TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(fin)));
+			try {
+				TarArchiveEntry entry;
+				while (null != (entry = in.getNextTarEntry())) {
+					if(entry.isDirectory()) {
+						// create the directory
+						final File dir = new File(extractRootDir, entry.getName());
+						if (!dir.exists() && !dir.mkdirs())
+							throw new IllegalStateException("Could not create directory entry, possibly permission issues: " + dir.getAbsolutePath());
+					}
+					else {
+						final File file = new File(extractRootDir, entry.getName());
+
+						final File dir = file.getParentFile();
+						if (!dir.isDirectory())
+							dir.mkdirs( );
+
+						BufferedOutputStream out = new BufferedOutputStream( new FileOutputStream(file) );
+						try {
+							int len;
+							byte[] buf = new byte[1024 * 16];
+							while( (len = in.read(buf)) > 0 ) {
+								if (len > 0)
+									out.write(buf, 0, len);
+							}
+						} finally {
+							out.close();
+						}
+
+						if ((entry.getMode() & 1) != 0)
+							file.setExecutable(true);
+					}
+				}
+			} finally {
+				in.close();
+			}
+		} finally {
+			fin.close();
 		}
 	}
 
