@@ -29,7 +29,7 @@ $H$H$H$H Step 2: Git
 
 Open the \"Git Repository Exploring\" perspective. If you do not have it, you\'re likely still missing [EGit](http://www.eclipse.org/egit/).
 
-Then clone this Git repository: https://github.com/cloudstore/main.git
+Then clone this Git repository: https://github.com/cloudstore/cloudstore.git
 
 
 $H$H$H$H Step 3: Import projects
