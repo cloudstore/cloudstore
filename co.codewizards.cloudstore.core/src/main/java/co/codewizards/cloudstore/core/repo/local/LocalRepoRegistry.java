@@ -4,6 +4,8 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -29,7 +31,6 @@ public class LocalRepoRegistry
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoRegistry.class);
 
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repoRegistry.properties"; // new name since 0.9.1
-	private static final String LOCAL_REPO_REGISTRY_LOCK_FILE = "repoRegistry.lock";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryId:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
 	private static final String PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP = "evictDeadEntriesLastTimestamp";
@@ -37,7 +38,6 @@ public class LocalRepoRegistry
 	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
 
 	private File registryFile;
-	private File lockFile;
 	private long repoRegistryFileLastModified;
 	private Properties repoRegistryProperties;
 	private boolean repoRegistryPropertiesDirty;
@@ -332,21 +332,27 @@ public class LocalRepoRegistry
 	}
 
 	private LockFile acquireLockFile() {
-		return LockFileFactory.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
-	}
-
-	private File getLockFile() {
-		if (lockFile == null) {
-			lockFile = new File(getRegistryFile().getParentFile(), LOCAL_REPO_REGISTRY_LOCK_FILE);
-		}
-		return lockFile;
+		return LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
 	}
 
 	private void loadRepoRegistry() {
 		try {
-			File registryFile = getRegistryFile();
-			if (registryFile.exists() && registryFile.length() > 0)
-				repoRegistryProperties = PropertiesUtil.load(registryFile);
+			final File registryFile = getRegistryFile();
+			if (registryFile.exists() && registryFile.length() > 0) {
+				final Properties properties = new Properties();
+				final LockFile lockFile = acquireLockFile();
+				try {
+					final InputStream in = lockFile.createInputStream();
+					try {
+						properties.load(in);
+					} finally {
+						in.close();
+					}
+				} finally {
+					lockFile.release();
+				}
+				repoRegistryProperties = properties;
+			}
 			else
 				repoRegistryProperties = new Properties();
 
@@ -369,8 +375,18 @@ public class LocalRepoRegistry
 			throw new IllegalStateException("repoRegistryProperties not loaded, yet!");
 
 		try {
-			File registryFile = getRegistryFile();
-			PropertiesUtil.store(registryFile, repoRegistryProperties, null);
+			final File registryFile = getRegistryFile();
+			final LockFile lockFile = acquireLockFile();
+			try {
+				final OutputStream out = lockFile.createOutputStream();
+				try {
+					repoRegistryProperties.store(out, null);
+				} finally {
+					out.close();
+				}
+			} finally {
+				lockFile.release();
+			}
 			repoRegistryFileLastModified = registryFile.lastModified();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);

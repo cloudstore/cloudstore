@@ -3,7 +3,11 @@ package co.codewizards.cloudstore.core.io;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 class LockFileProxy implements LockFile {
 
@@ -31,4 +35,18 @@ class LockFileProxy implements LockFile {
 		return lockFileImpl;
 	}
 
+	@Override
+	public Lock getLock() {
+		return lockFileImpl.getLock();
+	}
+
+	@Override
+	public InputStream createInputStream() throws IOException {
+		return lockFileImpl.createInputStream();
+	}
+
+	@Override
+	public OutputStream createOutputStream() throws IOException {
+		return lockFileImpl.createOutputStream();
+	}
 }

@@ -1,6 +1,10 @@
 package co.codewizards.cloudstore.core.io;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Lock-file exclusively locking a certain {@link #getFile() file}.
@@ -36,5 +40,11 @@ public interface LockFile {
 	 *  @throws IllegalStateException if this method is invoked more than once on the same instance.
 	 */
 	void release();
+
+	Lock getLock();
+
+	InputStream createInputStream() throws IOException;
+
+	OutputStream createOutputStream() throws IOException;
 
 }

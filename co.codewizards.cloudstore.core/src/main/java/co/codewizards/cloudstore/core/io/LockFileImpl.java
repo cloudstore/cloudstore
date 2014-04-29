@@ -4,9 +4,13 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +27,7 @@ class LockFileImpl implements LockFile {
 	private int lockCounter = 0;
 	private RandomAccessFile randomAccessFile;
 	private FileLock fileLock;
+	private final Lock lock = new ReentrantLock();
 
 	protected LockFileImpl(LockFileFactory lockFileFactory, File file) {
 		this.lockFileFactory = assertNotNull("lockFileFactory", lockFileFactory);
@@ -130,4 +135,79 @@ class LockFileImpl implements LockFile {
 
 	private static void doNothing() { }
 
+	@Override
+	public Lock getLock() {
+		return lock;
+	}
+
+	@Override
+	public InputStream createInputStream() throws IOException {
+		return new LockFileInputStream();
+	}
+
+	@Override
+	public OutputStream createOutputStream() throws IOException {
+		return new LockFileOutputStream();
+	}
+
+	private class LockFileInputStream extends InputStream {
+
+		private long position;
+
+		public LockFileInputStream() {
+			lock.lock();
+		}
+
+		@Override
+		public int read() throws IOException {
+			randomAccessFile.seek(position);
+			final int result = randomAccessFile.read();
+			position = randomAccessFile.getFilePointer();
+			return result;
+		}
+
+		@Override
+		public int read(byte[] b, int off, int len) throws IOException {
+			randomAccessFile.seek(position);
+			final int result = randomAccessFile.read(b, off, len);
+			position = randomAccessFile.getFilePointer();
+			return result;
+		}
+
+		@Override
+		public void close() throws IOException {
+			super.close();
+			lock.unlock();
+		}
+	}
+
+	private class LockFileOutputStream extends OutputStream {
+
+		private long position;
+
+		public LockFileOutputStream() throws IOException {
+			lock.lock();
+			randomAccessFile.setLength(0);
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			randomAccessFile.seek(position);
+			randomAccessFile.write(b);
+			position = randomAccessFile.getFilePointer();
+		}
+
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			randomAccessFile.seek(position);
+			randomAccessFile.write(b, off, len);
+			position = randomAccessFile.getFilePointer();
+		}
+
+		@Override
+		public void close() throws IOException {
+			super.close();
+			lock.unlock();
+		}
+	}
 }

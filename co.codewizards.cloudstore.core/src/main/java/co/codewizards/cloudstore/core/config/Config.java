@@ -3,8 +3,8 @@ package co.codewizards.cloudstore.core.config;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
@@ -252,7 +252,7 @@ public class Config {
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
 						LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); // TODO maybe system property for timeout?
 						try {
-							FileInputStream in = new FileInputStream(propertiesFile);
+							final InputStream in = lockFile.createInputStream();
 							try {
 								properties.load(in);
 							} finally {
