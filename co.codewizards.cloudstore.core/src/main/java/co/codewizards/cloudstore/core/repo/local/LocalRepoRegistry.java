@@ -29,6 +29,7 @@ public class LocalRepoRegistry
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoRegistry.class);
 
 	public static final String LOCAL_REPO_REGISTRY_FILE = "repoRegistry.properties"; // new name since 0.9.1
+	private static final String LOCAL_REPO_REGISTRY_LOCK_FILE = "repoRegistry.lock";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryId:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
 	private static final String PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP = "evictDeadEntriesLastTimestamp";
@@ -36,6 +37,7 @@ public class LocalRepoRegistry
 	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
 
 	private File registryFile;
+	private File lockFile;
 	private long repoRegistryFileLastModified;
 	private Properties repoRegistryProperties;
 	private boolean repoRegistryPropertiesDirty;
@@ -186,7 +188,7 @@ public class LocalRepoRegistry
 		if (repositoryAlias.indexOf('/') >= 0)
 			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
 
-		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = acquireLockFile();
 		try {
 			loadRepoRegistryIfNeeded();
 			getLocalRootOrFail(repositoryId); // make sure, this is a known repositoryId!
@@ -205,7 +207,7 @@ public class LocalRepoRegistry
 	public synchronized void removeRepositoryAlias(String repositoryAlias) {
 		assertNotNull("repositoryAlias", repositoryAlias);
 
-		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = acquireLockFile();
 		try {
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKeyForAlias(repositoryAlias);
@@ -226,7 +228,7 @@ public class LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
-		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = acquireLockFile();
 		try {
 			loadRepoRegistryIfNeeded();
 			String propertyKey = getPropertyKeyForID(repositoryId);
@@ -288,7 +290,7 @@ public class LocalRepoRegistry
 	 * i.e. it's neither a repository-ID nor a repository-alias of a known repository.
 	 */
 	public synchronized Collection<String> getRepositoryAliasesOrFail(String repositoryName) throws IllegalArgumentException {
-		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = acquireLockFile();
 		try {
 			List<String> result = new ArrayList<String>();
 			UUID repositoryId = getRepositoryIdOrFail(repositoryName);
@@ -318,7 +320,7 @@ public class LocalRepoRegistry
 	}
 
 	private void loadRepoRegistryIfNeeded() {
-		LockFile lockFile = LockFileFactory.getInstance().acquire(getRegistryFile(), LOCK_TIMEOUT_MS);
+		LockFile lockFile = acquireLockFile();
 		try {
 			if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
 				loadRepoRegistry();
@@ -327,6 +329,17 @@ public class LocalRepoRegistry
 		} finally {
 			lockFile.release();
 		}
+	}
+
+	private LockFile acquireLockFile() {
+		return LockFileFactory.getInstance().acquire(getLockFile(), LOCK_TIMEOUT_MS);
+	}
+
+	private File getLockFile() {
+		if (lockFile == null) {
+			lockFile = new File(getRegistryFile().getParentFile(), LOCAL_REPO_REGISTRY_LOCK_FILE);
+		}
+		return lockFile;
 	}
 
 	private void loadRepoRegistry() {
