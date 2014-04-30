@@ -95,7 +95,10 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 			System.out.println("Remote repositories connected:");
 			for (RemoteRepository remoteRepository : remoteRepositories) {
 				System.out.println("  * remoteRepository.repositoryId = " + remoteRepository.getRepositoryId());
-				System.out.println("    remoteRepository.remoteRoot = " + remoteRepository.getRemoteRoot());
+				if (remoteRepository.getRemoteRoot() != null)
+					System.out.println("    remoteRepository.remoteRoot = " + remoteRepository.getRemoteRoot());
+
+				System.out.println("    remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(remoteRepository.getPublicKey()));
 				System.out.println();
 			}
 		}
@@ -111,6 +114,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 			System.out.println("Remote repositories requesting connection:");
 			for (RemoteRepositoryRequest remoteRepositoryRequest : remoteRepositoryRequests) {
 				System.out.println("  * remoteRepositoryRequest.repositoryId = " + remoteRepositoryRequest.getRepositoryId());
+				System.out.println("    remoteRepositoryRequest.publicKeySha1 = " + HashUtil.sha1ForHuman(remoteRepositoryRequest.getPublicKey()));
 				System.out.println("    remoteRepositoryRequest.created = " + new DateTime(remoteRepositoryRequest.getCreated()));
 				System.out.println("    remoteRepositoryRequest.changed = " + new DateTime(remoteRepositoryRequest.getChanged()));
 				System.out.println();
