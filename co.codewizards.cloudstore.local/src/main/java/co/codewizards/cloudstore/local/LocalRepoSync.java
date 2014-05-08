@@ -73,13 +73,12 @@ public class LocalRepoSync {
 		sync(null, localRoot, monitor);
 	}
 
-	public void sync(File file, ProgressMonitor monitor) {
+	public RepoFile sync(File file, ProgressMonitor monitor) {
 		if (!(assertNotNull("file", file).isAbsolute()))
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
 		if (localRoot.equals(file)) {
-			sync(null, file, monitor);
-			return;
+			return sync(null, file, monitor);
 		}
 
 		monitor.beginTask("Local sync...", 100);
@@ -93,23 +92,42 @@ public class LocalRepoSync {
 				// of a remote-repository. The following re-up-sync then leads us here.
 				// To speed up things, we simply quit as this is a valid state.
 				if (!Files.isSymbolicLink(file.toPath()) && !file.exists() && repoFileDAO.getRepoFile(localRoot, file) == null)
-					return;
+					return null;
 
 				// In the unlikely event, that this is not a valid state, we simply sync all
 				// and return.
 				sync(null, localRoot, new SubProgressMonitor(monitor, 99));
-				return;
+				final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				if (repoFile != null) // if it still does not exist, we run into the re-sync below and this might quickly return null, if that is correct or otherwise sync what's needed.
+					return repoFile;
+
+				parentRepoFile = repoFileDAO.getRepoFile(localRoot, parentFile);
+				if (parentRepoFile == null && parentFile.exists())
+					throw new IllegalStateException("RepoFile not found for existing file/dir: " + parentFile.getAbsolutePath());
 			}
 
 			monitor.worked(1);
 
-			sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99));
+			return sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99));
 		} finally {
 			monitor.done();
 		}
 	}
 
-	private void sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
+	/**
+	 * Sync the single given {@code file}.
+	 * <p>
+	 * If {@code file} is a directory, it recursively syncs all its children.
+	 * @param parentRepoFile the parent. May be <code>null</code>, if the file is the repository's root-directory.
+	 * For non-root files, this must not be <code>null</code>!
+	 * @param file the file to be synced. Must not be <code>null</code>.
+	 * @param monitor the progress-monitor. Must not be <code>null</code>.
+	 * @return the {@link RepoFile} corresponding to the given {@code file}. Is <code>null</code>, if the given
+	 * {@code file} does not exist; otherwise it is never <code>null</code>.
+	 */
+	private RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
+		assertNotNull("file", file);
+		assertNotNull("monitor", monitor);
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
@@ -124,11 +142,11 @@ public class LocalRepoSync {
 			final boolean fileIsSymlink = Files.isSymbolicLink(file.toPath());
 			if (repoFile == null) {
 				if (!fileIsSymlink && !file.exists())
-					return;
+					return null;
 
 				repoFile = createRepoFile(parentRepoFile, file, new SubProgressMonitor(monitor, 50));
 				if (repoFile == null) { // ignoring non-normal files.
-					return;
+					return null;
 				}
 			} else if (isModified(repoFile, file))
 				updateRepoFile(repoFile, file, new SubProgressMonitor(monitor, 50));
@@ -157,6 +175,7 @@ public class LocalRepoSync {
 			}
 
 			transaction.flush();
+			return repoFile;
 		} finally {
 			monitor.done();
 		}

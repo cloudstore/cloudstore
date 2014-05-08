@@ -22,6 +22,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -38,6 +39,7 @@ public class CloudStoreClient {
 	static {
 		List<Class<? extends SubCommand>> l = Arrays.asList(
 				AcceptRepoConnectionSubCommand.class,
+				AfterUpdateHookSubCommand.class,
 				CreateRepoSubCommand.class,
 				CreateRepoAliasSubCommand.class,
 				DropRepoAliasSubCommand.class,
@@ -149,6 +151,7 @@ public class CloudStoreClient {
 			RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
 			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
 			int programExitStatus = new CloudStoreClient(args).throwException(false).execute();
+			new CloudStoreUpdaterCore().createUpdaterDirIfUpdateNeeded(); // doing it after execute(), because the system-properties are otherwise maybe not set.
 			System.exit(programExitStatus);
 		} catch (Throwable x) {
 			logger.error(x.toString(), x);
@@ -233,7 +236,8 @@ public class CloudStoreClient {
 				System.err.println();
 				System.err.println("Available sub-commands:");
 				for (SubCommand sc : subCommands) {
-					System.err.println("  " + sc.getSubCommandName());
+					if (sc.isVisibleInHelp())
+						System.err.println("  " + sc.getSubCommandName());
 				}
 			}
 			else {

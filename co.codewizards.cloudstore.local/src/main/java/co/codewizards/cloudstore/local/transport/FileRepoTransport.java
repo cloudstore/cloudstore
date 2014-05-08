@@ -892,8 +892,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				if (isSymlink(file) || (file.exists() && !file.isFile())) // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
-					file.renameTo(IOUtil.createCollisionFile(file));
+				if (isSymlink(file) || (file.exists() && !file.isFile())) { // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
+					logger.info("beginPutFile: Collision: Destination file already exists and is a symlink or a directory! file='{}'", file.getAbsolutePath());
+					final File collisionFile = IOUtil.createCollisionFile(file);
+					file.renameTo(collisionFile);
+					new LocalRepoSync(transaction).sync(collisionFile, new NullProgressMonitor());
+				}
 
 				if (isSymlink(file) || (file.exists() && !file.isFile()))
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
@@ -976,7 +980,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 */
 	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, RepoFile normalFileOrSymlink) {
 		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
-			File collisionFile = IOUtil.createCollisionFile(file);
+			final File collisionFile = IOUtil.createCollisionFile(file);
 			file.renameTo(collisionFile);
 			if (file.exists())
 				throw new IllegalStateException("Could not rename file to resolve collision: " + file);
@@ -986,6 +990,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+
+			new LocalRepoSync(transaction).sync(collisionFile, new NullProgressMonitor()); // TODO sub-progress-monitor!
 		}
 	}
 
@@ -1042,17 +1048,28 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		assertNotNull("file", file);
 		assertNotNull("normalFileOrSymlink", normalFileOrSymlink);
 
+		if (!file.exists()) {
+			logger.debug("detectFileCollision: path='{}': return false, because destination file does not exist.", normalFileOrSymlink.getPath());
+			return false;
+		}
+
 		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
-		if (normalFileOrSymlink.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision)
+		if (normalFileOrSymlink.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision) {
+			logger.debug("detectFileCollision: path='{}': return false, because: normalFileOrSymlink.localRevision <= lastSyncFromRemoteRepositoryLocalRevision :: {} <= {}", normalFileOrSymlink.getPath(), normalFileOrSymlink.getLocalRevision(), lastSyncFromRemoteRepositoryLocalRevision);
 			return false;
+		}
 
 		// The file was transferred from the same repository before and was thus not changed locally nor in another repo.
 		// This can only happen, if the sync was interrupted (otherwise the check for the localRevision above
 		// would have already caused this method to abort).
-		if (fromRepositoryId.equals(normalFileOrSymlink.getLastSyncFromRepositoryId()))
+		if (fromRepositoryId.equals(normalFileOrSymlink.getLastSyncFromRepositoryId())) {
+			logger.debug("detectFileCollision: path='{}': return false, because: fromRepositoryId == normalFileOrSymlink.lastSyncFromRepositoryId :: fromRepositoryId='{}'", normalFileOrSymlink.getPath(), fromRemoteRepository);
 			return false;
+		}
 
+		logger.debug("detectFileCollision: path='{}': return true! fromRepositoryId='{}' normalFileOrSymlink.localRevision={} lastSyncFromRemoteRepositoryLocalRevision={} normalFileOrSymlink.lastSyncFromRepositoryId='{}'",
+				normalFileOrSymlink.getPath(), fromRemoteRepository, normalFileOrSymlink.getLocalRevision(), lastSyncFromRemoteRepositoryLocalRevision, normalFileOrSymlink.getLastSyncFromRepositoryId());
 		return true;
 	}
 

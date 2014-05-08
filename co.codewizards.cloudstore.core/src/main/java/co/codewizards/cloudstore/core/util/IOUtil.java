@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -269,6 +270,7 @@ public final class IOUtil {
 	 */
 	public static String simplifyPath(File path)
 	{
+		logger.debug("simplifyPath: path='{}'", path);
 		LinkedList<String> dirs = new LinkedList<String>();
 
 		String pathStr = path.getAbsolutePath();
@@ -277,7 +279,7 @@ public final class IOUtil {
 		StringTokenizer tk = new StringTokenizer(pathStr, File.separator, false);
 		while (tk.hasMoreTokens()) {
 			String dir = tk.nextToken();
-			if (".".equals(dir))
+			if (".".equals(dir) || dir.isEmpty())
 				;// nothing
 			else if ("..".equals(dir)) {
 				if (!dirs.isEmpty())
@@ -286,6 +288,7 @@ public final class IOUtil {
 			else
 				dirs.addLast(dir);
 		}
+		logger.debug("simplifyPath: dirs='{}'", dirs);
 
 		StringBuffer sb = new StringBuffer();
 		for (String dir : dirs) {
@@ -1013,33 +1016,41 @@ public final class IOUtil {
 		}
 	}
 
-//	/**
-//	 * Copy a directory recursively.
-//	 * @param sourceDirectory The source directory
-//	 * @param destinationDirectory The destination directory
-//	 * @throws IOException in case of an error
-//	 */
-//	public static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException
-//	{
-//		if(!sourceDirectory.exists() || !sourceDirectory.isDirectory())
-//			throw new IOException("No such source directory: "+sourceDirectory.getAbsolutePath());
-//		if(destinationDirectory.exists()) {
-//			if(!destinationDirectory.isDirectory())
-//				throw new IOException("Destination exists but is not a directory: "+sourceDirectory.getAbsolutePath());
-//		} else
-//			destinationDirectory.mkdirs();
-//
-//		File[] files = sourceDirectory.listFiles();
-//		for (File file : files) {
-//			File destinationFile = new File(destinationDirectory, file.getName());
-//			if(file.isDirectory())
-//				copyDirectory(file, destinationFile);
-//			else
-//				copyFile(file, destinationFile);
-//		}
-//
-//		destinationDirectory.setLastModified(sourceDirectory.lastModified());
-//	}
+	/**
+	 * Copy a directory recursively.
+	 * @param sourceDirectory The source directory
+	 * @param destinationDirectory The destination directory
+	 * @throws IOException in case of an error
+	 */
+	public static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException
+	{
+		copyDirectory(sourceDirectory, destinationDirectory, null);
+	}
+	public static void copyDirectory(File sourceDirectory, File destinationDirectory, FileFilter fileFilter) throws IOException
+	{
+		if(!sourceDirectory.exists() || !sourceDirectory.isDirectory())
+			throw new IOException("No such source directory: "+sourceDirectory.getAbsolutePath());
+		if(destinationDirectory.exists()) {
+			if(!destinationDirectory.isDirectory())
+				throw new IOException("Destination exists but is not a directory: "+sourceDirectory.getAbsolutePath());
+		} else
+			destinationDirectory.mkdirs();
+
+		File[] files = sourceDirectory.listFiles(fileFilter);
+		for (File file : files) {
+			File destinationFile = new File(destinationDirectory, file.getName());
+			if(file.isDirectory()) {
+				if (destinationDirectory.getAbsoluteFile().equals(file.getAbsoluteFile()))
+					logger.warn("copyDirectory: Skipping directory, because it equals the destination: {}", file.getAbsoluteFile());
+				else
+					copyDirectory(file, destinationFile, fileFilter);
+			}
+			else
+				copyFile(file, destinationFile);
+		}
+
+		destinationDirectory.setLastModified(sourceDirectory.lastModified());
+	}
 
 	/**
 	 * Copy a resource loaded by the class loader of a given class to a file.
@@ -1102,64 +1113,64 @@ public final class IOUtil {
 		}
 	}
 
-//	/**
-//	 * Copy a file.
-//	 * @param sourceFile The source file to copy
-//	 * @param destinationFile To which file to copy the source
-//	 * @throws IOException in case of an error
-//	 */
-//	public static void copyFile(File sourceFile, File destinationFile)
-//	throws IOException
-//	{
-//		copyFile(sourceFile, destinationFile, null);
-//	}
-//	public static void copyFile(File sourceFile, File destinationFile, ProgressMonitor monitor)
-//	throws IOException
-//	{
-//		FileInputStream source = null;
-//		FileOutputStream destination = null;
-//
-//		try {
-//			// First make sure the specified source file
-//			// exists, is a file, and is readable.
-//			if (!sourceFile.exists() || !sourceFile.isFile())
-//				throw new IOException("FileCopy: no such source file: "+sourceFile.getCanonicalPath());
-//			if (!sourceFile.canRead())
-//			 throw new IOException("FileCopy: source file is unreadable: "+sourceFile.getCanonicalPath());
-//
-//			// If the destination exists, make sure it is a writeable file.	If the destination doesn't
-//			// exist, make sure the directory exists and is writeable.
-//			if (destinationFile.exists()) {
-//				if (destinationFile.isFile()) {
-//					if (!destinationFile.canWrite())
-//						throw new IOException("FileCopy: destination file is unwriteable: " + destinationFile.getCanonicalPath());
-//				} else
-//					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
-//			} else {
-//				File parentdir = destinationFile.getParentFile();
-//				if (parentdir == null || !parentdir.exists())
-//					throw new IOException("FileCopy: destination directory doesn't exist: " +
-//									destinationFile.getCanonicalPath());
-//				 if (!parentdir.canWrite())
-//					 throw new IOException("FileCopy: destination directory is unwriteable: " +
-//									destinationFile.getCanonicalPath());
-//			}
-//			// If we've gotten this far, then everything is okay; we can
-//			// copy the file.
-//			source = new FileInputStream(sourceFile);
-//			destination = new FileOutputStream(destinationFile);
-//			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
-//			// No matter what happens, always close any streams we've opened.
-//		} finally {
-//			if (source != null)
-//				try { source.close(); } catch (IOException e) { ; }
-//			if (destination != null)
-//				try { destination.close(); } catch (IOException e) { ; }
-//		}
-//
-//		// copy the timestamp
-//		destinationFile.setLastModified(sourceFile.lastModified());
-//	}
+	/**
+	 * Copy a file.
+	 * @param sourceFile The source file to copy
+	 * @param destinationFile To which file to copy the source
+	 * @throws IOException in case of an error
+	 */
+	public static void copyFile(File sourceFile, File destinationFile)
+	throws IOException
+	{
+		copyFile(sourceFile, destinationFile, null);
+	}
+	public static void copyFile(File sourceFile, File destinationFile, ProgressMonitor monitor)
+	throws IOException
+	{
+		FileInputStream source = null;
+		FileOutputStream destination = null;
+
+		try {
+			// First make sure the specified source file
+			// exists, is a file, and is readable.
+			if (!sourceFile.exists() || !sourceFile.isFile())
+				throw new IOException("FileCopy: no such source file: "+sourceFile.getCanonicalPath());
+			if (!sourceFile.canRead())
+			 throw new IOException("FileCopy: source file is unreadable: "+sourceFile.getCanonicalPath());
+
+			// If the destination exists, make sure it is a writeable file.	If the destination doesn't
+			// exist, make sure the directory exists and is writeable.
+			if (destinationFile.exists()) {
+				if (destinationFile.isFile()) {
+					if (!destinationFile.canWrite())
+						throw new IOException("FileCopy: destination file is unwriteable: " + destinationFile.getCanonicalPath());
+				} else
+					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
+			} else {
+				File parentdir = destinationFile.getParentFile();
+				if (parentdir == null || !parentdir.exists())
+					throw new IOException("FileCopy: destination directory doesn't exist: " +
+									destinationFile.getCanonicalPath());
+				 if (!parentdir.canWrite())
+					 throw new IOException("FileCopy: destination directory is unwriteable: " +
+									destinationFile.getCanonicalPath());
+			}
+			// If we've gotten this far, then everything is okay; we can
+			// copy the file.
+			source = new FileInputStream(sourceFile);
+			destination = new FileOutputStream(destinationFile);
+			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
+			// No matter what happens, always close any streams we've opened.
+		} finally {
+			if (source != null)
+				try { source.close(); } catch (IOException e) { ; }
+			if (destination != null)
+				try { destination.close(); } catch (IOException e) { ; }
+		}
+
+		// copy the timestamp
+		destinationFile.setLastModified(sourceFile.lastModified());
+	}
 
 	/**
 	 * Add a trailing file separator character to the

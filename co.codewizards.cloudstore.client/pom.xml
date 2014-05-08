@@ -21,6 +21,10 @@
 			<artifactId>co.codewizards.cloudstore.rest.client</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.updater</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>args4j</groupId>
 	    	<artifactId>args4j</artifactId>
     	</dependency>

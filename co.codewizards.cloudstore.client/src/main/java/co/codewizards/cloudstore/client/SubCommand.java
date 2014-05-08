@@ -54,7 +54,6 @@ public abstract class SubCommand
 	public void prepare()
 	throws Exception
 	{
-
 	}
 
 	public abstract void run()
@@ -79,5 +78,9 @@ public abstract class SubCommand
 
 		String result = console.readLine(fmt, args);
 		return result;
+	}
+
+	public boolean isVisibleInHelp() {
+		return true;
 	}
 }
