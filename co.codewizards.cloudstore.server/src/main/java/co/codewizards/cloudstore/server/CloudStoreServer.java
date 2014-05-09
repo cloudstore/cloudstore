@@ -44,16 +44,16 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
-import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.rest.server.CloudStoreREST;
 
 public class CloudStoreServer implements Runnable {
-	public static final String SYSTEM_PROPERTY_SECURE_PORT = "cloudstore.securePort";
+	public static final String CONFIG_KEY_SECURE_PORT = "server.securePort";
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreServer.class);
 
@@ -147,10 +147,10 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized int getSecurePort() {
 		if (securePort <= 0) {
-			securePort = PropertiesUtil.getSystemPropertyValueAsInt(SYSTEM_PROPERTY_SECURE_PORT, DEFAULT_SECURE_PORT);
+			securePort = Config.getInstance().getPropertyAsInt(CONFIG_KEY_SECURE_PORT, DEFAULT_SECURE_PORT);
 			if (securePort < 1 || securePort > 65535) {
-				logger.warn("System property '{}' is set to the value '{}' which is out of range for a port number. Falling back to default port {}.",
-						SYSTEM_PROPERTY_SECURE_PORT, securePort, DEFAULT_SECURE_PORT);
+				logger.warn("Config key '{}' is set to the value '{}' which is out of range for a port number. Falling back to default port {}.",
+						CONFIG_KEY_SECURE_PORT, securePort, DEFAULT_SECURE_PORT);
 				securePort = DEFAULT_SECURE_PORT;
 			}
 		}

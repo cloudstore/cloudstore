@@ -422,6 +422,7 @@ public class Config {
 	 * instead!
 	 * @return the property's value. Never <code>null</code>.
 	 * @see #getPropertyAsEnum(String, Class, Enum)
+	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final E defaultValue) {
 		assertNotNull("defaultValue", defaultValue);
@@ -439,6 +440,7 @@ public class Config {
 	 * if this entry's value does not match any possible enum value. May be <code>null</code>.
 	 * @return the property's value. Never <code>null</code> unless {@code defaultValue} is <code>null</code>.
 	 * @see #getPropertyAsEnum(String, Enum)
+	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final Class<E> enumClass, final E defaultValue) {
 		assertNotNull("enumClass", enumClass);

@@ -279,7 +279,7 @@ public final class IOUtil {
 		StringTokenizer tk = new StringTokenizer(pathStr, File.separator, false);
 		while (tk.hasMoreTokens()) {
 			String dir = tk.nextToken();
-			if (".".equals(dir) || dir.isEmpty())
+			if (".".equals(dir))
 				;// nothing
 			else if ("..".equals(dir)) {
 				if (!dirs.isEmpty())
