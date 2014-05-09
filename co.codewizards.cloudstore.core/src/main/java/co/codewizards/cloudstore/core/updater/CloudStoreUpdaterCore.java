@@ -19,6 +19,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
@@ -35,17 +36,21 @@ public class CloudStoreUpdaterCore {
 	public static final String remoteUpdatePropertiesURL = "http://cloudstore.codewizards.co/update/${artifactId}/update.properties";
 
 	/**
-	 * System property controlling whether we do a downgrade. By default, only an upgrade is done. If this
-	 * system property is set to <code>true</code> and the local version is newer than the version on the server
+	 * Configuration property key controlling whether we do a downgrade. By default, only an upgrade is done. If this
+	 * configuration property is set to <code>true</code> and the local version is newer than the version on the server
 	 * a downgrade is done, too.
+	 * <p>
+	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
-	public static final String SYSTEM_PROPERTY_DOWNGRADE = "cloudstore.updater.downgrade";
+	public static final String CONFIG_KEY_DOWNGRADE = "updater.downgrade";
 
 	/**
 	 * System property controlling whether to force the update. If this property is set, an update is
 	 * done even if the versions locally and remotely are already the same.
+	 * <p>
+	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
-	public static final String SYSTEM_PROPERTY_FORCE = "cloudstore.updater.force";
+	public static final String CONFIG_KEY_FORCE = "updater.force";
 
 	private Version localVersion;
 	private Version remoteVersion;
@@ -224,28 +229,15 @@ public class CloudStoreUpdaterCore {
 	}
 
 	/**
-	 * Is the system property {@link #SYSTEM_PROPERTY_DOWNGRADE} set to "true"?
-	 * @return <code>true</code>, if the system property is set (i.e. neither <code>null</code> nor an empty
-	 * string). For user-friendlyness, it returns <code>true</code>, if the system-property's value is not
-	 * exactly "false", i.e. the user specified this property and wrote sth. into it likely wanting to
-	 * enable it.
+	 * Is the configuration property {@link #CONFIG_KEY_DOWNGRADE} set to "true"?
+	 * @return the value of the configuration property {@link #CONFIG_KEY_DOWNGRADE}.
 	 */
 	private boolean isDowngrade() {
-		final String value = System.getProperty(SYSTEM_PROPERTY_DOWNGRADE);
-		logger.debug("isDowngrade: System property '{}' has value '{}'.", SYSTEM_PROPERTY_DOWNGRADE, value);
-		if (value == null || value.isEmpty())
-			return false;
-
-		return !Boolean.FALSE.toString().equalsIgnoreCase(value);
+		return Config.getInstance().getPropertyAsBoolean(CONFIG_KEY_DOWNGRADE, Boolean.FALSE);
 	}
 
 	private boolean isForce() {
-		final String value = System.getProperty(SYSTEM_PROPERTY_FORCE);
-		logger.debug("isForce: System property '{}' has value '{}'.", SYSTEM_PROPERTY_FORCE, value);
-		if (value == null || value.isEmpty())
-			return false;
-
-		return !Boolean.FALSE.toString().equalsIgnoreCase(value);
+		return Config.getInstance().getPropertyAsBoolean(CONFIG_KEY_FORCE, Boolean.FALSE);
 	}
 
 	/**

@@ -72,6 +72,22 @@ public class Config {
 	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN = ".%s.cloudstore.properties";
 	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE = "%s.cloudstore.properties";
 
+	private static final String TRUE_STRING = Boolean.TRUE.toString();
+	private static final String FALSE_STRING = Boolean.FALSE.toString();
+
+	/**
+	 * Prefix used for system properties overriding configuration entries.
+	 * <p>
+	 * Every property in the configuration (i.e. in its properties files) can be overridden
+	 * by a corresponding system property. The system property must be prefixed.
+	 * <p>
+	 * For example, to override the configuration property with the key "deferrableExecutor.timeout",
+	 * you can pass the system property "cloudstore.deferrableExecutor.timeout" to the JVM. If the
+	 * system property exists, the configuration is not consulted, but the system property value is
+	 * used as shortcut.
+	 */
+	public static final String SYSTEM_PROPERTY_PREFIX = "cloudstore.";
+
 	private static final LinkedHashSet<File> fileHardRefs = new LinkedHashSet<>();
 	private static final int fileHardRefsMaxSize = 30;
 	/**
@@ -282,6 +298,10 @@ public class Config {
 	 * <p>
 	 * <b>Important:</b> This is often not the desired behaviour. You might want to use
 	 * {@link #getPropertyAsNonEmptyTrimmedString(String, String)} instead!
+	 * <p>
+	 * Every property can be overwritten by a system property prefixed with {@value #SYSTEM_PROPERTY_PREFIX}.
+	 * If - for example - the key "updater.force" is to be read and a system property
+	 * named "cloudstore.updater.force" is set, this system property is returned instead!
 	 * @param key the key identifying the property. Must not be <code>null</code>.
 	 * @param defaultValue the default value to fall back to, if neither this {@code Config}'s
 	 * internal {@code Properties} nor any of its parents contains a matching entry.
@@ -292,6 +312,15 @@ public class Config {
 	public String getProperty(final String key, final String defaultValue) {
 		assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
+
+		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
+		final String sysPropVal = System.getProperty(sysPropKey);
+		if (sysPropVal != null) {
+			logger.debug("getProperty: System property with key='{}' and value='{}' overrides config (config is not queried).", sysPropKey, sysPropVal);
+			return sysPropVal;
+		}
+		logger.debug("getProperty: System property with key='{}' is not set (config is queried next).", sysPropKey);
+
 		synchronized (instanceMutex) {
 			readIfNeeded();
 			return properties.getProperty(key, defaultValue);
@@ -309,6 +338,10 @@ public class Config {
 	 * to use the program's default instead. It is therefore consistent with
 	 * {@link #getPropertyAsLong(String, long)} and all other {@code getPropertyAs...(...)}
 	 * methods.
+	 * <p>
+	 * Every property can be overwritten by a system property prefixed with {@value #SYSTEM_PROPERTY_PREFIX}.
+	 * If - for example - the key "updater.force" is to be read and a system property
+	 * named "cloudstore.updater.force" is set, this system property is returned instead!
 	 * @param key the key identifying the property. Must not be <code>null</code>.
 	 * @param defaultValue the default value to fall back to, if neither this {@code Config}'s
 	 * internal {@code Properties} nor any of its parents contains a matching entry or
@@ -319,6 +352,15 @@ public class Config {
 	public String getPropertyAsNonEmptyTrimmedString(final String key, final String defaultValue) {
 		assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
+
+		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
+		final String sysPropVal = System.getProperty(sysPropKey);
+		if (sysPropVal != null) {
+			logger.debug("getPropertyAsNonEmptyTrimmedString: System property with key='{}' and value='{}' overrides config (config is not queried).", sysPropKey, sysPropVal);
+			return sysPropVal;
+		}
+		logger.debug("getPropertyAsNonEmptyTrimmedString: System property with key='{}' is not set (config is queried next).", sysPropKey);
+
 		synchronized (instanceMutex) {
 			readIfNeeded();
 			String sval = properties.getProperty(key);
@@ -342,7 +384,7 @@ public class Config {
 			final long lval = Long.parseLong(sval);
 			return lval;
 		} catch (NumberFormatException x) {
-			logger.warn("getPropertyAsLong: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
+			logger.warn("getPropertyAsLong: One of the properties files %s contains the key '%s' (or the system properties override it) with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
 	}
@@ -356,9 +398,18 @@ public class Config {
 			final int ival = Integer.parseInt(sval);
 			return ival;
 		} catch (NumberFormatException x) {
-			logger.warn("getPropertyAsInt: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
+			logger.warn("getPropertyAsInt: One of the properties files %s contains the key '%s' (or the system properties override it) with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
+	}
+
+	public int getPropertyAsPositiveOrZeroInt(final String key, final int defaultValue) {
+		final int value = getPropertyAsInt(key, defaultValue);
+		if (value < 0) {
+			logger.warn("getPropertyAsPositiveInt: One of the properties files %s contains the key '%s' (or the system properties override it) with the negative value '%s' (only values >= 0 are allowed). Falling back to default value '%s'!", propertiesFiles, key, value, defaultValue);
+			return defaultValue;
+		}
+		return value;
 	}
 
 	/**
@@ -399,6 +450,21 @@ public class Config {
 			return Enum.valueOf(enumClass, sval);
 		} catch (IllegalArgumentException x) {
 			logger.warn("getPropertyAsEnum: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	public boolean getPropertyAsBoolean(final String key, final boolean defaultValue) {
+		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		if (sval == null)
+			return defaultValue;
+
+		if (TRUE_STRING.equalsIgnoreCase(sval))
+			return true;
+		else if (FALSE_STRING.equalsIgnoreCase(sval))
+			return false;
+		else {
+			logger.warn("getPropertyAsBoolean: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
 	}

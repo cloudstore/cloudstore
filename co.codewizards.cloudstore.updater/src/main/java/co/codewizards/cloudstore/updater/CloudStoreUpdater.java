@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -113,12 +114,16 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 	private void run() throws Exception {
 		System.out.println("CloudStore updater started. Downloading meta-data.");
+
+		boolean restoreRenamedFiles = false;
 		try {
 			final File downloadFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].downloadURL");
 			final File signatureFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].signatureURL");
 
 			System.out.println("Verifying PGP signature.");
 			new PGPVerifier().verify(downloadFile, signatureFile);
+
+			checkAvailableDiskSpace(getInstallationDir(), downloadFile.length() * 5);
 
 			final File backupDir = getBackupDir();
 			backupDir.mkdirs();
@@ -129,34 +134,106 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			.fileFilter(fileFilterIgnoringBackupAndUpdaterDir)
 			.compress(getInstallationDir());
 
+			// Because of f***ing Windows and its insane file-locking, we first try to move all
+			// files out of the way by renaming them. If this fails, we restore the previous
+			// state. This way, we increase the probability that we leave a consistent state.
+			// If a file is locked, this should fail already now, rather than later after we extracted
+			// half of the tarball.
+			System.out.println("Renaming files in installation directory: " + getInstallationDir());
+			restoreRenamedFiles = true;
+			renameFiles(getInstallationDir(), fileFilterIgnoringBackupAndUpdaterDir);
+
 			System.out.println("Overwriting installation directory: " + getInstallationDir());
 			final Set<File> keepFiles = new HashSet<>();
 			keepFiles.add(getInstallationDir());
 			populateFilesRecursively(getBackupDir(), keepFiles);
 			populateFilesRecursively(getUpdaterDir(), keepFiles);
-			final FileFilter fileFilterTrackingExtractedFiles = new FileFilter() {
-				@Override
-				public boolean accept(File file) {
-					keepFiles.add(file);
-					keepFiles.add(file.getParentFile()); // just in case the parent didn't have its own entry and was created implicitly
-					return true;
-				}
-			};
 
 			new TarGzFile(downloadFile)
 			.tarGzEntryNameConverter(new ExtractTarGzEntryNameConverter())
-			.fileFilter(fileFilterTrackingExtractedFiles)
+			.fileFilter(new FileFilterTrackingExtractedFiles(keepFiles))
 			.extract(getInstallationDir());
 
-			System.out.println("Deleting old files from installation directory.");
+			restoreRenamedFiles = false;
+
+			System.out.println("Deleting old files from installation directory: " + getInstallationDir());
 			deleteAllExcept(getInstallationDir(), keepFiles);
 		} finally {
+			if (restoreRenamedFiles)
+				restoreRenamedFiles(getInstallationDir());
+
 			if (tempDownloadDir != null) {
 				System.out.println("Deleting temporary download-directory.");
 				IOUtil.deleteDirectoryRecursively(tempDownloadDir);
 			}
 		}
 		System.out.println("Update successfully done. Exiting.");
+	}
+
+	private void checkAvailableDiskSpace(final File dir, final long expectedRequiredSpace) throws IOException {
+		final long usableSpace = dir.getUsableSpace();
+		logger.debug("checkAvailableDiskSpace: dir='{}' dir.usableSpace='{} MiB' expectedRequiredSpace='{} MiB'",
+				dir, usableSpace / 1024 / 1024, expectedRequiredSpace / 1024 / 1024);
+
+		if (usableSpace < expectedRequiredSpace) {
+			final String msg = String.format("Insufficient disk space! The file system of the directory '%s' has %s MiB (%s B) available, but %s MiB (%s B) are required!",
+					dir, usableSpace / 1024 / 1024, usableSpace, expectedRequiredSpace / 1024 / 1024, expectedRequiredSpace);
+			logger.error("checkAvailableDiskSpace: " + msg);
+			throw new IOException(msg);
+		}
+	}
+
+	private static final String RENAMED_FILE_SUFFIX = ".csupdbak";
+
+	private void renameFiles(final File dir, final FileFilter fileFilter) throws IOException {
+		final File[] children = dir.listFiles(fileFilter);
+		if (children != null) {
+			for (final File child : children) {
+				if (child.isDirectory())
+					renameFiles(child, fileFilter);
+				else {
+					final File newChild = new File(dir, child.getName() + RENAMED_FILE_SUFFIX);
+					logger.debug("renameFiles: file='{}', newName='{}'", child, newChild.getName());
+					if (!child.renameTo(newChild)) {
+						final String msg = String.format("Failed to rename the file '%s' to '%s' (in the same directory)!", child, newChild.getName());
+						logger.error("renameFiles: {}", msg);
+						throw new IOException(msg);
+					}
+				}
+			}
+		}
+	}
+
+	private void restoreRenamedFiles(File dir) {
+		final File[] children = dir.listFiles();
+		if (children != null) {
+			for (final File child : children) {
+				if (child.isDirectory())
+					restoreRenamedFiles(child);
+				else if (child.getName().endsWith(RENAMED_FILE_SUFFIX)) {
+					final File newChild = new File(dir, child.getName().substring(0, child.getName().length() - RENAMED_FILE_SUFFIX.length()));
+					logger.debug("restoreRenamedFiles: file='{}', newName='{}'", child, newChild.getName());
+					newChild.delete();
+					if (!child.renameTo(newChild))
+						logger.warn("restoreRenamedFiles: Failed to rename the file '{}' back to its original name '{}' (in the same directory)!", child, newChild.getName());
+				}
+			}
+		}
+	}
+
+	private static class FileFilterTrackingExtractedFiles implements FileFilter {
+		private final Collection<File> files;
+
+		public FileFilterTrackingExtractedFiles(Collection<File> files) {
+			this.files = assertNotNull("files", files);
+		}
+
+		@Override
+		public boolean accept(File file) {
+			files.add(file);
+			files.add(file.getParentFile()); // just in case the parent didn't have its own entry and was created implicitly
+			return true;
+		}
 	}
 
 	private static class ExtractTarGzEntryNameConverter implements TarGzEntryNameConverter {
@@ -216,6 +293,14 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		try {
 			System.out.println("Downloading: " + resolvedURLStr);
 			final URL url = new URL(resolvedURLStr);
+			long contentLength = url.openConnection().getContentLengthLong();
+			if (contentLength < 0)
+				logger.warn("downloadURLViaRemoteUpdateProperties: contentLength unknown! url='{}'", url);
+			else {
+				logger.debug("downloadURLViaRemoteUpdateProperties: contentLength={} url='{}'", contentLength, url);
+				checkAvailableDiskSpace(tempDownloadDir, Math.max(1024 * 1024, contentLength * 3 / 2));
+			}
+
 			final String path = url.getPath();
 			final int lastSlashIndex = path.lastIndexOf('/');
 			if (lastSlashIndex < 0)

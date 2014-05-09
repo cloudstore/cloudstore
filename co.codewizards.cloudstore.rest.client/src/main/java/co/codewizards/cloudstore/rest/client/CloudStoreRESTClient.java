@@ -52,20 +52,16 @@ public class CloudStoreRESTClient {
 	/**
 	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
 	 * <p>
-	 * The configuration can be overridden by the system property {@link #SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT}.
+	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
 	public static final String CONFIG_KEY_SOCKET_CONNECT_TIMEOUT = "socket.connectTimeout"; //$NON-NLS-1$
 
 	/**
 	 * The {@code key} for the read timeout used with {@link Config#getPropertyAsInt(String, int)}.
 	 * <p>
-	 * The configuration can be overridden by the system property {@link #SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT}.
+	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
 	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "socket.readTimeout"; //$NON-NLS-1$
-
-	public static final String SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT = "cloudstore.socket.connectTimeout"; //$NON-NLS-1$
-
-	public static final String SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT = "cloudstore.socket.readTimeout"; //$NON-NLS-1$
 
 	private Integer socketConnectTimeout;
 
@@ -85,8 +81,7 @@ public class CloudStoreRESTClient {
 
 	public Integer getSocketConnectTimeout() {
 		if (socketConnectTimeout == null)
-			socketConnectTimeout = getConfigPropertyAsPositiveInt(
-					SYSTEM_PROPERTY_SOCKET_CONNECT_TIMEOUT,
+			socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
 					DEFAULT_SOCKET_CONNECT_TIMEOUT);
 
@@ -101,8 +96,7 @@ public class CloudStoreRESTClient {
 
 	public Integer getSocketReadTimeout() {
 		if (socketReadTimeout == null)
-			socketReadTimeout = getConfigPropertyAsPositiveInt(
-					SYSTEM_PROPERTY_SOCKET_READ_TIMEOUT,
+			socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_READ_TIMEOUT,
 					DEFAULT_SOCKET_READ_TIMEOUT);
 
@@ -113,33 +107,6 @@ public class CloudStoreRESTClient {
 			socketReadTimeout = null;
 
 		this.socketReadTimeout = socketReadTimeout;
-	}
-
-	private int getConfigPropertyAsPositiveInt(String systemProperty, String configKey, int defaultValue) {
-		String value = System.getProperty(systemProperty);
-		if (value == null || value.isEmpty()) {
-			logger.info("System property '{}' is undefined! Looking for key '{}' in global config.", systemProperty, configKey);
-			return _getConfigPropertyAsPositiveInt(configKey, defaultValue);
-		}
-		try {
-			int result = Integer.parseInt(value);
-			if (result < 0)
-				throw new NumberFormatException("Only values greater than or equal to 0 are allowed!");
-
-			return result;
-		} catch (NumberFormatException x) {
-			logger.warn("System property '{}' is set to the illegal value '{}'!  Looking for key '{}' in global config.", systemProperty, value, configKey);
-			return _getConfigPropertyAsPositiveInt(configKey, defaultValue);
-		}
-	}
-
-	private int _getConfigPropertyAsPositiveInt(String configKey, int defaultValue) {
-		int value = Config.getInstance().getPropertyAsInt(configKey, defaultValue);
-		if (value < 0) {
-			logger.warn("Config property '{}' is set to the illegal value '{}'!  Falling back to default value: {}", configKey, value, defaultValue);
-			return defaultValue;
-		}
-		return value;
 	}
 
 	/**

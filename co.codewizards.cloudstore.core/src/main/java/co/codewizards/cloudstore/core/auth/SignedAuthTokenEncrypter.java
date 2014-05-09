@@ -14,11 +14,13 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
+
 public class SignedAuthTokenEncrypter {
 	private static final Logger logger = LoggerFactory.getLogger(SignedAuthTokenEncrypter.class);
 
 	public static final int DEFAULT_KEY_SIZE = 128;
-	public static final String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.authTokenEncryption.keySize";
+	public static final String CONFIG_KEY_KEY_SIZE = "authTokenEncryption.keySize";
 
 	private static SecureRandom random = new SecureRandom();
 
@@ -73,20 +75,11 @@ public class SignedAuthTokenEncrypter {
 	}
 
 	protected int getKeySize() {
-		String keySizeString = System.getProperty(SYSTEM_PROPERTY_KEY_SIZE);
-		if (keySizeString == null) {
+		int keySize = Config.getInstance().getPropertyAsInt(CONFIG_KEY_KEY_SIZE, DEFAULT_KEY_SIZE);
+		if (keySize < 64) {
+			logger.warn("Config key '{}': keySize {} is out of range! Using default {} instead!", CONFIG_KEY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
 			return DEFAULT_KEY_SIZE;
 		}
-		try {
-			int keySize = Integer.parseInt(keySizeString);
-			if (keySize < 64) {
-				logger.warn("System property '{}': keySize {} is out of range! Using default {} instead!", SYSTEM_PROPERTY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
-				return DEFAULT_KEY_SIZE;
-			}
-			return keySize;
-		} catch (NumberFormatException x) {
-			logger.warn("System property '{}': keySize '{}' is not a valid number!" + x, SYSTEM_PROPERTY_KEY_SIZE, keySizeString);
-			return DEFAULT_KEY_SIZE;
-		}
+		return keySize;
 	}
 }
