@@ -146,6 +146,34 @@ $H$H$H$H deferrableExecutor.expiryPeriod
 TODO document this!
 
 
+$H$H$H$H transientRepoPassword.validityPeriod
+
+TODO document this!
+
+The default value is "3600000" (1 hour).
+
+
+$H$H$H$H transientRepoPassword.renewalPeriod
+
+TODO document this!
+
+The default value is "1800000" (30 minutes).
+
+
+$H$H$H$H transientRepoPassword.earlyRenewalPeriod
+
+TODO document this!
+
+The default value is "900000" (15 minutes).
+
+
+$H$H$H$H transientRepoPassword.expiryTimerPeriod
+
+TODO document this!
+
+The default value is "60000" (1 minute).
+
+
 $H$H$H$H server.securePort
 
 TODO document this!

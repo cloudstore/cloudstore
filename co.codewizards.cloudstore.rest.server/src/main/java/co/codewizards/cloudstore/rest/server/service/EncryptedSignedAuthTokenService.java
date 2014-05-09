@@ -26,8 +26,8 @@ import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.rest.server.auth.AuthRepoPassword;
-import co.codewizards.cloudstore.rest.server.auth.AuthRepoPasswordManager;
+import co.codewizards.cloudstore.rest.server.auth.TransientRepoPassword;
+import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
 @Path("_EncryptedSignedAuthToken/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -63,9 +63,9 @@ public class EncryptedSignedAuthTokenService
 	protected EncryptedSignedAuthToken getEncryptedSignedAuthToken(
 			UUID serverRepositoryId, UUID clientRepositoryId, byte[] localRepoPrivateKey, byte[] remoteRepoPublicKey)
 	{
-		AuthRepoPassword authRepoPassword = AuthRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
+		TransientRepoPassword transientRepoPassword = TransientRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 
-		AuthToken authToken = authRepoPassword.getAuthToken();
+		AuthToken authToken = transientRepoPassword.getAuthToken();
 		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
 		SignedAuthToken signedAuthToken = new AuthTokenSigner(localRepoPrivateKey).sign(authTokenData);
 

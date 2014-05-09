@@ -6,14 +6,14 @@ import java.util.UUID;
 
 import co.codewizards.cloudstore.core.auth.AuthToken;
 
-public class AuthRepoPassword {
+public class TransientRepoPassword {
 
 	private final UUID serverRepositoryId;
 	private final UUID clientRepositoryId;
 	private final AuthToken authToken;
 	private final char[] password;
 
-	protected AuthRepoPassword(UUID serverRepositoryId, UUID clientRepositoryId, AuthToken authToken) {
+	protected TransientRepoPassword(UUID serverRepositoryId, UUID clientRepositoryId, AuthToken authToken) {
 		this.serverRepositoryId = assertNotNull("serverRepositoryId", serverRepositoryId);
 		this.clientRepositoryId = assertNotNull("clientRepositoryId", clientRepositoryId);
 		this.authToken = assertNotNull("authToken", authToken);

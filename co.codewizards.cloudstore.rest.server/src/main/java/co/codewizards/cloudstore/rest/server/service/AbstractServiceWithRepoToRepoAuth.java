@@ -35,7 +35,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
-import co.codewizards.cloudstore.rest.server.auth.AuthRepoPasswordManager;
+import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
 public abstract class AbstractServiceWithRepoToRepoAuth {
 
@@ -149,7 +149,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		try {
 			UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
 			if (clientRepositoryId != null) {
-				if (AuthRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
+				if (TransientRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
 					return auth.getUserName();
 				else
 					throw newUnauthorizedException();
