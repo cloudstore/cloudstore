@@ -389,6 +389,15 @@ public class Config {
 		}
 	}
 
+	public long getPropertyAsPositiveOrZeroLong(final String key, final long defaultValue) {
+		final long value = getPropertyAsLong(key, defaultValue);
+		if (value < 0) {
+			logger.warn("getPropertyAsPositiveOrZeroLong: One of the properties files %s contains the key '%s' (or the system properties override it) with the negative value '%s' (only values >= 0 are allowed). Falling back to default value '%s'!", propertiesFiles, key, value, defaultValue);
+			return defaultValue;
+		}
+		return value;
+	}
+
 	public int getPropertyAsInt(final String key, final int defaultValue) {
 		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
@@ -406,7 +415,7 @@ public class Config {
 	public int getPropertyAsPositiveOrZeroInt(final String key, final int defaultValue) {
 		final int value = getPropertyAsInt(key, defaultValue);
 		if (value < 0) {
-			logger.warn("getPropertyAsPositiveInt: One of the properties files %s contains the key '%s' (or the system properties override it) with the negative value '%s' (only values >= 0 are allowed). Falling back to default value '%s'!", propertiesFiles, key, value, defaultValue);
+			logger.warn("getPropertyAsPositiveOrZeroInt: One of the properties files %s contains the key '%s' (or the system properties override it) with the negative value '%s' (only values >= 0 are allowed). Falling back to default value '%s'!", propertiesFiles, key, value, defaultValue);
 			return defaultValue;
 		}
 		return value;
