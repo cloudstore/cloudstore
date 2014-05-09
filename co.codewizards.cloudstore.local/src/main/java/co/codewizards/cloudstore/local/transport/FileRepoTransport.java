@@ -371,8 +371,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);
 
-		File fromFile = getFile(fromPath);
-		File toFile = getFile(toPath);
+		final File fromFile = getFile(fromPath);
+		final File toFile = getFile(toPath);
 
 		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
 			return;
@@ -394,8 +394,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					throw new RuntimeException(e);
 				}
 
-				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-				localRepoSync.sync(toFile, new NullProgressMonitor());
+				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
+				assertNotNull("toRepoFile", toRepoFile);
+				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
 			}
@@ -410,8 +412,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);
 
-		File fromFile = getFile(fromPath);
-		File toFile = getFile(toPath);
+		final File fromFile = getFile(fromPath);
+		final File toFile = getFile(toPath);
 
 		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
 			return;
@@ -419,8 +421,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
 			return;
 
-		File fromParentFile = fromFile.getParentFile();
-		File toParentFile = toFile.getParentFile();
+		final File fromParentFile = fromFile.getParentFile();
+		final File toParentFile = toFile.getParentFile();
 		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(fromParentFile);
@@ -435,12 +437,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					throw new RuntimeException(e);
 				}
 
-				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
-				localRepoSync.sync(toFile, new NullProgressMonitor());
-				RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
-				if (repoFile != null)
-					localRepoSync.deleteRepoFile(repoFile);
+				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
+				final RepoFile fromRepoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
+				if (fromRepoFile != null)
+					localRepoSync.deleteRepoFile(fromRepoFile);
 
+				assertNotNull("toRepoFile", toRepoFile);
+				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(fromParentFile);
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
