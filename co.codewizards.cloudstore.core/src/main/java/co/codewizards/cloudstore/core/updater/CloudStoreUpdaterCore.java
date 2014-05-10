@@ -406,6 +406,9 @@ public class CloudStoreUpdaterCore {
 	 * <p>
 	 * The check, whether an update is needed, is not done every time. The result is cached for
 	 * {@linkplain #CONFIG_KEY_REMOTE_VERSION_CACHE_VALIDITY_PERIOD a certain time period} to reduce HTTP queries.
+	 * <p>
+	 * This method does not throw any exception. In case of an exception, it is only logged and this
+	 * method returns normally.
 	 */
 	public void createUpdaterDirIfUpdateNeeded() {
 		File updaterDir = null;

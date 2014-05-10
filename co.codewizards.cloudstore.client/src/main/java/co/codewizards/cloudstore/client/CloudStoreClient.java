@@ -148,10 +148,18 @@ public class CloudStoreClient {
 	{
 		initLogging();
 		try {
-			RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
-			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
-			int programExitStatus = new CloudStoreClient(args).throwException(false).execute();
-			new CloudStoreUpdaterCore().createUpdaterDirIfUpdateNeeded(); // doing it after execute(), because the system-properties are otherwise maybe not set.
+			final int programExitStatus;
+			try {
+				RestRepoTransportFactory restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+				restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(ConsoleDynamicX509TrustManagerCallback.class);
+				programExitStatus = new CloudStoreClient(args).throwException(false).execute();
+			} finally {
+				// Doing it after execute(), because the system-properties are otherwise maybe not set.
+				// Doing it in a finally-block, because the server might already be updated and incompatible - thus causing an error.
+				// The following method catches all exceptions and logs them, hence this should not interfere with
+				// the clean program completion.
+				new CloudStoreUpdaterCore().createUpdaterDirIfUpdateNeeded();
+			}
 			System.exit(programExitStatus);
 		} catch (Throwable x) {
 			logger.error(x.toString(), x);
