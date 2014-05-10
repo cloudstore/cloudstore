@@ -142,7 +142,7 @@ public class CloudStoreUpdaterCore {
 		return remoteVersion;
 	}
 
-	public Version getLocalVersion() {
+	protected Version getLocalVersion() {
 		if (localVersion == null) {
 			final String value = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_VERSION);
 			if (value == null || value.isEmpty())

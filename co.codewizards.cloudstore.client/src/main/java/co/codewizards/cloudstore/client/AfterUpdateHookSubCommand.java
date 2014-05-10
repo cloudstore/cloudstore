@@ -18,8 +18,7 @@ public class AfterUpdateHookSubCommand extends SubCommand {
 
 	@Override
 	public void run() throws Exception {
-		final Version localVersion = new CloudStoreUpdaterCore().getLocalVersion();
-		System.out.println("Update completed! New local version: " + localVersion);
+		System.out.println("Update completed! New local version: " + VersionSubCommand.getVersion());
 	}
 
 	@Override

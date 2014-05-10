@@ -175,6 +175,7 @@ public class CloudStoreClient {
 	}
 
 	public int execute() throws Exception {
+		logger.debug("execute: CloudStore CLI version {} is executing.", VersionSubCommand.getVersion());
 		final String[] args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(this.args);
 		int programExitStatus = 1;
 		boolean displayHelp = true;

@@ -30,8 +30,8 @@ public class ReleasePreparer {
 	//   * to create a tag in SVN after check-in!
 	//   * to update the symlinks on the web-server after the release was successful.
 
-//	protected String newMavenVersion = "0.9.3";
-	protected String newMavenVersion = "0.9.4-SNAPSHOT";
+	protected String newMavenVersion = "0.9.4";
+//	protected String newMavenVersion = "0.9.5-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.
@@ -46,7 +46,6 @@ public class ReleasePreparer {
 
 	protected String rootDir = "..";
 	protected File rootDirFile;
-	protected String parentDir = "co.codewizards.parent/";
 
 	protected Properties properties;
 
