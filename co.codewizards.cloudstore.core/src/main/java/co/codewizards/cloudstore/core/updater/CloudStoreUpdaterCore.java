@@ -509,7 +509,7 @@ public class CloudStoreUpdaterCore {
 		}
 
 		if (localVersion.equals(remoteVersion)) {
-			logger.debug("isUpdateNeeded: Silently returning, because localVersion equals remoteVersion='{}'", remoteVersion);
+			logger.debug("isUpdateNeeded: No update, because localVersion equals remoteVersion='{}'", remoteVersion);
 			return false;
 		}
 
@@ -519,7 +519,7 @@ public class CloudStoreUpdaterCore {
 				return true;
 			}
 
-			logger.info("isUpdateNeeded: Silently returning, because localVersion='{}' is newer than remoteVersion='{}'", localVersion, remoteVersion);
+			logger.info("isUpdateNeeded: No update, because localVersion='{}' is newer than remoteVersion='{}'", localVersion, remoteVersion);
 			return false;
 		}
 
