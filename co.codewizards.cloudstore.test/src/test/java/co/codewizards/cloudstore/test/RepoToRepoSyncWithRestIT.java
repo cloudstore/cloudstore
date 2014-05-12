@@ -408,27 +408,8 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 	@Test
 	public void syncSymlinkFileDown() throws Exception {
-		localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
-		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-
-		remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
-		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
-
-		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
-		assertThat(localRepoManagerLocal).isNotNull();
-
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
-		assertThat(localRepoManagerRemote).isNotNull();
-
-		UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
-		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
-
-		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
-		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
+		createLocalAndRemoteRepo();
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
 		File child_1 = createDirectory(remoteRoot, "1");
 
@@ -443,13 +424,13 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
+		localRepoManagerRemote.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
-	@Test
-	public void syncSymlinkFileUp() throws Exception {
+	private void createLocalAndRemoteRepo() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
@@ -472,6 +453,15 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
 		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
+		localRepoManagerLocal.close();
+		localRepoManagerRemote.close();
+	}
+
+	@Test
+	public void syncSymlinkFileUp() throws Exception {
+		createLocalAndRemoteRepo();
+		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+
 		File child_1 = createDirectory(localRoot, "1");
 
 		File child_1_a = createFileWithRandomContent(child_1, "a");
@@ -485,6 +475,29 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
+		localRepoManagerLocal.close();
+
+		assertThatFilesInRepoAreCorrect(localRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
+	@Test
+	public void syncFileWithSpecialChars() throws Exception {
+		createLocalAndRemoteRepo();
+		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+
+		File child_1 = createDirectory(localRoot, "A ä Ä { + } x ( << ))]] [ #");
+
+		File child_1_a = createFileWithRandomContent(child_1, "Öü ß ? # + {{ d d } (( > << ]] )");
+		createRelativeSymlink(new File(child_1, "Öü ß ? # + {{ d d } (( > << ]] ).new"), child_1_a);
+
+		localRepoManagerLocal.localSync(new NullProgressMonitor());
+		assertThatFilesInRepoAreCorrect(localRoot);
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		repoToRepoSync.close();
+		localRepoManagerLocal.close();
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());

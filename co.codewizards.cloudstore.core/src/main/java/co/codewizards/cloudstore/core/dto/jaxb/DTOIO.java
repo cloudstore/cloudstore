@@ -2,7 +2,12 @@ package co.codewizards.cloudstore.core.dto.jaxb;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
@@ -42,13 +47,20 @@ public abstract class DTOIO <D> {
 		}
 	}
 
-	public void serialize(D dto, File out) {
+	public void serialize(final D dto, final File file) {
 		assertNotNull("dto", dto);
-		assertNotNull("out", out);
+		assertNotNull("file", file);
 		try {
-			getMarshaller().marshal(dto, out);
-		} catch (JAXBException e) {
-			throw new RuntimeException(e);
+			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
+			// we manage the OutputStream ourself, as well.
+			final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+			try {
+				getMarshaller().marshal(dto, out);
+			} finally {
+				out.close();
+			}
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException("Writing file '" + file.getAbsolutePath() + "' failed: " + e, e);
 		}
 	}
 
@@ -61,12 +73,18 @@ public abstract class DTOIO <D> {
 		}
 	}
 
-	public D deserialize(File in) {
-		assertNotNull("in", in);
+	public D deserialize(final File file) {
+		assertNotNull("file", file);
 		try {
-			return dtoClass.cast(getUnmarshaller().unmarshal(in));
-		} catch (JAXBException e) {
-			throw new RuntimeException("Reading file '" + in.getAbsolutePath() + "' failed: " + e, e);
+			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
+			final InputStream in = new BufferedInputStream(new FileInputStream(file));
+			try {
+				return dtoClass.cast(getUnmarshaller().unmarshal(in));
+			} finally {
+				in.close();
+			}
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException("Reading file '" + file.getAbsolutePath() + "' failed: " + e, e);
 		}
 	}
 
