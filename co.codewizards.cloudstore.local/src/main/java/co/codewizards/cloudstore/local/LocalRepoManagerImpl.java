@@ -10,13 +10,17 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -141,6 +145,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			initMetaDir(createRepository);
 			initPersistenceManagerFactory(createRepository);
 			deleteExpiredRemoteRepositoryRequests();
+			syncWithLocalRepoRegistry();
 			updateRepositoryPropertiesFile();
 			releaseLockFile = false;
 			deleteMetaDir = false; // if we come here, creation is successful => NO deletion
@@ -148,10 +153,42 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (releaseLockFile && lockFile != null)
 				lockFile.release();
 
-			if (deleteMetaDir)
+			if (deleteMetaDir) {
 				IOUtil.deleteDirectoryRecursively(getMetaDir());
+//				if (repositoryId != null) // TODO should be removed - will be evicted after some time, anyway, but
+//					LocalRepoRegistry.getInstance().removeRepository(repositoryId);
+			}
 		}
-		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
+	}
+
+	@Override
+	public void putRepositoryAlias(final String repositoryAlias) {
+		assertNotNull("repositoryAlias", repositoryAlias);
+		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
+		try {
+			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			if (!localRepository.getAliases().contains(repositoryAlias))
+				localRepository.getAliases().add(repositoryAlias);
+
+			LocalRepoRegistry.getInstance().putRepositoryAlias(repositoryAlias, repositoryId);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
+	@Override
+	public void removeRepositoryAlias(String repositoryAlias) {
+		assertNotNull("repositoryAlias", repositoryAlias);
+		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
+		try {
+			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			localRepository.getAliases().remove(repositoryAlias);
+			LocalRepoRegistry.getInstance().removeRepositoryAlias(repositoryAlias);
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
 	}
 
 	private File assertValidLocalRoot(File localRoot) {
@@ -262,19 +299,88 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			throw new RepositoryCorruptException(localRoot, "Repository is not version 2!");
 	}
 
+	private void syncWithLocalRepoRegistry() {
+		assertNotNull("repositoryId", repositoryId);
+		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
+		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
+		try {
+			final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			for (final String repositoryAlias : new ArrayList<>(localRepository.getAliases())) {
+				final UUID repositoryIdInRegistry = localRepoRegistry.getRepositoryId(repositoryAlias);
+				if (repositoryIdInRegistry == null) {
+					localRepoRegistry.putRepositoryAlias(repositoryAlias, repositoryId);
+					logger.info("syncWithLocalRepoRegistry: Alias '{}' of repository '{}' copied from repo to repoRegistry.", repositoryAlias, repositoryId);
+				}
+				else if (repositoryId.equals(repositoryIdInRegistry)) {
+					logger.debug("syncWithLocalRepoRegistry: Alias '{}' of repository '{}' already in-sync.", repositoryAlias, repositoryId);
+				}
+				else {
+					localRepository.getAliases().remove(repositoryAlias);
+					logger.warn("syncWithLocalRepoRegistry: Alias '{}' removed from repository '{}', because of conflicting entry (repository '{}') in localRepoRegistry.", repositoryAlias, repositoryId, repositoryIdInRegistry);
+				}
+			}
+
+			final Collection<String> repositoryAliases = localRepoRegistry.getRepositoryAliases(repositoryId.toString());
+			if (repositoryAliases != null) {
+				for (final String repositoryAlias : repositoryAliases) {
+					if (!localRepository.getAliases().contains(repositoryAlias)) {
+						localRepository.getAliases().add(repositoryAlias);
+						logger.info("syncWithLocalRepoRegistry: Alias '{}' of repository '{}' copied from repoRegistry to repo.", repositoryAlias, repositoryId);
+					}
+				}
+			}
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
+
 	private void updateRepositoryPropertiesFile() {
 		assertNotNull("repositoryProperties", repositoryProperties);
 		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
+			boolean store = false;
 			String repositoryId = assertNotNull("repositoryId", getRepositoryId()).toString();
 			if (!repositoryId.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
 				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryId);
-				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
+				store = true;
 			}
+
+			final LocalRepoTransactionImpl transaction = beginReadTransaction();
+			try {
+				final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+				final SortedSet<String> repositoryAliases = new TreeSet<>(localRepository.getAliases());
+				final String aliasesString = repositoryAliasesToString(repositoryAliases);
+				if (!aliasesString.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ALIASES))) {
+					repositoryProperties.setProperty(PROP_REPOSITORY_ALIASES, aliasesString);
+					store = true;
+				}
+
+				transaction.commit();
+			} finally {
+				transaction.rollbackIfActive();
+			}
+
+			if (store)
+				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
+
 			repositoryProperties = null; // not needed anymore => gc
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private String repositoryAliasesToString(final Set<String> repositoryAliases) {
+		assertNotNull("repositoryAliases", repositoryAliases);
+		final StringBuilder sb = new StringBuilder();
+		sb.append('/');
+		for (String repositoryAlias : repositoryAliases) {
+			sb.append(repositoryAlias);
+			sb.append('/');
+		}
+		return sb.toString();
 	}
 
 	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {

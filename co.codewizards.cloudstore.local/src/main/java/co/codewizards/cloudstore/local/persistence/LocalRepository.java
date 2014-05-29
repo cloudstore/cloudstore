@@ -1,9 +1,13 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
+import javax.jdo.annotations.Join;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -25,6 +29,9 @@ public class LocalRepository extends Repository {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] privateKey;
 
+	@Join
+	private Set<String> aliases;
+
 	public LocalRepository() { }
 
 	/**
@@ -44,5 +51,12 @@ public class LocalRepository extends Repository {
 
 	public void setPrivateKey(byte[] privateKey) {
 		this.privateKey = privateKey;
+	}
+
+	public Set<String> getAliases() {
+		if (aliases == null)
+			aliases = new HashSet<>();
+
+		return aliases;
 	}
 }

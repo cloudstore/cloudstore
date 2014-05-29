@@ -46,7 +46,7 @@ public class CreateRepoAliasSubCommand extends SubCommandWithExistingLocalRepo
 			if (oldRepositoryId != null)
 				System.err.println(String.format("ERROR: There is already a repository registered with the alias '%s'! The existing repository's ID is '%s' and its local-root is '%s'.", alias, oldRepositoryId, oldLocalRoot));
 			else {
-				localRepoRegistry.putRepositoryAlias(alias, localRepoManager.getRepositoryId());
+				localRepoManager.putRepositoryAlias(alias);
 				System.out.println(String.format("Created alias '%s' for repository %s (local-root '%s').", alias, localRepoManager.getRepositoryId(), localRepoManager.getLocalRoot()));
 			}
 		} finally {

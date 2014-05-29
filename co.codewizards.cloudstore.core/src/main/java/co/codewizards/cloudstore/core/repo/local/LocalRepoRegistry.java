@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
@@ -34,7 +35,13 @@ public class LocalRepoRegistry
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryId:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
 	private static final String PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP = "evictDeadEntriesLastTimestamp";
+	/**
+	 * @deprecated Replaced by {@link #CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD}.
+	 */
+	@Deprecated
 	private static final String PROP_EVICT_DEAD_ENTRIES_PERIOD = "evictDeadEntriesPeriod";
+	public static final String CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD = "repoRegistry.evictDeadEntriesPeriod";
+	public static final long DEFAULT_EVICT_DEAD_ENTRIES_PERIOD = 24 * 60 * 60 * 1000L;
 	private static final long LOCK_TIMEOUT_MS = 10000L; // 10 s
 
 	private File registryFile;
@@ -172,6 +179,14 @@ public class LocalRepoRegistry
 		return localRoot;
 	}
 
+	/**
+	 * Puts an alias into the registry.
+	 * <p>
+	 * <b>Important:</b> Do <b>not</b> call this method directly. Most likely, you should use
+	 * {@link LocalRepoManager#putRepositoryAlias(String)} instead!
+	 * @param repositoryAlias
+	 * @param repositoryId
+	 */
 	public synchronized void putRepositoryAlias(String repositoryAlias, UUID repositoryId) {
 		assertNotNull("repositoryAlias", repositoryAlias);
 		assertNotNull("repositoryId", repositoryId);
@@ -243,7 +258,7 @@ public class LocalRepoRegistry
 		}
 	}
 
-	private Date getPropertyAsDate(String key) {
+	protected Date getPropertyAsDate(String key) {
 		String value = getProperty(key);
 		if (value == null || value.trim().isEmpty())
 			return null;
@@ -255,17 +270,17 @@ public class LocalRepoRegistry
 		setProperty(key, new DateTime(assertNotNull("value", value)).toString());
 	}
 
-	private Long getPropertyAsLong(String key) {
-		String value = getProperty(key);
-		if (value == null || value.trim().isEmpty())
-			return null;
-
-		return Long.valueOf(value);
-	}
-
-	private void setProperty(String key, long value) {
-		setProperty(key, Long.toString(value));
-	}
+//	private Long getPropertyAsLong(String key) {
+//		String value = getProperty(key);
+//		if (value == null || value.trim().isEmpty())
+//			return null;
+//
+//		return Long.valueOf(value);
+//	}
+//
+//	private void setProperty(String key, long value) {
+//		setProperty(key, Long.toString(value));
+//	}
 
 	private String getProperty(String key) {
 		return repoRegistryProperties.getProperty(assertNotNull("key", key));
@@ -276,24 +291,41 @@ public class LocalRepoRegistry
 		repoRegistryProperties.setProperty(assertNotNull("key", key), assertNotNull("value", value));
 	}
 
-
 	private void removeProperty(String key) {
 		repoRegistryPropertiesDirty = true;
 		repoRegistryProperties.remove(assertNotNull("key", key));
 	}
 
 	/**
-	 * Get all aliases known for the specified repository.
+	 * Gets all aliases known for the specified repository.
 	 * @param repositoryName the repository-ID or -alias. Must not be <code>null</code>.
 	 * @return the known aliases. Never <code>null</code>, but maybe empty (if there are no aliases for this repository).
 	 * @throws IllegalArgumentException if the repository with the given {@code repositoryName} does not exist,
 	 * i.e. it's neither a repository-ID nor a repository-alias of a known repository.
 	 */
 	public synchronized Collection<String> getRepositoryAliasesOrFail(String repositoryName) throws IllegalArgumentException {
+		return getRepositoryAliases(repositoryName, true);
+	}
+
+	/**
+	 * Gets all aliases known for the specified repository.
+	 * @param repositoryName the repository-ID or -alias. Must not be <code>null</code>.
+	 * @return the known aliases. <code>null</code>, if there is no repository with
+	 * the given {@code repositoryName}. Empty, if the repository is known, but there
+	 * are no aliases for it.
+	 */
+	public synchronized Collection<String> getRepositoryAliases(String repositoryName) {
+		return getRepositoryAliases(repositoryName, false);
+	}
+
+	private Collection<String> getRepositoryAliases(String repositoryName, boolean fail) throws IllegalArgumentException {
 		LockFile lockFile = acquireLockFile();
 		try {
+			UUID repositoryId = fail ? getRepositoryIdOrFail(repositoryName) : getRepositoryId(repositoryName);
+			if (repositoryId == null)
+				return null;
+
 			List<String> result = new ArrayList<String>();
-			UUID repositoryId = getRepositoryIdOrFail(repositoryName);
 			for (Entry<Object, Object> me : repoRegistryProperties.entrySet()) {
 				String key = String.valueOf(me.getKey());
 				if (key.startsWith(PROP_KEY_PREFIX_REPOSITORY_ALIAS)) {
@@ -309,7 +341,6 @@ public class LocalRepoRegistry
 			lockFile.release();
 		}
 	}
-
 
 	private String getPropertyKeyForAlias(String repositoryAlias) {
 		return PROP_KEY_PREFIX_REPOSITORY_ALIAS + assertNotNull("repositoryAlias", repositoryAlias);
@@ -398,11 +429,8 @@ public class LocalRepoRegistry
 	 * and removes them.
 	 */
 	private void evictDeadEntriesPeriodically() {
-		Long period = getPropertyAsLong(PROP_EVICT_DEAD_ENTRIES_PERIOD);
-		if (period == null) {
-			period = 24 * 60 * 60 * 1000L;
-			setProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD, period);
-		}
+		Long period = Config.getInstance().getPropertyAsLong(CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD, DEFAULT_EVICT_DEAD_ENTRIES_PERIOD);
+		removeProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD);
 		Date last = getPropertyAsDate(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP);
 		if (last != null) {
 			long millisAfterLast = System.currentTimeMillis() - last.getTime();

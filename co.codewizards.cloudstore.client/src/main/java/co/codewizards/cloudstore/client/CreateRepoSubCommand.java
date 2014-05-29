@@ -71,32 +71,30 @@ public class CreateRepoSubCommand extends SubCommand
 			if (!localRootFile.exists())
 				throw new IOException("Could not create directory (permissions?): " + localRoot);
 		}
-		UUID repositoryId;
+
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
 		try {
-			repositoryId = localRepoManager.getRepositoryId();
+			if (!noAlias && alias != null) {
+				LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+				UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
+
+				File oldLocalRoot = null;
+				if (oldRepositoryId != null) {
+					oldLocalRoot = localRepoRegistry.getLocalRoot(oldRepositoryId);
+					if (oldLocalRoot == null || !oldLocalRoot.exists()) {
+						// orphaned entry to be ignored (should be cleaned up after a while, anyway)
+						oldRepositoryId = null;
+						oldLocalRoot = null;
+					}
+				}
+
+				if (oldRepositoryId != null)
+					System.err.println(String.format("WARNING: There is already a repository registered with the alias '%s'! Skipping automatic alias registration. The existing repository's ID is '%s' and its local-root is '%s'.", alias, oldRepositoryId, oldLocalRoot));
+				else
+					localRepoManager.putRepositoryAlias(alias);
+			}
 		} finally {
 			localRepoManager.close();
-		}
-
-		if (!noAlias && alias != null) {
-			LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
-			UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
-
-			File oldLocalRoot = null;
-			if (oldRepositoryId != null) {
-				oldLocalRoot = localRepoRegistry.getLocalRoot(oldRepositoryId);
-				if (oldLocalRoot == null || !oldLocalRoot.exists()) {
-					// orphaned entry to be ignored (should be cleaned up after a while, anyway)
-					oldRepositoryId = null;
-					oldLocalRoot = null;
-				}
-			}
-
-			if (oldRepositoryId != null)
-				System.err.println(String.format("WARNING: There is already a repository registered with the alias '%s'! Skipping automatic alias registration. The existing repository's ID is '%s' and its local-root is '%s'.", alias, oldRepositoryId, oldLocalRoot));
-			else
-				localRepoRegistry.putRepositoryAlias(alias, repositoryId);
 		}
 
 		new RepoInfoSubCommand(localRootFile).run();

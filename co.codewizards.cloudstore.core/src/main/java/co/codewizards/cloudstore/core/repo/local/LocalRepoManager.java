@@ -23,6 +23,13 @@ public interface LocalRepoManager {
 	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
 	String PROP_REPOSITORY_ID = "repository.id";
 	String PROP_VERSION = "repository.version";
+	/**
+	 * Aliases separated by '/' (because '/' is an illegal character for an alias).
+	 * <p>
+	 * To make scripting easier (e.g. using grep), the aliases start and end with a
+	 * '/'. For example: "/alias1/alias2/alias3/"
+	 */
+	String PROP_REPOSITORY_ALIASES = "repository.aliases";
 
 	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
@@ -169,5 +176,9 @@ public interface LocalRepoManager {
 	 */
 	@Deprecated
 	void finalize() throws Throwable;
+
+	void putRepositoryAlias(String repositoryAlias);
+
+	void removeRepositoryAlias(String repositoryAlias);
 
 }
