@@ -17,6 +17,16 @@
 		</license>
 	</licenses>
 
+	<ciManagement>
+		<system>jenkins</system>
+		<url>https://codewizards.co/jenkins/job/co.codewizards.cloudstore/</url>
+	</ciManagement>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>http://cloudstore.codewizards.co/tracker</url>
+	</issueManagement>
+
 	<properties>
 		<cloudstore.version>${project.version}</cloudstore.version>
 		<cloudstore_version>${project.version}</cloudstore_version> <!-- We must not use a '.' in a property used by velocity (for our web-site). -->
@@ -55,15 +65,35 @@
 			<id>cloudstore.codewizards.co</id>
 			<url>file:${java.io.tmpdir}/cloudstore-junk</url>
 		</site>
+		<!--
+		The following properties must be defined in the local ~/.m2/settings.xml to support deployment of the artifacts:
+		<activeProfiles>
+			<activeProfile>default</activeProfile>
+		</activeProfiles>
+		<profiles>
+			<profile>
+				<id>default</id>
+				<properties>
+					<cloudstore.repository.id>cloudstore-repo</cloudstore.repository.id>
+					<cloudstore.repository.name>CloudStore Repository</cloudstore.repository.name>
+					<cloudstore.repository.url>file:/srv/www/cloudstore/maven/release</cloudstore.repository.url>
+
+					<cloudstore.snapshotRepository.id>cloudstore-snapshot-repo</cloudstore.snapshotRepository.id>
+					<cloudstore.snapshotRepository.name>CloudStore Snapshot Repository</cloudstore.snapshotRepository.name>
+					<cloudstore.snapshotRepository.url>file:/srv/www/cloudstore/maven/snapshot</cloudstore.snapshotRepository.url>
+				</properties>
+			</profile>
+		</profiles>
+		-->
 		<repository>
-			<id>www.codewizards.co-private-libs-release-local</id>
-			<name>www.codewizards.co-private-libs-release-local</name>
-			<url>https://www.codewizards.co/maven-private/libs-release-local</url>
+			<id>${cloudstore.repository.id}</id>
+			<name>${cloudstore.repository.name}</name>
+			<url>${cloudstore.repository.url}</url>
 		</repository>
 		<snapshotRepository>
-			<id>www.codewizards.co-private-libs-snapshot-local</id>
-			<name>www.codewizards.co-private-libs-snapshot-local</name>
-			<url>https://www.codewizards.co/maven-private/libs-snapshot-local</url>
+			<id>${cloudstore.snapshotRepository.id}</id>
+			<name>${cloudstore.snapshotRepository.name}</name>
+			<url>${cloudstore.snapshotRepository.url}</url>
 		</snapshotRepository>
 	</distributionManagement>
 
