@@ -50,7 +50,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
 
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
 		remoteRepositoryId = localRepoManager.getRepositoryId();
 

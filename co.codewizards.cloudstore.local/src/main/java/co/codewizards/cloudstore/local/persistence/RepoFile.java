@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 	@Query(name="getChildRepoFiles_parent", value="SELECT WHERE this.parent == :parent"),
 	@Query(
 			name="getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId",
-			value="SELECT WHERE this.localRevision > :localRevision && this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId"),
+			value="SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)"), // TODO this necessary == null is IMHO a DN bug!
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);
