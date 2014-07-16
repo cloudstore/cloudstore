@@ -263,7 +263,7 @@ public class Config {
 				properties.clear();
 				for (int i = 0; i < propertiesFiles.length; i++) {
 					final File propertiesFile = propertiesFiles[i];
-					logger.info("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
+					logger.debug("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
 					final long lastModified = propertiesFile.lastModified(); // is 0 for non-existing file
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
 						LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); // TODO maybe system property for timeout?

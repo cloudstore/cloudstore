@@ -102,7 +102,7 @@ public class CloudStoreUpdaterCore {
 			final RemoteVersionCache remoteVersionCache = readRemoteVersionCacheFromProperties();
 			final long cachePeriod = getRemoteVersionCacheValidityPeriod();
 			if (remoteVersionCache != null && System.currentTimeMillis() - remoteVersionCache.remoteVersionTimestamp.getMillis() <= cachePeriod) {
-				logger.info("getRemoteVersion: Cached value '{}' is from {} and still valid (it expires {}). Using this value (not asking server).",
+				logger.debug("getRemoteVersion: Cached value '{}' is from {} and still valid (it expires {}). Using this value (not asking server).",
 						remoteVersionCache.remoteVersion,
 						remoteVersionCache.remoteVersionTimestamp.toDate(),
 						new Date(remoteVersionCache.remoteVersionTimestamp.getMillis() + cachePeriod));
