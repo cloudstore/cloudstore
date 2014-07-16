@@ -5,6 +5,17 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.5?
+
+Compared to version 0.9.4, there are the following changes:
+
+* Bugfix: Fixed a bug blocking the synchronisation, if the file name contained a '#'.
+	([issue 31](https://github.com/cloudstore/cloudstore/issues/31)).
+
+* Bugfix: Fixed a minor bug causing collisions when a file was modified locally while being uploaded (during re-down-sync).
+	([issue 25](https://github.com/cloudstore/cloudstore/issues/25)).
+
+
 $H$H$H What\'s new in 0.9.4?
 
 Compared to version 0.9.3, there are the following changes:
