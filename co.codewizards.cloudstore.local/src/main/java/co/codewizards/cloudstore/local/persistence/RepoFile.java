@@ -34,7 +34,9 @@ import org.slf4j.LoggerFactory;
 @Queries({
 	@Query(name="getChildRepoFile_parent_name", value="SELECT UNIQUE WHERE this.parent == :parent && this.name == :name"),
 	@Query(name="getChildRepoFiles_parent", value="SELECT WHERE this.parent == :parent"),
-	@Query(name="getRepoFilesChangedAfter_localRevision", value="SELECT WHERE this.localRevision > :localRevision"),
+	@Query(
+			name="getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId",
+			value="SELECT WHERE this.localRevision > :localRevision && this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId"),
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);

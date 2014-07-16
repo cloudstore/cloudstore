@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.jdo.Query;
 
@@ -136,15 +137,20 @@ public class RepoFileDAO extends DAO<RepoFile, RepoFileDAO> {
 	 * than the given {@code localRevision}.
 	 * @param localRevision the {@link RepoFile#getLocalRevision() localRevision}, after which the files
 	 * to be queried where modified.
+	 * @param exclLastSyncFromRepositoryId the {@link RepoFile#getLastSyncFromRepositoryId() lastSyncFromRepositoryId}
+	 * to exclude from the result set. This is used to prevent changes originating from a repository to be synced back
+	 * to its origin (unnecessary and maybe causing a collision there).
+	 * See <a href="https://github.com/cloudstore/cloudstore/issues/25">issue 25</a>.
 	 * @return those {@link RepoFile}s which were modified after the given {@code localRevision}. Never
 	 * <code>null</code>, but maybe empty.
 	 */
-	public Collection<RepoFile> getRepoFilesChangedAfter(long localRevision) {
-		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision");
+	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(long localRevision, UUID exclLastSyncFromRepositoryId) {
+		assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
+		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
-			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision);
+			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision, exclLastSyncFromRepositoryId.toString());
 			logger.debug("getRepoFilesChangedAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
 			startTimestamp = System.currentTimeMillis();

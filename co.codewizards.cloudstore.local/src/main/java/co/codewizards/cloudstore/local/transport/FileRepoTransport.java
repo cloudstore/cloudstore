@@ -178,13 +178,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public ChangeSetDTO getChangeSetDTO(boolean localSync) {
+	public ChangeSetDTO getChangeSetDTO(final boolean localSync) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		ChangeSetDTO changeSetDTO = new ChangeSetDTO();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final ChangeSetDTO changeSetDTO = new ChangeSetDTO();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
 		try {
 			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
 			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
@@ -225,7 +225,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				}
 			}
 
-			Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfter(lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+			final Collection<RepoFile> repoFiles = repoFileDAO.getRepoFilesChangedAfterExclLastSyncFromRepositoryId(
+					lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), clientRepositoryId);
 			RepoFile pathPrefixRepoFile = null; // the virtual root for the client
 			if (!getPathPrefix().isEmpty()) {
 				pathPrefixRepoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
