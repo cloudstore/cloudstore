@@ -1,9 +1,13 @@
 package co.codewizards.cloudstore.server;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -57,6 +61,8 @@ public class CloudStoreServer implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreServer.class);
 
+	private static Class<? extends CloudStoreServer> cloudStoreServerClass = CloudStoreServer.class;
+
 	private static final int DEFAULT_SECURE_PORT = 8443;
 
 	private static final String CERTIFICATE_ALIAS = "CloudStoreServer";
@@ -78,15 +84,35 @@ public class CloudStoreServer implements Runnable {
 		initLogging();
 		try {
 			args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
-			new CloudStoreServer().run();
+			createCloudStoreServer(args).run();
 		} catch (Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
 		}
 	}
 
-	public CloudStoreServer() {
+	public CloudStoreServer(final String... args) {
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
+	}
+
+	protected static Constructor<? extends CloudStoreServer> getCloudStoreServerConstructor() throws NoSuchMethodException, SecurityException {
+		final Class<? extends CloudStoreServer> clazz = getCloudStoreServerClass();
+		final Constructor<? extends CloudStoreServer> constructor = clazz.getConstructor(String[].class);
+		return constructor;
+	}
+
+	protected static CloudStoreServer createCloudStoreServer(String[] args) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		final Constructor<? extends CloudStoreServer> constructor = getCloudStoreServerConstructor();
+		final CloudStoreServer cloudStoreServer = constructor.newInstance(new Object[] { args });
+		return cloudStoreServer;
+	}
+
+	protected static Class<? extends CloudStoreServer> getCloudStoreServerClass() {
+		return cloudStoreServerClass;
+	}
+	protected static void setCloudStoreServerClass(Class<? extends CloudStoreServer> cloudStoreServerClass) {
+		assertNotNull("cloudStoreServerClass", cloudStoreServerClass);
+		CloudStoreServer.cloudStoreServerClass = cloudStoreServerClass;
 	}
 
 	@Override
@@ -296,7 +322,8 @@ public class CloudStoreServer implements Runnable {
 		sslContextFactory.setKeyManagerPassword(KEY_PASSWORD_STRING);
 		sslContextFactory.setTrustStorePath(getKeyStoreFile().getPath());
 		sslContextFactory.setTrustStorePassword(KEY_STORE_PASSWORD_STRING);
-		sslContextFactory.setExcludeCipherSuites(
+
+		sslContextFactory.setExcludeCipherSuites( // TODO make this configurable!
 //				"SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA", "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5",
 //				"SSL_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
 // Using wildcards instead. This should be much safer:
