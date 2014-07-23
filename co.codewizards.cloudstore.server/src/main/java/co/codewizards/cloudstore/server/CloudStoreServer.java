@@ -39,6 +39,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -309,10 +310,18 @@ public class CloudStoreServer implements Runnable {
 	private ServletContextHandler createServletContextHandler() {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		ServletContainer servletContainer = new ServletContainer(new CloudStoreREST());
+		ServletContainer servletContainer = new ServletContainer(assertNotNull("createResourceConfig()", createResourceConfig()));
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 //		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;
+	}
+
+	/**
+	 * Creates the actual REST application.
+	 * @return the actual REST application. Must not be <code>null</code>.
+	 */
+	protected ResourceConfig createResourceConfig() {
+		return new CloudStoreREST();
 	}
 
 	private ServerConnector createServerConnectorForHTTPS(Server server, HttpConfiguration httpConfigurationForHTTPS) {
