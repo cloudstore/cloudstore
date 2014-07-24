@@ -24,7 +24,7 @@ public class ConfigTest extends AbstractTest {
 
 	@Override
 	public void after() {
-		for (File file : Config.getInstance().propertiesFiles) {
+		for (final File file : Config.getInstance().propertiesFiles) {
 			file.delete();
 			assertThat(file).doesNotExist();
 		}
@@ -49,6 +49,8 @@ public class ConfigTest extends AbstractTest {
 		String value = globalConfig.getProperty(testKey1, null);
 		assertThat(value).isNull();
 
+		waitForDifferentLastModifiedTimestamp();
+
 		setGlobalProperty(testKey1, "testValueAAA");
 		value = globalConfig.getProperty(testKey1, null);
 		assertThat(value).isEqualTo("testValueAAA");
@@ -62,17 +64,17 @@ public class ConfigTest extends AbstractTest {
 
 	@Test
 	public void testConfigInheritance() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
+		final File localRoot = newTestRepositoryLocalRoot();
 		assertThat(localRoot).doesNotExist();
 		localRoot.mkdirs();
 		assertThat(localRoot).isDirectory();
 
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		final File child_1 = new File(localRoot, "1");
 		assertThat(child_1).doesNotExist();
-		Config config_1 = Config.getInstanceForDirectory(child_1);
+		final Config config_1 = Config.getInstanceForDirectory(child_1);
 		assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
 		createDirectory(child_1);
 		assertThat(child_1).isDirectory();
@@ -88,8 +90,8 @@ public class ConfigTest extends AbstractTest {
 		setGlobalProperty(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.replaceAfterTransfer.name());
 		assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
 
-		File child_1_a = new File(child_1, "a");
-		Config config_1_a = Config.getInstanceForFile(child_1_a);
+		final File child_1_a = new File(child_1, "a");
+		final Config config_1_a = Config.getInstanceForFile(child_1_a);
 
 		assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
 		assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
@@ -118,11 +120,11 @@ public class ConfigTest extends AbstractTest {
 
 		createFileWithRandomContent(child_1_a);
 
-		File child_1_2 = createDirectory(child_1, "2");
-		File child_1_2_aaa = new File(child_1_2, "aaa");
+		final File child_1_2 = createDirectory(child_1, "2");
+		final File child_1_2_aaa = new File(child_1_2, "aaa");
 		createFileWithRandomContent(child_1_2_aaa);
 
-		Config config_1_2_aaa = Config.getInstanceForFile(child_1_2_aaa);
+		final Config config_1_2_aaa = Config.getInstanceForFile(child_1_2_aaa);
 		assertThat(config_1_2_aaa.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueBBB");
 
 		setProperty(new File(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), testKey1, "val_1_2_hidden");
@@ -167,7 +169,7 @@ public class ConfigTest extends AbstractTest {
 		// Make sure the file has a different lastModified-timestamp! Most file systems have a timestamp-granularity of 1 second.
 		try {
 			Thread.sleep(1000);
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -176,17 +178,17 @@ public class ConfigTest extends AbstractTest {
 		return newTestRepositoryLocalRoot("");
 	}
 
-	private static void setGlobalProperty(String key, String value) throws IOException {
+	private static void setGlobalProperty(final String key, final String value) throws IOException {
 		setProperty(Config.getInstance().propertiesFiles[0], key, value);
 	}
 
-	private static void setProperty(File propertiesFile, String key, String value) throws IOException {
+	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {
 		assertNotNull("propertiesFile", propertiesFile);
 		assertNotNull("key", key);
 
-		Properties properties = new Properties();
+		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {
-			InputStream in = new FileInputStream(propertiesFile);
+			final InputStream in = new FileInputStream(propertiesFile);
 			properties.load(in);
 			in.close();
 		}
@@ -196,7 +198,7 @@ public class ConfigTest extends AbstractTest {
 		else
 			properties.setProperty(key, value);
 
-		OutputStream out = new FileOutputStream(propertiesFile);
+		final OutputStream out = new FileOutputStream(propertiesFile);
 		properties.store(out, null);
 		out.close();
 	}
