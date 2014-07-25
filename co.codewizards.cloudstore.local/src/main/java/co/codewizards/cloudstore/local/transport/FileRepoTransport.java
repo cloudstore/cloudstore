@@ -50,6 +50,7 @@ import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDTOIO;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
+import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -82,7 +83,7 @@ import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 
-public class FileRepoTransport extends AbstractRepoTransport {
+public class FileRepoTransport extends AbstractRepoTransport implements ContextWithLocalRepoManager {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
 
 	private static final long MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY = 100; // TODO make configurable!
@@ -575,7 +576,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return tempChunkFileDTO;
 	}
 
-	protected LocalRepoManager getLocalRepoManager() {
+	@Override
+	public LocalRepoManager getLocalRepoManager() {
 		if (localRepoManager == null) {
 			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
 			File remoteRootFile;
