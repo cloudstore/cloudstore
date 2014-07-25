@@ -8,6 +8,7 @@ import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Unique;
+import javax.jdo.listener.StoreCallback;
 
 /**
  * A {@code Repository} represents a repository inside the database.
@@ -23,7 +24,7 @@ import javax.jdo.annotations.Unique;
 @PersistenceCapable
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP)
 @Unique(name="Repository_repositoryId", members="repositoryId")
-public abstract class Repository extends Entity
+public abstract class Repository extends Entity implements StoreCallback
 {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String repositoryId;
@@ -33,22 +34,25 @@ public abstract class Repository extends Entity
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private byte[] publicKey;
 
-	public Repository() {
-		this(null);
-	}
+	public Repository() { }
 
-	protected Repository(UUID repositoryId) {
-		this.repositoryId = repositoryId == null ? UUID.randomUUID().toString() : repositoryId.toString();
+	protected Repository(final UUID repositoryId) {
+		// We do not create the repositoryId here anymore, because creating it lazily avoids unnecessary
+		// creations when the JDO runtime instantiates objects (and reads their values from the DB anyway).
+		this.repositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
 	public UUID getRepositoryId() {
+		if (repositoryId == null)
+			repositoryId = UUID.randomUUID().toString();
+
 		return UUID.fromString(repositoryId);
 	}
 
 	public long getRevision() {
 		return revision;
 	}
-	public void setRevision(long revision) {
+	public void setRevision(final long revision) {
 		this.revision = revision;
 	}
 
@@ -56,7 +60,12 @@ public abstract class Repository extends Entity
 		return publicKey;
 	}
 
-	public void setPublicKey(byte[] publicKey) {
+	public void setPublicKey(final byte[] publicKey) {
 		this.publicKey = publicKey;
+	}
+
+	@Override
+	public void jdoPreStore() {
+		getRepositoryId();
 	}
 }
