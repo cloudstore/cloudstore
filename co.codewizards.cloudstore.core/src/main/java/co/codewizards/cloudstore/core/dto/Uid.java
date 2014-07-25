@@ -19,7 +19,9 @@ import co.codewizards.cloudstore.core.util.Base64Url;
  * <a href="http://en.wikipedia.org/wiki/Base64">base64url</a>
  * (<a href="http://en.wikipedia.org/wiki/Base64#RFC_4648">RFC 4648</a>). The difference to normal base64 is
  * that base64url replaces '+' by '-' and '/' by '_' in order to make the encoded string usable in URLs
- * and file names without any escaping.
+ * without any escaping.
+ * <p>
+ * <b>Important:</b> The string-representation is <b>case-sensitive</b>!
  * <p>
  * Examples showing the difference of {@code UUID} vs. {@code Uid}:
  * <pre> WQL8yMHUQ4FhZrB0cLux5g
@@ -40,7 +42,7 @@ import co.codewizards.cloudstore.core.util.Base64Url;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 @XmlJavaTypeAdapter(type=Uid.class, value=UidXmlAdapter.class)
-public class Uid {
+public class Uid implements Comparable<Uid> {
 	private static final Charset ASCII = Charset.forName("ASCII");
 
 	private final long hi;
@@ -106,6 +108,7 @@ public class Uid {
 	 * {@linkplain #equals(Object) equal} to) the first instance.
 	 *
 	 * @param uidString the string-encoded value of the Uid.
+	 * @see #toString()
 	 */
 	public Uid(final String uidString) {
 		this(Base64Url.decodeBase64(assertValidUidString(uidString).getBytes(ASCII)));
@@ -149,8 +152,30 @@ public class Uid {
 		return true;
 	}
 
+	/**
+	 * Gets a base64url-encoded string-representation of this {@code Uid}.
+	 * <p>
+	 * The string returned by this method can be passed to {@link #Uid(String)} to create a new equal
+	 * {@code Uid} instance.
+	 * <p>
+	 * <b>Important:</b> The string-representation is <b>case-sensitive</b>!
+	 * <p>
+	 * <b><u>Inherited documentation:</u></b><br/>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String toString() {
 		return new String(Base64Url.encodeBase64(toBytes()), ASCII);
+	}
+
+	@Override
+	public int compareTo(final Uid other) {
+		assertNotNull("other", other);
+		// Same semantics as for normal numbers.
+        return (this.hi < other.hi ? -1 :
+                (this.hi > other.hi ? 1 :
+                 (this.lo < other.lo ? -1 :
+                  (this.lo > other.lo ? 1 :
+                   0))));
 	}
 }
