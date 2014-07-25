@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.net.URL;
@@ -26,8 +26,8 @@ public class RestRepoTransportIT extends AbstractIT {
 
 	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
 		@Override
-		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(CheckServerTrustedCertificateExceptionContext context) {
-			CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
+			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
 			result.setTrusted(true);
 			return result;
 		}
@@ -48,20 +48,20 @@ public class RestRepoTransportIT extends AbstractIT {
 
 	@Test
 	public void getRepositoryId() throws Exception {
-		File remoteRoot = newTestRepositoryLocalRoot("");
+		final File remoteRoot = newTestRepositoryLocalRoot("");
 		assertThat(remoteRoot).doesNotExist();
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot).isDirectory();
 
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
-		UUID remoteRepositoryId = localRepoManager.getRepositoryId();
+		final UUID remoteRepositoryId = localRepoManager.getRepositoryId();
 
-		URL remoteRootURL = new URL("https://localhost:" + getSecurePort() + "/" + remoteRepositoryId);
+		final URL remoteRootURL = new URL(getSecureUrl() + "/" + remoteRepositoryId);
 
-		RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL).createRepoTransport(remoteRootURL, null);
+		final RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL).createRepoTransport(remoteRootURL, null);
 		assertThat(repoTransport).isInstanceOf(RestRepoTransport.class);
-		UUID repositoryId = repoTransport.getRepositoryId();
+		final UUID repositoryId = repoTransport.getRepositoryId();
 		assertThat(repositoryId).isEqualTo(remoteRepositoryId);
 
 		repoTransport.close();

@@ -29,14 +29,14 @@ import org.slf4j.LoggerFactory;
 @Unique(name="RepoFile_parent_name", members={"parent", "name"})
 @Indices({
 	@Index(name="RepoFile_parent", members={"parent"}),
-	@Index(name="RepoFile_localRevision", members={"localRevision"}),
+	@Index(name="RepoFile_localRevision", members={"localRevision"})
 })
 @Queries({
 	@Query(name="getChildRepoFile_parent_name", value="SELECT UNIQUE WHERE this.parent == :parent && this.name == :name"),
 	@Query(name="getChildRepoFiles_parent", value="SELECT WHERE this.parent == :parent"),
 	@Query(
 			name="getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId",
-			value="SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)"), // TODO this necessary == null is IMHO a DN bug!
+			value="SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)") // TODO this necessary == null is IMHO a DN bug!
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);
@@ -51,19 +51,26 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private Date lastModified;
 
+	// TODO 1: The direct partner-repository from which this was synced, should be a real relation to the RemoteRepository,
+	// because this is more efficient (not a String, but a long id).
+	// TODO 2: We should additionally store (and forward) the origin repositoryId (UUID/String) to use this feature during
+	// circular syncs over multiple repos - e.g. repoA ---> repoB ---> repoC ---> repoA (again) - this circle would currently
+	// cause https://github.com/cloudstore/cloudstore/issues/25 again (because issue 25 is only solved for direct partners - not indirect).
+	// TODO 3: We should switch from UUID to Uid everywhere (most importantly the repositoryId).
+	// Careful, though: Uid's String-representation is case-sensitive! Due to Windows, it must thus not be used for file names!
 	private String lastSyncFromRepositoryId;
 
 	public RepoFile getParent() {
 		return parent;
 	}
-	public void setParent(RepoFile parent) {
+	public void setParent(final RepoFile parent) {
 		this.parent = parent;
 	}
 
 	public String getName() {
 		return name;
 	}
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -78,10 +85,10 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		return localRevision;
 	}
 	@Override
-	public void setLocalRevision(long localRevision) {
+	public void setLocalRevision(final long localRevision) {
 		if (this.localRevision != localRevision) {
 			if (logger.isDebugEnabled()) {
-				LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
+				final LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
 				logger.debug("setLocalRevision: localRepositoryId={} path='{}' old={} new={}", localRepository.getRepositoryId(), getPath(), this.localRevision, localRevision);
 			}
 			this.localRevision = localRevision;
@@ -97,7 +104,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	 * @return the path within the repository from the {@link LocalRepository#getRoot() root} (including) to <code>this</code> (including). Never <code>null</code>.
 	 */
 	public List<RepoFile> getPathList() {
-		LinkedList<RepoFile> path = new LinkedList<RepoFile>();
+		final LinkedList<RepoFile> path = new LinkedList<RepoFile>();
 		RepoFile rf = this;
 		while (rf != null) {
 			path.addFirst(rf);
@@ -114,8 +121,8 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	 * @return the path from the root to <code>this</code>. Never <code>null</code>. The repository's root itself has the path "/".
 	 */
 	public String getPath() {
-		StringBuilder sb = new StringBuilder();
-		for (RepoFile repoFile : getPathList()) {
+		final StringBuilder sb = new StringBuilder();
+		for (final RepoFile repoFile : getPathList()) {
 			if (sb.length() == 0 || sb.charAt(sb.length() - 1) != '/')
 				sb.append('/');
 
@@ -129,10 +136,10 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	 * @param localRoot the repository's root directory.
 	 * @return the {@link File} represented by this {@link RepoFile} inside the given repository's {@code localRoot} directory.
 	 */
-	public File getFile(File localRoot) {
+	public File getFile(final File localRoot) {
 		assertNotNull("localRoot", localRoot);
 		File result = localRoot;
-		for (RepoFile repoFile : getPathList()) {
+		for (final RepoFile repoFile : getPathList()) {
 			if (repoFile.getParent() == null) // skip the root
 				continue;
 
@@ -150,14 +157,14 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	public Date getLastModified() {
 		return lastModified;
 	}
-	public void setLastModified(Date lastModified) {
+	public void setLastModified(final Date lastModified) {
 		this.lastModified = lastModified;
 	}
 
 	public UUID getLastSyncFromRepositoryId() {
 		return lastSyncFromRepositoryId == null ? null : UUID.fromString(lastSyncFromRepositoryId);
 	}
-	public void setLastSyncFromRepositoryId(UUID repositoryId) {
+	public void setLastSyncFromRepositoryId(final UUID repositoryId) {
 		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 }

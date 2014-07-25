@@ -48,14 +48,14 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback1 = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter);
 		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback1).build());
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		cloudStoreRestClient.execute(new TestCommand(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 
-		cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback2 = new DynamicX509TrustManagerCallback() {
 			@Override
 			public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
@@ -72,7 +72,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	public void testException() throws Exception {
 		final File trustStoreFile = getRandomTrustStoreFile();
 		final long[] handleCertificateExceptionCounter = new long[1];
-		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter);
 		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
@@ -104,7 +104,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter) {
 			@Override
 			public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
@@ -132,14 +132,14 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingTemporarily(handleCertificateExceptionCounter);
 		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		cloudStoreRestClient.execute(new TestCommand(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 
-		cloudStoreRestClient = new CloudStoreRestClient("https://localhost:" + getSecurePort());
+		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		cloudStoreRestClient.execute(new TestCommand(false));
