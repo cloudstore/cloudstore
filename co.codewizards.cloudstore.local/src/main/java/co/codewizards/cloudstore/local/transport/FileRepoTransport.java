@@ -114,18 +114,18 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void requestRepoConnection(byte[] publicKey) {
+	public void requestRepoConnection(final byte[] publicKey) {
 		assertNotNull("publicKey", publicKey);
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(clientRepositoryId);
+			final RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			final RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(clientRepositoryId);
 			if (remoteRepository != null)
 				throw new IllegalArgumentException("RemoteRepository already connected! repositoryId=" + clientRepositoryId);
 
-			String localPathPrefix = getPathPrefix();
-			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
+			final String localPathPrefix = getPathPrefix();
+			final RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
 			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(clientRepositoryId);
 			if (remoteRepositoryRequest != null) {
 				logger.info("RemoteRepository already requested to be connected. repositoryId={}", clientRepositoryId);
@@ -145,7 +145,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
 			}
 			else {
-				long remoteRepositoryRequestsCount = remoteRepositoryRequestDAO.getObjectsCount();
+				final long remoteRepositoryRequestsCount = remoteRepositoryRequestDAO.getObjectsCount();
 				if (remoteRepositoryRequestsCount >= MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY)
 					throw new IllegalStateException(String.format(
 							"The maximum number of connection requests (%s) is reached or exceeded! Please retry later, when old requests were accepted or expired.", MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY));
@@ -165,11 +165,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	@Override
 	public RepositoryDTO getRepositoryDTO() {
-		LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
 		try {
-			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
-			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
-			RepositoryDTO repositoryDTO = toRepositoryDTO(localRepository);
+			final LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
+			final LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
+			final RepositoryDTO repositoryDTO = toRepositoryDTO(localRepository);
 			transaction.commit();
 			return repositoryDTO;
 		} finally {
@@ -186,19 +186,19 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		final ChangeSetDTO changeSetDTO = new ChangeSetDTO();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
 		try {
-			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
-			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+			final LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
+			final RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			final LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
+			final ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
+			final RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
 
 			// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
 			// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the
 			// next run.
-			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
+			final LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
 			changeSetDTO.setRepositoryDTO(toRepositoryDTO(localRepository));
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
+			final RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 
 			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepo(toRemoteRepository);
 			if (lastSyncToRemoteRepo == null) {
@@ -210,14 +210,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
 
 			((LocalRepoTransactionImpl)transaction).getPersistenceManager().getFetchPlan().setGroup(FetchPlan.ALL);
-			Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+			final Collection<Modification> modifications = modificationDAO.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			changeSetDTO.setModificationDTOs(toModificationDTOs(modifications));
 
 			if (!getPathPrefix().isEmpty()) {
-				Collection<DeleteModification> deleteModifications = transaction.getDAO(DeleteModificationDAO.class).getDeleteModificationsForPathOrParentOfPathAfter(
+				final Collection<DeleteModification> deleteModifications = transaction.getDAO(DeleteModificationDAO.class).getDeleteModificationsForPathOrParentOfPathAfter(
 						getPathPrefix(), lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), toRemoteRepository);
 				if (!deleteModifications.isEmpty()) { // our virtual root was deleted => create synthetic DeleteModificationDTO for virtual root
-					DeleteModificationDTO deleteModificationDTO = new DeleteModificationDTO();
+					final DeleteModificationDTO deleteModificationDTO = new DeleteModificationDTO();
 					deleteModificationDTO.setId(0);
 					deleteModificationDTO.setLocalRevision(localRepository.getRevision());
 					deleteModificationDTO.setPath("");
@@ -231,7 +231,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (!getPathPrefix().isEmpty()) {
 				pathPrefixRepoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
 			}
-			Map<Long, RepoFileDTO> id2RepoFileDTO = getId2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
+			final Map<Long, RepoFileDTO> id2RepoFileDTO = getId2RepoFileDTOWithParents(pathPrefixRepoFile, repoFiles, repoFileDAO);
 			changeSetDTO.setRepoFileDTOs(new ArrayList<RepoFileDTO>(id2RepoFileDTO.values()));
 
 			transaction.commit();
@@ -242,7 +242,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	protected File getPathPrefixFile() {
-		String pathPrefix = getPathPrefix();
+		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
@@ -250,11 +250,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeDirectory(String path, Date lastModified) {
+	public void makeDirectory(String path, final Date lastModified) {
 		path = prefixPath(path);
-		File file = getFile(path);
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final File file = getFile(path);
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 			mkDir(transaction, clientRepositoryId, file, lastModified);
@@ -265,7 +265,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void makeSymlink(String path, String target, Date lastModified) {
+	public void makeSymlink(String path, final String target, final Date lastModified) {
 		path = prefixPath(path);
 		assertNotNull("target", target);
 		final File file = getFile(path);
@@ -297,7 +297,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						if (!currentTargetEqualsNewTarget) {
 							final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
 							if (repoFile == null) {
-								File collisionFile = IOUtil.createCollisionFile(file);
+								final File collisionFile = IOUtil.createCollisionFile(file);
 								file.renameTo(collisionFile);
 								if (file.exists())
 									throw new IllegalStateException("Could not rename file to resolve collision: " + file);
@@ -317,14 +317,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					if (lastModified != null)
 						IOUtil.setLastModifiedNoFollow(file, lastModified.getTime());
 
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 
 				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
 
-				Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles = getOffset2TempChunkFileWithDTOFile(file).values();
-				for (TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
+				final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles = getOffset2TempChunkFileWithDTOFile(file).values();
+				for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
 					if (tempChunkFileWithDTOFile.getTempChunkFileDTOFile() != null)
 						deleteOrFail(tempChunkFileWithDTOFile.getTempChunkFileDTOFile());
 
@@ -351,15 +351,15 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void assertNoDeleteModificationCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
-		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
-		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
+	private void assertNoDeleteModificationCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
+		final RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
+		final long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 
 		if (!path.startsWith("/"))
 			path = '/' + path;
 
-		DeleteModificationDAO deleteModificationDAO = transaction.getDAO(DeleteModificationDAO.class);
-		Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForPathOrParentOfPathAfter(
+		final DeleteModificationDAO deleteModificationDAO = transaction.getDAO(DeleteModificationDAO.class);
+		final Collection<DeleteModification> deleteModifications = deleteModificationDAO.getDeleteModificationsForPathOrParentOfPathAfter(
 				path, lastSyncFromRemoteRepositoryLocalRevision, fromRemoteRepository);
 
 		if (!deleteModifications.isEmpty())
@@ -391,7 +391,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						toParentFile.mkdirs();
 
 					Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 
@@ -424,7 +424,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		final File fromParentFile = fromFile.getParentFile();
 		final File toParentFile = toFile.getParentFile();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(fromParentFile);
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
@@ -434,7 +434,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 						toParentFile.mkdirs();
 
 					Files.move(fromFile.toPath(), toFile.toPath());
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 
@@ -459,26 +459,26 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	@Override
 	public void delete(String path) {
 		path = prefixPath(path);
-		File file = getFile(path);
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		boolean fileIsLocalRoot = localRepoManager.getLocalRoot().equals(file);
-		File parentFile = file.getParentFile();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final File file = getFile(path);
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final boolean fileIsLocalRoot = getLocalRepoManager().getLocalRoot().equals(file);
+		final File parentFile = file.getParentFile();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 				localRepoSync.sync(file, new NullProgressMonitor());
 
 				if (fileIsLocalRoot) {
 					// Cannot delete the repository's root! Deleting all its contents instead.
-					long fileLastModified = file.lastModified();
+					final long fileLastModified = file.lastModified();
 					try {
-						File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
+						final File[] children = file.listFiles(new FilenameFilterSkipMetaDir());
 						if (children == null)
 							throw new IllegalStateException("File-listing localRoot returned null: " + file);
 
-						for (File child : children)
+						for (final File child : children)
 							delete(transaction, localRepoSync, clientRepositoryId, child);
 					} finally {
 						file.setLastModified(fileLastModified);
@@ -496,7 +496,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void delete(LocalRepoTransaction transaction, LocalRepoSync localRepoSync, UUID fromRepositoryId, File file) {
+	private void delete(final LocalRepoTransaction transaction, final LocalRepoSync localRepoSync, final UUID fromRepositoryId, final File file) {
 		if (detectFileCollisionRecursively(transaction, fromRepositoryId, file)) {
 			file.renameTo(IOUtil.createCollisionFile(file));
 
@@ -508,7 +508,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			throw new IllegalStateException("Deleting file or directory failed: " + file);
 		}
 
-		RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+		final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
 		if (repoFile != null)
 			localRepoSync.deleteRepoFile(repoFile);
 	}
@@ -517,21 +517,21 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	public RepoFileDTO getRepoFileDTO(String path) {
 		RepoFileDTO repoFileDTO = null;
 		path = prefixPath(path);
-		File file = getFile(path);
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // it performs a local sync!
+		final File file = getFile(path);
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // it performs a local sync!
 		try {
-			LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
 
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
-			RepoFile repoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
+			final RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+			final RepoFile repoFile = repoFileDAO.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
 			if (repoFile != null)
 				repoFileDTO = toRepoFileDTO(repoFile, repoFileDAO, Integer.MAX_VALUE); // TODO pass depth as argument - or maybe leave it this way?
 
 			transaction.commit();
-		} catch (RuntimeException x) {
+		} catch (final RuntimeException x) {
 			throw x;
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			throw new RuntimeException(x);
 		} finally {
 			transaction.rollbackIfActive();
@@ -539,7 +539,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repoFileDTO;
 	}
 
-	private FileChunkDTO toFileChunkDTO(FileChunk fileChunk) {
+	private FileChunkDTO toFileChunkDTO(final FileChunk fileChunk) {
 		final FileChunkDTO fileChunkDTO = new FileChunkDTO();
 		fileChunkDTO.setOffset(fileChunk.getOffset());
 		fileChunkDTO.setLength(fileChunk.getLength());
@@ -581,7 +581,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			File remoteRootFile;
 			try {
 				remoteRootFile = new File(getRemoteRootWithoutPathPrefix().toURI());
-			} catch (URISyntaxException e) {
+			} catch (final URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
 			localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(remoteRootFile);
@@ -594,11 +594,11 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		File remoteRootFile;
 		try {
 			remoteRootFile = new File(getRemoteRoot().toURI());
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 
-		File localRootFile = LocalRepoHelper.getLocalRootContainingFile(remoteRootFile);
+		final File localRootFile = LocalRepoHelper.getLocalRootContainingFile(remoteRootFile);
 		if (localRootFile == null)
 			throw new IllegalStateException(String.format(
 					"remoteRoot='%s' does not point to a file or directory within an existing repository (nor its root directory)!",
@@ -606,16 +606,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 		try {
 			return localRootFile.toURI().toURL();
-		} catch (MalformedURLException e) {
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private List<ModificationDTO> toModificationDTOs(Collection<Modification> modifications) {
-		long startTimestamp = System.currentTimeMillis();
-		List<ModificationDTO> result = new ArrayList<ModificationDTO>(assertNotNull("modifications", modifications).size());
-		for (Modification modification : modifications) {
-			ModificationDTO modificationDTO = toModificationDTO(modification);
+	private List<ModificationDTO> toModificationDTOs(final Collection<Modification> modifications) {
+		final long startTimestamp = System.currentTimeMillis();
+		final List<ModificationDTO> result = new ArrayList<ModificationDTO>(assertNotNull("modifications", modifications).size());
+		for (final Modification modification : modifications) {
+			final ModificationDTO modificationDTO = toModificationDTO(modification);
 			if (modificationDTO != null)
 				result.add(modificationDTO);
 		}
@@ -623,10 +623,10 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return result;
 	}
 
-	private ModificationDTO toModificationDTO(Modification modification) {
+	private ModificationDTO toModificationDTO(final Modification modification) {
 		ModificationDTO modificationDTO;
 		if (modification instanceof CopyModification) {
-			CopyModification copyModification = (CopyModification) modification;
+			final CopyModification copyModification = (CopyModification) modification;
 
 			String fromPath = copyModification.getFromPath();
 			String toPath = copyModification.getToPath();
@@ -636,13 +636,13 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			fromPath = unprefixPath(fromPath);
 			toPath = unprefixPath(toPath);
 
-			CopyModificationDTO copyModificationDTO = new CopyModificationDTO();
+			final CopyModificationDTO copyModificationDTO = new CopyModificationDTO();
 			modificationDTO = copyModificationDTO;
 			copyModificationDTO.setFromPath(fromPath);
 			copyModificationDTO.setToPath(toPath);
 		}
 		else if (modification instanceof DeleteModification) {
-			DeleteModification deleteModification = (DeleteModification) modification;
+			final DeleteModification deleteModification = (DeleteModification) modification;
 
 			String path = deleteModification.getPath();
 			if (!isPathUnderPathPrefix(path))
@@ -663,22 +663,22 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return modificationDTO;
 	}
 
-	private RepositoryDTO toRepositoryDTO(LocalRepository localRepository) {
-		RepositoryDTO repositoryDTO = new RepositoryDTO();
+	private RepositoryDTO toRepositoryDTO(final LocalRepository localRepository) {
+		final RepositoryDTO repositoryDTO = new RepositoryDTO();
 		repositoryDTO.setRepositoryId(localRepository.getRepositoryId());
 		repositoryDTO.setRevision(localRepository.getRevision());
 		repositoryDTO.setPublicKey(localRepository.getPublicKey());
 		return repositoryDTO;
 	}
 
-	private Map<Long, RepoFileDTO> getId2RepoFileDTOWithParents(RepoFile pathPrefixRepoFile, Collection<RepoFile> repoFiles, RepoFileDAO repoFileDAO) {
+	private Map<Long, RepoFileDTO> getId2RepoFileDTOWithParents(final RepoFile pathPrefixRepoFile, final Collection<RepoFile> repoFiles, final RepoFileDAO repoFileDAO) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFiles", repoFiles);
-		Map<Long, RepoFileDTO> entityID2RepoFileDTO = new HashMap<Long, RepoFileDTO>();
-		for (RepoFile repoFile : repoFiles) {
+		final Map<Long, RepoFileDTO> entityID2RepoFileDTO = new HashMap<Long, RepoFileDTO>();
+		for (final RepoFile repoFile : repoFiles) {
 			RepoFile rf = repoFile;
 			if (rf instanceof NormalFile) {
-				NormalFile nf = (NormalFile) rf;
+				final NormalFile nf = (NormalFile) rf;
 				if (nf.isInProgress()) {
 					continue;
 				}
@@ -689,7 +689,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			while (rf != null) {
 				if (!entityID2RepoFileDTO.containsKey(rf.getId())) {
-					RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO, 0);
+					final RepoFileDTO repoFileDTO = toRepoFileDTO(rf, repoFileDAO, 0);
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
 						repoFileDTO.setParentId(null); // virtual root has no parent!
 						repoFileDTO.setName(""); // virtual root has no name!
@@ -707,7 +707,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return entityID2RepoFileDTO;
 	}
 
-	private boolean isDirectOrIndirectParent(RepoFile parentRepoFile, RepoFile repoFile) {
+	private boolean isDirectOrIndirectParent(final RepoFile parentRepoFile, final RepoFile repoFile) {
 		assertNotNull("parentRepoFile", parentRepoFile);
 		assertNotNull("repoFile", repoFile);
 		RepoFile rf = repoFile;
@@ -720,7 +720,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return false;
 	}
 
-	private RepoFileDTO toRepoFileDTO(RepoFile repoFile, RepoFileDAO repoFileDAO, int depth) {
+	private RepoFileDTO toRepoFileDTO(final RepoFile repoFile, final RepoFileDAO repoFileDAO, final int depth) {
 		assertNotNull("repoFileDAO", repoFileDAO);
 		assertNotNull("repoFile", repoFile);
 		final RepoFileDTO repoFileDTO;
@@ -742,7 +742,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			if (depth > 1) {
 				final TempChunkFileDTOIO tempChunkFileDTOIO = new TempChunkFileDTOIO();
 				final File file = repoFile.getFile(getLocalRepoManager().getLocalRoot());
-				for (TempChunkFileWithDTOFile tempChunkFileWithDTOFile : getOffset2TempChunkFileWithDTOFile(file).values()) {
+				for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : getOffset2TempChunkFileWithDTOFile(file).values()) {
 					final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
 					if (tempChunkFileDTOFile == null)
 						continue; // incomplete: meta-data not yet written => ignore
@@ -750,7 +750,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					final TempChunkFileDTO tempChunkFileDTO;
 					try {
 						tempChunkFileDTO = tempChunkFileDTOIO.deserialize(tempChunkFileDTOFile);
-					} catch (Exception x) {
+					} catch (final Exception x) {
 						logger.warn("toRepoFileDTO: Ignoring corrupt tempChunkFileDTOFile '" + tempChunkFileDTOFile.getAbsolutePath() + "': " + x, x);
 						continue;
 					}
@@ -779,7 +779,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return repoFileDTO;
 	}
 
-	private void mkDir(LocalRepoTransaction transaction, UUID clientRepositoryId, File file, Date lastModified) {
+	private void mkDir(final LocalRepoTransaction transaction, final UUID clientRepositoryId, final File file, final Date lastModified) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("file", file);
 
@@ -846,20 +846,20 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
-		File file = new File(getLocalRepoManager().getLocalRoot(), path);
+		final File file = new File(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 
 	@Override
-	public byte[] getFileData(String path, long offset, int length) {
+	public byte[] getFileData(String path, final long offset, int length) {
 		path = prefixPath(path);
-		File file = getFile(path);
+		final File file = getFile(path);
 		try {
-			RandomAccessFile raf = new RandomAccessFile(file, "r");
+			final RandomAccessFile raf = new RandomAccessFile(file, "r");
 			try {
 				raf.seek(offset);
 				if (length < 0) {
-					long l = raf.length() - offset;
+					final long l = raf.length() - offset;
 					if (l > Integer.MAX_VALUE)
 						throw new IllegalArgumentException(
 								String.format("The data to be read from file '%s' is too large (offset=%s length=%s limit=%s). You must specify a length (and optionally an offset) to read it partially.",
@@ -868,7 +868,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					length = (int) l;
 				}
 
-				byte[] bytes = new byte[length];
+				final byte[] bytes = new byte[length];
 				int off = 0;
 				int numRead = 0;
 				while (off < bytes.length && (numRead = raf.read(bytes, off, bytes.length-off)) >= 0) {
@@ -882,7 +882,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			} finally {
 				raf.close();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -915,7 +915,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					newFile = true;
 					try {
 						file.createNewFile();
-					} catch (IOException e) {
+					} catch (final IOException e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -983,7 +983,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>.
 	 * @param normalFileOrSymlink the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
-	private void detectAndHandleFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, RepoFile normalFileOrSymlink) {
+	private void detectAndHandleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
 		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
 			final File collisionFile = IOUtil.createCollisionFile(file);
 			file.renameTo(collisionFile);
@@ -992,7 +992,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 			try {
 				Files.copy(collisionFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 
@@ -1000,14 +1000,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private boolean detectFileCollisionRecursively(LocalRepoTransaction transaction, UUID fromRepositoryId, File fileOrDirectory) {
+	private boolean detectFileCollisionRecursively(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File fileOrDirectory) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("fileOrDirectory", fileOrDirectory);
 
 		// we handle symlinks before invoking exists() below, because this method and most other File methods resolve symlinks!
 		if (Files.isSymbolicLink(fileOrDirectory.toPath())) {
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
+			final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
 			if (!(repoFile instanceof Symlink))
 				return true; // We had a change after the last local sync (symlink => directory or normal file)!
 
@@ -1019,18 +1019,18 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 
 		if (fileOrDirectory.isFile()) {
-			RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
+			final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
 			if (!(repoFile instanceof NormalFile))
 				return true; // We had a change after the last local sync (normal file => directory or symlink)!
 
 			return detectFileCollision(transaction, fromRepositoryId, fileOrDirectory, repoFile);
 		}
 
-		File[] children = fileOrDirectory.listFiles();
+		final File[] children = fileOrDirectory.listFiles();
 		if (children == null)
 			throw new IllegalStateException("listFiles() of directory returned null: " + fileOrDirectory);
 
-		for (File child : children) {
+		for (final File child : children) {
 			if (detectFileCollisionRecursively(transaction, fromRepositoryId, child))
 				return true;
 		}
@@ -1047,7 +1047,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * @param normalFileOrSymlink
 	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
 	 */
-	private boolean detectFileCollision(LocalRepoTransaction transaction, UUID fromRepositoryId, File file, RepoFile normalFileOrSymlink) {
+	private boolean detectFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("fromRepositoryId", fromRepositoryId);
 		assertNotNull("file", file);
@@ -1058,8 +1058,8 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			return false;
 		}
 
-		RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
-		long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
+		final RemoteRepository fromRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(fromRepositoryId);
+		final long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 		if (normalFileOrSymlink.getLocalRevision() <= lastSyncFromRemoteRepositoryLocalRevision) {
 			logger.debug("detectFileCollision: path='{}': return false, because: normalFileOrSymlink.localRevision <= lastSyncFromRemoteRepositoryLocalRevision :: {} <= {}", normalFileOrSymlink.getPath(), normalFileOrSymlink.getLocalRevision(), lastSyncFromRemoteRepositoryLocalRevision);
 			return false;
@@ -1088,14 +1088,14 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		try {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
+				final RepoFile repoFile = transaction.getDAO(RepoFileDAO.class).getRepoFile(localRoot, file);
 				if (repoFile == null)
 					throw new IllegalStateException("No RepoFile found for file: " + file);
 
 				if (!(repoFile instanceof NormalFile))
 					throw new IllegalStateException("RepoFile is not an instance of NormalFile for file: " + file);
 
-				NormalFile normalFile = (NormalFile) repoFile;
+				final NormalFile normalFile = (NormalFile) repoFile;
 				if (!normalFile.isInProgress())
 					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
 							repoFile, file));
@@ -1146,7 +1146,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			} finally {
 				in.close();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -1173,7 +1173,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				raf.close();
 			}
 			logger.trace("writeFileDataToDestFile: Wrote {} bytes at offset {} to '{}'.", fileData.length, offset, destFile.getAbsolutePath());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -1200,16 +1200,16 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes with SHA1 '{}' to '{}'.", fileData.length, sha1, tempChunkFile.getAbsolutePath());
 			final TempChunkFileDTO tempChunkFileDTO = createTempChunkFileDTO(offset, tempChunkFile, sha1);
 			new TempChunkFileDTOIO().serialize(tempChunkFileDTO, tempChunkFileDTOFile);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void deleteTempChunkFilesWithoutDTOFile(Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
+	private void deleteTempChunkFilesWithoutDTOFile(final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
 		for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
 			final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
 			if (tempChunkFileDTOFile == null || !tempChunkFileDTOFile.exists()) {
-				File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile();
+				final File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile();
 				logger.warn("deleteTempChunkFilesWithoutDTOFile: No DTO-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
 				deleteOrFail(tempChunkFile);
 				continue;
@@ -1260,18 +1260,18 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		return Collections.unmodifiableMap(result);
 	}
 
-	private File getTempChunkFileDTOFile(File file) {
+	private File getTempChunkFileDTOFile(final File file) {
 		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_DTO_FILE_SUFFIX);
 	}
 
-	private String sha1(byte[] data) {
+	private String sha1(final byte[] data) {
 		assertNotNull("data", data);
 		try {
-			byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
+			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
 			return HashUtil.encodeHexStr(hash);
-		} catch (NoSuchAlgorithmException e) {
+		} catch (final NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -1304,7 +1304,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
 		try {
 			tempFile.createNewFile();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 		return tempFile;
@@ -1333,7 +1333,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 
 	private final Map<File, FileWriteStrategy> file2FileWriteStrategy = new WeakHashMap<>();
 
-	private FileWriteStrategy getFileWriteStrategy(File file) {
+	private FileWriteStrategy getFileWriteStrategy(final File file) {
 		assertNotNull("file", file);
 		synchronized (file2FileWriteStrategy) {
 			FileWriteStrategy fileWriteStrategy = file2FileWriteStrategy.get(file);
@@ -1346,7 +1346,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endPutFile(String path, final Date lastModified, final long length, String sha1) {
+	public void endPutFile(String path, final Date lastModified, final long length, final String sha1) {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
 		assertNotNull("sha1", sha1);
@@ -1379,7 +1379,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					try {
 						fileIn = new FileInputStream(file);
 						destFile.createNewFile();
-					} catch (IOException e) {
+					} catch (final IOException e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -1425,7 +1425,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					} finally {
 						raf.close();
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 
@@ -1442,7 +1442,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 				deleteTempChunkFiles(tempChunkFileWithDTOFiles);
 				deleteTempDirIfEmpty(file);
 
-				LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 				file.setLastModified(lastModified.getTime());
 				localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
 				normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
@@ -1476,7 +1476,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 		}
 	}
 
-	private void deleteOrFail(File file) {
+	private void deleteOrFail(final File file) {
 		file.delete();
 		if (isSymlink(file) || file.exists())
 			throw new IllegalStateException("Could not delete file (it still exists after deletion): " + file);
@@ -1492,7 +1492,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	 * @param in the {@link InputStream} to be skipped. Must not be <code>null</code>.
 	 * @param length the number of bytes to be skipped. Must not be negative (i.e. <code>length &gt;= 0</code>).
 	 */
-	private void skipOrFail(InputStream in, long length) {
+	private void skipOrFail(final InputStream in, final long length) {
 		assertNotNull("in", in);
 		if (length < 0)
 			throw new IllegalArgumentException("length < 0");
@@ -1516,7 +1516,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 					skippedNowWas0Counter = 0;
 
 				skipped += skippedNow;
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -1556,24 +1556,24 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			} finally {
 				raf.close();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public void endSyncFromRepository() {
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			PersistenceManager pm = ((co.codewizards.cloudstore.local.LocalRepoTransactionImpl)transaction).getPersistenceManager();
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
-			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
+			final PersistenceManager pm = ((co.codewizards.cloudstore.local.LocalRepoTransactionImpl)transaction).getPersistenceManager();
+			final RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			final LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
+			final ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
 
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
+			final RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 
-			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
+			final LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
 			if (lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress() < 0)
 				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", clientRepositoryId));
 
@@ -1581,7 +1581,7 @@ public class FileRepoTransport extends AbstractRepoTransport {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
 
 			pm.flush(); // prevent problems caused by batching, deletion and foreign keys
-			Collection<Modification> modifications = modificationDAO.getModificationsBeforeOrEqual(
+			final Collection<Modification> modifications = modificationDAO.getModificationsBeforeOrEqual(
 					toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			modificationDAO.deletePersistentAll(modifications);
 			pm.flush();
@@ -1593,12 +1593,12 @@ public class FileRepoTransport extends AbstractRepoTransport {
 	}
 
 	@Override
-	public void endSyncToRepository(long fromLocalRevision) {
-		UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+	public void endSyncToRepository(final long fromLocalRevision) {
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
+			final RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			final RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(clientRepositoryId);
 			remoteRepository.setRevision(fromLocalRevision);
 
 			transaction.commit();
