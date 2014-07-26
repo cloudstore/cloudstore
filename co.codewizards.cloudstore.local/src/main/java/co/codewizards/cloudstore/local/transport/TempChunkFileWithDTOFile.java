@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local.transport;
 
 import java.io.File;
 
-class TempChunkFileWithDTOFile {
+public class TempChunkFileWithDTOFile {
 
 	private File tempChunkFile;
 	private File tempChunkFileDTOFile;
@@ -10,13 +10,13 @@ class TempChunkFileWithDTOFile {
 	public File getTempChunkFile() {
 		return tempChunkFile;
 	}
-	public void setTempChunkFile(File tempChunkFile) {
+	public void setTempChunkFile(final File tempChunkFile) {
 		this.tempChunkFile = tempChunkFile;
 	}
 	public File getTempChunkFileDTOFile() {
 		return tempChunkFileDTOFile;
 	}
-	public void setTempChunkFileDTOFile(File tempChunkFileDTOFile) {
+	public void setTempChunkFileDTOFile(final File tempChunkFileDTOFile) {
 		this.tempChunkFileDTOFile = tempChunkFileDTOFile;
 	}
 

@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 import javax.jdo.PersistenceManager;
@@ -22,10 +24,11 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 	private Transaction jdoTransaction;
 	private Lock lock;
 	private long localRevision = -1;
+	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
 
 	private final AutoTrackLifecycleListener autoTrackLifecycleListener = new AutoTrackLifecycleListener(this);
 
-	public LocalRepoTransactionImpl(LocalRepoManagerImpl localRepoManager, boolean write) {
+	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
 		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
 		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
 		this.write = write;
@@ -55,6 +58,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		daoClass2Dao.clear();
 		autoTrackLifecycleListener.onCommit();
 		persistenceManager.flush();
 		jdoTransaction.commit();
@@ -75,6 +79,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		daoClass2Dao.clear();
 		autoTrackLifecycleListener.onRollback();
 		jdoTransaction.rollback();
 		persistenceManager.close();
@@ -104,7 +109,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 				throw new IllegalStateException("This is a read-only transaction!");
 
 			jdoTransaction.setSerializeRead(true);
-			LocalRepository lr = getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository lr = getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
 			localRevision = lr.getRevision() + 1;
 			lr.setRevision(localRevision);
@@ -133,21 +138,28 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 	}
 
 	@Override
-	public <D> D getDAO(Class<D> daoClass) {
-		final PersistenceManager pm = getPersistenceManager();
-		D dao;
-		try {
-			dao = daoClass.newInstance();
-		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+	public <D> D getDAO(final Class<D> daoClass) {
+
+		@SuppressWarnings("unchecked")
+		D dao = (D) daoClass2Dao.get(daoClass);
+
+		if (dao == null) {
+			final PersistenceManager pm = getPersistenceManager();
+			try {
+				dao = daoClass.newInstance();
+			} catch (final InstantiationException e) {
+				throw new RuntimeException(e);
+			} catch (final IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+
+			if (!(dao instanceof DAO))
+				throw new IllegalStateException(String.format("dao class %s does not extend DAO!", daoClass.getName()));
+
+			((DAO<?, ?>)dao).setPersistenceManager(pm);
+
+			daoClass2Dao.put(daoClass, dao);
 		}
-
-		if (!(dao instanceof DAO))
-			throw new IllegalStateException(String.format("dao class %s does not extend DAO!", daoClass.getName()));
-
-		((DAO<?, ?>)dao).setPersistenceManager(pm);
 		return dao;
 	}
 
