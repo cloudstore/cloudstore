@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
 
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
-public interface LocalRepoManager {
+public interface LocalRepoManager extends AutoCloseable {
 
 	String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
 	int DEFAULT_KEY_SIZE = 4096;
@@ -99,6 +99,7 @@ public interface LocalRepoManager {
 	 * It decrements the real backend-instance's reference counter. As soon as this reaches 0, the backend
 	 * is really closed - which may happen delayed (for performance reasons).
 	 */
+	@Override
 	void close();
 
 	/**

@@ -35,7 +35,7 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  * {@link AbstractRepoTransport}!
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public interface RepoTransport {
+public interface RepoTransport extends AutoCloseable {
 
 	/**
 	 * Gets the factory which created this instance.
@@ -76,6 +76,7 @@ public interface RepoTransport {
 
 	byte[] getPublicKey();
 
+	@Override
 	void close();
 
 	/**
