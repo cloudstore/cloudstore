@@ -341,15 +341,17 @@ public final class IOUtil {
 				else
 					bytesRead = in.read(buf);
 
-				if (bytesRead <= 0)
+				if (bytesRead < 0)
 					break;
 
-				out.write(buf, 0, bytesRead);
+				if (bytesRead > 0) {
+					out.write(buf, 0, bytesRead);
 
-				if (monitor != null && inputLen >= 0)
-					monitor.worked(1);
+					if (monitor != null && inputLen >= 0)
+						monitor.worked(1);
 
-				transferred += bytesRead;
+					transferred += bytesRead;
+				}
 
 				if(inputLen >= 0 && transferred >= inputLen)
 					break;
@@ -1593,5 +1595,39 @@ public final class IOUtil {
 
 	public static boolean isSymlink(final File file) {
 		return Files.isSymbolicLink(file.toPath());
+	}
+
+	public static int readOrFail(final InputStream in) throws IOException {
+		final int read = in.read();
+		if (read < 0)
+			throw new IOException("Premature end of stream!");
+
+		return read;
+	}
+
+	public static void readOrFail(final InputStream in, final byte[] buf, int off, int len) throws IOException {
+		assertNotNull("buf", buf);
+		if (off < 0)
+			throw new IllegalArgumentException("off < 0");
+
+		if (len == 0)
+			return;
+
+		if (len < 0)
+			throw new IllegalArgumentException("len < 0");
+
+		int bytesRead;
+		while ((bytesRead = in.read(buf, off, len)) >= 0) {
+			if (bytesRead > 0) {
+				off += bytesRead;
+				len -= bytesRead;
+			}
+			if (len < 0)
+				throw new IllegalStateException("len < 0");
+
+			if (len == 0)
+				return;
+		}
+		throw new IOException("Premature end of stream!");
 	}
 }

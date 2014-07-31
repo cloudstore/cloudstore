@@ -26,30 +26,30 @@ public class SignedAuthTokenEncrypter {
 
 	private PublicKey publicKey;
 
-	public SignedAuthTokenEncrypter(byte[] publicKeyData) {
+	public SignedAuthTokenEncrypter(final byte[] publicKeyData) {
 		assertNotNull("publicKeyData", publicKeyData);
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyData);
+			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			final EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyData);
 			this.publicKey = keyFactory.generatePublic(publicKeySpec);
-		} catch (RuntimeException e) {
+		} catch (final RuntimeException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public EncryptedSignedAuthToken encrypt(byte[] signedAuthTokenData) {
+	public EncryptedSignedAuthToken encrypt(final byte[] signedAuthTokenData) {
 		try {
-			byte[] symKey = new byte[getKeySize() / 8];
+			final byte[] symKey = new byte[getKeySize() / 8];
 			random.nextBytes(symKey);
 
-			Cipher asymCipher = Cipher.getInstance("RSA/None/OAEPWITHSHA1ANDMGF1PADDING");
+			final Cipher asymCipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA1ANDMGF1PADDING");
 			asymCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-			byte[] symKeyEncrypted = asymCipher.doFinal(symKey);
+			final byte[] symKeyEncrypted = asymCipher.doFinal(symKey);
 
-			Cipher symCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			final Cipher symCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 //			symCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(symKey, "AES"), new IvParameterSpec(new byte[symKey.length]));
 			symCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(symKey, "AES"));
 			// We do not really need an IV, because we use a random key ONCE.
@@ -59,23 +59,23 @@ public class SignedAuthTokenEncrypter {
 			// can attack easier, if the IV is 0. Very unlikely, but still. Hence we do not
 			// enforce it to be 0 (which we could to save a few bytes in the transfer).
 			// Marco :-)
-			byte[] symIV = symCipher.getIV();
-			byte[] signedAuthTokenDataEncrypted = symCipher.doFinal(signedAuthTokenData);
+			final byte[] symIV = symCipher.getIV();
+			final byte[] signedAuthTokenDataEncrypted = symCipher.doFinal(signedAuthTokenData);
 
-			EncryptedSignedAuthToken result = new EncryptedSignedAuthToken();
+			final EncryptedSignedAuthToken result = new EncryptedSignedAuthToken();
 			result.setEncryptedSignedAuthTokenData(signedAuthTokenDataEncrypted);
 			result.setEncryptedSignedAuthTokenDataIV(symIV);
 			result.setEncryptedSymmetricKey(symKeyEncrypted);
 			return result;
-		} catch (RuntimeException e) {
+		} catch (final RuntimeException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	protected int getKeySize() {
-		int keySize = Config.getInstance().getPropertyAsInt(CONFIG_KEY_KEY_SIZE, DEFAULT_KEY_SIZE);
+		final int keySize = Config.getInstance().getPropertyAsInt(CONFIG_KEY_KEY_SIZE, DEFAULT_KEY_SIZE);
 		if (keySize < 64) {
 			logger.warn("Config key '{}': keySize {} is out of range! Using default {} instead!", CONFIG_KEY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
 			return DEFAULT_KEY_SIZE;
