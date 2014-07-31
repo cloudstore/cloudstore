@@ -23,10 +23,10 @@ import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
-import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
+import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.dto.RepoFileDTO;
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -40,11 +40,11 @@ import co.codewizards.cloudstore.rest.client.command.Delete;
 import co.codewizards.cloudstore.rest.client.command.EndPutFile;
 import co.codewizards.cloudstore.rest.client.command.EndSyncFromRepository;
 import co.codewizards.cloudstore.rest.client.command.EndSyncToRepository;
-import co.codewizards.cloudstore.rest.client.command.GetChangeSetDTO;
+import co.codewizards.cloudstore.rest.client.command.GetChangeSetDto;
 import co.codewizards.cloudstore.rest.client.command.GetEncryptedSignedAuthToken;
 import co.codewizards.cloudstore.rest.client.command.GetFileData;
-import co.codewizards.cloudstore.rest.client.command.GetRepoFileDTO;
-import co.codewizards.cloudstore.rest.client.command.GetRepositoryDTO;
+import co.codewizards.cloudstore.rest.client.command.GetRepoFileDto;
+import co.codewizards.cloudstore.rest.client.command.GetRepositoryDto;
 import co.codewizards.cloudstore.rest.client.command.MakeDirectory;
 import co.codewizards.cloudstore.rest.client.command.MakeSymlink;
 import co.codewizards.cloudstore.rest.client.command.Move;
@@ -85,9 +85,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public UUID getRepositoryId() {
 		if (repositoryId == null) {
-			final RepositoryDTO repositoryDTO = getRepositoryDTO();
-			repositoryId = repositoryDTO.getRepositoryId();
-			publicKey = repositoryDTO.getPublicKey();
+			final RepositoryDto repositoryDto = getRepositoryDto();
+			repositoryId = repositoryDto.getRepositoryId();
+			publicKey = repositoryDto.getPublicKey();
 		}
 		return repositoryId;
 	}
@@ -99,16 +99,16 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public RepositoryDTO getRepositoryDTO() {
-		return getClient().execute(new GetRepositoryDTO(getRepositoryName()));
+	public RepositoryDto getRepositoryDto() {
+		return getClient().execute(new GetRepositoryDto(getRepositoryName()));
 	}
 
 	@Override
 	public void requestRepoConnection(final byte[] publicKey) {
-		final RepositoryDTO repositoryDTO = new RepositoryDTO();
-		repositoryDTO.setRepositoryId(getClientRepositoryIdOrFail());
-		repositoryDTO.setPublicKey(publicKey);
-		getClient().execute(new RequestRepoConnection(getRepositoryName(), getPathPrefix(), repositoryDTO));
+		final RepositoryDto repositoryDto = new RepositoryDto();
+		repositoryDto.setRepositoryId(getClientRepositoryIdOrFail());
+		repositoryDto.setPublicKey(publicKey);
+		getClient().execute(new RequestRepoConnection(getRepositoryName(), getPathPrefix(), repositoryDto));
 	}
 
 	@Override
@@ -118,11 +118,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSetDTO getChangeSetDTO(final boolean localSync) {
+	public ChangeSetDto getChangeSetDto(final boolean localSync) {
 		final long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().execute(new GetChangeSetDTO(getRepositoryId().toString(), localSync));
+				return getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync));
 			} catch (final DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
 					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);
@@ -165,12 +165,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public RepoFileDTO getRepoFileDTO(String path) {
+	public RepoFileDto getRepoFileDto(String path) {
 		path = prefixPath(path);
 		final long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().execute(new GetRepoFileDTO(getRepositoryId().toString(), path));
+				return getClient().execute(new GetRepoFileDto(getRepositoryId().toString(), path));
 			} catch (final DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
 					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);

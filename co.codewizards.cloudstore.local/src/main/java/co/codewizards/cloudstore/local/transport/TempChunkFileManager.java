@@ -16,9 +16,9 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
-import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDTOIO;
+import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
+import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
@@ -27,7 +27,7 @@ public class TempChunkFileManager {
 	private static final Logger logger = LoggerFactory.getLogger(TempChunkFileManager.class);
 
 	private static final String TEMP_CHUNK_FILE_PREFIX = "chunk_";
-	private static final String TEMP_CHUNK_FILE_DTO_FILE_SUFFIX = ".xml";
+	private static final String TEMP_CHUNK_FILE_Dto_FILE_SUFFIX = ".xml";
 
 	private static final class Holder {
 		static final TempChunkFileManager instance = new TempChunkFileManager();
@@ -44,12 +44,12 @@ public class TempChunkFileManager {
 		assertNotNull("fileData", fileData);
 		try {
 			final File tempChunkFile = createTempChunkFile(destFile, offset);
-			final File tempChunkFileDTOFile = getTempChunkFileDTOFile(tempChunkFile);
+			final File tempChunkFileDtoFile = getTempChunkFileDtoFile(tempChunkFile);
 
 			// Delete the meta-data-file, in case we overwrite an older temp-chunk-file. This way it
 			// is guaranteed, that if the meta-data-file exists, it is consistent with either
 			// the temp-chunk-file or the chunk was already written into the final destination.
-			deleteOrFail(tempChunkFileDTOFile);
+			deleteOrFail(tempChunkFileDtoFile);
 
 			final FileOutputStream out = new FileOutputStream(tempChunkFile);
 			try {
@@ -59,41 +59,41 @@ public class TempChunkFileManager {
 			}
 			final String sha1 = sha1(fileData);
 			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes with SHA1 '{}' to '{}'.", fileData.length, sha1, tempChunkFile.getAbsolutePath());
-			final TempChunkFileDTO tempChunkFileDTO = createTempChunkFileDTO(offset, tempChunkFile, sha1);
-			new TempChunkFileDTOIO().serialize(tempChunkFileDTO, tempChunkFileDTOFile);
+			final TempChunkFileDto tempChunkFileDto = createTempChunkFileDto(offset, tempChunkFile, sha1);
+			new TempChunkFileDtoIo().serialize(tempChunkFileDto, tempChunkFileDtoFile);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public void deleteTempChunkFilesWithoutDTOFile(final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
-		for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
-			final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
-			if (tempChunkFileDTOFile == null || !tempChunkFileDTOFile.exists()) {
-				final File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile();
-				logger.warn("deleteTempChunkFilesWithoutDTOFile: No DTO-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
+	public void deleteTempChunkFilesWithoutDtoFile(final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles) {
+		for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
+			final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
+			if (tempChunkFileDtoFile == null || !tempChunkFileDtoFile.exists()) {
+				final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile();
+				logger.warn("deleteTempChunkFilesWithoutDtoFile: No Dto-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
 				deleteOrFail(tempChunkFile);
 				continue;
 			}
 		}
 	}
 
-	public Map<Long, TempChunkFileWithDTOFile> getOffset2TempChunkFileWithDTOFile(final File destFile) {
+	public Map<Long, TempChunkFileWithDtoFile> getOffset2TempChunkFileWithDtoFile(final File destFile) {
 		final File[] tempFiles = getTempDir(destFile).listFiles();
 		if (tempFiles == null)
 			return Collections.emptyMap();
 
 		final String destFileName = destFile.getName();
-		final Map<Long, TempChunkFileWithDTOFile> result = new TreeMap<Long, TempChunkFileWithDTOFile>();
+		final Map<Long, TempChunkFileWithDtoFile> result = new TreeMap<Long, TempChunkFileWithDtoFile>();
 		for (final File tempFile : tempFiles) {
 			String tempFileName = tempFile.getName();
 			if (!tempFileName.startsWith(TEMP_CHUNK_FILE_PREFIX))
 				continue;
 
 			final boolean dtoFile;
-			if (tempFileName.endsWith(TEMP_CHUNK_FILE_DTO_FILE_SUFFIX)) {
+			if (tempFileName.endsWith(TEMP_CHUNK_FILE_Dto_FILE_SUFFIX)) {
 				dtoFile = true;
-				tempFileName = tempFileName.substring(0, tempFileName.length() - TEMP_CHUNK_FILE_DTO_FILE_SUFFIX.length());
+				tempFileName = tempFileName.substring(0, tempFileName.length() - TEMP_CHUNK_FILE_Dto_FILE_SUFFIX.length());
 			}
 			else
 				dtoFile = false;
@@ -108,21 +108,21 @@ public class TempChunkFileManager {
 
 			final String offsetStr = tempFileName.substring(lastUnderscoreIndex + 1);
 			final Long offset = Long.valueOf(offsetStr, 36);
-			TempChunkFileWithDTOFile tempChunkFileWithDTOFile = result.get(offset);
-			if (tempChunkFileWithDTOFile == null) {
-				tempChunkFileWithDTOFile = new TempChunkFileWithDTOFile();
-				result.put(offset, tempChunkFileWithDTOFile);
+			TempChunkFileWithDtoFile tempChunkFileWithDtoFile = result.get(offset);
+			if (tempChunkFileWithDtoFile == null) {
+				tempChunkFileWithDtoFile = new TempChunkFileWithDtoFile();
+				result.put(offset, tempChunkFileWithDtoFile);
 			}
 			if (dtoFile)
-				tempChunkFileWithDTOFile.setTempChunkFileDTOFile(tempFile);
+				tempChunkFileWithDtoFile.setTempChunkFileDtoFile(tempFile);
 			else
-				tempChunkFileWithDTOFile.setTempChunkFile(tempFile);
+				tempChunkFileWithDtoFile.setTempChunkFile(tempFile);
 		}
 		return Collections.unmodifiableMap(result);
 	}
 
-	public File getTempChunkFileDTOFile(final File file) {
-		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_DTO_FILE_SUFFIX);
+	public File getTempChunkFileDtoFile(final File file) {
+		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 	}
 
 	private String sha1(final byte[] data) {
@@ -196,40 +196,40 @@ public class TempChunkFileManager {
 	 * @param offset the offset in the (real) destination file (<i>not</i> in {@code tempChunkFile}! there the offset is always 0).
 	 * @param tempChunkFile the tempChunkFile containing the chunk's data. Must not be <code>null</code>.
 	 * @param sha1 the sha1 of the single chunk (in {@code tempChunkFile}). Must not be <code>null</code>.
-	 * @return the DTO. Never <code>null</code>.
+	 * @return the Dto. Never <code>null</code>.
 	 */
-	public TempChunkFileDTO createTempChunkFileDTO(final long offset, final File tempChunkFile, final String sha1) {
+	public TempChunkFileDto createTempChunkFileDto(final long offset, final File tempChunkFile, final String sha1) {
 		assertNotNull("tempChunkFile", tempChunkFile);
 		assertNotNull("sha1", sha1);
 
 		if (!tempChunkFile.exists())
 			throw new IllegalArgumentException("The tempChunkFile does not exist: " + tempChunkFile.getAbsolutePath());
 
-		final FileChunkDTO fileChunkDTO = new FileChunkDTO();
-		fileChunkDTO.setOffset(offset);
+		final FileChunkDto fileChunkDto = new FileChunkDto();
+		fileChunkDto.setOffset(offset);
 
 		final long tempChunkFileLength = tempChunkFile.length();
 		if (tempChunkFileLength > Integer.MAX_VALUE)
 			throw new IllegalStateException("tempChunkFile.length > Integer.MAX_VALUE");
 
-		fileChunkDTO.setLength((int) tempChunkFileLength);
-		fileChunkDTO.setSha1(sha1);
+		fileChunkDto.setLength((int) tempChunkFileLength);
+		fileChunkDto.setSha1(sha1);
 
-		final TempChunkFileDTO tempChunkFileDTO = new TempChunkFileDTO();
-		tempChunkFileDTO.setFileChunkDTO(fileChunkDTO);
-		return tempChunkFileDTO;
+		final TempChunkFileDto tempChunkFileDto = new TempChunkFileDto();
+		tempChunkFileDto.setFileChunkDto(fileChunkDto);
+		return tempChunkFileDto;
 	}
 
-	public void deleteTempChunkFiles(final Collection<TempChunkFileWithDTOFile> tempChunkFileWithDTOFiles) {
-		for (final TempChunkFileWithDTOFile tempChunkFileWithDTOFile : tempChunkFileWithDTOFiles) {
-			final File tempChunkFile = tempChunkFileWithDTOFile.getTempChunkFile(); // tempChunkFile may be null!!!
-			final File tempChunkFileDTOFile = tempChunkFileWithDTOFile.getTempChunkFileDTOFile();
+	public void deleteTempChunkFiles(final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles) {
+		for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
+			final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile(); // tempChunkFile may be null!!!
+			final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
 
 			if (tempChunkFile != null && tempChunkFile.exists())
 				deleteOrFail(tempChunkFile);
 
-			if (tempChunkFileDTOFile != null && tempChunkFileDTOFile.exists())
-				deleteOrFail(tempChunkFileDTOFile);
+			if (tempChunkFileDtoFile != null && tempChunkFileDtoFile.exists())
+				deleteOrFail(tempChunkFileDtoFile);
 		}
 	}
 }

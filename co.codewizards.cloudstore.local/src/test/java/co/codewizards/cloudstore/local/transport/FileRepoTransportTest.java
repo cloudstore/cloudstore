@@ -15,11 +15,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
-import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
-import co.codewizards.cloudstore.core.dto.ModificationDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
+import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
+import co.codewizards.cloudstore.core.dto.ModificationDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -28,11 +28,11 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.local.AbstractTest;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
-import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepoDAO;
+import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepoDao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
-import co.codewizards.cloudstore.local.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 
 public class FileRepoTransportTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransportTest.class);
@@ -41,7 +41,7 @@ public class FileRepoTransportTest extends AbstractTest {
 	private UUID remoteRepositoryId;
 	private File localRoot;
 	private UUID localRepositoryId;
-	private ChangeSetDTO changeSetResponse1;
+	private ChangeSetDto changeSetResponse1;
 
 	@Test
 	public void getChangeSetForEntireRepository() throws Exception {
@@ -92,33 +92,33 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		changeSetResponse1 = repoTransport.getChangeSetDTO(false);
+		changeSetResponse1 = repoTransport.getChangeSetDto(false);
 
 		repoTransport.close();
 
 		assertThat(changeSetResponse1).isNotNull();
-		assertThat(changeSetResponse1.getRepoFileDTOs()).isNotNull().isNotEmpty();
-		assertThat(changeSetResponse1.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse1.getRepositoryDTO().getRepositoryId()).isNotNull();
+		assertThat(changeSetResponse1.getRepoFileDtos()).isNotNull().isNotEmpty();
+		assertThat(changeSetResponse1.getRepositoryDto()).isNotNull();
+		assertThat(changeSetResponse1.getRepositoryDto().getRepositoryId()).isNotNull();
 
 		// changeSetResponse1 should contain the entire repository - including the root -, because really
 		// every localRevision must be > -1.
-		assertThat(changeSetResponse1.getRepoFileDTOs()).hasSize(15);
+		assertThat(changeSetResponse1.getRepoFileDtos()).hasSize(15);
 
-		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDTOs());
+		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDtos());
 		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
 
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {
-			LocalRepositoryDAO localRepositoryDAO = transaction.getDAO(LocalRepositoryDAO.class);
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			LastSyncToRemoteRepoDAO lastSyncToRemoteRepoDAO = transaction.getDAO(LastSyncToRemoteRepoDAO.class);
-			LocalRepository localRepository = localRepositoryDAO.getLocalRepositoryOrFail();
-			RemoteRepository toRemoteRepository = remoteRepositoryDAO.getRemoteRepositoryOrFail(localRepositoryId);
-			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDAO.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
+			LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
+			RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+			LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
+			LocalRepository localRepository = localRepositoryDao.getLocalRepositoryOrFail();
+			RemoteRepository toRemoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(localRepositoryId);
+			LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepoOrFail(toRemoteRepository);
 			lastSyncToRemoteRepo.setRemoteRepository(toRemoteRepository);
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(localRepository.getRevision());
-			lastSyncToRemoteRepoDAO.makePersistent(lastSyncToRemoteRepo);
+			lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -145,19 +145,19 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
+		ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
 		repoTransport.close();
 		assertThat(changeSetResponse2).isNotNull();
-		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
-		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
+		assertThat(changeSetResponse2.getRepoFileDtos()).isNotNull().isNotEmpty();
+		assertThat(changeSetResponse2.getRepositoryDto()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDto().getRepositoryId()).isNotNull();
 
 		// We expect the added file and its direct parent, because they are both modified (new localRevision).
 		// Additionally, we expect all parent-directories (recursively) until (including) the root, because they
 		// are required to have a complete relative path for each modified RepoFile.
-		assertThat(changeSetResponse2.getRepoFileDTOs()).hasSize(4);
+		assertThat(changeSetResponse2.getRepoFileDtos()).hasSize(4);
 
-		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDTOs());
+		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDtos());
 		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1/c");
 
@@ -185,19 +185,19 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
+		ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
 		repoTransport.close();
 
 		assertThat(changeSetResponse2).isNotNull();
-		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isNotEmpty();
-		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
+		assertThat(changeSetResponse2.getRepoFileDtos()).isNotNull().isNotEmpty();
+		assertThat(changeSetResponse2.getRepositoryDto()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDto().getRepositoryId()).isNotNull();
 
 		// We expect the changed file and all parent-directories (recursively) until (including) the
 		// root, because they are required to have a complete relative path for each modified RepoFile.
-		assertThat(changeSetResponse2.getRepoFileDTOs()).hasSize(4);
+		assertThat(changeSetResponse2.getRepoFileDtos()).hasSize(4);
 
-		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDTOs());
+		Set<String> paths = getPaths(changeSetResponse2.getRepoFileDtos());
 		assertThat(paths).hasSize(1);
 		assertThat(paths.iterator().next()).isEqualTo("/2/1/b");
 
@@ -230,32 +230,32 @@ public class FileRepoTransportTest extends AbstractTest {
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		ChangeSetDTO changeSetResponse2 = repoTransport.getChangeSetDTO(false);
+		ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
 		repoTransport.close();
 		assertThat(changeSetResponse2).isNotNull();
-		assertThat(changeSetResponse2.getRepoFileDTOs()).isNotNull().isEmpty();
-		assertThat(changeSetResponse2.getRepositoryDTO()).isNotNull();
-		assertThat(changeSetResponse2.getRepositoryDTO().getRepositoryId()).isNotNull();
+		assertThat(changeSetResponse2.getRepoFileDtos()).isNotNull().isEmpty();
+		assertThat(changeSetResponse2.getRepositoryDto()).isNotNull();
+		assertThat(changeSetResponse2.getRepositoryDto().getRepositoryId()).isNotNull();
 
-		// We expect the DeleteModificationDTO
-		assertThat(changeSetResponse2.getModificationDTOs()).hasSize(1);
+		// We expect the DeleteModificationDto
+		assertThat(changeSetResponse2.getModificationDtos()).hasSize(1);
 
-		ModificationDTO modificationDTO = changeSetResponse2.getModificationDTOs().get(0);
-		assertThat(modificationDTO).isNotNull().isInstanceOf(DeleteModificationDTO.class);
-		DeleteModificationDTO deleteModificationDTO = (DeleteModificationDTO) modificationDTO;
-		assertThat(deleteModificationDTO.getPath()).isEqualTo("/2/1/b");
+		ModificationDto modificationDto = changeSetResponse2.getModificationDtos().get(0);
+		assertThat(modificationDto).isNotNull().isInstanceOf(DeleteModificationDto.class);
+		DeleteModificationDto deleteModificationDto = (DeleteModificationDto) modificationDto;
+		assertThat(deleteModificationDto.getPath()).isEqualTo("/2/1/b");
 
 		localRepoManager.close();
 	}
 
-	private Set<String> getPaths(Collection<RepoFileDTO> repoFileDTOs) {
-		assertThat(repoFileDTOs).isNotNull().isNotEmpty();
-		RepoFileDTOTreeNode rootNode = RepoFileDTOTreeNode.createTree(repoFileDTOs);
+	private Set<String> getPaths(Collection<RepoFileDto> repoFileDtos) {
+		assertThat(repoFileDtos).isNotNull().isNotEmpty();
+		RepoFileDtoTreeNode rootNode = RepoFileDtoTreeNode.createTree(repoFileDtos);
 		assertThat(rootNode).isNotNull();
-		assertThat(rootNode.getRepoFileDTO().getName()).isEqualTo("");
-		List<RepoFileDTOTreeNode> leafs = rootNode.getLeafs();
+		assertThat(rootNode.getRepoFileDto().getName()).isEqualTo("");
+		List<RepoFileDtoTreeNode> leafs = rootNode.getLeafs();
 		Set<String> paths = new HashSet<String>(leafs.size());
-		for (RepoFileDTOTreeNode leaf : leafs) {
+		for (RepoFileDtoTreeNode leaf : leafs) {
 			paths.add(leaf.getPath());
 		}
 		return paths;

@@ -10,9 +10,9 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 
 /**
  * {@link SubCommand} implementation for cancelling a connection with a remote repository.
@@ -61,32 +61,32 @@ public class DropRepoConnectionSubCommand extends SubCommandWithExistingLocalRep
 			localRepositoryId = localRepoManager.getRepositoryId();
 			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 			try {
-				RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+				RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 				if (remoteRepositoryId != null) {
-					RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(remoteRepositoryId);
+					RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(remoteRepositoryId);
 					if (remoteRepository != null) {
 						foundSomethingToCancel = true;
 						remoteRoot = remoteRepository.getRemoteRoot();
-						remoteRepositoryDAO.deletePersistent(remoteRepository);
-						remoteRepositoryDAO.getPersistenceManager().flush();
+						remoteRepositoryDao.deletePersistent(remoteRepository);
+						remoteRepositoryDao.getPersistenceManager().flush();
 					}
 
-					RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-					RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(remoteRepositoryId);
+					RemoteRepositoryRequestDao remoteRepositoryRequestDao = transaction.getDao(RemoteRepositoryRequestDao.class);
+					RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDao.getRemoteRepositoryRequest(remoteRepositoryId);
 					if (remoteRepositoryRequest != null) {
 						foundSomethingToCancel = true;
-						remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
-						remoteRepositoryRequestDAO.getPersistenceManager().flush();
+						remoteRepositoryRequestDao.deletePersistent(remoteRepositoryRequest);
+						remoteRepositoryRequestDao.getPersistenceManager().flush();
 					}
 				}
 
 				if (remoteRoot != null) {
-					RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
+					RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(remoteRoot);
 					if (remoteRepository != null) {
 						foundSomethingToCancel = true;
 						remoteRepositoryId = remoteRepository.getRepositoryId();
-						remoteRepositoryDAO.deletePersistent(remoteRepository);
-						remoteRepositoryDAO.getPersistenceManager().flush();
+						remoteRepositoryDao.deletePersistent(remoteRepository);
+						remoteRepositoryDao.getPersistenceManager().flush();
 					}
 					// TODO automatically cancel on the remote side, too.
 				}

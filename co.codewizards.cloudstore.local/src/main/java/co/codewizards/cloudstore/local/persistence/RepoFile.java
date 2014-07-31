@@ -88,7 +88,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	public void setLocalRevision(final long localRevision) {
 		if (this.localRevision != localRevision) {
 			if (logger.isDebugEnabled()) {
-				final LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
+				final LocalRepository localRepository = new LocalRepositoryDao().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
 				logger.debug("setLocalRevision: localRepositoryId={} path='{}' old={} new={}", localRepository.getRepositoryId(), getPath(), this.localRevision, localRevision);
 			}
 			this.localRevision = localRevision;

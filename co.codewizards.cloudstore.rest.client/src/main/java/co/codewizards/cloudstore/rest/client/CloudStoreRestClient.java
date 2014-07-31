@@ -244,13 +244,13 @@ public class CloudStoreRestClient {
 //		}
 //	}
 
-//	public RepositoryDTO getRepositoryDTO(final String repositoryName) {
+//	public RepositoryDto getRepositoryDto(final String repositoryName) {
 //		assertNotNull("repositoryName", repositoryName);
 //		acquireClient();
 //		try {
-//			final RepositoryDTO repositoryDTO = createWebTarget(getPath(RepositoryDTO.class), urlEncode(repositoryName))
-//					.request().get(RepositoryDTO.class);
-//			return repositoryDTO;
+//			final RepositoryDto repositoryDto = createWebTarget(getPath(RepositoryDto.class), urlEncode(repositoryName))
+//					.request().get(RepositoryDto.class);
+//			return repositoryDto;
 //		} catch (final RuntimeException x) {
 //			handleException(x);
 //			throw x; // we do not expect null
@@ -263,17 +263,17 @@ public class CloudStoreRestClient {
 //		return "_" + dtoClass.getSimpleName();
 //	}
 
-//	public ChangeSetDTO getChangeSet(final String repositoryName, final boolean localSync) {
+//	public ChangeSetDto getChangeSet(final String repositoryName, final boolean localSync) {
 //		assertNotNull("repositoryName", repositoryName);
 //		acquireClient();
 //		try {
-//			WebTarget webTarget = createWebTarget(getPath(ChangeSetDTO.class), urlEncode(repositoryName));
+//			WebTarget webTarget = createWebTarget(getPath(ChangeSetDto.class), urlEncode(repositoryName));
 //
 //			if (localSync)
 //				webTarget = webTarget.queryParam("localSync", localSync);
 //
-//			final ChangeSetDTO changeSetDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSetDTO.class);
-//			return changeSetDTO;
+//			final ChangeSetDto changeSetDto = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSetDto.class);
+//			return changeSetDto;
 //		} catch (final RuntimeException x) {
 //			handleException(x);
 //			throw x; // we do not expect null
@@ -282,14 +282,14 @@ public class CloudStoreRestClient {
 //		}
 //	}
 
-//	public void requestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDTO clientRepositoryDTO) {
-//		assertNotNull("clientRepositoryDTO", clientRepositoryDTO);
-//		assertNotNull("clientRepositoryDTO.repositoryId", clientRepositoryDTO.getRepositoryId());
-//		assertNotNull("clientRepositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
+//	public void requestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
+//		assertNotNull("clientRepositoryDto", clientRepositoryDto);
+//		assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
+//		assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
 //		acquireClient();
 //		try {
 //			final Response response = createWebTarget("_requestRepoConnection", urlEncode(repositoryName), pathPrefix)
-//					.request().post(Entity.entity(clientRepositoryDTO, MediaType.APPLICATION_XML));
+//					.request().post(Entity.entity(clientRepositoryDto, MediaType.APPLICATION_XML));
 //			assertResponseIndicatesSuccess(response);
 //		} catch (final RuntimeException x) {
 //			handleException(x);
@@ -316,13 +316,13 @@ public class CloudStoreRestClient {
 //		}
 //	}
 
-//	public RepoFileDTO getRepoFileDTO(final String repositoryName, final String path) {
+//	public RepoFileDto getRepoFileDto(final String repositoryName, final String path) {
 //		assertNotNull("repositoryName", repositoryName);
 //		acquireClient();
 //		try {
-//			final WebTarget webTarget = createWebTarget(getPath(RepoFileDTO.class), urlEncode(repositoryName), encodePath(path));
-//			final RepoFileDTO repoFileDTO = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(RepoFileDTO.class);
-//			return repoFileDTO;
+//			final WebTarget webTarget = createWebTarget(getPath(RepoFileDto.class), urlEncode(repositoryName), encodePath(path));
+//			final RepoFileDto repoFileDto = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(RepoFileDto.class);
+//			return repoFileDto;
 //		} catch (final RuntimeException x) {
 //			handleException(x);
 //			return null;

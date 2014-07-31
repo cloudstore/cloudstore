@@ -1,41 +1,41 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
-import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
-import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
-import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
-import co.codewizards.cloudstore.core.dto.DirectoryDTO;
+import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.CopyModificationDto;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
+import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
-import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.ModificationDTO;
-import co.codewizards.cloudstore.core.dto.NormalFileDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTOList;
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
-import co.codewizards.cloudstore.core.dto.SymlinkDTO;
-import co.codewizards.cloudstore.core.dto.TempChunkFileDTO;
+import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.dto.ModificationDto;
+import co.codewizards.cloudstore.core.dto.NormalFileDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDtoList;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.SymlinkDto;
+import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 
 public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbContextProvider {
 
 	@Override
 	public Class<?>[] getClassesToBeBound() {
 		return new Class<?>[] {
-				ChangeSetDTO.class,
-				CopyModificationDTO.class,
-				DeleteModificationDTO.class,
-				DirectoryDTO.class,
+				ChangeSetDto.class,
+				CopyModificationDto.class,
+				DeleteModificationDto.class,
+				DirectoryDto.class,
 				EncryptedSignedAuthToken.class,
 				Error.class,
 				ErrorStackTraceElement.class,
-				FileChunkDTO.class,
-				ModificationDTO.class,
-				NormalFileDTO.class,
-				RepoFileDTO.class,
-				RepoFileDTOList.class,
-				RepositoryDTO.class,
-				SymlinkDTO.class,
-				TempChunkFileDTO.class
+				FileChunkDto.class,
+				ModificationDto.class,
+				NormalFileDto.class,
+				RepoFileDto.class,
+				RepoFileDtoList.class,
+				RepositoryDto.class,
+				SymlinkDto.class,
+				TempChunkFileDto.class
 		};
 	}
 

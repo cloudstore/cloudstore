@@ -11,9 +11,9 @@ import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.local.persistence.DAO;
+import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
-import co.codewizards.cloudstore.local.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 
 public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction {
 
@@ -109,7 +109,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 				throw new IllegalStateException("This is a read-only transaction!");
 
 			jdoTransaction.setSerializeRead(true);
-			final LocalRepository lr = getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository lr = getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
 			localRevision = lr.getRevision() + 1;
 			lr.setRevision(localRevision);
@@ -138,7 +138,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 	}
 
 	@Override
-	public <D> D getDAO(final Class<D> daoClass) {
+	public <D> D getDao(final Class<D> daoClass) {
 
 		@SuppressWarnings("unchecked")
 		D dao = (D) daoClass2Dao.get(daoClass);
@@ -153,10 +153,10 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 				throw new RuntimeException(e);
 			}
 
-			if (!(dao instanceof DAO))
-				throw new IllegalStateException(String.format("dao class %s does not extend DAO!", daoClass.getName()));
+			if (!(dao instanceof Dao))
+				throw new IllegalStateException(String.format("dao class %s does not extend Dao!", daoClass.getName()));
 
-			((DAO<?, ?>)dao).setPersistenceManager(pm);
+			((Dao<?, ?>)dao).setPersistenceManager(pm);
 
 			daoClass2Dao.put(daoClass, dao);
 		}

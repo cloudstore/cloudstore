@@ -30,16 +30,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.CallerBlocksPolicy;
-import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
-import co.codewizards.cloudstore.core.dto.CopyModificationDTO;
-import co.codewizards.cloudstore.core.dto.DeleteModificationDTO;
-import co.codewizards.cloudstore.core.dto.DirectoryDTO;
-import co.codewizards.cloudstore.core.dto.FileChunkDTO;
-import co.codewizards.cloudstore.core.dto.ModificationDTO;
-import co.codewizards.cloudstore.core.dto.NormalFileDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTOTreeNode;
-import co.codewizards.cloudstore.core.dto.SymlinkDTO;
+import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.CopyModificationDto;
+import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
+import co.codewizards.cloudstore.core.dto.DirectoryDto;
+import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.dto.ModificationDto;
+import co.codewizards.cloudstore.core.dto.NormalFileDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
+import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -142,7 +142,7 @@ public class RepoToRepoSync {
 			}
 			else { // THIS IS FOR TESTING ONLY!
 				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryId, localRoot);
-				remoteRepoTransport.getChangeSetDTO(true); // trigger the local sync on the remote side (we don't need the change set)
+				remoteRepoTransport.getChangeSetDto(true); // trigger the local sync on the remote side (we don't need the change set)
 
 				waitForAndCheckLocalSyncFuture();
 
@@ -206,38 +206,38 @@ public class RepoToRepoSync {
 	private void sync(RepoTransport fromRepoTransport, boolean fromRepoLocalSync, RepoTransport toRepoTransport, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			ChangeSetDTO changeSetDTO = fromRepoTransport.getChangeSetDTO(fromRepoLocalSync);
+			ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync);
 			monitor.worked(8);
 
 			waitForAndCheckLocalSyncFutureIfExists();
 
-			sync(fromRepoTransport, toRepoTransport, changeSetDTO, new SubProgressMonitor(monitor, 90));
+			sync(fromRepoTransport, toRepoTransport, changeSetDto, new SubProgressMonitor(monitor, 90));
 
 			fromRepoTransport.endSyncFromRepository();
-			toRepoTransport.endSyncToRepository(changeSetDTO.getRepositoryDTO().getRevision());
+			toRepoTransport.endSyncToRepository(changeSetDto.getRepositoryDto().getRevision());
 			monitor.worked(2);
 		} finally {
 			monitor.done();
 		}
 	}
 
-	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetDTO changeSetDTO, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetDTO.getModificationDTOs().size() + 2 * changeSetDTO.getRepoFileDTOs().size());
+	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, ChangeSetDto changeSetDto, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 2 * changeSetDto.getRepoFileDtos().size());
 		try {
-			RepoFileDTOTreeNode repoFileDTOTree = RepoFileDTOTreeNode.createTree(changeSetDTO.getRepoFileDTOs());
-			if (repoFileDTOTree != null) {
-				sync(fromRepoTransport, toRepoTransport, repoFileDTOTree,
-						new Class<?>[] { DirectoryDTO.class }, new Class<?>[0],
-						new SubProgressMonitor(monitor, repoFileDTOTree.size()));
+			RepoFileDtoTreeNode repoFileDtoTree = RepoFileDtoTreeNode.createTree(changeSetDto.getRepoFileDtos());
+			if (repoFileDtoTree != null) {
+				sync(fromRepoTransport, toRepoTransport, repoFileDtoTree,
+						new Class<?>[] { DirectoryDto.class }, new Class<?>[0],
+						new SubProgressMonitor(monitor, repoFileDtoTree.size()));
 			}
 
-			syncModifications(fromRepoTransport, toRepoTransport, changeSetDTO.getModificationDTOs(),
-					new SubProgressMonitor(monitor, changeSetDTO.getModificationDTOs().size()));
+			syncModifications(fromRepoTransport, toRepoTransport, changeSetDto.getModificationDtos(),
+					new SubProgressMonitor(monitor, changeSetDto.getModificationDtos().size()));
 
-			if (repoFileDTOTree != null) {
-				sync(fromRepoTransport, toRepoTransport, repoFileDTOTree,
-						new Class<?>[] { RepoFileDTO.class }, new Class<?>[] { DirectoryDTO.class },
-						new SubProgressMonitor(monitor, repoFileDTOTree.size()));
+			if (repoFileDtoTree != null) {
+				sync(fromRepoTransport, toRepoTransport, repoFileDtoTree,
+						new Class<?>[] { RepoFileDto.class }, new Class<?>[] { DirectoryDto.class },
+						new SubProgressMonitor(monitor, repoFileDtoTree.size()));
 			}
 		} finally {
 			monitor.done();
@@ -245,50 +245,50 @@ public class RepoToRepoSync {
 	}
 
 	private void sync(RepoTransport fromRepoTransport, RepoTransport toRepoTransport,
-			RepoFileDTOTreeNode repoFileDTOTree,
-			Class<?>[] repoFileDTOClassesIncl, Class<?>[] repoFileDTOClassesExcl,
+			RepoFileDtoTreeNode repoFileDtoTree,
+			Class<?>[] repoFileDtoClassesIncl, Class<?>[] repoFileDtoClassesExcl,
 			ProgressMonitor monitor) {
 		assertNotNull("fromRepoTransport", fromRepoTransport);
 		assertNotNull("toRepoTransport", toRepoTransport);
-		assertNotNull("repoFileDTOTree", repoFileDTOTree);
-		assertNotNull("repoFileDTOClassesIncl", repoFileDTOClassesIncl);
-		assertNotNull("repoFileDTOClassesExcl", repoFileDTOClassesExcl);
+		assertNotNull("repoFileDtoTree", repoFileDtoTree);
+		assertNotNull("repoFileDtoClassesIncl", repoFileDtoClassesIncl);
+		assertNotNull("repoFileDtoClassesExcl", repoFileDtoClassesExcl);
 		assertNotNull("monitor", monitor);
 
-		Map<Class<?>, Boolean> repoFileDTOClass2Included = new HashMap<Class<?>, Boolean>();
-		Map<Class<?>, Boolean> repoFileDTOClass2Excluded = new HashMap<Class<?>, Boolean>();
+		Map<Class<?>, Boolean> repoFileDtoClass2Included = new HashMap<Class<?>, Boolean>();
+		Map<Class<?>, Boolean> repoFileDtoClass2Excluded = new HashMap<Class<?>, Boolean>();
 
-		monitor.beginTask("Synchronising...", repoFileDTOTree.size());
+		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
 			LinkedList<Future<Void>> syncFileAsynchronouslyFutures = new LinkedList<Future<Void>>();
 			ThreadPoolExecutor syncFileAsynchronouslyExecutor = createSyncFileAsynchronouslyExecutor();
 			try {
-				for (RepoFileDTOTreeNode repoFileDTOTreeNode : repoFileDTOTree) {
-					RepoFileDTO repoFileDTO = repoFileDTOTreeNode.getRepoFileDTO();
-					Class<? extends RepoFileDTO> repoFileDTOClass = repoFileDTO.getClass();
+				for (RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
+					RepoFileDto repoFileDto = repoFileDtoTreeNode.getRepoFileDto();
+					Class<? extends RepoFileDto> repoFileDtoClass = repoFileDto.getClass();
 
-					Boolean included = repoFileDTOClass2Included.get(repoFileDTOClass);
+					Boolean included = repoFileDtoClass2Included.get(repoFileDtoClass);
 					if (included == null) {
 						included = false;
-						for (Class<?> clazz : repoFileDTOClassesIncl) {
-							if (clazz.isAssignableFrom(repoFileDTOClass)) {
+						for (Class<?> clazz : repoFileDtoClassesIncl) {
+							if (clazz.isAssignableFrom(repoFileDtoClass)) {
 								included = true;
 								break;
 							}
 						}
-						repoFileDTOClass2Included.put(repoFileDTOClass, included);
+						repoFileDtoClass2Included.put(repoFileDtoClass, included);
 					}
 
-					Boolean excluded = repoFileDTOClass2Excluded.get(repoFileDTOClass);
+					Boolean excluded = repoFileDtoClass2Excluded.get(repoFileDtoClass);
 					if (excluded == null) {
 						excluded = false;
-						for (Class<?> clazz : repoFileDTOClassesExcl) {
-							if (clazz.isAssignableFrom(repoFileDTOClass)) {
+						for (Class<?> clazz : repoFileDtoClassesExcl) {
+							if (clazz.isAssignableFrom(repoFileDtoClass)) {
 								excluded = true;
 								break;
 							}
 						}
-						repoFileDTOClass2Excluded.put(repoFileDTOClass, excluded);
+						repoFileDtoClass2Excluded.put(repoFileDtoClass, excluded);
 					}
 
 					if (!included || excluded) {
@@ -296,18 +296,18 @@ public class RepoToRepoSync {
 						continue;
 					}
 
-					if (repoFileDTO instanceof DirectoryDTO)
-						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (DirectoryDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
-					else if (repoFileDTO instanceof NormalFileDTO) {
+					if (repoFileDto instanceof DirectoryDto)
+						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (DirectoryDto) repoFileDto, new SubProgressMonitor(monitor, 1));
+					else if (repoFileDto instanceof NormalFileDto) {
 						Future<Void> syncFileAsynchronouslyFuture = syncFileAsynchronously(syncFileAsynchronouslyExecutor,
 								fromRepoTransport, toRepoTransport,
-								repoFileDTOTreeNode, repoFileDTO, new SubProgressMonitor(monitor, 1));
+								repoFileDtoTreeNode, repoFileDto, new SubProgressMonitor(monitor, 1));
 						syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
 					}
-					else if (repoFileDTO instanceof SymlinkDTO)
-						syncSymlink(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, (SymlinkDTO) repoFileDTO, new SubProgressMonitor(monitor, 1));
+					else if (repoFileDto instanceof SymlinkDto)
+						syncSymlink(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (SymlinkDto) repoFileDto, new SubProgressMonitor(monitor, 1));
 					else
-						throw new IllegalStateException("Unsupported RepoFileDTO type: " + repoFileDTO);
+						throw new IllegalStateException("Unsupported RepoFileDto type: " + repoFileDto);
 
 					checkAndEvictDoneSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
 				}
@@ -321,58 +321,58 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private SortedMap<Long, Collection<ModificationDTO>> getLocalRevision2ModificationDTOs(Collection<ModificationDTO> modificationDTOs) {
-		SortedMap<Long, Collection<ModificationDTO>> map = new TreeMap<Long, Collection<ModificationDTO>>();
-		for (ModificationDTO modificationDTO : modificationDTOs) {
-			long localRevision = modificationDTO.getLocalRevision();
-			Collection<ModificationDTO> collection = map.get(localRevision);
+	private SortedMap<Long, Collection<ModificationDto>> getLocalRevision2ModificationDtos(Collection<ModificationDto> modificationDtos) {
+		SortedMap<Long, Collection<ModificationDto>> map = new TreeMap<Long, Collection<ModificationDto>>();
+		for (ModificationDto modificationDto : modificationDtos) {
+			long localRevision = modificationDto.getLocalRevision();
+			Collection<ModificationDto> collection = map.get(localRevision);
 			if (collection == null) {
-				collection = new ArrayList<ModificationDTO>();
+				collection = new ArrayList<ModificationDto>();
 				map.put(localRevision, collection);
 			}
-			collection.add(modificationDTO);
+			collection.add(modificationDto);
 		}
 		return map;
 	}
 
-	private void syncModifications(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, Collection<ModificationDTO> modificationDTOs, ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", modificationDTOs.size());
+	private void syncModifications(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, Collection<ModificationDto> modificationDtos, ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising...", modificationDtos.size());
 		try {
-			SortedMap<Long,Collection<ModificationDTO>> localRevision2ModificationDTOs = getLocalRevision2ModificationDTOs(modificationDTOs);
-			for (Map.Entry<Long,Collection<ModificationDTO>> me : localRevision2ModificationDTOs.entrySet()) {
-				ModificationDTOSet modificationDTOSet = new ModificationDTOSet(me.getValue());
+			SortedMap<Long,Collection<ModificationDto>> localRevision2ModificationDtos = getLocalRevision2ModificationDtos(modificationDtos);
+			for (Map.Entry<Long,Collection<ModificationDto>> me : localRevision2ModificationDtos.entrySet()) {
+				ModificationDtoSet modificationDtoSet = new ModificationDtoSet(me.getValue());
 
-				for (List<CopyModificationDTO> copyModificationDTOs : modificationDTOSet.getFromPath2CopyModificationDTOs().values()) {
+				for (List<CopyModificationDto> copyModificationDtos : modificationDtoSet.getFromPath2CopyModificationDtos().values()) {
 
-					for (Iterator<CopyModificationDTO> itCopyMod = copyModificationDTOs.iterator(); itCopyMod.hasNext(); ) {
-						CopyModificationDTO copyModificationDTO = itCopyMod.next();
-						List<DeleteModificationDTO> deleteModificationDTOs = modificationDTOSet.getPath2DeleteModificationDTOs().get(copyModificationDTO.getFromPath());
+					for (Iterator<CopyModificationDto> itCopyMod = copyModificationDtos.iterator(); itCopyMod.hasNext(); ) {
+						CopyModificationDto copyModificationDto = itCopyMod.next();
+						List<DeleteModificationDto> deleteModificationDtos = modificationDtoSet.getPath2DeleteModificationDtos().get(copyModificationDto.getFromPath());
 						boolean moveInstead = false;
-						if (!itCopyMod.hasNext() && deleteModificationDTOs != null && !deleteModificationDTOs.isEmpty())
+						if (!itCopyMod.hasNext() && deleteModificationDtos != null && !deleteModificationDtos.isEmpty())
 							moveInstead = true;
 
 						if (moveInstead) {
-							logger.info("syncModifications: Moving from '{}' to '{}'", copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
-							toRepoTransport.move(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
+							logger.info("syncModifications: Moving from '{}' to '{}'", copyModificationDto.getFromPath(), copyModificationDto.getToPath());
+							toRepoTransport.move(copyModificationDto.getFromPath(), copyModificationDto.getToPath());
 						}
 						else {
-							logger.info("syncModifications: Copying from '{}' to '{}'", copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
-							toRepoTransport.copy(copyModificationDTO.getFromPath(), copyModificationDTO.getToPath());
+							logger.info("syncModifications: Copying from '{}' to '{}'", copyModificationDto.getFromPath(), copyModificationDto.getToPath());
+							toRepoTransport.copy(copyModificationDto.getFromPath(), copyModificationDto.getToPath());
 						}
 
-						if (!moveInstead && deleteModificationDTOs != null) {
-							for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
-								logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
-								toRepoTransport.delete(deleteModificationDTO.getPath());
+						if (!moveInstead && deleteModificationDtos != null) {
+							for (DeleteModificationDto deleteModificationDto : deleteModificationDtos) {
+								logger.info("syncModifications: Deleting '{}'", deleteModificationDto.getPath());
+								toRepoTransport.delete(deleteModificationDto.getPath());
 							}
 						}
 					}
 				}
 
-				for (List<DeleteModificationDTO> deleteModificationDTOs : modificationDTOSet.getPath2DeleteModificationDTOs().values()) {
-					for (DeleteModificationDTO deleteModificationDTO : deleteModificationDTOs) {
-						logger.info("syncModifications: Deleting '{}'", deleteModificationDTO.getPath());
-						toRepoTransport.delete(deleteModificationDTO.getPath());
+				for (List<DeleteModificationDto> deleteModificationDtos : modificationDtoSet.getPath2DeleteModificationDtos().values()) {
+					for (DeleteModificationDto deleteModificationDto : deleteModificationDtos) {
+						logger.info("syncModifications: Deleting '{}'", deleteModificationDto.getPath());
+						toRepoTransport.delete(deleteModificationDto.getPath());
 					}
 				}
 			}
@@ -383,13 +383,13 @@ public class RepoToRepoSync {
 
 	private void syncDirectory(
 			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
-			final RepoFileDTOTreeNode repoFileDTOTreeNode, final DirectoryDTO directoryDTO, final ProgressMonitor monitor) {
+			final RepoFileDtoTreeNode repoFileDtoTreeNode, final DirectoryDto directoryDto, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			final String path = repoFileDTOTreeNode.getPath();
+			final String path = repoFileDtoTreeNode.getPath();
 			logger.info("syncDirectory: path='{}'", path);
 			try {
-				toRepoTransport.makeDirectory(path, directoryDTO.getLastModified());
+				toRepoTransport.makeDirectory(path, directoryDto.getLastModified());
 			} catch (DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during makeDirectory: {}", path);
 				if (logger.isDebugEnabled())
@@ -404,12 +404,12 @@ public class RepoToRepoSync {
 
 	private void syncSymlink(
 			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
-			final RepoFileDTOTreeNode repoFileDTOTreeNode, final SymlinkDTO symlinkDTO, final SubProgressMonitor monitor) {
+			final RepoFileDtoTreeNode repoFileDtoTreeNode, final SymlinkDto symlinkDto, final SubProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			final String path = repoFileDTOTreeNode.getPath();
+			final String path = repoFileDtoTreeNode.getPath();
 			try {
-				toRepoTransport.makeSymlink(path, symlinkDTO.getTarget(), symlinkDTO.getLastModified());
+				toRepoTransport.makeSymlink(path, symlinkDto.getTarget(), symlinkDto.getLastModified());
 			} catch (DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during makeSymlink: {}", path);
 				if (logger.isDebugEnabled())
@@ -425,12 +425,12 @@ public class RepoToRepoSync {
 	private Future<Void> syncFileAsynchronously(
 			final ThreadPoolExecutor syncFileAsynchronouslyExecutor,
 			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
-			final RepoFileDTOTreeNode repoFileDTOTreeNode, final RepoFileDTO normalFileDTO, final ProgressMonitor monitor) {
+			final RepoFileDtoTreeNode repoFileDtoTreeNode, final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
 
 		Callable<Void> callable = new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
-				syncFile(fromRepoTransport, toRepoTransport, repoFileDTOTreeNode, normalFileDTO, monitor);
+				syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, normalFileDto, monitor);
 				return null;
 			}
 		};
@@ -438,41 +438,41 @@ public class RepoToRepoSync {
 		return future;
 	}
 
-	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDTOTreeNode repoFileDTOTreeNode, RepoFileDTO normalFileDTO, ProgressMonitor monitor) {
+	private void syncFile(RepoTransport fromRepoTransport, RepoTransport toRepoTransport, RepoFileDtoTreeNode repoFileDtoTreeNode, RepoFileDto normalFileDto, ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			final String path = repoFileDTOTreeNode.getPath();
+			final String path = repoFileDtoTreeNode.getPath();
 			logger.info("syncFile: path='{}'", path);
 
-			final RepoFileDTO fromRepoFileDTO = fromRepoTransport.getRepoFileDTO(path);
-			if (fromRepoFileDTO == null) {
+			final RepoFileDto fromRepoFileDto = fromRepoTransport.getRepoFileDto(path);
+			if (fromRepoFileDto == null) {
 				logger.warn("File was deleted during sync on source side: {}", path);
 				return;
 			}
-			if (!(fromRepoFileDTO instanceof NormalFileDTO)) {
+			if (!(fromRepoFileDto instanceof NormalFileDto)) {
 				logger.warn("Normal file was replaced by a directory (or another type) during sync on source side: {}", path);
 				return;
 			}
 			monitor.worked(10);
 
-			NormalFileDTO fromNormalFileDTO = (NormalFileDTO) fromRepoFileDTO;
+			NormalFileDto fromNormalFileDto = (NormalFileDto) fromRepoFileDto;
 
-			final RepoFileDTO toRepoFileDTO = toRepoTransport.getRepoFileDTO(path);
-			if (areFilesExistingAndEqual(fromRepoFileDTO, toRepoFileDTO)) {
-				logger.info("File is already equal on destination side (sha1='{}'): {}", fromNormalFileDTO.getSha1(), path);
+			final RepoFileDto toRepoFileDto = toRepoTransport.getRepoFileDto(path);
+			if (areFilesExistingAndEqual(fromRepoFileDto, toRepoFileDto)) {
+				logger.info("File is already equal on destination side (sha1='{}'): {}", fromNormalFileDto.getSha1(), path);
 				return;
 			}
 			monitor.worked(10);
 
-			logger.info("Beginning to copy file (from.sha1='{}' to.sha1='{}'): {}", fromNormalFileDTO.getSha1(),
-					toRepoFileDTO instanceof NormalFileDTO ? ((NormalFileDTO)toRepoFileDTO).getSha1() : "<NoInstanceOf_NormalFileDTO>",
+			logger.info("Beginning to copy file (from.sha1='{}' to.sha1='{}'): {}", fromNormalFileDto.getSha1(),
+					toRepoFileDto instanceof NormalFileDto ? ((NormalFileDto)toRepoFileDto).getSha1() : "<NoInstanceOf_NormalFileDto>",
 							path);
 
-			final NormalFileDTO toNormalFileDTO;
-			if (toRepoFileDTO instanceof NormalFileDTO)
-				toNormalFileDTO = (NormalFileDTO) toRepoFileDTO;
+			final NormalFileDto toNormalFileDto;
+			if (toRepoFileDto instanceof NormalFileDto)
+				toNormalFileDto = (NormalFileDto) toRepoFileDto;
 			else
-				toNormalFileDTO = new NormalFileDTO(); // dummy (null-object pattern)
+				toNormalFileDto = new NormalFileDto(); // dummy (null-object pattern)
 
 			try {
 				toRepoTransport.beginPutFile(path);
@@ -485,69 +485,69 @@ public class RepoToRepoSync {
 			}
 			monitor.worked(1);
 
-			final Map<Long, FileChunkDTO> offset2ToTempFileChunkDTO = new HashMap<>(toNormalFileDTO.getTempFileChunkDTOs().size());
-			for (FileChunkDTO toTempFileChunkDTO : toNormalFileDTO.getTempFileChunkDTOs())
-				offset2ToTempFileChunkDTO.put(toTempFileChunkDTO.getOffset(), toTempFileChunkDTO);
+			final Map<Long, FileChunkDto> offset2ToTempFileChunkDto = new HashMap<>(toNormalFileDto.getTempFileChunkDtos().size());
+			for (FileChunkDto toTempFileChunkDto : toNormalFileDto.getTempFileChunkDtos())
+				offset2ToTempFileChunkDto.put(toTempFileChunkDto.getOffset(), toTempFileChunkDto);
 
-			logger.debug("Comparing {} FileChunkDTOs. path='{}'", fromNormalFileDTO.getFileChunkDTOs().size(), path);
-			final List<FileChunkDTO> fromFileChunkDTOsDirty = new ArrayList<FileChunkDTO>();
-			final Iterator<FileChunkDTO> toFileChunkDTOIterator = toNormalFileDTO.getFileChunkDTOs().iterator();
+			logger.debug("Comparing {} FileChunkDtos. path='{}'", fromNormalFileDto.getFileChunkDtos().size(), path);
+			final List<FileChunkDto> fromFileChunkDtosDirty = new ArrayList<FileChunkDto>();
+			final Iterator<FileChunkDto> toFileChunkDtoIterator = toNormalFileDto.getFileChunkDtos().iterator();
 			int fileChunkIndex = -1;
-			for (final FileChunkDTO fromFileChunkDTO : fromNormalFileDTO.getFileChunkDTOs()) {
-				final FileChunkDTO toFileChunkDTO = toFileChunkDTOIterator.hasNext() ? toFileChunkDTOIterator.next() : null;
+			for (final FileChunkDto fromFileChunkDto : fromNormalFileDto.getFileChunkDtos()) {
+				final FileChunkDto toFileChunkDto = toFileChunkDtoIterator.hasNext() ? toFileChunkDtoIterator.next() : null;
 				++fileChunkIndex;
-				final FileChunkDTO toTempFileChunkDTO = offset2ToTempFileChunkDTO.get(fromFileChunkDTO.getOffset());
-				if (toTempFileChunkDTO == null) {
-					if (toFileChunkDTO != null
-							&& equal(fromFileChunkDTO.getOffset(), toFileChunkDTO.getOffset())
-							&& equal(fromFileChunkDTO.getLength(), toFileChunkDTO.getLength())
-							&& equal(fromFileChunkDTO.getSha1(), toFileChunkDTO.getSha1())) {
+				final FileChunkDto toTempFileChunkDto = offset2ToTempFileChunkDto.get(fromFileChunkDto.getOffset());
+				if (toTempFileChunkDto == null) {
+					if (toFileChunkDto != null
+							&& equal(fromFileChunkDto.getOffset(), toFileChunkDto.getOffset())
+							&& equal(fromFileChunkDto.getLength(), toFileChunkDto.getLength())
+							&& equal(fromFileChunkDto.getSha1(), toFileChunkDto.getSha1())) {
 						if (logger.isTraceEnabled()) {
-							logger.trace("Skipping clean FileChunkDTO. index={} offset={} sha1='{}'",
-									fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+							logger.trace("Skipping clean FileChunkDto. index={} offset={} sha1='{}'",
+									fileChunkIndex, fromFileChunkDto.getOffset(), fromFileChunkDto.getSha1());
 						}
 						continue;
 					}
 				}
 				else {
-					if (equal(fromFileChunkDTO.getOffset(), toTempFileChunkDTO.getOffset())
-							&& equal(fromFileChunkDTO.getLength(), toTempFileChunkDTO.getLength())
-							&& equal(fromFileChunkDTO.getSha1(), toTempFileChunkDTO.getSha1())) {
+					if (equal(fromFileChunkDto.getOffset(), toTempFileChunkDto.getOffset())
+							&& equal(fromFileChunkDto.getLength(), toTempFileChunkDto.getLength())
+							&& equal(fromFileChunkDto.getSha1(), toTempFileChunkDto.getSha1())) {
 						if (logger.isTraceEnabled()) {
-							logger.trace("Skipping clean temporary FileChunkDTO. index={} offset={} sha1='{}'",
-									fileChunkIndex, fromFileChunkDTO.getOffset(), fromFileChunkDTO.getSha1());
+							logger.trace("Skipping clean temporary FileChunkDto. index={} offset={} sha1='{}'",
+									fileChunkIndex, fromFileChunkDto.getOffset(), fromFileChunkDto.getSha1());
 						}
 						continue;
 					}
 				}
 
 				if (logger.isTraceEnabled()) {
-					logger.trace("Enlisting dirty FileChunkDTO. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
-							fileChunkIndex, fromFileChunkDTO.getOffset(),
-							(toFileChunkDTO == null ? "null" : toFileChunkDTO.getOffset()),
-							fromFileChunkDTO.getSha1(),
-							(toFileChunkDTO == null ? "null" : toFileChunkDTO.getSha1()));
+					logger.trace("Enlisting dirty FileChunkDto. index={} fromOffset={} toOffset={} fromSha1='{}' toSha1='{}'",
+							fileChunkIndex, fromFileChunkDto.getOffset(),
+							(toFileChunkDto == null ? "null" : toFileChunkDto.getOffset()),
+							fromFileChunkDto.getSha1(),
+							(toFileChunkDto == null ? "null" : toFileChunkDto.getSha1()));
 				}
-				fromFileChunkDTOsDirty.add(fromFileChunkDTO);
+				fromFileChunkDtosDirty.add(fromFileChunkDto);
 			}
 
 			logger.info("Need to copy {} dirty file-chunks (of {} total). path='{}'",
-					fromFileChunkDTOsDirty.size(), fromNormalFileDTO.getFileChunkDTOs().size(), path);
+					fromFileChunkDtosDirty.size(), fromNormalFileDto.getFileChunkDtos().size(), path);
 
 			ProgressMonitor subMonitor = new SubProgressMonitor(monitor, 73);
-			subMonitor.beginTask("Synchronising...", fromFileChunkDTOsDirty.size());
+			subMonitor.beginTask("Synchronising...", fromFileChunkDtosDirty.size());
 			fileChunkIndex = -1;
 			long bytesCopied = 0;
 			long copyChunksBeginTimestamp = System.currentTimeMillis();
-			for (FileChunkDTO fileChunkDTO : fromFileChunkDTOsDirty) {
+			for (FileChunkDto fileChunkDto : fromFileChunkDtosDirty) {
 				++fileChunkIndex;
 				if (logger.isTraceEnabled()) {
-					logger.trace("Reading data for dirty FileChunkDTO (index {} of {}). path='{}' offset={}",
-							fileChunkIndex, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+					logger.trace("Reading data for dirty FileChunkDto (index {} of {}). path='{}' offset={}",
+							fileChunkIndex, fromFileChunkDtosDirty.size(), path, fileChunkDto.getOffset());
 				}
-				byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDTO.getOffset(), fileChunkDTO.getLength());
+				byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDto.getOffset(), fileChunkDto.getLength());
 
-				if (fileData == null || fileData.length != fileChunkDTO.getLength() || !sha1(fileData).equals(fileChunkDTO.getSha1())) {
+				if (fileData == null || fileData.length != fileChunkDto.getLength() || !sha1(fileData).equals(fileChunkDto.getSha1())) {
 					logger.warn("Source file was modified or deleted during sync: {}", path);
 					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
 					// direction. The file should be synced again in the correct direction in the next run (after the source
@@ -556,21 +556,21 @@ public class RepoToRepoSync {
 				}
 
 				if (logger.isTraceEnabled()) {
-					logger.trace("Writing data for dirty FileChunkDTO ({} of {}). path='{}' offset={}",
-							fileChunkIndex + 1, fromFileChunkDTOsDirty.size(), path, fileChunkDTO.getOffset());
+					logger.trace("Writing data for dirty FileChunkDto ({} of {}). path='{}' offset={}",
+							fileChunkIndex + 1, fromFileChunkDtosDirty.size(), path, fileChunkDto.getOffset());
 				}
-				toRepoTransport.putFileData(path, fileChunkDTO.getOffset(), fileData);
+				toRepoTransport.putFileData(path, fileChunkDto.getOffset(), fileData);
 				bytesCopied += fileData.length;
 				subMonitor.worked(1);
 			}
 			subMonitor.done();
 
 			logger.info("Copied {} dirty file-chunks with together {} bytes in {} ms. path='{}'",
-					fromFileChunkDTOsDirty.size(), bytesCopied, System.currentTimeMillis() - copyChunksBeginTimestamp, path);
+					fromFileChunkDtosDirty.size(), bytesCopied, System.currentTimeMillis() - copyChunksBeginTimestamp, path);
 
 			toRepoTransport.endPutFile(
-					path, fromNormalFileDTO.getLastModified(),
-					fromNormalFileDTO.getLength(), fromNormalFileDTO.getSha1());
+					path, fromNormalFileDto.getLastModified(),
+					fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
 
 			monitor.worked(6);
 		} finally {
@@ -590,19 +590,19 @@ public class RepoToRepoSync {
 		}
 	}
 
-	private boolean areFilesExistingAndEqual(RepoFileDTO fromRepoFileDTO, RepoFileDTO toRepoFileDTO) {
-		if (!(fromRepoFileDTO instanceof NormalFileDTO))
+	private boolean areFilesExistingAndEqual(RepoFileDto fromRepoFileDto, RepoFileDto toRepoFileDto) {
+		if (!(fromRepoFileDto instanceof NormalFileDto))
 			return false;
 
-		if (!(toRepoFileDTO instanceof NormalFileDTO))
+		if (!(toRepoFileDto instanceof NormalFileDto))
 			return false;
 
-		NormalFileDTO fromNormalFileDTO = (NormalFileDTO) fromRepoFileDTO;
-		NormalFileDTO toNormalFileDTO = (NormalFileDTO) toRepoFileDTO;
+		NormalFileDto fromNormalFileDto = (NormalFileDto) fromRepoFileDto;
+		NormalFileDto toNormalFileDto = (NormalFileDto) toRepoFileDto;
 
-		return equal(fromNormalFileDTO.getLength(), toNormalFileDTO.getLength())
-				&& equal(fromNormalFileDTO.getLastModified(), toNormalFileDTO.getLastModified())
-				&& equal(fromNormalFileDTO.getSha1(), toNormalFileDTO.getSha1());
+		return equal(fromNormalFileDto.getLength(), toNormalFileDto.getLength())
+				&& equal(fromNormalFileDto.getLastModified(), toNormalFileDto.getLastModified())
+				&& equal(fromNormalFileDto.getSha1(), toNormalFileDto.getSha1());
 	}
 
 	public void close() {

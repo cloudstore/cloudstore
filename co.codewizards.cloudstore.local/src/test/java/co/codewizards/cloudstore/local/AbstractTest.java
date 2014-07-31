@@ -30,7 +30,7 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
-import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 
 public abstract class AbstractTest {
@@ -175,12 +175,12 @@ public abstract class AbstractTest {
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
 		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+			RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 			assertThat(filesInRepo).isNotNull();
 
 			for (File file : filesInRepo) {
-				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile == null) {
 					Assert.fail("Corresponding RepoFile missing in repository for file: " + file);
 				}
@@ -193,7 +193,7 @@ public abstract class AbstractTest {
 			}
 
 			filesInRepo = new HashSet<File>(filesInRepo);
-			Collection<RepoFile> repoFiles = repoFileDAO.getObjects();
+			Collection<RepoFile> repoFiles = repoFileDao.getObjects();
 			Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
 			for (RepoFile repoFile : repoFiles) {
 				File file = repoFile.getFile(localRoot);

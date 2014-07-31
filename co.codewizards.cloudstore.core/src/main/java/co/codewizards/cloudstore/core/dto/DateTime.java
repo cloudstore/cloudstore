@@ -13,7 +13,7 @@ import co.codewizards.cloudstore.core.util.Util;
 /**
  * Immutable representation of a timestamp (a date and a time).
  * <p>
- * This object serves as a DTO both inside XML and in URLs (usually as
+ * This object serves as a Dto both inside XML and in URLs (usually as
  * a query parameter, but it may be used inside a path, too). For this
  * purpose, its {@link #toString()} method and its {@linkplain #DateTime(String) single-String-argument-constructor}
  * are used.

@@ -61,13 +61,13 @@ import co.codewizards.cloudstore.local.persistence.Entity;
 import co.codewizards.cloudstore.local.persistence.FileChunk;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
-import co.codewizards.cloudstore.local.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.Modification;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.Repository;
 import co.codewizards.cloudstore.local.persistence.Symlink;
@@ -166,7 +166,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			if (!localRepository.getAliases().contains(repositoryAlias))
 				localRepository.getAliases().add(repositoryAlias);
 
@@ -182,7 +182,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			localRepository.getAliases().remove(repositoryAlias);
 			LocalRepoRegistry.getInstance().removeRepositoryAlias(repositoryAlias);
 			transaction.commit();
@@ -305,7 +305,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			for (final String repositoryAlias : new ArrayList<>(localRepository.getAliases())) {
 				final UUID repositoryIdInRegistry = localRepoRegistry.getRepositoryId(repositoryAlias);
 				if (repositoryIdInRegistry == null) {
@@ -350,7 +350,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			final LocalRepoTransactionImpl transaction = beginReadTransaction();
 			try {
-				final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+				final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 				final SortedSet<String> repositoryAliases = new TreeSet<>(localRepository.getAliases());
 				final String aliasesString = repositoryAliasesToString(repositoryAliases);
 				if (!aliasesString.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ALIASES))) {
@@ -417,7 +417,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			try {
 				pm.currentTransaction().begin();
 
-				RemoteRepositoryRequestDAO dao = new RemoteRepositoryRequestDAO().persistenceManager(pm);
+				RemoteRepositoryRequestDao dao = new RemoteRepositoryRequestDao().persistenceManager(pm);
 				Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
 				pm.deletePersistentAll(expiredRequests);
 
@@ -540,7 +540,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
 		try {
-			LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
+			LocalRepository localRepository = new LocalRepositoryDao().persistenceManager(pm).getLocalRepositoryOrFail();
 			readRepositoryMainProperties(localRepository);
 		} catch (IllegalStateException x) {
 			throw new RepositoryCorruptException(localRoot, x.getMessage());
@@ -788,7 +788,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final byte[] result;
 		final LocalRepoTransactionImpl transaction = beginReadTransaction();
 		try {
-			final RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(repositoryId);
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(repositoryId);
 			result = remoteRepository.getPublicKey();
 			transaction.commit();
 		} finally {
@@ -843,15 +843,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("publicKey", publicKey);
 		LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 
 			if (remoteRoot != null) {
-				RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
+				RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDao.getRemoteRepository(remoteRoot);
 				if (otherRepoWithSameRemoteRoot != null && !repositoryId.equals(otherRepoWithSameRemoteRoot.getRepositoryId()))
 					throw new IllegalStateException(String.format("Duplicate remoteRoot! The RemoteRepository '%s' already has the same remoteRoot '%s'! The remoteRoot must be unique!", otherRepoWithSameRemoteRoot.getRepositoryId(), remoteRoot));
 			}
 
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
+			RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(repositoryId);
 			if (remoteRepository == null) {
 				remoteRepository = new RemoteRepository(repositoryId);
 				remoteRepository.setRevision(-1);
@@ -861,12 +861,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			remoteRepository.setLocalPathPrefix(localPathPrefix);
 
-			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
+			remoteRepositoryDao.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 
-			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(repositoryId);
+			RemoteRepositoryRequestDao remoteRepositoryRequestDao = transaction.getDao(RemoteRepositoryRequestDao.class);
+			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDao.getRemoteRepositoryRequest(repositoryId);
 			if (remoteRepositoryRequest != null)
-				remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
+				remoteRepositoryRequestDao.deletePersistent(remoteRepositoryRequest);
 
 			transaction.commit();
 		} finally {
@@ -879,10 +879,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		assertNotNull("entityID", repositoryId);
 		LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
+			RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+			RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(repositoryId);
 			if (remoteRepository != null)
-				remoteRepositoryDAO.deletePersistent(remoteRepository);
+				remoteRepositoryDao.deletePersistent(remoteRepository);
 
 			transaction.commit();
 		} finally {
@@ -909,7 +909,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final String localPathPrefix;
 		final LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(remoteRoot);
 			localPathPrefix = remoteRepository.getLocalPathPrefix();
 			transaction.commit();
 		} finally {
@@ -923,7 +923,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final String localPathPrefix;
 		final LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(repositoryId);
+			RemoteRepository clientRemoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(repositoryId);
 			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
 			transaction.commit();
 		} finally {
@@ -937,7 +937,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		UUID remoteRepositoryId;
 		LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(remoteRoot);
 			remoteRepositoryId = remoteRepository.getRepositoryId();
 			transaction.commit();
 		} finally {

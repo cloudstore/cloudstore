@@ -38,9 +38,9 @@ public class PersistenceTest extends AbstractTest {
 			RemoteRepository remoteRepository = new RemoteRepository();
 			remoteRepository.setLocalPathPrefix("");
 			remoteRepository.setPublicKey(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 });
-			remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).makePersistent(remoteRepository);
+			remoteRepository = transaction.getDao(RemoteRepositoryDao.class).makePersistent(remoteRepository);
 
-			CopyModificationDAO copyModificationDAO = transaction.getDAO(CopyModificationDAO.class);
+			CopyModificationDao copyModificationDao = transaction.getDao(CopyModificationDao.class);
 			for (int i = 0; i < modificationCount; ++i) {
 				CopyModification copyModification = new CopyModification();
 				copyModification.setRemoteRepository(remoteRepository);
@@ -48,7 +48,7 @@ public class PersistenceTest extends AbstractTest {
 				copyModification.setToPath("/to/" + i);
 				copyModification.setLength(100000);
 				copyModification.setSha1("TEST" + i);
-				copyModificationDAO.makePersistent(copyModification);
+				copyModificationDao.makePersistent(copyModification);
 			}
 			transaction.commit();
 		} finally {
@@ -60,9 +60,9 @@ public class PersistenceTest extends AbstractTest {
 
 		transaction = localRepoManager.beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjects().iterator().next();
-			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
-			Collection<Modification> modifications = modificationDAO.getModifications(remoteRepository);
+			RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getObjects().iterator().next();
+			ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
+			Collection<Modification> modifications = modificationDao.getModifications(remoteRepository);
 			assertThat(modifications).hasSize(modificationCount);
 			System.out.println("*** Accessing fromPath and toPath ***");
 			for (Modification modification : modifications) {

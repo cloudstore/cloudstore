@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -33,18 +33,18 @@ public class RequestRepoConnectionService
 
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(RepositoryDTO clientRepositoryDTO)
+	public void requestConnection(RepositoryDto clientRepositoryDto)
 	{
-		requestConnection("", clientRepositoryDTO);
+		requestConnection("", clientRepositoryDto);
 	}
 
 	@POST
 	@Path("{pathPrefix:.*}")
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(@PathParam("pathPrefix") String pathPrefix, RepositoryDTO clientRepositoryDTO)
+	public void requestConnection(@PathParam("pathPrefix") String pathPrefix, RepositoryDto clientRepositoryDto)
 	{
 		assertNotNull("pathPrefix", pathPrefix);
-		assertNotNull("repositoryDTO", clientRepositoryDTO);
+		assertNotNull("repositoryDto", clientRepositoryDto);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 
@@ -65,9 +65,9 @@ public class RequestRepoConnectionService
 		}
 
 		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDTO.getRepositoryId());
+		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
 		try {
-			repoTransport.requestRepoConnection(clientRepositoryDTO.getPublicKey());
+			repoTransport.requestRepoConnection(clientRepositoryDto.getPublicKey());
 		} finally {
 			repoTransport.close();
 		}

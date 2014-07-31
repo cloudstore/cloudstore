@@ -14,7 +14,7 @@ public interface LocalRepoTransaction {
 
 	LocalRepoManager getLocalRepoManager();
 
-	<D> D getDAO(Class<D> daoClass);
+	<D> D getDao(Class<D> daoClass);
 
 	void flush();
 

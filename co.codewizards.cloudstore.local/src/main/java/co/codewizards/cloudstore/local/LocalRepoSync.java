@@ -32,16 +32,16 @@ import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
-import co.codewizards.cloudstore.local.persistence.DeleteModificationDAO;
+import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.FileChunk;
-import co.codewizards.cloudstore.local.persistence.ModificationDAO;
+import co.codewizards.cloudstore.local.persistence.ModificationDao;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
-import co.codewizards.cloudstore.local.persistence.NormalFileDAO;
+import co.codewizards.cloudstore.local.persistence.NormalFileDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
-import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 
 public class LocalRepoSync {
@@ -50,11 +50,11 @@ public class LocalRepoSync {
 
 	private final LocalRepoTransaction transaction;
 	private final File localRoot;
-	private final RepoFileDAO repoFileDAO;
-	private final NormalFileDAO normalFileDAO;
-	private final RemoteRepositoryDAO remoteRepositoryDAO;
-	private final ModificationDAO modificationDAO;
-	private final DeleteModificationDAO deleteModificationDAO;
+	private final RepoFileDao repoFileDao;
+	private final NormalFileDao normalFileDao;
+	private final RemoteRepositoryDao remoteRepositoryDao;
+	private final ModificationDao modificationDao;
+	private final DeleteModificationDao deleteModificationDao;
 	private Collection<RemoteRepository> remoteRepositories;
 
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
@@ -62,11 +62,11 @@ public class LocalRepoSync {
 	public LocalRepoSync(LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
-		repoFileDAO = this.transaction.getDAO(RepoFileDAO.class);
-		normalFileDAO = this.transaction.getDAO(NormalFileDAO.class);
-		remoteRepositoryDAO = this.transaction.getDAO(RemoteRepositoryDAO.class);
-		modificationDAO = this.transaction.getDAO(ModificationDAO.class);
-		deleteModificationDAO = this.transaction.getDAO(DeleteModificationDAO.class);
+		repoFileDao = this.transaction.getDao(RepoFileDao.class);
+		normalFileDao = this.transaction.getDao(NormalFileDao.class);
+		remoteRepositoryDao = this.transaction.getDao(RemoteRepositoryDao.class);
+		modificationDao = this.transaction.getDao(ModificationDao.class);
+		deleteModificationDao = this.transaction.getDao(DeleteModificationDao.class);
 	}
 
 	public void sync(ProgressMonitor monitor) {
@@ -84,24 +84,24 @@ public class LocalRepoSync {
 		monitor.beginTask("Local sync...", 100);
 		try {
 			File parentFile = file.getParentFile();
-			RepoFile parentRepoFile = repoFileDAO.getRepoFile(localRoot, parentFile);
+			RepoFile parentRepoFile = repoFileDao.getRepoFile(localRoot, parentFile);
 			if (parentRepoFile == null) {
 				// If the file does not exist and its RepoFile neither exists, then
 				// this is in sync already and we can simply leave. This regularly
 				// happens during the deletion of a directory which is the connection-point
 				// of a remote-repository. The following re-up-sync then leads us here.
 				// To speed up things, we simply quit as this is a valid state.
-				if (!Files.isSymbolicLink(file.toPath()) && !file.exists() && repoFileDAO.getRepoFile(localRoot, file) == null)
+				if (!Files.isSymbolicLink(file.toPath()) && !file.exists() && repoFileDao.getRepoFile(localRoot, file) == null)
 					return null;
 
 				// In the unlikely event, that this is not a valid state, we simply sync all
 				// and return.
 				sync(null, localRoot, new SubProgressMonitor(monitor, 99));
-				final RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile != null) // if it still does not exist, we run into the re-sync below and this might quickly return null, if that is correct or otherwise sync what's needed.
 					return repoFile;
 
-				parentRepoFile = repoFileDAO.getRepoFile(localRoot, parentFile);
+				parentRepoFile = repoFileDao.getRepoFile(localRoot, parentFile);
 				if (parentRepoFile == null && parentFile.exists())
 					throw new IllegalStateException("RepoFile not found for existing file/dir: " + parentFile.getAbsolutePath());
 			}
@@ -130,7 +130,7 @@ public class LocalRepoSync {
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Local sync...", 100);
 		try {
-			RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 
 			// If the type changed - e.g. from normal file to directory - or if the file was deleted
 			// we must delete the old instance.
@@ -167,7 +167,7 @@ public class LocalRepoSync {
 				childSubProgressMonitor.done();
 			}
 
-			final Collection<RepoFile> childRepoFiles = repoFileDAO.getChildRepoFiles(repoFile);
+			final Collection<RepoFile> childRepoFiles = repoFileDao.getChildRepoFiles(repoFile);
 			for (final RepoFile childRepoFile : childRepoFiles) {
 				if (!childNames.contains(childRepoFile.getName())) {
 					deleteRepoFile(childRepoFile);
@@ -286,7 +286,7 @@ public class LocalRepoSync {
 			if (repoFile instanceof NormalFile)
 				createCopyModificationsIfPossible((NormalFile)repoFile);
 
-			return repoFileDAO.makePersistent(repoFile);
+			return repoFileDao.makePersistent(repoFile);
 		} finally {
 			monitor.done();
 		}
@@ -394,7 +394,7 @@ public class LocalRepoSync {
 			}
 		}
 
-		List<NormalFile> normalFiles = new ArrayList<>(normalFileDAO.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
+		List<NormalFile> normalFiles = new ArrayList<>(normalFileDao.getNormalFilesForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
 		Collections.shuffle(normalFiles);
 		for (NormalFile normalFile : normalFiles) {
 //			if (normalFile.isInProgress()) // Additional check. Do we really want this? I don't think so!
@@ -408,7 +408,7 @@ public class LocalRepoSync {
 				return;
 		}
 
-		List<DeleteModification> deleteModifications = new ArrayList<>(deleteModificationDAO.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
+		List<DeleteModification> deleteModifications = new ArrayList<>(deleteModificationDao.getDeleteModificationsForSha1(newNormalFile.getSha1(), newNormalFile.getLength()));
 		Collections.shuffle(deleteModifications);
 		for (DeleteModification deleteModification : deleteModifications) {
 			createCopyModifications(deleteModification, newNormalFile, fromPaths);
@@ -446,7 +446,7 @@ public class LocalRepoSync {
 			modification.setToPath(toNormalFile.getPath());
 			modification.setLength(toNormalFile.getLength());
 			modification.setSha1(toNormalFile.getSha1());
-			modificationDAO.makePersistent(modification);
+			modificationDao.makePersistent(modification);
 		}
 	}
 
@@ -476,24 +476,24 @@ public class LocalRepoSync {
 			modification.setPath(repoFile.getPath());
 			modification.setLength(normalFile == null ? -1 : normalFile.getLength());
 			modification.setSha1(normalFile == null ? null : normalFile.getSha1());
-			modificationDAO.makePersistent(modification);
+			modificationDao.makePersistent(modification);
 		}
 	}
 
 	private Collection<RemoteRepository> getRemoteRepositories() {
 		if (remoteRepositories == null)
-			remoteRepositories = Collections.unmodifiableCollection(remoteRepositoryDAO.getObjects());
+			remoteRepositories = Collections.unmodifiableCollection(remoteRepositoryDao.getObjects());
 
 		return remoteRepositories;
 	}
 
 	private void deleteRepoFileWithAllChildrenRecursively(RepoFile repoFile) {
 		assertNotNull("repoFile", repoFile);
-		for (RepoFile childRepoFile : repoFileDAO.getChildRepoFiles(repoFile)) {
+		for (RepoFile childRepoFile : repoFileDao.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}
 		putIntoSha1AndLength2PathsIfNormalFile(repoFile);
-		repoFileDAO.deletePersistent(repoFile);
+		repoFileDao.deletePersistent(repoFile);
 	}
 
 	private void putIntoSha1AndLength2PathsIfNormalFile(RepoFile repoFile) {

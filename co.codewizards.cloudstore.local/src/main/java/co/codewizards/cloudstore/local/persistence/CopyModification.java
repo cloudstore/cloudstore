@@ -55,7 +55,7 @@ public class CopyModification extends Modification {
 	 * <p>
 	 * This path is always relative to the local repository's root; even if the remote repository uses a
 	 * {@link RemoteRepository#getLocalPathPrefix() path-prefix}. Stripping of the path-prefix is
-	 * done during DTO generation.
+	 * done during Dto generation.
 	 * @return the source path of the copied file. Never <code>null</code>.
 	 */
 	public String getFromPath() {

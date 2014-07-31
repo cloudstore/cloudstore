@@ -5,9 +5,9 @@ import java.net.URL;
 import java.util.Date;
 import java.util.UUID;
 
-import co.codewizards.cloudstore.core.dto.ChangeSetDTO;
-import co.codewizards.cloudstore.core.dto.RepoFileDTO;
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -66,7 +66,7 @@ public interface RepoTransport {
 	URL getRemoteRootWithoutPathPrefix();
 	String getPathPrefix();
 
-	RepositoryDTO getRepositoryDTO();
+	RepositoryDto getRepositoryDto();
 
 	/**
 	 * Get the repository's unique ID.
@@ -84,7 +84,7 @@ public interface RepoTransport {
 	 */
 	void requestRepoConnection(byte[] publicKey);
 
-	ChangeSetDTO getChangeSetDTO(boolean localSync);
+	ChangeSetDto getChangeSetDto(boolean localSync);
 
 	/**
 	 * Creates the specified directory (including all parent-directories).
@@ -119,7 +119,7 @@ public interface RepoTransport {
 	 */
 	void delete(String path);
 
-	RepoFileDTO getRepoFileDTO(String path);
+	RepoFileDto getRepoFileDto(String path);
 
 	/**
 	 * Get the binary file data at the given {@code offset} and with the given {@code length}.

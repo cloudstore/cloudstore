@@ -11,14 +11,14 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
-import co.codewizards.cloudstore.local.persistence.CopyModificationDAO;
-import co.codewizards.cloudstore.local.persistence.DeleteModificationDAO;
-import co.codewizards.cloudstore.local.persistence.DirectoryDAO;
-import co.codewizards.cloudstore.local.persistence.NormalFileDAO;
+import co.codewizards.cloudstore.local.persistence.CopyModificationDao;
+import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
+import co.codewizards.cloudstore.local.persistence.DirectoryDao;
+import co.codewizards.cloudstore.local.persistence.NormalFileDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.
@@ -86,7 +86,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 //	}
 
 	private void showRemoteRepositories(LocalRepoTransaction transaction) {
-		Collection<RemoteRepository> remoteRepositories = transaction.getDAO(RemoteRepositoryDAO.class).getObjects();
+		Collection<RemoteRepository> remoteRepositories = transaction.getDao(RemoteRepositoryDao.class).getObjects();
 		if (remoteRepositories.isEmpty()) {
 			System.out.println("Remote repositories connected: {NONE}");
 			System.out.println();
@@ -105,7 +105,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	}
 
 	private void showRemoteRepositoryRequests(LocalRepoTransaction transaction) {
-		Collection<RemoteRepositoryRequest> remoteRepositoryRequests = transaction.getDAO(RemoteRepositoryRequestDAO.class).getObjects();
+		Collection<RemoteRepositoryRequest> remoteRepositoryRequests = transaction.getDao(RemoteRepositoryRequestDao.class).getObjects();
 		if (remoteRepositoryRequests.isEmpty()) {
 			System.out.println("Remote repositories requesting connection: {NONE}");
 			System.out.println();
@@ -123,14 +123,14 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	}
 
 	private void showRepositoryStats(LocalRepoTransaction transaction) {
-		NormalFileDAO normalFileDAO = transaction.getDAO(NormalFileDAO.class);
-		DirectoryDAO directoryDAO = transaction.getDAO(DirectoryDAO.class);
-		CopyModificationDAO copyModificationDAO = transaction.getDAO(CopyModificationDAO.class);
-		DeleteModificationDAO deleteModificationDAO = transaction.getDAO(DeleteModificationDAO.class);
-		long normalFileCount = normalFileDAO.getObjectsCount();
-		long directoryCount = directoryDAO.getObjectsCount();
-		long copyModificationCount = copyModificationDAO.getObjectsCount();
-		long deleteModificationCount = deleteModificationDAO.getObjectsCount();
+		NormalFileDao normalFileDao = transaction.getDao(NormalFileDao.class);
+		DirectoryDao directoryDao = transaction.getDao(DirectoryDao.class);
+		CopyModificationDao copyModificationDao = transaction.getDao(CopyModificationDao.class);
+		DeleteModificationDao deleteModificationDao = transaction.getDao(DeleteModificationDao.class);
+		long normalFileCount = normalFileDao.getObjectsCount();
+		long directoryCount = directoryDao.getObjectsCount();
+		long copyModificationCount = copyModificationDao.getObjectsCount();
+		long deleteModificationCount = deleteModificationDao.getObjectsCount();
 
 		System.out.println("Statistics:");
 		System.out.println("  * Count(NormalFile): " + normalFileCount);

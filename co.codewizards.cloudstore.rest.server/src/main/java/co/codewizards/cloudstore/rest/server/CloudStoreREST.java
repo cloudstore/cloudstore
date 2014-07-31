@@ -10,7 +10,7 @@ import co.codewizards.cloudstore.rest.server.jersey.CloudStoreBinder;
 import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
 import co.codewizards.cloudstore.rest.server.service.BeginPutFileService;
-import co.codewizards.cloudstore.rest.server.service.ChangeSetDTOService;
+import co.codewizards.cloudstore.rest.server.service.ChangeSetDtoService;
 import co.codewizards.cloudstore.rest.server.service.CopyService;
 import co.codewizards.cloudstore.rest.server.service.EncryptedSignedAuthTokenService;
 import co.codewizards.cloudstore.rest.server.service.EndPutFileService;
@@ -19,8 +19,8 @@ import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
 import co.codewizards.cloudstore.rest.server.service.MakeSymlinkService;
 import co.codewizards.cloudstore.rest.server.service.MoveService;
-import co.codewizards.cloudstore.rest.server.service.RepoFileDTOService;
-import co.codewizards.cloudstore.rest.server.service.RepositoryDTOService;
+import co.codewizards.cloudstore.rest.server.service.RepoFileDtoService;
+import co.codewizards.cloudstore.rest.server.service.RepositoryDtoService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 import co.codewizards.cloudstore.rest.server.service.WebDavService;
@@ -47,17 +47,17 @@ public class CloudStoreREST extends ResourceConfig {
 		registerClasses(
 				// BEGIN services
 				BeginPutFileService.class,
-				ChangeSetDTOService.class,
+				ChangeSetDtoService.class,
 				CopyService.class,
 				EncryptedSignedAuthTokenService.class,
 				EndPutFileService.class,
 				EndSyncFromRepositoryService.class,
 				EndSyncToRepositoryService.class,
-				RepoFileDTOService.class,
+				RepoFileDtoService.class,
 				MakeDirectoryService.class,
 				MakeSymlinkService.class,
 				MoveService.class,
-				RepositoryDTOService.class,
+				RepositoryDtoService.class,
 				RequestRepoConnectionService.class,
 				TestService.class,
 				WebDavService.class,

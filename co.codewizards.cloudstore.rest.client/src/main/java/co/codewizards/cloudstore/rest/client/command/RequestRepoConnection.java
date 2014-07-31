@@ -6,25 +6,25 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 
 public class RequestRepoConnection extends VoidCommand {
 	private final String repositoryName;
 	private final String pathPrefix;
-	private final RepositoryDTO clientRepositoryDTO;
+	private final RepositoryDto clientRepositoryDto;
 
-	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDTO clientRepositoryDTO) {
+	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
 		this.repositoryName = assertNotNull("repositoryName", repositoryName);
 		this.pathPrefix = pathPrefix;
-		this.clientRepositoryDTO = assertNotNull("clientRepositoryDTO", clientRepositoryDTO);
-		assertNotNull("clientRepositoryDTO.repositoryId", clientRepositoryDTO.getRepositoryId());
-		assertNotNull("clientRepositoryDTO.publicKey", clientRepositoryDTO.getPublicKey());
+		this.clientRepositoryDto = assertNotNull("clientRepositoryDto", clientRepositoryDto);
+		assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
+		assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
 	}
 
 	@Override
 	public Response _execute() {
 		return createWebTarget("_requestRepoConnection", urlEncode(repositoryName), pathPrefix)
-				.request().post(Entity.entity(clientRepositoryDTO, MediaType.APPLICATION_XML));
+				.request().post(Entity.entity(clientRepositoryDto, MediaType.APPLICATION_XML));
 	}
 
 }

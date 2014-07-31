@@ -22,7 +22,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 
 public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	private static final Logger logger = LoggerFactory.getLogger(SyncSubCommand.class);
@@ -95,7 +95,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 			localRoot = localRepoManager.getLocalRoot();
 			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 			try {
-				Collection<RemoteRepository> remoteRepositories = transaction.getDAO(RemoteRepositoryDAO.class).getObjects();
+				Collection<RemoteRepository> remoteRepositories = transaction.getDao(RemoteRepositoryDao.class).getObjects();
 				for (RemoteRepository remoteRepository : remoteRepositories) {
 					if (remoteRepository.getRemoteRoot() == null)
 						continue;
