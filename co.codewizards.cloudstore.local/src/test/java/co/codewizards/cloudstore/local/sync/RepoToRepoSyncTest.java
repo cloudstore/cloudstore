@@ -13,8 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -227,7 +226,70 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(child_2_1_b_actual).isEqualTo(child_2_1_b_expected);
 	}
 
+
+	@Test
+	public void syncUpAndModifyFile() throws Exception {
+		localRoot = newTestRepositoryLocalRoot("local");
+		localRoot.mkdirs();
+
+		remoteRoot = newTestRepositoryLocalRoot("remote");
+		remoteRoot.mkdirs();
+
+		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+
+		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
+
+		File child_1 = createDirectory(remoteRoot, "1");
+		File file_1a = createFileWithRandomContent(child_1, "a");
+
+		localRepoManagerLocal.localSync(new LoggerProgressMonitor(logger));
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+
+		// test-case: modify a local file and only do up-sync
+		modifyFileRandomly(file_1a);
+		repoToRepoSync.syncUp(new LoggerProgressMonitor(logger));
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		// remark: no down-sync here, directly edit a second time and upload:
+		modifyFileRandomly(file_1a);
+		repoToRepoSync.syncUp(new LoggerProgressMonitor(logger));
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		repoToRepoSync.syncDown(false, new LoggerProgressMonitor(logger));
+		localRepoManagerLocal.localSync(new LoggerProgressMonitor(logger));
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		repoToRepoSync.close();
+
+		localRepoManagerLocal.close();
+		localRepoManagerRemote.close();
+
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
 	private void modifyFileRandomly(File file) throws IOException {
+		try {
+			//TODO get rid of that sleep; needed, because *nix system are rounding to the next second.
+			// Setting via file.setLastModified(time) did not solve the problem.
+			Thread.sleep(1100);
+		} catch (InterruptedException e) {
+			logger.error("Interrupted!", e);
+		}
 		RandomAccessFile raf = new RandomAccessFile(file, "rw");
 		try {
 			if (file.length() > 0)

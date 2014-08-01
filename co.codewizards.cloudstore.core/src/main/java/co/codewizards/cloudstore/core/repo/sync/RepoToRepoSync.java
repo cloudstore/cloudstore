@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.equal;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -108,10 +109,12 @@ public class RepoToRepoSync {
 			readRemoteRepositoryIdFromRepoTransport();
 			monitor.worked(1);
 
-			if (localSyncExecutor != null)
+			if (localSyncExecutor != null) {
 				throw new IllegalStateException("localSyncExecutor != null");
-			if (localSyncFuture != null)
+			}
+			if (localSyncFuture != null) {
 				throw new IllegalStateException("localSyncFuture != null");
+			}
 
 			localSyncExecutor = Executors.newFixedThreadPool(1);
 			localSyncFuture = localSyncExecutor.submit(new Callable<Void>() {
@@ -124,21 +127,19 @@ public class RepoToRepoSync {
 			});
 
 			if (!TEST_INVERSE) { // This is the normal sync (NOT test).
-				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
-				sync(remoteRepoTransport, true, localRepoTransport, new SubProgressMonitor(monitor, 50));
+				syncDown(true, new SubProgressMonitor(monitor, 50));
 
-				if (localSyncExecutor != null)
+				if (localSyncExecutor != null) {
 					throw new IllegalStateException("localSyncExecutor != null");
-				if (localSyncFuture != null)
+				}
+				if (localSyncFuture != null) {
 					throw new IllegalStateException("localSyncFuture != null");
+				}
 
-				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
-				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
-
+				syncUp(new SubProgressMonitor(monitor, 50));
 				// Immediately sync back to make sure the changes we caused don't cause problems later
 				// (right now there's very likely no collision and this should be very fast).
-				logger.info("sync: down again: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
-				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
+				syncDown(false, new SubProgressMonitor(monitor, 50));
 			}
 			else { // THIS IS FOR TESTING ONLY!
 				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryId, localRoot);
@@ -146,18 +147,23 @@ public class RepoToRepoSync {
 
 				waitForAndCheckLocalSyncFuture();
 
-				logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
-				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
-
-				logger.info("sync: down: fromID={} from='{}' toID={} to='{}'", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot);
-				sync(remoteRepoTransport, false, localRepoTransport, new SubProgressMonitor(monitor, 50));
-
-				logger.info("sync: up again: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
-				sync(localRepoTransport, false, remoteRepoTransport, new SubProgressMonitor(monitor, 50));
+				syncUp(new SubProgressMonitor(monitor, 50));
+				syncDown(false, new SubProgressMonitor(monitor, 50));
+				syncUp(new SubProgressMonitor(monitor, 50));
 			}
 		} finally {
 			monitor.done();
 		}
+	}
+
+	public void syncUp(final ProgressMonitor monitor) {
+		logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
+		sync(localRepoTransport, false, remoteRepoTransport, monitor);
+	}
+
+	public void syncDown(boolean fromRepoLocalSync, final ProgressMonitor monitor) {
+		logger.info("sync: down: fromID={} from='{}' toID={} to='{}', fromRepoLocalSync={}", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot, fromRepoLocalSync);
+		sync(remoteRepoTransport, fromRepoLocalSync, localRepoTransport, monitor);
 	}
 
 	private void waitForAndCheckLocalSyncFutureIfExists() {
