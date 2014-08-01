@@ -12,3 +12,4 @@ Questions?
 ====
 
 Please take a look at our [FAQ](http://cloudstore.codewizards.co/latest-stable/documentation/faq.html).
+
