@@ -1345,7 +1345,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 	public void endPutFile(String path, final Date lastModified, final long length, final String sha1) {
 		path = prefixPath(path);
 		assertNotNull("lastModified", lastModified);
-		assertNotNull("sha1", sha1);
 		final File file = getFile(path);
 		final File parentFile = file.getParentFile();
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
@@ -1445,7 +1444,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 				normalFile.setInProgress(false);
 
 				logger.trace("endPutFile: Committing: sha1='{}' file='{}'", normalFile.getSha1(), file);
-				if (!sha1.equals(normalFile.getSha1())) {
+				if (sha1 != null && !sha1.equals(normalFile.getSha1())) {
 					logger.warn("endPutFile: File was modified during transport (either on source or destination side): expectedSha1='{}' foundSha1='{}' file='{}'",
 							sha1, normalFile.getSha1(), file);
 				}

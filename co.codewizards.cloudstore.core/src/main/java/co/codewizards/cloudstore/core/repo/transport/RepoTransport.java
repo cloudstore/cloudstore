@@ -166,6 +166,18 @@ public interface RepoTransport extends AutoCloseable {
 	 */
 	void putFileData(String path, long offset, byte[] fileData);
 
+	/**
+	 * Ends a file transfer to this {@code RepoTransport}.
+	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
+	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
+	 * It is always relative to the repository's root directory.
+	 * @param lastModified when was the file's last modification. Must not be <code>null</code>.
+	 * @param length the length of the file in bytes. If the file already existed and was longer, it is
+	 * truncated to this length.
+	 * @param sha1 the SHA1 hash of the file. May be <code>null</code>. If it is given, the repository may
+	 * log a warning, if the current file is different. It should not throw an exception, because it
+	 * is a valid state that a file is modified (by another process) while it is transferred.
+	 */
 	void endPutFile(String path, Date lastModified, long length, String sha1);
 
 	void endSyncFromRepository();
