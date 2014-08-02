@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
-import co.codewizards.cloudstore.rest.server.CloudStoreREST;
+import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
 /**
  * @author unascribed
@@ -24,10 +24,10 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultExceptionMapper.class);
 
-	public DefaultExceptionMapper(@Context CloudStoreREST cloudStoreREST) {
-		logger.debug("<init>: Instance created. cloudStoreREST={}", cloudStoreREST);
+	public DefaultExceptionMapper(@Context CloudStoreRest cloudStoreRest) {
+		logger.debug("<init>: Instance created. cloudStoreREST={}", cloudStoreRest);
 
-		if (cloudStoreREST == null)
+		if (cloudStoreRest == null)
 			throw new IllegalArgumentException("cloudStoreREST == null");
 
 	}

@@ -55,7 +55,7 @@ import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
-import co.codewizards.cloudstore.rest.server.CloudStoreREST;
+import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
 public class CloudStoreServer implements Runnable {
 	public static final String CONFIG_KEY_SECURE_PORT = "server.securePort";
@@ -321,7 +321,7 @@ public class CloudStoreServer implements Runnable {
 	 * @return the actual REST application. Must not be <code>null</code>.
 	 */
 	protected ResourceConfig createResourceConfig() {
-		return new CloudStoreREST();
+		return new CloudStoreRest();
 	}
 
 	private ServerConnector createServerConnectorForHTTPS(Server server, HttpConfiguration httpConfigurationForHTTPS) {

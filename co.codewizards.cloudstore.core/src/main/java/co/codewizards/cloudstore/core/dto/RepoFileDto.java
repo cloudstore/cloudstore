@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class RepoFileDto {
-	private long id;
+	private long id = -1;
 
 	private Long parentId;
 
@@ -23,28 +23,28 @@ public class RepoFileDto {
 	public long getId() {
 		return id;
 	}
-	public void setId(long id) {
+	public void setId(final long id) {
 		this.id = id;
 	}
 
 	public Long getParentId() {
 		return parentId;
 	}
-	public void setParentId(Long parentId) {
+	public void setParentId(final Long parentId) {
 		this.parentId = parentId;
 	}
 
 	public String getName() {
 		return name;
 	}
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
 	public long getLocalRevision() {
 		return localRevision;
 	}
-	public void setLocalRevision(long localRevision) {
+	public void setLocalRevision(final long localRevision) {
 		this.localRevision = localRevision;
 	}
 	/**
@@ -56,7 +56,7 @@ public class RepoFileDto {
 	public Date getLastModified() {
 		return lastModified;
 	}
-	public void setLastModified(Date lastModified) {
+	public void setLastModified(final Date lastModified) {
 		this.lastModified = lastModified;
 	}
 }

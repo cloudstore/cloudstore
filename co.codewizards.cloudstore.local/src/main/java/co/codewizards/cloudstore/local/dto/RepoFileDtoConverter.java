@@ -36,6 +36,7 @@ public class RepoFileDtoConverter {
 	private final LocalRepoManager localRepoManager;
 	private final LocalRepoTransaction transaction;
 	private final RepoFileDao repoFileDao;
+	private boolean excludeLocalIds;
 
 	public RepoFileDtoConverter(final LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -93,10 +94,12 @@ public class RepoFileDtoConverter {
 		else
 			throw new UnsupportedOperationException("RepoFile type not yet supported: " + repoFile);
 
-		repoFileDto.setId(repoFile.getId());
+		if (! isExcludeLocalIds()) {
+			repoFileDto.setId(repoFile.getId());
+			repoFileDto.setParentId(repoFile.getParent() == null ? null : repoFile.getParent().getId());
+		}
 		repoFileDto.setLocalRevision(repoFile.getLocalRevision());
 		repoFileDto.setName(repoFile.getName());
-		repoFileDto.setParentId(repoFile.getParent() == null ? null : repoFile.getParent().getId());
 		repoFileDto.setLastModified(repoFile.getLastModified());
 
 		return repoFileDto;
@@ -108,5 +111,12 @@ public class RepoFileDtoConverter {
 		fileChunkDto.setLength(fileChunk.getLength());
 		fileChunkDto.setSha1(fileChunk.getSha1());
 		return fileChunkDto;
+	}
+
+	public boolean isExcludeLocalIds() {
+		return excludeLocalIds;
+	}
+	public void setExcludeLocalIds(final boolean excludeLocalIds) {
+		this.excludeLocalIds = excludeLocalIds;
 	}
 }

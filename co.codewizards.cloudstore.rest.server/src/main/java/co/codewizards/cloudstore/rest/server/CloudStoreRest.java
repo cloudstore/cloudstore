@@ -30,9 +30,9 @@ import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-@ApplicationPath("CloudStoreREST")
-public class CloudStoreREST extends ResourceConfig {
-	private static final Logger logger = LoggerFactory.getLogger(CloudStoreREST.class);
+@ApplicationPath("CloudStoreRest")
+public class CloudStoreRest extends ResourceConfig {
+	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRest.class);
 
 	static {
 		logger.debug("<static_init>: Class loaded.");

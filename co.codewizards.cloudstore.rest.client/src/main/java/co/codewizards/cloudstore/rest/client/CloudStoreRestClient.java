@@ -818,18 +818,39 @@ public class CloudStoreRestClient {
 		if (!Throwable.class.isAssignableFrom(clazz))
 			return;
 
-		Object throwableO = null;
-		if (throwableO == null) {
-			throwableO = getObjectOrNull(clazz, new Class<?>[] { String.class }, error.getMessage());
-		}
+		@SuppressWarnings("unchecked")
+		final Class<? extends Throwable> clasz = (Class<? extends Throwable>) clazz;
 
-		if (throwableO == null) {
-			throwableO = getObjectOrNull(clazz, null);
-		}
+		final RemoteException cause = new RemoteException(error);
 
-		if (throwableO != null) {
-			final Throwable throwable = (Throwable) throwableO;
-			throwable.initCause(new RemoteException(error));
+		Throwable throwable = null;
+
+		// trying XyzException(String message, Throwable cause)
+		if (throwable == null)
+			throwable = getObjectOrNull(clasz, new Class<?>[] { String.class, Throwable.class }, error.getMessage(), cause);
+
+		// trying XyzException(String message)
+		if (throwable == null)
+			throwable = getObjectOrNull(clasz, new Class<?>[] { String.class }, error.getMessage());
+
+		// trying XyzException(Throwable cause)
+		if (throwable == null)
+			throwable = getObjectOrNull(clasz, new Class<?>[] { Throwable.class }, cause);
+
+		// trying XyzException()
+		if (throwable == null)
+			throwable = getObjectOrNull(clasz, null);
+
+		if (throwable != null) {
+			try {
+				throwable.initCause(cause);
+			} catch (final Exception x) {
+				// This happens, if either the cause was already set in an appropriate constructor (see above)
+				// or the concrete Throwable does not support it. If we were unable to set the cause we want,
+				// we better use a RemoteException and not the original one.
+				if (throwable.getCause() != cause)
+					return;
+			}
 			if (throwable instanceof RuntimeException)
 				throw (RuntimeException) throwable;
 
@@ -840,8 +861,8 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	private Object getObjectOrNull(final Class<?> clazz, Class<?>[] argumentTypes, final Object ... arguments) {
-		Object result = null;
+	private <T> T getObjectOrNull(final Class<T> clazz, Class<?>[] argumentTypes, final Object ... arguments) {
+		T result = null;
 		if (argumentTypes == null)
 			argumentTypes = new Class<?> [0];
 
@@ -856,7 +877,7 @@ public class CloudStoreRestClient {
 		}
 
 		if (result == null) {
-			Constructor<?> constructor;
+			Constructor<T> constructor;
 			try {
 				constructor = clazz.getConstructor(argumentTypes);
 			} catch (final NoSuchMethodException e) {
