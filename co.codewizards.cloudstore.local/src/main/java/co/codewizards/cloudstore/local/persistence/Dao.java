@@ -231,6 +231,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected Collection<E> load(final Collection<E> entities) {
+		assertNotNull("entities", entities);
 		final Collection<E> result = new ArrayList<>();
 		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		for (final E entity : entities) {
