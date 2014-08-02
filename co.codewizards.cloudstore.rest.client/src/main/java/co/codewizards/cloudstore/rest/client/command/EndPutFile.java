@@ -19,7 +19,7 @@ public class EndPutFile extends VoidCommand {
 		this.path = assertNotNull("path", path);
 		this.lastModified = assertNotNull("lastModified", lastModified);
 		this.length = length;
-		this.sha1 = assertNotNull("sha1", sha1);
+		this.sha1 = sha1;
 	}
 
 	@Override
