@@ -10,12 +10,15 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
+import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListenerRegistry;
 import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 
-public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction {
+public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWithLocalRepoManager, ContextWithPersistenceManager {
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
@@ -26,7 +29,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 	private long localRevision = -1;
 	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
 
-	private final AutoTrackLifecycleListener autoTrackLifecycleListener = new AutoTrackLifecycleListener(this);
+	private final LocalRepoTransactionListenerRegistry listenerRegistry = new LocalRepoTransactionListenerRegistry(this);
 
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
 		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
@@ -43,14 +46,9 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 			lock();
 
 		persistenceManager = persistenceManagerFactory.getPersistenceManager();
-		hookLifecycleListeners();
 		jdoTransaction = persistenceManager.currentTransaction();
 		jdoTransaction.begin();
-		autoTrackLifecycleListener.onBegin();
-	}
-
-	private void hookLifecycleListeners() {
-		persistenceManager.addInstanceLifecycleListener(autoTrackLifecycleListener, (Class[]) null);
+		listenerRegistry.onBegin();
 	}
 
 	@Override
@@ -58,8 +56,8 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		listenerRegistry.onCommit();
 		daoClass2Dao.clear();
-		autoTrackLifecycleListener.onCommit();
 		persistenceManager.flush();
 		jdoTransaction.commit();
 		persistenceManager.close();
@@ -79,8 +77,8 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 		if (!isActive())
 			throw new IllegalStateException("Transaction is not active!");
 
+		listenerRegistry.onRollback();
 		daoClass2Dao.clear();
-		autoTrackLifecycleListener.onRollback();
 		jdoTransaction.rollback();
 		persistenceManager.close();
 		jdoTransaction = null;
@@ -95,6 +93,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 			rollback();
 	}
 
+	@Override
 	public PersistenceManager getPersistenceManager() {
 		if (!isActive()) {
 			throw new IllegalStateException("Transaction is not active!");
