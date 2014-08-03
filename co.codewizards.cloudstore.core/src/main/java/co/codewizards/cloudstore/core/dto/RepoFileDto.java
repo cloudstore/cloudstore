@@ -16,7 +16,7 @@ public class RepoFileDto {
 
 	private String name;
 
-	private long localRevision;
+//	private long localRevision;
 
 	private Date lastModified;
 
@@ -41,12 +41,12 @@ public class RepoFileDto {
 		this.name = name;
 	}
 
-	public long getLocalRevision() {
-		return localRevision;
-	}
-	public void setLocalRevision(final long localRevision) {
-		this.localRevision = localRevision;
-	}
+//	public long getLocalRevision() {
+//		return localRevision;
+//	}
+//	public void setLocalRevision(final long localRevision) {
+//		this.localRevision = localRevision;
+//	}
 	/**
 	 * Gets the timestamp of the file's last modification.
 	 * <p>

@@ -97,8 +97,8 @@ public class RepoFileDtoConverter {
 		if (! isExcludeLocalIds()) {
 			repoFileDto.setId(repoFile.getId());
 			repoFileDto.setParentId(repoFile.getParent() == null ? null : repoFile.getParent().getId());
+//			repoFileDto.setLocalRevision(repoFile.getLocalRevision());
 		}
-		repoFileDto.setLocalRevision(repoFile.getLocalRevision());
 		repoFileDto.setName(repoFile.getName());
 		repoFileDto.setLastModified(repoFile.getLastModified());
 
