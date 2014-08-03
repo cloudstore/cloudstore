@@ -76,7 +76,7 @@ public class CloudStoreServer implements Runnable {
 	private static final char[] KEY_PASSWORD_CHAR_ARRAY = KEY_PASSWORD_STRING.toCharArray();
 
 	private File keyStoreFile;
-	private SecureRandom random = new SecureRandom();
+	private final SecureRandom random = new SecureRandom();
 	private int securePort;
 	private final AtomicBoolean running = new AtomicBoolean();
 	private Server server;
@@ -86,7 +86,7 @@ public class CloudStoreServer implements Runnable {
 		try {
 			args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 			createCloudStoreServer(args).run();
-		} catch (Throwable x) {
+		} catch (final Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
 		}
@@ -102,7 +102,7 @@ public class CloudStoreServer implements Runnable {
 		return constructor;
 	}
 
-	protected static CloudStoreServer createCloudStoreServer(String[] args) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	protected static CloudStoreServer createCloudStoreServer(final String[] args) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		final Constructor<? extends CloudStoreServer> constructor = getCloudStoreServerConstructor();
 		final CloudStoreServer cloudStoreServer = constructor.newInstance(new Object[] { args });
 		return cloudStoreServer;
@@ -111,7 +111,7 @@ public class CloudStoreServer implements Runnable {
 	protected static Class<? extends CloudStoreServer> getCloudStoreServerClass() {
 		return cloudStoreServerClass;
 	}
-	protected static void setCloudStoreServerClass(Class<? extends CloudStoreServer> cloudStoreServerClass) {
+	protected static void setCloudStoreServerClass(final Class<? extends CloudStoreServer> cloudStoreServerClass) {
 		assertNotNull("cloudStoreServerClass", cloudStoreServerClass);
 		CloudStoreServer.cloudStoreServerClass = cloudStoreServerClass;
 	}
@@ -133,9 +133,9 @@ public class CloudStoreServer implements Runnable {
 			synchronized (this) {
 				server = null;
 			}
-		} catch (RuntimeException x) {
+		} catch (final RuntimeException x) {
 			throw x;
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			throw new RuntimeException(x);
 		} finally {
 			running.set(false);
@@ -146,7 +146,7 @@ public class CloudStoreServer implements Runnable {
 		if (server != null) {
 			try {
 				server.stop();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new RuntimeException();
 			}
 		}
@@ -154,7 +154,7 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized File getKeyStoreFile() {
 		if (keyStoreFile == null) {
-			File sslServer = new File(ConfigDir.getInstance().getFile(), "ssl.server");
+			final File sslServer = new File(ConfigDir.getInstance().getFile(), "ssl.server");
 
 			if (!sslServer.isDirectory())
 				sslServer.mkdirs();
@@ -167,7 +167,7 @@ public class CloudStoreServer implements Runnable {
 		return keyStoreFile;
 	}
 
-	public synchronized void setKeyStoreFile(File keyStoreFile) {
+	public synchronized void setKeyStoreFile(final File keyStoreFile) {
 		assertNotRunning();
 		this.keyStoreFile = keyStoreFile;
 	}
@@ -184,7 +184,7 @@ public class CloudStoreServer implements Runnable {
 		return securePort;
 	}
 
-	public synchronized void setSecurePort(int securePort) {
+	public synchronized void setSecurePort(final int securePort) {
 		assertNotRunning();
 		this.securePort = securePort;
 	}
@@ -202,17 +202,17 @@ public class CloudStoreServer implements Runnable {
 			System.out.println("There is no key, yet. Creating a new RSA key pair, now. This might");
 			System.out.println("take a while (a few seconds up to a few minutes). Please be patient!");
 			System.out.println("**********************************************************************");
-			long keyGenStartTimestamp = System.currentTimeMillis();
-			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			final long keyGenStartTimestamp = System.currentTimeMillis();
+			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 			keyGen.initialize(4096, random); // TODO make configurable
-			KeyPair pair = keyGen.generateKeyPair();
+			final KeyPair pair = keyGen.generateKeyPair();
 
-			X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
+			final X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
 
-			long serial = new SecureRandom().nextLong();
+			final long serial = new SecureRandom().nextLong();
 
 			v3CertGen.setSerialNumber(BigInteger.valueOf(serial).abs());
 			v3CertGen.setIssuerDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
@@ -223,32 +223,32 @@ public class CloudStoreServer implements Runnable {
 			v3CertGen.setPublicKey(pair.getPublic());
 			v3CertGen.setSignatureAlgorithm("SHA1WithRSAEncryption");
 
-			X509Certificate pkCertificate = v3CertGen.generateX509Certificate(pair.getPrivate());
+			final X509Certificate pkCertificate = v3CertGen.generateX509Certificate(pair.getPrivate());
 
-			PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
+			final PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
 			ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
 
-			FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
+			final FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
 			try {
 				ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
 				fos.close();
 			}
 
-			long keyGenDuration = System.currentTimeMillis() - keyGenStartTimestamp;
+			final long keyGenDuration = System.currentTimeMillis() - keyGenStartTimestamp;
 			logger.info("initKeyStore: Creating RSA key pair took {} ms.", keyGenDuration);
 			System.out.println(String.format("Generating a new RSA key pair took %s ms.", keyGenDuration));
 		}
 
-		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		FileInputStream fis = new FileInputStream(getKeyStoreFile());
+		final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+		final FileInputStream fis = new FileInputStream(getKeyStoreFile());
 		try {
 			ks.load(fis, KEY_STORE_PASSWORD_CHAR_ARRAY);
 		} finally {
 			fis.close();
 		}
-		X509Certificate certificate = (X509Certificate) ks.getCertificate(CERTIFICATE_ALIAS);
-		String certificateSha1 = HashUtil.sha1ForHuman(certificate.getEncoded());
+		final X509Certificate certificate = (X509Certificate) ks.getCertificate(CERTIFICATE_ALIAS);
+		final String certificateSha1 = HashUtil.sha1ForHuman(certificate.getEncoded());
 		System.out.println("**********************************************************************");
 		System.out.println("Server certificate fingerprint (SHA1):");
 		System.out.println();
@@ -265,13 +265,13 @@ public class CloudStoreServer implements Runnable {
 	}
 
 	private Server createServer() {
-		QueuedThreadPool threadPool = new QueuedThreadPool();
+		final QueuedThreadPool threadPool = new QueuedThreadPool();
 		threadPool.setMaxThreads(500);
 
-		Server server = new Server(threadPool);
+		final Server server = new Server(threadPool);
 		server.addBean(new ScheduledExecutorScheduler());
 
-		HttpConfiguration http_config = createHttpConfigurationForHTTP();
+		final HttpConfiguration http_config = createHttpConfigurationForHTTP();
 
 //        ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(http_config));
 //        http.setPort(8080);
@@ -283,14 +283,14 @@ public class CloudStoreServer implements Runnable {
 		server.setDumpBeforeStop(false);
 		server.setStopAtShutdown(true);
 
-		HttpConfiguration https_config = createHttpConfigurationForHTTPS(http_config);
+		final HttpConfiguration https_config = createHttpConfigurationForHTTPS(http_config);
 		server.addConnector(createServerConnectorForHTTPS(server, https_config));
 
 		return server;
 	}
 
 	private HttpConfiguration createHttpConfigurationForHTTP() {
-		HttpConfiguration http_config = new HttpConfiguration();
+		final HttpConfiguration http_config = new HttpConfiguration();
 		http_config.setSecureScheme("https");
 		http_config.setSecurePort(getSecurePort());
 		http_config.setOutputBufferSize(32768);
@@ -301,16 +301,16 @@ public class CloudStoreServer implements Runnable {
 		return http_config;
 	}
 
-	private HttpConfiguration createHttpConfigurationForHTTPS(HttpConfiguration httpConfigurationForHTTP) {
-		HttpConfiguration https_config = new HttpConfiguration(httpConfigurationForHTTP);
+	private HttpConfiguration createHttpConfigurationForHTTPS(final HttpConfiguration httpConfigurationForHTTP) {
+		final HttpConfiguration https_config = new HttpConfiguration(httpConfigurationForHTTP);
 		https_config.addCustomizer(new SecureRequestCustomizer());
 		return https_config;
 	}
 
 	private ServletContextHandler createServletContextHandler() {
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		ServletContainer servletContainer = new ServletContainer(assertNotNull("createResourceConfig()", createResourceConfig()));
+		final ServletContainer servletContainer = new ServletContainer(assertNotNull("createResourceConfig()", createResourceConfig()));
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 //		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;
@@ -324,8 +324,8 @@ public class CloudStoreServer implements Runnable {
 		return new CloudStoreRest();
 	}
 
-	private ServerConnector createServerConnectorForHTTPS(Server server, HttpConfiguration httpConfigurationForHTTPS) {
-		SslContextFactory sslContextFactory = new SslContextFactory();
+	private ServerConnector createServerConnectorForHTTPS(final Server server, final HttpConfiguration httpConfigurationForHTTPS) {
+		final SslContextFactory sslContextFactory = new SslContextFactory();
 		sslContextFactory.setKeyStorePath(getKeyStoreFile().getPath());
 		sslContextFactory.setKeyStorePassword(KEY_STORE_PASSWORD_STRING);
 		sslContextFactory.setKeyManagerPassword(KEY_PASSWORD_STRING);
@@ -340,34 +340,32 @@ public class CloudStoreServer implements Runnable {
 				".*DES.*");
 		//        sslContextFactory.setCertAlias(CERTIFICATE_ALIAS); // Jetty uses our certificate. We put only one single cert into the key store. Hence, we don't need this.
 
-		ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpConfigurationForHTTPS));
+		final ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpConfigurationForHTTPS));
 		sslConnector.setPort(getSecurePort());
 		return sslConnector;
 	}
 
 	private static void initLogging() throws IOException, JoranException {
-		File logDir = ConfigDir.getInstance().getLogDir();
+		final File logDir = ConfigDir.getInstance().getLogDir();
 		DerbyUtil.setLogFile(new File(logDir, "derby.log"));
 
-		String logbackXmlName = "logback.server.xml";
-		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final String logbackXmlName = "logback.server.xml";
+		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreServer.class, logbackXmlName, logbackXmlFile);
 
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 	    try {
-	      JoranConfigurator configurator = new JoranConfigurator();
+	      final JoranConfigurator configurator = new JoranConfigurator();
 	      configurator.setContext(context);
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
 	      configurator.doConfigure(logbackXmlFile);
-	    } catch (JoranException je) {
+	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();
 	    }
 	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 	}
-
-	private static void doNothing() { }
 }

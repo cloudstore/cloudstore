@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.childprocess;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,7 +34,7 @@ public class LogDumpedStreamThread extends Thread
 	 */
 	private static final int logWhenBufferExceedsSize = 50 * 1024; // 50 KB
 
-	private ByteArrayOutputStream bufferOutputStream = new ByteArrayOutputStream();
+	private final ByteArrayOutputStream bufferOutputStream = new ByteArrayOutputStream();
 	private volatile boolean forceInterrupt = false;
 	private Long firstNonLoggedWriteTimestamp = null;
 	private long lastWriteTimestamp = 0;
@@ -42,7 +44,7 @@ public class LogDumpedStreamThread extends Thread
 
 	private Logger childProcessLogger;
 
-	public LogDumpedStreamThread(String childProcessLoggerName)
+	public LogDumpedStreamThread(final String childProcessLoggerName)
 	{
 		if (childProcessLoggerName == null)
 			childProcessLogger = logger;
@@ -50,7 +52,7 @@ public class LogDumpedStreamThread extends Thread
 			childProcessLogger = LoggerFactory.getLogger(childProcessLoggerName);
 	}
 
-	public void write(byte[] data, int length)
+	public void write(final byte[] data, final int length)
 	{
 		if (data == null)
 			throw new IllegalArgumentException("data == null"); //$NON-NLS-1$
@@ -63,13 +65,13 @@ public class LogDumpedStreamThread extends Thread
 		}
 	}
 
-	public void setOutputStringBuffer(StringBuffer outputStringBuffer) {
+	public void setOutputStringBuffer(final StringBuffer outputStringBuffer) {
 		this.outputStringBuffer = outputStringBuffer;
 	}
 	public StringBuffer getOutputStringBuffer() {
 		return outputStringBuffer;
 	}
-	public void setOutputStringBufferMaxLength(int outputStringBufferMaxLength) {
+	public void setOutputStringBufferMaxLength(final int outputStringBufferMaxLength) {
 		this.outputStringBufferMaxLength = outputStringBufferMaxLength;
 	}
 	public int getOutputStringBufferMaxLength() {
@@ -94,13 +96,13 @@ public class LogDumpedStreamThread extends Thread
 				synchronized (bufferOutputStream) {
 					try {
 						bufferOutputStream.wait(500L);
-					} catch (InterruptedException x) {
+					} catch (final InterruptedException x) {
 						doNothing();
 					}
 
 					processBuffer(false);
 				}
-			} catch (Throwable e) {
+			} catch (final Throwable e) {
 				logger.error("run: " + e, e); //$NON-NLS-1$
 			}
 		}
@@ -112,23 +114,23 @@ public class LogDumpedStreamThread extends Thread
 		processBuffer(true);
 	}
 
-	protected void processBuffer(boolean force)
+	protected void processBuffer(final boolean force)
 	{
 		synchronized (bufferOutputStream) {
 			if (bufferOutputStream.size() > 0) {
-				long firstNonLoggedWriteAge = firstNonLoggedWriteTimestamp == null ? 0 : System.currentTimeMillis() - firstNonLoggedWriteTimestamp;
-				long noWritePeriod = System.currentTimeMillis() - lastWriteTimestamp;
+				final long firstNonLoggedWriteAge = firstNonLoggedWriteTimestamp == null ? 0 : System.currentTimeMillis() - firstNonLoggedWriteTimestamp;
+				final long noWritePeriod = System.currentTimeMillis() - lastWriteTimestamp;
 				if (force || firstNonLoggedWriteAge > logMaxAge || noWritePeriod > logAfterNoWritePeriod || bufferOutputStream.size() > logWhenBufferExceedsSize) {
 					String currentBufferString;
 					try {
 						currentBufferString = bufferOutputStream.toString(IOUtil.CHARSET_NAME_UTF_8);
-					} catch (UnsupportedEncodingException e) {
+					} catch (final UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}
 
-					StringBuffer outputStringBuffer = getOutputStringBuffer();
+					final StringBuffer outputStringBuffer = getOutputStringBuffer();
 					if (outputStringBuffer != null) {
-						int newOutputStringBufferLength = outputStringBuffer.length() + currentBufferString.length();
+						final int newOutputStringBufferLength = outputStringBuffer.length() + currentBufferString.length();
 						if (newOutputStringBufferLength > outputStringBufferMaxLength) {
 							int lastCharPositionToDelete = newOutputStringBufferLength - outputStringBufferMaxLength;
 							// search for first line-break
@@ -152,20 +154,18 @@ public class LogDumpedStreamThread extends Thread
 		}
 	}
 
-	private static final void doNothing() { }
-
-	private String prefixEveryLine(String s)
+	private String prefixEveryLine(final String s)
 	{
 		try {
-			StringBuilder result = new StringBuilder();
+			final StringBuilder result = new StringBuilder();
 			final String prefix = "  >>> "; //$NON-NLS-1$
-			BufferedReader r = new BufferedReader(new StringReader(s));
+			final BufferedReader r = new BufferedReader(new StringReader(s));
 			String line;
 			while (null != (line = r.readLine()))
 				result.append(prefix).append(line).append('\n');
 
 			return result.toString();
-		} catch (IOException x) {
+		} catch (final IOException x) {
 			throw new RuntimeException(x);
 		}
 	}

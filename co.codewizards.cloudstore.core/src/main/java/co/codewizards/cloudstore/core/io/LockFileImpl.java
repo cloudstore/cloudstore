@@ -29,7 +29,7 @@ class LockFileImpl implements LockFile {
 	private FileLock fileLock;
 	private final Lock lock = new ReentrantLock();
 
-	protected LockFileImpl(LockFileFactory lockFileFactory, File file) {
+	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
 		this.lockFileFactory = assertNotNull("lockFileFactory", lockFileFactory);
 		this.file = assertNotNull("file", file);
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
@@ -65,22 +65,22 @@ class LockFileImpl implements LockFile {
 				++lockCounter;
 				logger.debug("[{}]tryAcquire: returning true. lockCounter={}", thisID, lockCounter);
 				return true;
-			} catch (IOException x) {
+			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
 		}
 	}
 
-	public void acquire(long timeoutMillis) throws TimeoutException {
+	public void acquire(final long timeoutMillis) throws TimeoutException {
 		if (timeoutMillis < 0)
 			throw new IllegalArgumentException("timeoutMillis < 0");
 
-		long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = System.currentTimeMillis();
 
 		while (!tryAcquire()) {
 			try {
 				Thread.sleep(300);
-			} catch (InterruptedException e) { doNothing(); }
+			} catch (final InterruptedException e) { doNothing(); }
 
 			if (timeoutMillis > 0 && System.currentTimeMillis() - beginTimestamp > timeoutMillis) {
 				throw new TimeoutException(String.format("Could not lock '%s' within timeout of %s ms!",
@@ -102,7 +102,7 @@ class LockFileImpl implements LockFile {
 		logger.trace("[{}]release: entered. lockCounter={}", thisID, lockCounter);
 		synchronized (this) {
 			logger.trace("[{}]release: inside synchronized", thisID);
-			int lockCounterValue = --lockCounter;
+			final int lockCounterValue = --lockCounter;
 			if (lockCounterValue > 0) {
 				logger.debug("[{}]release: NOT releasing underlying FileLock. lockCounter={}", thisID, lockCounter);
 				return;
@@ -122,7 +122,7 @@ class LockFileImpl implements LockFile {
 					randomAccessFile.close();
 					randomAccessFile = null;
 				}
-			} catch (IOException x) {
+			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
 		}
@@ -132,8 +132,6 @@ class LockFileImpl implements LockFile {
 	protected int getLockCounter() {
 		return lockCounter;
 	}
-
-	private static void doNothing() { }
 
 	@Override
 	public Lock getLock() {
@@ -167,7 +165,7 @@ class LockFileImpl implements LockFile {
 		}
 
 		@Override
-		public int read(byte[] b, int off, int len) throws IOException {
+		public int read(final byte[] b, final int off, final int len) throws IOException {
 			randomAccessFile.seek(position);
 			final int result = randomAccessFile.read(b, off, len);
 			position = randomAccessFile.getFilePointer();
@@ -191,14 +189,14 @@ class LockFileImpl implements LockFile {
 		}
 
 		@Override
-		public void write(int b) throws IOException {
+		public void write(final int b) throws IOException {
 			randomAccessFile.seek(position);
 			randomAccessFile.write(b);
 			position = randomAccessFile.getFilePointer();
 		}
 
 		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
+		public void write(final byte[] b, final int off, final int len) throws IOException {
 			randomAccessFile.seek(position);
 			randomAccessFile.write(b, off, len);
 			position = randomAccessFile.getFilePointer();

@@ -35,21 +35,21 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerFactoryImpl.class);
 
-	private Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();
-	private Set<LocalRepoManagerImpl> nonReOpenableLocalRepoManagerImpls = new HashSet<LocalRepoManagerImpl>();
+	private final Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();
+	private final Set<LocalRepoManagerImpl> nonReOpenableLocalRepoManagerImpls = new HashSet<LocalRepoManagerImpl>();
 
-	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
+	private final List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
 
-	private LocalRepoManagerCloseListener localRepoManagerCloseListener = new LocalRepoManagerCloseListener() {
+	private final LocalRepoManagerCloseListener localRepoManagerCloseListener = new LocalRepoManagerCloseListener() {
 		@Override
-		public void preClose(LocalRepoManagerCloseEvent event) {
+		public void preClose(final LocalRepoManagerCloseEvent event) {
 			if (!event.isBackend())
 				throw new IllegalStateException("Why are we notified by the proxy?!?");
 
 			preLocalRepoManagerBackendClose(event.getLocalRepoManager());
 		}
 		@Override
-		public void postClose(LocalRepoManagerCloseEvent event) {
+		public void postClose(final LocalRepoManagerCloseEvent event) {
 			if (!event.isBackend())
 				throw new IllegalStateException("Why are we notified by the proxy?!?");
 
@@ -72,7 +72,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 			nonReOpenableLocalRepoManagerImpls.add(localRepoManagerImpl);
 			while (localRepoManagerImpl.isOpen()) {
 				logger.info("createLocalRepoManagerForExistingRepository: Existing LocalRepoManagerImpl is currently closing and could not be re-opened. Waiting for it to be completely closed.");
-				try { Thread.sleep(100); } catch (InterruptedException x) { doNothing(); }
+				try { Thread.sleep(100); } catch (final InterruptedException x) { doNothing(); }
 			}
 			localRepoManagerImpl = null;
 		}
@@ -104,7 +104,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 		return createProxy(localRepoManagerImpl);
 	}
 
-	private LocalRepoManager createProxy(LocalRepoManagerImpl localRepoManagerImpl) {
+	private LocalRepoManager createProxy(final LocalRepoManagerImpl localRepoManagerImpl) {
 		return (LocalRepoManager) Proxy.newProxyInstance(
 				this.getClass().getClassLoader(),
 				new Class<?>[] { LocalRepoManager.class },
@@ -113,22 +113,22 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 
 	@Override
 	public synchronized void close() {
-		for (LocalRepoManagerImpl localRepoManagerImpl : new ArrayList<LocalRepoManagerImpl>(localRoot2LocalRepoManagerImpl.values())) {
+		for (final LocalRepoManagerImpl localRepoManagerImpl : new ArrayList<LocalRepoManagerImpl>(localRoot2LocalRepoManagerImpl.values())) {
 			localRepoManagerImpl.close();
 		}
 	}
 
 	@Override
-	public void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+	public void addLocalRepoManagerCloseListener(final LocalRepoManagerCloseListener listener) {
 		localRepoManagerCloseListeners.add(listener);
 	}
 
 	@Override
-	public void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+	public void removeLocalRepoManagerCloseListener(final LocalRepoManagerCloseListener listener) {
 		localRepoManagerCloseListeners.remove(listener);
 	}
 
-	private void enlist(LocalRepoManagerImpl localRepoManager) {
+	private void enlist(final LocalRepoManagerImpl localRepoManager) {
 		localRoot2LocalRepoManagerImpl.put(localRepoManager.getLocalRoot(), localRepoManager);
 		localRepoManager.addLocalRepoManagerCloseListener(localRepoManagerCloseListener);
 	}
@@ -137,23 +137,23 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 		assertNotNull("localRoot", localRoot);
 		try {
 			localRoot = localRoot.getCanonicalFile();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 		return localRoot;
 	}
 
-	private void preLocalRepoManagerBackendClose(LocalRepoManager localRepoManager) {
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+	private void preLocalRepoManagerBackendClose(final LocalRepoManager localRepoManager) {
+		final LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.preClose(event);
 		}
 	}
 
-	private void postLocalRepoManagerBackendClose(LocalRepoManagerImpl localRepoManager) {
+	private void postLocalRepoManagerBackendClose(final LocalRepoManagerImpl localRepoManager) {
 		assertNotNull("localRepoManager", localRepoManager);
 		synchronized (this) {
-			LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
+			final LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
 			if (localRepoManager != localRepoManager2) {
 				if (nonReOpenableLocalRepoManagerImpls.remove(localRepoManager))
 					logger.info("localRepoManager[{}] could not be re-opened and was unlisted before.", localRepoManager.id);
@@ -163,11 +163,9 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
 				localRoot2LocalRepoManagerImpl.put(localRepoManager2.getLocalRoot(), localRepoManager2); // re-add!
 			}
 		}
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+		final LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, localRepoManager, true);
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.postClose(event);
 		}
 	}
-
-	private static final void doNothing() { }
 }

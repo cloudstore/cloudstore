@@ -175,8 +175,6 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	private static final void doNothing() { }
-
 	public <R> R execute(final Command<R> command) {
 		assertNotNull("command", command);
 		acquireClient();

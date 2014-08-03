@@ -40,47 +40,47 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	private Properties remoteUpdateProperties;
 	private File tempDownloadDir;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		initLogging();
 		try {
-			int programExitStatus = new CloudStoreUpdater(args).throwException(false).execute();
+			final int programExitStatus = new CloudStoreUpdater(args).throwException(false).execute();
 			System.exit(programExitStatus);
-		} catch (Throwable x) {
+		} catch (final Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
 		}
 	}
 
-	public CloudStoreUpdater(String[] args) {
+	public CloudStoreUpdater(final String[] args) {
 		this.args = args;
 	}
 
 	public boolean isThrowException() {
 		return throwException;
 	}
-	public void setThrowException(boolean throwException) {
+	public void setThrowException(final boolean throwException) {
 		this.throwException = throwException;
 	}
-	public CloudStoreUpdater throwException(boolean throwException) {
+	public CloudStoreUpdater throwException(final boolean throwException) {
 		setThrowException(throwException);
 		return this;
 	}
 
 	public int execute() throws Exception {
 		int programExitStatus = 1;
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 			this.run();
 			programExitStatus = 0;
-		} catch (CmdLineException e) {
+		} catch (final CmdLineException e) {
 			// handling of wrong arguments
 			programExitStatus = 2;
 			System.err.println("Error: " + e.getMessage());
 			System.err.println();
 			if (throwException)
 				throw e;
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			programExitStatus = 3;
 			logger.error(x.toString(), x);
 			if (throwException)
@@ -93,19 +93,19 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		ConfigDir.getInstance().getLogDir();
 
 		final String logbackXmlName = "logback.updater.xml";
-		File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreUpdater.class, logbackXmlName, logbackXmlFile);
 
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 	    try {
-	      JoranConfigurator configurator = new JoranConfigurator();
+	      final JoranConfigurator configurator = new JoranConfigurator();
 	      configurator.setContext(context);
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
 	      configurator.doConfigure(logbackXmlFile);
-	    } catch (JoranException je) {
+	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();
 	    }
@@ -204,7 +204,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		}
 	}
 
-	private void restoreRenamedFiles(File dir) {
+	private void restoreRenamedFiles(final File dir) {
 		final File[] children = dir.listFiles();
 		if (children != null) {
 			for (final File child : children) {
@@ -224,12 +224,12 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	private static class FileFilterTrackingExtractedFiles implements FileFilter {
 		private final Collection<File> files;
 
-		public FileFilterTrackingExtractedFiles(Collection<File> files) {
+		public FileFilterTrackingExtractedFiles(final Collection<File> files) {
 			this.files = assertNotNull("files", files);
 		}
 
 		@Override
-		public boolean accept(File file) {
+		public boolean accept(final File file) {
 			files.add(file);
 			files.add(file.getParentFile()); // just in case the parent didn't have its own entry and was created implicitly
 			return true;
@@ -256,7 +256,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		files.add(fileOrDir);
 		final File[] children = fileOrDir.listFiles();
 		if (children != null) {
-			for (File child : children)
+			for (final File child : children)
 				populateFilesRecursively(child, files);
 		}
 	}
@@ -268,7 +268,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			logger.debug("deleteAllExcept: Keeping: {}", fileOrDir);
 			final File[] children = fileOrDir.listFiles();
 			if (children != null) {
-				for (File child : children)
+				for (final File child : children)
 					deleteAllExcept(child, keepFiles);
 			}
 		}
@@ -293,7 +293,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		try {
 			System.out.println("Downloading: " + resolvedURLStr);
 			final URL url = new URL(resolvedURLStr);
-			long contentLength = url.openConnection().getContentLengthLong();
+			final long contentLength = url.openConnection().getContentLengthLong();
 			if (contentLength < 0)
 				logger.warn("downloadURLViaRemoteUpdateProperties: contentLength unknown! url='{}'", url);
 			else {
@@ -327,7 +327,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			}
 
 			return downloadFile;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -336,7 +336,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		if (tempDownloadDir == null) {
 			try {
 				tempDownloadDir = IOUtil.createUniqueRandomFolder(IOUtil.getTempDir(), "cloudstore-update-");
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -374,13 +374,11 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				} finally {
 					in.close();
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 			remoteUpdateProperties = properties;
 		}
 		return remoteUpdateProperties;
 	}
-
-	private static final void doNothing() { }
 }

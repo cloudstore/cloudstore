@@ -19,7 +19,7 @@ public final class Util {
 
 		try {
 			return new URI(url.getProtocol(), url.getAuthority(), url.getPath(), url.getQuery(), url.getRef());
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			// Since every URL is an URI, its transformation should never fail. But if it does, we rethrow.
 			throw new RuntimeException(e);
 		}
@@ -74,4 +74,11 @@ public final class Util {
 	public static final boolean equal(final int one, final int two) {
 		return one == two;
 	}
+
+	/**
+	 * Does really nothing.
+	 * <p>
+	 * This method should be used in the catch of a try-catch-block, if there's really no action needed.
+	 */
+	public static final void doNothing() { }
 }
