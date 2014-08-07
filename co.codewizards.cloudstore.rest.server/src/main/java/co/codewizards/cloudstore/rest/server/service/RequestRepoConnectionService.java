@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.rest.server.service;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -19,6 +20,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @Path("_requestRepoConnection/{repositoryName}")
 public class RequestRepoConnectionService
@@ -47,19 +49,10 @@ public class RequestRepoConnectionService
 		assertNotNull("repositoryDto", clientRepositoryDto);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-
 		if (!"".equals(pathPrefix)) {
-			String localRootURLString = localRootURL.toExternalForm();
-			if (localRootURLString.endsWith("/"))
-				localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
-
-			if (!pathPrefix.startsWith("/"))
-				pathPrefix = '/' + pathPrefix;
-
-			localRootURLString = localRootURLString + pathPrefix;
 			try {
-				localRootURL = new URL(localRootURLString);
-			} catch (MalformedURLException e) {
+				localRootURL = UrlUtil.appendPath(localRootURL.toURI(), pathPrefix, false).toURL();
+			} catch (URISyntaxException | MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
 		}

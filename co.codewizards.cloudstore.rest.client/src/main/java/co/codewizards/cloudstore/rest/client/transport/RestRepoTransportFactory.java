@@ -39,7 +39,7 @@ public class RestRepoTransportFactory extends AbstractRepoTransportFactory {
 	}
 
 	@Override
-	protected RepoTransport _createRepoTransport(URL remoteRoot) {
+	protected RepoTransport _createRepoTransport() {
 		return new RestRepoTransport();
 	}
 }

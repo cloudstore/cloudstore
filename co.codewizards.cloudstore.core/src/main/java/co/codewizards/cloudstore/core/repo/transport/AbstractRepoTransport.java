@@ -13,6 +13,8 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
 public abstract class AbstractRepoTransport implements RepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRepoTransport.class);
 
+	private static final String SLASH = "/";
+
 	private RepoTransportFactory repoTransportFactory;
 	private URL remoteRoot;
 	private URL remoteRootWithoutPathPrefix;
@@ -76,8 +78,8 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String getPathPrefix() {
-		String pathPrefix = this.pathPrefix;
-		if (pathPrefix == null) {
+		String urlEncodedPathPrefix = this.pathPrefix;
+		if (urlEncodedPathPrefix == null) {
 			URL rr = getRemoteRoot();
 			if (rr == null)
 				throw new IllegalStateException("remoteRoot not yet assigned!");
@@ -90,30 +92,30 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 								remoteRoot, remoteRootWithoutPathPrefix));
 
 			if (remoteRoot.equals(remoteRootWithoutPathPrefix))
-				pathPrefix = "";
+				urlEncodedPathPrefix = "";
 			else {
-				pathPrefix = remoteRoot.substring(remoteRootWithoutPathPrefix.length());
-				if (!pathPrefix.startsWith("/"))
-					pathPrefix = '/' + pathPrefix;
+				urlEncodedPathPrefix = remoteRoot.substring(remoteRootWithoutPathPrefix.length());
+				if (!urlEncodedPathPrefix.startsWith(SLASH))
+					urlEncodedPathPrefix = SLASH + urlEncodedPathPrefix;
 
-				if (pathPrefix.endsWith("/"))
-					throw new IllegalStateException("pathPrefix should not end with '/', but it does!");
+				if (urlEncodedPathPrefix.endsWith(SLASH))
+					throw new IllegalStateException("pathPrefix should not end with '" + SLASH + "', but it does!");
 			}
 
-			this.pathPrefix = pathPrefix;
+			this.pathPrefix = urlEncodedPathPrefix;
 		}
-		return pathPrefix;
+		return urlEncodedPathPrefix;
 	}
 
 	@Override
 	public String prefixPath(String path) {
 		assertNotNull("path", path);
-		if ("".equals(path) || "/".equals(path))
+		if ("".equals(path) || SLASH.equals(path))
 			return getPathPrefix();
-		if (path.startsWith("/"))
+		if (path.startsWith(SLASH))
 			return getPathPrefix() + path;
 		else
-			return getPathPrefix() + '/' + path;
+			return getPathPrefix() + SLASH + path;
 	}
 
 	@Override
@@ -123,14 +125,14 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 		if (pathPrefix.isEmpty())
 			return path;
 
-		if (!path.startsWith("/"))
-			path = '/' + path;
+		if (!path.startsWith(SLASH))
+			path = SLASH + path;
 
 		if (!path.startsWith(pathPrefix))
 			throw new IllegalArgumentException(String.format("path='%s' does not start with pathPrefix='%s'!", path, pathPrefix));
 
 		String result = path.substring(pathPrefix.length());
-		if (!result.isEmpty() && !result.startsWith("/"))
+		if (!result.isEmpty() && !result.startsWith(SLASH))
 			throw new IllegalStateException(String.format("pathAfterPathPrefix='%s' is neither empty nor does it start with a '/'! path='%s' pathPrefix='%s'", result, path, pathPrefix));
 
 		return result;

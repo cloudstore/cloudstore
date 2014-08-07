@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -13,9 +14,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import junit.framework.Assert;
-
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,6 +29,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -42,6 +43,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	private File remoteRoot;
 
 	private String localPathPrefix;
+	/** Must be URL-encoded. */
 	private String remotePathPrefix;
 	private URL remoteRootURLWithPathPrefix;
 
@@ -56,14 +58,27 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		if (localPathPrefix.isEmpty())
 			return localRoot;
 
-		return new File(localRoot, localPathPrefix);
+		URI uri = UrlUtil.appendPath(localRoot.toURI(), localPathPrefix, false);
+		File file;
+		try {
+			file = UrlUtil.getFile(uri.toURL());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		return file;
 	}
 
 	private File getRemoteRootWithPathPrefix() {
 		if (remotePathPrefix.isEmpty())
 			return remoteRoot;
 
-		final File file = new File(remoteRoot, remotePathPrefix);
+		URI uri = UrlUtil.appendPath(remoteRoot.toURI(), remotePathPrefix, true);
+		File file;
+		try {
+			file = UrlUtil.getFile(uri.toURL());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
 		return file;
 	}
 
@@ -118,7 +133,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
 		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
-		final File child_1 = createDirectory(remoteRoot, "1 {11 11ä11} 1");
+		final File child_1 = createDirectory(remoteRoot, "1 {11 11ä11#+} 1");
 
 		createFileWithRandomContent(child_1, "a");
 		createFileWithRandomContent(child_1, "b");
@@ -128,7 +143,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		createFileWithRandomContent(child_2, "a");
 
-		final File child_2_1 = createDirectory(child_2, "1 {11 11ä11} 1");
+		final File child_2_1 = createDirectory(child_2, "1 {11 11ä11#+} 1");
 		createFileWithRandomContent(child_2_1, "a");
 		createFileWithRandomContent(child_2_1, "b");
 
@@ -138,6 +153,17 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		createFileWithRandomContent(child_3, "b");
 		createFileWithRandomContent(child_3, "c");
 		createFileWithRandomContent(child_3, "d");
+
+		// special characters: fileNames must not be encoded.
+		final File child_4 = createDirectory(remoteRoot, "#4");
+
+		createFileWithRandomContent(child_4, "a");
+		createFileWithRandomContent(child_4, "#b");
+		createFileWithRandomContent(child_4, "c+");
+		createFileWithRandomContent(child_4, "d$");
+
+		final File child_5 = createDirectory(remoteRoot, "5#");
+		createFileWithRandomContent(child_5, "e");
 
 		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
@@ -177,7 +203,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
 		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
-		final File child_1 = createDirectory(localRoot, "1 {11 11ä11} 1");
+		final File child_1 = createDirectory(localRoot, "1 {11 11ä11#+} 1");
 
 		createFileWithRandomContent(child_1, "a");
 		createFileWithRandomContent(child_1, "b");
@@ -187,7 +213,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		createFileWithRandomContent(child_2, "a");
 
-		final File child_2_1 = createDirectory(child_2, "1 {11 11ä11} 1");
+		final File child_2_1 = createDirectory(child_2, "1 {11 11ä11#+} 1");
 		createFileWithRandomContent(child_2_1, "a");
 		createFileWithRandomContent(child_2_1, "b");
 
@@ -226,7 +252,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File l_child_2 = new File(localRoot, "2");
 		assertThat(l_child_2).isDirectory();
 
-		final File l_child_2_1 = new File(l_child_2, "1 {11 11ä11} 1");
+		final File l_child_2_1 = new File(l_child_2, "1 {11 11ä11#+} 1");
 		assertThat(l_child_2_1).isDirectory();
 
 		final File l_child_2_1_a = new File(l_child_2_1, "a");
@@ -263,7 +289,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
+		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		final File r_child_2_1_a = new File(r_child_2_1, "a");
@@ -341,6 +367,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		syncFromRemoteToLocal();
 	}
 
+	@Test
+	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar() throws Exception {
+		remotePathPrefix = "/%234";
+		syncFromRemoteToLocal();
+	}
+	@Test
+	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar2() throws Exception {
+		remotePathPrefix = "/5%23";
+		syncFromRemoteToLocal();
+	}
 
 	@Test
 	public void syncMovedFile() throws Exception {
@@ -349,7 +385,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
+		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		final File r_child_2_1_b = new File(r_child_2_1, "b");
@@ -379,7 +415,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File r_child_2 = new File(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11} 1");
+		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
 		final File r_child_2_1_b = new File(r_child_2_1, "b");

@@ -413,9 +413,6 @@ public class CloudStoreUpdaterCore {
 	public void createUpdaterDirIfUpdateNeeded() {
 		File updaterDir = null;
 		try {
-			updaterDir = getUpdaterDir();
-			IOUtil.deleteDirectoryRecursively(updaterDir);
-
 			if (!isEnabled()) {
 				if (isForce())
 					logger.warn("createUpdaterDirIfUpdateNeeded: The configuration key '{}' (or its corresponding system property) is set to force an update, but the updater is *not* enabled! You must set the configuration key '{}' (or its corresponding system property) additionally! Skipping!", CONFIG_KEY_FORCE, CONFIG_KEY_ENABLED);
@@ -424,6 +421,9 @@ public class CloudStoreUpdaterCore {
 
 				return;
 			}
+
+			updaterDir = getUpdaterDir();
+			IOUtil.deleteDirectoryRecursively(updaterDir);
 
 			if (isUpdateNeeded()) {
 				if (!canWriteAll(getInstallationDir())) {

@@ -64,6 +64,7 @@ public interface RepoTransport extends AutoCloseable {
 	void setClientRepositoryId(UUID clientRepositoryId);
 
 	URL getRemoteRootWithoutPathPrefix();
+	/** URL-encoded path, as extracted from remoteRoot. */
 	String getPathPrefix();
 
 	RepositoryDto getRepositoryDto();

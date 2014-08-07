@@ -53,6 +53,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
 		remoteRepositoryId = localRepoManager.getRepositoryId();
+		assertThat(remoteRepositoryId).isNotNull();
 
 		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot).doesNotExist();
@@ -81,8 +82,8 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		createFileWithRandomContent(child_3, "a");
 		createFileWithRandomContent(child_3, "b");
-		createFileWithRandomContent(child_3, "c");
-		createFileWithRandomContent(child_3, "d");
+		createFileWithRandomContent(child_3, "c+");
+		createFileWithRandomContent(child_3, "d#");
 
 		localRepoManager.localSync(new LoggerProgressMonitor(logger));
 
@@ -106,7 +107,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		assertThat(changeSetResponse1.getRepoFileDtos()).hasSize(15);
 
 		Set<String> paths = getPaths(changeSetResponse1.getRepoFileDtos());
-		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c", "/3/d");
+		assertThat(paths).containsOnly("/1/a", "/1/b", "/1/c", "/2/a", "/2/1/a", "/2/1/b", "/3/a", "/3/b", "/3/c+", "/3/d#");
 
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {

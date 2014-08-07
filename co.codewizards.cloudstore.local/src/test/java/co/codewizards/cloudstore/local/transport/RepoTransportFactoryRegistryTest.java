@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;

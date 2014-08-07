@@ -54,6 +54,7 @@ import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollision
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.LocalRepoSync;
 import co.codewizards.cloudstore.local.LocalRepoTransactionImpl;
@@ -239,7 +240,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
-			return new File(getLocalRepoManager().getLocalRoot(), pathPrefix);
+			return UrlUtil.getFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
 	}
 
 	@Override
@@ -587,12 +588,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 
 	@Override
 	protected URL determineRemoteRootWithoutPathPrefix() {
-		File remoteRootFile;
-		try {
-			remoteRootFile = new File(getRemoteRoot().toURI());
-		} catch (final URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
+		File remoteRootFile = UrlUtil.getFile(getRemoteRoot());
 
 		final File localRootFile = LocalRepoHelper.getLocalRootContainingFile(remoteRootFile);
 		if (localRootFile == null)
@@ -846,7 +842,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
-		final File file = new File(getLocalRepoManager().getLocalRoot(), path);
+		final File file = UrlUtil.getFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 

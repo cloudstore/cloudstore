@@ -16,7 +16,7 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 	public RepoTransport createRepoTransport(URL remoteRoot, UUID clientRepositoryId) {
 		assertNotNull("remoteRoot", remoteRoot);
 		// clientRepositoryId may be null!
-		RepoTransport repoTransport = _createRepoTransport(remoteRoot);
+		RepoTransport repoTransport = _createRepoTransport();
 		if (repoTransport == null)
 			throw new IllegalStateException(String.format("Implementation error in class %s: _createRepoTransport(...) returned null!", this.getClass().getName()));
 
@@ -26,5 +26,5 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 		return repoTransport;
 	}
 
-	protected abstract RepoTransport _createRepoTransport(URL remoteRoot);
+	protected abstract RepoTransport _createRepoTransport();
 }

@@ -156,12 +156,14 @@ public class RepoToRepoSync {
 	}
 
 	protected void syncUp(final ProgressMonitor monitor) {
-		logger.info("sync: up: fromID={} from='{}' toID={} to='{}'", localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
+		logger.info("sync: up: fromID={} from='{}' toID={} to='{}'",
+				localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
 		sync(localRepoTransport, false, remoteRepoTransport, monitor);
 	}
 
 	protected void syncDown(final boolean fromRepoLocalSync, final ProgressMonitor monitor) {
-		logger.info("sync: down: fromID={} from='{}' toID={} to='{}', fromRepoLocalSync={}", remoteRepositoryId, remoteRoot, localRepositoryId, localRoot, fromRepoLocalSync);
+		logger.info("sync: down: fromID={} from='{}' toID={} to='{}', fromRepoLocalSync={}",
+				remoteRepositoryId, remoteRoot, localRepositoryId, localRoot, fromRepoLocalSync);
 		sync(remoteRepoTransport, fromRepoLocalSync, localRepoTransport, monitor);
 	}
 
