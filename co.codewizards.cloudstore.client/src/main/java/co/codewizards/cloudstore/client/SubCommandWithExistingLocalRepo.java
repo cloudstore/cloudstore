@@ -69,7 +69,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			if (localRoot.equals(localFile))
 				localPathPrefix = "";
 			else
-				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile);
+				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile).replace(File.separatorChar, '/');
 		}
 		assertLocalRootNotNull();
 	}
