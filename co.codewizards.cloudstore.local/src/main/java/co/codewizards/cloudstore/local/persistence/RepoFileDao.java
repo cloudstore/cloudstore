@@ -23,15 +23,15 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 
 	private static class DirectoryCache {
 		private static final int MAX_SIZE = 50;
-		private Map<File, Directory> file2DirectoryCache = new HashMap<File, Directory>();
-		private Map<Directory, File> directory2FileCache = new HashMap<Directory, File>();
-		private LinkedList<Directory> directoryCacheList = new LinkedList<Directory>();
+		private final Map<File, Directory> file2DirectoryCache = new HashMap<File, Directory>();
+		private final Map<Directory, File> directory2FileCache = new HashMap<Directory, File>();
+		private final LinkedList<Directory> directoryCacheList = new LinkedList<Directory>();
 
-		public Directory get(File file) {
+		public Directory get(final File file) {
 			return file2DirectoryCache.get(file);
 		}
 
-		public void put(File file, Directory directory) {
+		public void put(final File file, final Directory directory) {
 			file2DirectoryCache.put(assertNotNull("file", file), assertNotNull("directory", directory));
 			directory2FileCache.put(directory, file);
 			directoryCacheList.remove(directory);
@@ -39,19 +39,19 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 			removeOldEntriesIfNecessary();
 		}
 
-		public void remove(Directory directory) {
-			File file = directory2FileCache.remove(directory);
+		public void remove(final Directory directory) {
+			final File file = directory2FileCache.remove(directory);
 			file2DirectoryCache.remove(file);
 		}
 
-		public void remove(File file) {
-			Directory directory = file2DirectoryCache.remove(file);
+		public void remove(final File file) {
+			final Directory directory = file2DirectoryCache.remove(file);
 			directory2FileCache.remove(directory);
 		}
 
 		private void removeOldEntriesIfNecessary() {
 			while (directoryCacheList.size() > MAX_SIZE) {
-				Directory directory = directoryCacheList.removeFirst();
+				final Directory directory = directoryCacheList.removeFirst();
 				remove(directory);
 			}
 		}
@@ -63,9 +63,9 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * @param name the {@link RepoFile#getName() name} of the queried child.
 	 * @return the child matching the given criteria; <code>null</code>, if there is no such object in the database.
 	 */
-	public RepoFile getChildRepoFile(RepoFile parent, String name) {
-		Query query = pm().newNamedQuery(getEntityClass(), "getChildRepoFile_parent_name");
-		RepoFile repoFile = (RepoFile) query.execute(parent, name);
+	public RepoFile getChildRepoFile(final RepoFile parent, final String name) {
+		final Query query = pm().newNamedQuery(getEntityClass(), "getChildRepoFile_parent_name");
+		final RepoFile repoFile = (RepoFile) query.execute(parent, name);
 		return repoFile;
 	}
 
@@ -78,26 +78,26 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * @throws IllegalArgumentException if one of the parameters is <code>null</code> or if the given {@code file}
 	 * is not located inside the repository - i.e. it is not a direct or indirect child of the given {@code localRoot}.
 	 */
-	public RepoFile getRepoFile(File localRoot, File file) throws IllegalArgumentException {
+	public RepoFile getRepoFile(final File localRoot, final File file) throws IllegalArgumentException {
 		return _getRepoFile(assertNotNull("localRoot", localRoot), assertNotNull("file", file), file);
 	}
 
-	private RepoFile _getRepoFile(File localRoot, File file, File originallySearchedFile) {
+	private RepoFile _getRepoFile(final File localRoot, final File file, final File originallySearchedFile) {
 		if (localRoot.equals(file)) {
 			return getLocalRootDirectory();
 		}
 
-		DirectoryCache directoryCache = getDirectoryCache();
-		Directory directory = directoryCache.get(file);
+		final DirectoryCache directoryCache = getDirectoryCache();
+		final Directory directory = directoryCache.get(file);
 		if (directory != null)
 			return directory;
 
-		File parentFile = file.getParentFile();
+		final File parentFile = file.getParentFile();
 		if (parentFile == null)
 			throw new IllegalArgumentException(String.format("Repository '%s' does not contain file '%s'!", localRoot, originallySearchedFile));
 
-		RepoFile parentRepoFile = _getRepoFile(localRoot, parentFile, originallySearchedFile);
-		RepoFile result = getChildRepoFile(parentRepoFile, file.getName());
+		final RepoFile parentRepoFile = _getRepoFile(localRoot, parentFile, originallySearchedFile);
+		final RepoFile result = getChildRepoFile(parentRepoFile, file.getName());
 		if (result instanceof Directory)
 			directoryCache.put(file, (Directory)result);
 
@@ -121,10 +121,11 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * is usually never <code>null</code>.
 	 * @return the children of the given {@code parent}. Never <code>null</code>, but maybe empty.
 	 */
-	public Collection<RepoFile> getChildRepoFiles(RepoFile parent) {
-		Query query = pm().newNamedQuery(getEntityClass(), "getChildRepoFiles_parent");
+	public Collection<RepoFile> getChildRepoFiles(final RepoFile parent) {
+		final Query query = pm().newNamedQuery(getEntityClass(), "getChildRepoFiles_parent");
 		try {
 			@SuppressWarnings("unchecked")
+			final
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(parent);
 			return load(repoFiles);
 		} finally {
@@ -144,9 +145,9 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * @return those {@link RepoFile}s which were modified after the given {@code localRevision}. Never
 	 * <code>null</code>, but maybe empty.
 	 */
-	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(long localRevision, UUID exclLastSyncFromRepositoryId) {
+	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(final long localRevision, final UUID exclLastSyncFromRepositoryId) {
 		assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
-		Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
+		final Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
@@ -164,7 +165,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	}
 
 	@Override
-	public void deletePersistent(RepoFile entity) {
+	public void deletePersistent(final RepoFile entity) {
 		getPersistenceManager().flush();
 		if (entity instanceof Directory)
 			getDirectoryCache().remove((Directory) entity);

@@ -105,12 +105,11 @@ public class RepoToRepoSync {
 			readRemoteRepositoryIdFromRepoTransport();
 			monitor.worked(1);
 
-			if (localSyncExecutor != null) {
+			if (localSyncExecutor != null)
 				throw new IllegalStateException("localSyncExecutor != null");
-			}
-			if (localSyncFuture != null) {
+
+			if (localSyncFuture != null)
 				throw new IllegalStateException("localSyncFuture != null");
-			}
 
 			localSyncExecutor = Executors.newFixedThreadPool(1);
 			localSyncFuture = localSyncExecutor.submit(new Callable<Void>() {
@@ -125,12 +124,11 @@ public class RepoToRepoSync {
 			if (!TEST_INVERSE) { // This is the normal sync (NOT test).
 				syncDown(true, new SubProgressMonitor(monitor, 50));
 
-				if (localSyncExecutor != null) {
+				if (localSyncExecutor != null)
 					throw new IllegalStateException("localSyncExecutor != null");
-				}
-				if (localSyncFuture != null) {
+
+				if (localSyncFuture != null)
 					throw new IllegalStateException("localSyncFuture != null");
-				}
 
 				syncUp(new SubProgressMonitor(monitor, 50));
 				// Immediately sync back to make sure the changes we caused don't cause problems later
