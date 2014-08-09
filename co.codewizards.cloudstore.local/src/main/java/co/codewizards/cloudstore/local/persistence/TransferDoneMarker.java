@@ -27,7 +27,7 @@ import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
 					+ " this.fromRepositoryId == :fromRepositoryId"
 					+ " && this.toRepositoryId == :toRepositoryId"
 					+ " && this.transferDoneMarkerType == :transferDoneMarkerType"
-					+ " && this.fromRepoFileId == :fromEntityId"),
+					+ " && this.fromEntityId == :fromEntityId"),
 	@Query(
 			name="getTransferDoneMarkers_fromRepositoryId_toRepositoryId",
 			value="SELECT WHERE this.fromRepositoryId == :fromRepositoryId && this.toRepositoryId == :toRepositoryId")
