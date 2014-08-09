@@ -54,6 +54,10 @@ public interface RepoTransport extends AutoCloseable {
 	 * This is thus the remote repository's root URL as used to synchronise a certain local repository.
 	 * The word "remote" should not be misunderstood as actually on another computer. It just means behind
 	 * this transport abstraction.
+	 * <p>
+	 * In contrast to the {@link #getRemoteRootWithoutPathPrefix() remoteRootWithoutPathPrefix}, this is
+	 * the connection point for the synchronisation, which might be a sub-directory, i.e. not the native
+	 * root of the connected repository.
 	 * @return the remote repository's root URL, maybe including a {@linkplain #getPathPrefix() path-prefix}.
 	 * Never <code>null</code>, if properly initialised.
 	 */
@@ -63,8 +67,36 @@ public interface RepoTransport extends AutoCloseable {
 	UUID getClientRepositoryId();
 	void setClientRepositoryId(UUID clientRepositoryId);
 
+	/**
+	 * Gets the remote repository's root URL without the {@linkplain #getPathPrefix() path-prefix}.
+	 * <p>
+	 * In other words, this is the repository's <b>native root</b>, even if the connection is established to a
+	 * sub-directory.
+	 * @return the remote repository's root URL without the {@linkplain #getPathPrefix() path-prefix}. Never
+	 * <code>null</code>, if properly initialised.
+	 */
 	URL getRemoteRootWithoutPathPrefix();
-	/** URL-encoded path, as extracted from remoteRoot. */
+
+	/**
+	 * Prefix for every path (as used in {@link #delete(String)} for example).
+	 * <p>
+	 * It is possible to connect to a repository at a sub-directory, i.e. not the repo's root. If this
+	 * {@code RepoTransport} is connected to the repo's root, this {@code pathPrefix} is an empty string.
+	 * But if this {@code RepoTransport} is connected to a sub-directory, this sub-directory will be the
+	 * {@code pathPrefix}.
+	 * <p>
+	 * For example, if the {@link #getRemoteRoot() remoteRoot} is
+	 * <code>"https://some.host/some/repo/Private+pictures/Wedding+%26%+honeymoon"</code> and the
+	 * {@link #getRemoteRootWithoutPathPrefix() remoteRootWithoutPathPrefix} is
+	 * <code>"https://some.host/some/repo"</code>,
+	 * then this {@code pathPrefix} will be <code>"/Private pictures/Wedding &amp; honeymoon"</code>.
+	 * <p>
+	 * As shown in this example, the {@code pathPrefix} is - just like every other path - <b>not</b> encoded
+	 * in any way! The separator for the path-segments inside this prefix is "/" on all operating systems.
+	 * <p>
+	 * The {@code RepoTransport} implementations use this prefix to calculate back and forth between the
+	 * path relative to the connected {@code remoteRoot} and the complete path used in the repository.
+	 */
 	String getPathPrefix();
 
 	RepositoryDto getRepositoryDto();
