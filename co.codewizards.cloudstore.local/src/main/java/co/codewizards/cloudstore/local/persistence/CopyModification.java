@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
@@ -61,7 +61,7 @@ public class CopyModification extends Modification {
 	public String getFromPath() {
 		return fromPath;
 	}
-	public void setFromPath(String fromPath) {
+	public void setFromPath(final String fromPath) {
 		assertNotNull("fromPath", fromPath);
 		if (fromPath.isEmpty())
 			throw new IllegalArgumentException("fromPath is empty! fromPath must start with '/' and thus has a minimum length of 1 char!");
@@ -76,7 +76,7 @@ public class CopyModification extends Modification {
 	public String getToPath() {
 		return toPath;
 	}
-	public void setToPath(String toPath) {
+	public void setToPath(final String toPath) {
 		assertNotNull("toPath", toPath);
 		if (toPath.isEmpty())
 			throw new IllegalArgumentException("toPath is empty! toPath must start with '/' and thus has a minimum length of 1 char!");
@@ -91,13 +91,13 @@ public class CopyModification extends Modification {
 	public long getLength() {
 		return length;
 	}
-	public void setLength(long length) {
+	public void setLength(final long length) {
 		this.length = length;
 	}
 	public String getSha1() {
 		return sha1;
 	}
-	public void setSha1(String sha1) {
+	public void setSha1(final String sha1) {
 		this.sha1 = sha1;
 	}
 

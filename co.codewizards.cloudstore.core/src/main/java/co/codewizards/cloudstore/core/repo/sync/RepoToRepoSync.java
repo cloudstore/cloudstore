@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -22,14 +21,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.concurrent.CallerBlocksPolicy;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
@@ -46,9 +41,11 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
+import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
@@ -68,7 +65,7 @@ public class RepoToRepoSync {
 	private final File localRoot;
 	private final URL remoteRoot;
 	private final LocalRepoManager localRepoManager;
-	private final RepoTransport localRepoTransport;
+	private final LocalRepoTransport localRepoTransport;
 	private final RepoTransport remoteRepoTransport;
 	private final UUID localRepositoryId;
 	private final UUID remoteRepositoryId;
@@ -98,7 +95,7 @@ public class RepoToRepoSync {
 		remoteRepositoryId = localRepoManager.getRemoteRepositoryIdOrFail(remoteRoot);
 
 		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
-		localRepoTransport = createRepoTransport(localRoot, remoteRepositoryId);
+		localRepoTransport = (LocalRepoTransport) createRepoTransport(localRoot, remoteRepositoryId);
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -267,65 +264,84 @@ public class RepoToRepoSync {
 
 		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
-			final LinkedList<Future<Void>> syncFileAsynchronouslyFutures = new LinkedList<Future<Void>>();
-			final ThreadPoolExecutor syncFileAsynchronouslyExecutor = createSyncFileAsynchronouslyExecutor();
-			try {
-				for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
-					final RepoFileDto repoFileDto = repoFileDtoTreeNode.getRepoFileDto();
-					final Class<? extends RepoFileDto> repoFileDtoClass = repoFileDto.getClass();
+			for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
+				final RepoFileDto repoFileDto = repoFileDtoTreeNode.getRepoFileDto();
+				final Class<? extends RepoFileDto> repoFileDtoClass = repoFileDto.getClass();
 
-					Boolean included = repoFileDtoClass2Included.get(repoFileDtoClass);
-					if (included == null) {
-						included = false;
-						for (final Class<?> clazz : repoFileDtoClassesIncl) {
-							if (clazz.isAssignableFrom(repoFileDtoClass)) {
-								included = true;
-								break;
-							}
+				Boolean included = repoFileDtoClass2Included.get(repoFileDtoClass);
+				if (included == null) {
+					included = false;
+					for (final Class<?> clazz : repoFileDtoClassesIncl) {
+						if (clazz.isAssignableFrom(repoFileDtoClass)) {
+							included = true;
+							break;
 						}
-						repoFileDtoClass2Included.put(repoFileDtoClass, included);
 					}
-
-					Boolean excluded = repoFileDtoClass2Excluded.get(repoFileDtoClass);
-					if (excluded == null) {
-						excluded = false;
-						for (final Class<?> clazz : repoFileDtoClassesExcl) {
-							if (clazz.isAssignableFrom(repoFileDtoClass)) {
-								excluded = true;
-								break;
-							}
-						}
-						repoFileDtoClass2Excluded.put(repoFileDtoClass, excluded);
-					}
-
-					if (!included || excluded) {
-						monitor.worked(1);
-						continue;
-					}
-
-					if (repoFileDto instanceof DirectoryDto)
-						syncDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (DirectoryDto) repoFileDto, new SubProgressMonitor(monitor, 1));
-					else if (repoFileDto instanceof NormalFileDto) {
-						final Future<Void> syncFileAsynchronouslyFuture = syncFileAsynchronously(syncFileAsynchronouslyExecutor,
-								fromRepoTransport, toRepoTransport,
-								repoFileDtoTreeNode, repoFileDto, new SubProgressMonitor(monitor, 1));
-						syncFileAsynchronouslyFutures.add(syncFileAsynchronouslyFuture);
-					}
-					else if (repoFileDto instanceof SymlinkDto)
-						syncSymlink(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (SymlinkDto) repoFileDto, new SubProgressMonitor(monitor, 1));
-					else
-						throw new IllegalStateException("Unsupported RepoFileDto type: " + repoFileDto);
-
-					checkAndEvictDoneSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
+					repoFileDtoClass2Included.put(repoFileDtoClass, included);
 				}
 
-				checkAndEvictAllSyncFileAsynchronouslyFutures(syncFileAsynchronouslyFutures);
-			} finally {
-				syncFileAsynchronouslyExecutor.shutdown();
+				Boolean excluded = repoFileDtoClass2Excluded.get(repoFileDtoClass);
+				if (excluded == null) {
+					excluded = false;
+					for (final Class<?> clazz : repoFileDtoClassesExcl) {
+						if (clazz.isAssignableFrom(repoFileDtoClass)) {
+							excluded = true;
+							break;
+						}
+					}
+					repoFileDtoClass2Excluded.put(repoFileDtoClass, excluded);
+				}
+
+				if (!included || excluded) {
+					monitor.worked(1);
+					continue;
+				}
+
+				if (isDone(fromRepoTransport, toRepoTransport, repoFileDto)) {
+					logger.debug("sync: Skipping file already done in an interrupted transfer before: {}", repoFileDtoTreeNode.getPath());
+					monitor.worked(1);
+					continue;
+				}
+
+				if (repoFileDto instanceof DirectoryDto)
+					syncDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (DirectoryDto) repoFileDto, new SubProgressMonitor(monitor, 1));
+				else if (repoFileDto instanceof NormalFileDto) {
+					syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, repoFileDto, monitor);
+				}
+				else if (repoFileDto instanceof SymlinkDto)
+					syncSymlink(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (SymlinkDto) repoFileDto, new SubProgressMonitor(monitor, 1));
+				else
+					throw new IllegalStateException("Unsupported RepoFileDto type: " + repoFileDto);
+
+				markDone(fromRepoTransport, toRepoTransport, repoFileDto);
 			}
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private boolean isDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDto repoFileDto) {
+		return localRepoTransport.isTransferDone(
+				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
+				TransferDoneMarkerType.REPO_FILE, repoFileDto.getId(), repoFileDto.getLocalRevision());
+	}
+
+	private void markDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDto repoFileDto) {
+		localRepoTransport.markTransferDone(
+				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
+				TransferDoneMarkerType.REPO_FILE, repoFileDto.getId(), repoFileDto.getLocalRevision());
+	}
+
+	private boolean isDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final ModificationDto modificationDto) {
+		return localRepoTransport.isTransferDone(
+				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
+				TransferDoneMarkerType.MODIFICATION, modificationDto.getId(), modificationDto.getLocalRevision());
+	}
+
+	private void markDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final ModificationDto modificationDto) {
+		localRepoTransport.markTransferDone(
+				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
+				TransferDoneMarkerType.MODIFICATION, modificationDto.getId(), modificationDto.getLocalRevision());
 	}
 
 	private SortedMap<Long, Collection<ModificationDto>> getLocalRevision2ModificationDtos(final Collection<ModificationDto> modificationDtos) {
@@ -350,9 +366,15 @@ public class RepoToRepoSync {
 				final ModificationDtoSet modificationDtoSet = new ModificationDtoSet(me.getValue());
 
 				for (final List<CopyModificationDto> copyModificationDtos : modificationDtoSet.getFromPath2CopyModificationDtos().values()) {
-
 					for (final Iterator<CopyModificationDto> itCopyMod = copyModificationDtos.iterator(); itCopyMod.hasNext(); ) {
 						final CopyModificationDto copyModificationDto = itCopyMod.next();
+
+						if (isDone(fromRepoTransport, toRepoTransport, copyModificationDto)) {
+							logger.debug("sync: Skipping CopyModificaton already done in an interrupted transfer before: {} => {}", copyModificationDto.getFromPath(), copyModificationDto.getToPath());
+							monitor.worked(1);
+							continue;
+						}
+
 						final List<DeleteModificationDto> deleteModificationDtos = modificationDtoSet.getPath2DeleteModificationDtos().get(copyModificationDto.getFromPath());
 						boolean moveInstead = false;
 						if (!itCopyMod.hasNext() && deleteModificationDtos != null && !deleteModificationDtos.isEmpty())
@@ -373,13 +395,23 @@ public class RepoToRepoSync {
 								toRepoTransport.delete(deleteModificationDto.getPath());
 							}
 						}
+
+						markDone(fromRepoTransport, toRepoTransport, copyModificationDto);
 					}
 				}
 
 				for (final List<DeleteModificationDto> deleteModificationDtos : modificationDtoSet.getPath2DeleteModificationDtos().values()) {
 					for (final DeleteModificationDto deleteModificationDto : deleteModificationDtos) {
+						if (isDone(fromRepoTransport, toRepoTransport, deleteModificationDto)) {
+							logger.debug("sync: Skipping DeleteModificaton already done in an interrupted transfer before: {}", deleteModificationDto.getPath());
+							monitor.worked(1);
+							continue;
+						}
+
 						logger.info("syncModifications: Deleting '{}'", deleteModificationDto.getPath());
 						toRepoTransport.delete(deleteModificationDto.getPath());
+
+						markDone(fromRepoTransport, toRepoTransport, deleteModificationDto);
 					}
 				}
 			}
@@ -427,22 +459,6 @@ public class RepoToRepoSync {
 		} finally {
 			monitor.done();
 		}
-	}
-
-	private Future<Void> syncFileAsynchronously(
-			final ThreadPoolExecutor syncFileAsynchronouslyExecutor,
-			final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
-			final RepoFileDtoTreeNode repoFileDtoTreeNode, final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
-
-		final Callable<Void> callable = new Callable<Void>() {
-			@Override
-			public Void call() throws Exception {
-				syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, normalFileDto, monitor);
-				return null;
-			}
-		};
-		final Future<Void> future = syncFileAsynchronouslyExecutor.submit(callable);
-		return future;
 	}
 
 	private void syncFile(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode, final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
@@ -616,44 +632,5 @@ public class RepoToRepoSync {
 		localRepoManager.close();
 		localRepoTransport.close();
 		remoteRepoTransport.close();
-	}
-
-	private ThreadPoolExecutor createSyncFileAsynchronouslyExecutor() {
-		// TODO make configurable
-		final ThreadPoolExecutor syncFileAsynchronouslyExecutor = new ThreadPoolExecutor(3, 3,
-				60, TimeUnit.SECONDS,
-				new LinkedBlockingQueue<Runnable>(2));
-		syncFileAsynchronouslyExecutor.setRejectedExecutionHandler(new CallerBlocksPolicy());
-		return syncFileAsynchronouslyExecutor;
-	}
-
-	private void checkAndEvictDoneSyncFileAsynchronouslyFutures(final LinkedList<Future<Void>> syncFileAsynchronouslyFutures) {
-		for (final Iterator<Future<Void>> it = syncFileAsynchronouslyFutures.iterator(); it.hasNext();) {
-			final Future<Void> future = it.next();
-			if (future.isDone()) {
-				it.remove();
-				try {
-					future.get(); // We definitely don't need a timeout here, because we invoke it only, if it's done already. It should never wait.
-				} catch (final RuntimeException e) {
-					throw e;
-				} catch (final Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-	}
-
-	private void checkAndEvictAllSyncFileAsynchronouslyFutures(final LinkedList<Future<Void>> syncFileAsynchronouslyFutures) {
-		for (final Iterator<Future<Void>> it = syncFileAsynchronouslyFutures.iterator(); it.hasNext();) {
-			final Future<Void> future = it.next();
-			it.remove();
-			try {
-				future.get(); // I don't think we need a timeout, because the operations done in the callable have timeouts already.
-			} catch (final RuntimeException e) {
-				throw e;
-			} catch (final Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
 	}
 }

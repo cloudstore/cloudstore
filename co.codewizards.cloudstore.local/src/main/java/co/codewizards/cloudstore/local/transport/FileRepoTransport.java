@@ -44,7 +44,6 @@ import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
-import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -52,6 +51,8 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
+import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
@@ -77,8 +78,10 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
+import co.codewizards.cloudstore.local.persistence.TransferDoneMarkerDao;
 
-public class FileRepoTransport extends AbstractRepoTransport implements ContextWithLocalRepoManager {
+public class FileRepoTransport extends AbstractRepoTransport implements LocalRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
 
 	private static final long MAX_REMOTE_REPOSITORY_REQUESTS_QUANTITY = 100; // TODO make configurable!
@@ -588,7 +591,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 
 	@Override
 	protected URL determineRemoteRootWithoutPathPrefix() {
-		File remoteRootFile = UrlUtil.getFile(getRemoteRoot());
+		final File remoteRootFile = UrlUtil.getFile(getRemoteRoot());
 
 		final File localRootFile = LocalRepoHelper.getLocalRootContainingFile(remoteRootFile);
 		if (localRootFile == null)
@@ -1555,6 +1558,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 			final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 			final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
+			final TransferDoneMarkerDao transferDoneMarkerDao = transaction.getDao(TransferDoneMarkerDao.class);
 
 			final RemoteRepository toRemoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
 
@@ -1571,6 +1575,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 			modificationDao.deletePersistentAll(modifications);
 			pm.flush();
 
+			transferDoneMarkerDao.deleteRepoFileTransferDones(getRepositoryId(), clientRepositoryId);
+
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -1583,8 +1589,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+			final TransferDoneMarkerDao transferDoneMarkerDao = transaction.getDao(TransferDoneMarkerDao.class);
+
 			final RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
 			remoteRepository.setRevision(fromLocalRevision);
+
+			transferDoneMarkerDao.deleteRepoFileTransferDones(clientRepositoryId, getRepositoryId());
 
 			transaction.commit();
 		} finally {
@@ -1592,4 +1602,44 @@ public class FileRepoTransport extends AbstractRepoTransport implements ContextW
 		}
 	}
 
+	@Override
+	public boolean isTransferDone(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId, final long fromLocalRevision) {
+		boolean result = false;
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
+		try {
+			final TransferDoneMarkerDao dao = transaction.getDao(TransferDoneMarkerDao.class);
+			final TransferDoneMarker transferDoneMarker = dao.getTransferDoneMarker(
+					fromRepositoryId, toRepositoryId, transferDoneMarkerType, fromEntityId);
+			if (transferDoneMarker != null)
+				result = fromLocalRevision == transferDoneMarker.getFromLocalRevision();
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+		return result;
+	}
+
+	@Override
+	public void markTransferDone(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId, final long fromLocalRevision) {
+		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
+		try {
+			final TransferDoneMarkerDao dao = transaction.getDao(TransferDoneMarkerDao.class);
+			TransferDoneMarker transferDoneMarker = dao.getTransferDoneMarker(
+					fromRepositoryId, toRepositoryId, transferDoneMarkerType, fromEntityId);
+			if (transferDoneMarker == null) {
+				transferDoneMarker = new TransferDoneMarker();
+				transferDoneMarker.setFromRepositoryId(fromRepositoryId);
+				transferDoneMarker.setToRepositoryId(toRepositoryId);
+				transferDoneMarker.setTransferDoneMarkerType(transferDoneMarkerType);
+				transferDoneMarker.setFromEntityId(fromEntityId);
+			}
+			transferDoneMarker.setFromLocalRevision(fromLocalRevision);
+			dao.makePersistent(transferDoneMarker);
+
+			transaction.commit();
+		} finally {
+			transaction.rollbackIfActive();
+		}
+	}
 }

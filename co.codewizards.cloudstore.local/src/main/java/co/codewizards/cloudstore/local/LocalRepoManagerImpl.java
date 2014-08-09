@@ -69,6 +69,7 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
+import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 import co.codewizards.cloudstore.local.persistence.Repository;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 
@@ -466,6 +467,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		pm.getExtent(RemoteRepositoryRequest.class);
 		pm.getExtent(Repository.class);
 		pm.getExtent(RepoFile.class);
+		pm.getExtent(TransferDoneMarker.class);
 		pm.getExtent(Symlink.class);
 	}
 
