@@ -9,11 +9,8 @@ import org.kohsuke.args4j.Argument;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
-
-
 
 	@Argument(metaVar="<local>", required=true, index=0, usage="A path inside a repository in the local file system or a "
 			+ "repository-ID or a repository-alias (optionally with a path). If this matches both a locally "
@@ -44,7 +41,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 		assertNotNull("local", local);
 
 		String repositoryName;
-		int slashIndex = local.indexOf('/');
+		final int slashIndex = local.indexOf('/');
 		if (slashIndex < 0) {
 			repositoryName = local;
 			localPathPrefix = "";
@@ -61,9 +58,9 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			localPathPrefix = "";
 
 		localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryName(repositoryName);
-		if (localRoot != null) {
-			localFile = UrlUtil.getFile(localRoot, localPathPrefix);
-		} else {
+		if (localRoot != null)
+			localFile = localPathPrefix.isEmpty() ? localRoot : new File(localRoot, localPathPrefix);
+		else {
 			localFile = new File(local).getAbsoluteFile();
 			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
 			if (localRoot == null)
@@ -71,9 +68,8 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
 			if (localRoot.equals(localFile))
 				localPathPrefix = "";
-			else {
+			else
 				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile);
-			}
 		}
 		assertLocalRootNotNull();
 	}

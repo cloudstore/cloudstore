@@ -1,8 +1,11 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -31,7 +34,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	}
 
 	@Override
-	public void setRepoTransportFactory(RepoTransportFactory repoTransportFactory) {
+	public void setRepoTransportFactory(final RepoTransportFactory repoTransportFactory) {
 		this.repoTransportFactory = assertNotNull("repoTransportFactory", repoTransportFactory);
 	}
 
@@ -50,7 +53,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	}
 
 	public UUID getClientRepositoryIdOrFail() {
-		UUID clientRepositoryId = getClientRepositoryId();
+		final UUID clientRepositoryId = getClientRepositoryId();
 		if (clientRepositoryId == null)
 			throw new IllegalStateException("clientRepositoryId == null :: You must invoke setClientRepositoryId(...) before!");
 
@@ -62,7 +65,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 		return clientRepositoryId;
 	}
 	@Override
-	public void setClientRepositoryId(UUID clientRepositoryId) {
+	public void setClientRepositoryId(final UUID clientRepositoryId) {
 		this.clientRepositoryId = clientRepositoryId;
 	}
 
@@ -78,19 +81,20 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String getPathPrefix() {
-		String urlEncodedPathPrefix = this.pathPrefix;
-		if (urlEncodedPathPrefix == null) {
-			URL rr = getRemoteRoot();
+		String pathPrefix = this.pathPrefix;
+		if (pathPrefix == null) {
+			final URL rr = getRemoteRoot();
 			if (rr == null)
 				throw new IllegalStateException("remoteRoot not yet assigned!");
 
-			String remoteRoot = rr.toExternalForm();
-			String remoteRootWithoutPathPrefix = getRemoteRootWithoutPathPrefix().toExternalForm();
+			final String remoteRoot = rr.toExternalForm();
+			final String remoteRootWithoutPathPrefix = getRemoteRootWithoutPathPrefix().toExternalForm();
 			if (!remoteRoot.startsWith(remoteRootWithoutPathPrefix))
 				throw new IllegalStateException(String.format(
 								"remoteRoot='%s' does not start with remoteRootWithoutPathPrefix='%s'",
 								remoteRoot, remoteRootWithoutPathPrefix));
 
+			String urlEncodedPathPrefix;
 			if (remoteRoot.equals(remoteRootWithoutPathPrefix))
 				urlEncodedPathPrefix = "";
 			else {
@@ -102,13 +106,17 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 					throw new IllegalStateException("pathPrefix should not end with '" + SLASH + "', but it does!");
 			}
 
-			this.pathPrefix = urlEncodedPathPrefix;
+			try {
+				this.pathPrefix = pathPrefix = URLDecoder.decode(urlEncodedPathPrefix, CHARSET_NAME_UTF_8);
+			} catch (final UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
 		}
-		return urlEncodedPathPrefix;
+		return pathPrefix;
 	}
 
 	@Override
-	public String prefixPath(String path) {
+	public String prefixPath(final String path) {
 		assertNotNull("path", path);
 		if ("".equals(path) || SLASH.equals(path))
 			return getPathPrefix();
@@ -121,7 +129,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	@Override
 	public String unprefixPath(String path) {
 		assertNotNull("path", path);
-		String pathPrefix = getPathPrefix();
+		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return path;
 
@@ -131,16 +139,16 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 		if (!path.startsWith(pathPrefix))
 			throw new IllegalArgumentException(String.format("path='%s' does not start with pathPrefix='%s'!", path, pathPrefix));
 
-		String result = path.substring(pathPrefix.length());
+		final String result = path.substring(pathPrefix.length());
 		if (!result.isEmpty() && !result.startsWith(SLASH))
 			throw new IllegalStateException(String.format("pathAfterPathPrefix='%s' is neither empty nor does it start with a '/'! path='%s' pathPrefix='%s'", result, path, pathPrefix));
 
 		return result;
 	}
 
-	protected boolean isPathUnderPathPrefix(String path) {
+	protected boolean isPathUnderPathPrefix(final String path) {
 		assertNotNull("path", path);
-		String pathPrefix = getPathPrefix();
+		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return true;
 

@@ -34,6 +34,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
@@ -61,7 +62,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	throws WebApplicationException
 	{
 		if (auth == null) {
-			String authorizationHeader = request.getHeader("Authorization");
+			final String authorizationHeader = request.getHeader("Authorization");
 			if (authorizationHeader == null || authorizationHeader.isEmpty()) {
 				logger.debug("getAuth: There is no 'Authorization' header. Replying with a Status.UNAUTHORIZED response asking for 'Basic' authentication.");
 
@@ -75,15 +76,15 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 						.type(MediaType.APPLICATION_XML)
 						.entity(new Error("Only 'Basic' authentication is supported!")).build());
 
-			String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
-			byte[] basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_UTF_8));
-			StringBuilder userNameSB = new StringBuilder();
+			final String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
+			final byte[] basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_UTF_8));
+			final StringBuilder userNameSB = new StringBuilder();
 			char[] password = null;
 
-			ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
-			CharBuffer cb = CharBuffer.allocate(basicAuthDecodedBA.length + 1);
+			final ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
+			final CharBuffer cb = CharBuffer.allocate(basicAuthDecodedBA.length + 1);
 			try {
-				Reader r = new InputStreamReader(in, IOUtil.CHARSET_UTF_8);
+				final Reader r = new InputStreamReader(in, IOUtil.CHARSET_UTF_8);
 				int charsReadTotal = 0;
 				int charsRead;
 				do {
@@ -95,7 +96,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 				cb.position(0);
 
 				while (cb.position() < charsReadTotal) {
-					char c = cb.get();
+					final char c = cb.get();
 					if (c == ':')
 						break;
 
@@ -108,7 +109,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 					while (cb.position() < charsReadTotal)
 						password[idx++] = cb.get();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_XML).entity(new Error(e)).build());
 			} finally {
 				// For extra safety: Overwrite all sensitive memory with 0.
@@ -119,7 +120,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 					cb.put((char)0);
 			}
 
-			Auth auth = new Auth();
+			final Auth auth = new Auth();
 			auth.setUserName(userNameSB.toString());
 			auth.setPassword(password);
 			this.auth = auth;
@@ -138,16 +139,16 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	protected String authenticateAndReturnUserName()
 	throws WebApplicationException
 	{
-		UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
+		final UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
 		if (serverRepositoryId == null) {
 			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
 					.type(MediaType.APPLICATION_XML)
 					.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither an alias nor an ID of a known repository!", repositoryName))).build());
 		}
 
-		Auth auth = getAuth();
+		final Auth auth = getAuth();
 		try {
-			UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
+			final UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
 			if (clientRepositoryId != null) {
 				if (TransientRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
 					return auth.getUserName();
@@ -163,17 +164,17 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		throw newUnauthorizedException();
 	}
 
-	protected UUID getClientRepositoryIdFromUserName(String userName) {
+	protected UUID getClientRepositoryIdFromUserName(final String userName) {
 		if (assertNotNull("userName", userName).startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
-			String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
-			UUID clientRepositoryId = UUID.fromString(repositoryIdString);
+			final String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
+			final UUID clientRepositoryId = UUID.fromString(repositoryIdString);
 			return clientRepositoryId;
 		}
 		return null;
 	}
 
-	protected UUID getClientRepositoryIdFromUserNameOrFail(String userName) {
-		UUID clientRepositoryId = getClientRepositoryIdFromUserName(userName);
+	protected UUID getClientRepositoryIdFromUserNameOrFail(final String userName) {
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserName(userName);
 		if (clientRepositoryId == null)
 			throw new IllegalArgumentException(String.format("userName='%s' is not a repository!", userName));
 
@@ -185,21 +186,21 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected RepoTransport authenticateAndCreateLocalRepoTransport() {
-		String userName = authenticateAndReturnUserName();
-		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
-		URL localRootURL = getLocalRootURL(clientRepositoryId);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryId);
+		final String userName = authenticateAndReturnUserName();
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		final URL localRootURL = getLocalRootURL(clientRepositoryId);
+		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
+		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryId);
 		return repoTransport;
 	}
 
 	protected URL authenticateAndGetLocalRootURL() {
-		String userName = authenticateAndReturnUserName();
-		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		final String userName = authenticateAndReturnUserName();
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
 		return getLocalRootURL(clientRepositoryId);
 	}
 
-	protected URL getLocalRootURL(UUID clientRepositoryId) {
+	protected URL getLocalRootURL(final UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
 		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
@@ -208,22 +209,12 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			URL localRootURL;
 			try {
 				localRootURL = localRoot.toURI().toURL();
-			} catch (MalformedURLException e) {
+			} catch (final MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
-			if (!localPathPrefix.isEmpty()) {
-				String localRootURLString = localRootURL.toExternalForm();
-				if (localRootURLString.endsWith("/"))
-					localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
 
-				// localPathPrefix is guaranteed to start with a '/'.
-				localRootURLString += localPathPrefix;
-				try {
-					localRootURL = new URL(localRootURLString);
-				} catch (MalformedURLException e) {
-					throw new RuntimeException(e);
-				}
-			}
+			localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, localPathPrefix);
+
 			return localRootURL;
 		} finally {
 			localRepoManager.close();

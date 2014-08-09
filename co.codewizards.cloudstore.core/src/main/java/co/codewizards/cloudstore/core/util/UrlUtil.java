@@ -1,18 +1,23 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class UrlUtil {
 
 	private UrlUtil() { }
 
-	public static URL canonicalizeURL(URL url) {
+	public static URL canonicalizeURL(final URL url) {
 		if (url == null)
 			return null;
 
@@ -31,17 +36,17 @@ public final class UrlUtil {
 		}
 
 		if (result == null) {
-			String file = query == null ? path : path + '?' + query;
+			final String file = query == null ? path : path + '?' + query;
 			try {
 				result = new URL(url.getProtocol(), url.getHost(), url.getPort(), file);
-			} catch (MalformedURLException e) {
+			} catch (final MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		return result;
 	}
 
-	public static File getFile(URL url) {
+	public static File getFile(final URL url) {
 		try {
 			return new File(url.toURI());
 		} catch (final URISyntaxException e) {
@@ -49,31 +54,100 @@ public final class UrlUtil {
 		}
 	}
 
-	public static File getFile(File parent, String urlEncodedPath) {
-		return new File(appendPath(parent.toURI(), urlEncodedPath, true));
-	}
+//	public static File getFile(File parent, String urlEncodedPath) {
+//		return new File(appendPath(parent.toURI(), urlEncodedPath, true));
+//	}
 
 	/**
-	 * @param uri The URI to append to.
-	 * @param pathToAppend A relative path. Must not start with a '/' character.
-	 * @param pathToAppendIsEncoded
-	 * @return
+	 * Appends the {@linkplain URLEncoder URL-encoded} {@code path} to the given
+	 * base {@code url}.
+	 * @param url the URL to be appended. Must not be <code>null</code>.
+	 * @param path the path to append. May be <code>null</code>.
+	 * @return the URL composed of the prefix {@code url} and the suffix {@code path}.
 	 */
-	public static URI appendPath(final URI uri, String pathToAppend, boolean pathToAppendIsEncoded) {
-		if (pathToAppend == null || pathToAppend.length() < 1)
-			return uri;
-		try {
-			if (pathToAppendIsEncoded) {
-				pathToAppend = pathToAppend.replaceAll("\\+", "%2b"); // URLDecoder.decode would subset the '+' with ' ';
-				pathToAppend = URLDecoder.decode(pathToAppend, "UTF-8");
+	public static URL appendEncodedPath(final URL url, final String path) {
+		assertNotNull("url", url);
+		if (path == null || path.isEmpty())
+			return url;
+
+		return appendEncodedPath(url, Collections.singletonList(path));
+	}
+
+	public static URL appendNonEncodedPath(final URL url, final String path) {
+		assertNotNull("url", url);
+		if (path == null || path.isEmpty())
+			return url;
+
+		final String[] pathSegments = path.split("/");
+		final List<String> encodedPathSegments = new ArrayList<String>(pathSegments.length);
+		for (final String pathSegment : pathSegments) {
+			try {
+				encodedPathSegments.add(URLEncoder.encode(pathSegment, CHARSET_NAME_UTF_8));
+			} catch (final UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
 			}
-			if (pathToAppend.startsWith("/") && uri.getPath().endsWith("/"))
-				pathToAppend = pathToAppend.substring(1);
-			if (!pathToAppend.startsWith("/") && !uri.getPath().endsWith("/"))
-				pathToAppend = "/" + pathToAppend;
-			return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath() + pathToAppend, uri.getFragment());
-		} catch (URISyntaxException | UnsupportedEncodingException e) {
+		}
+		return appendEncodedPath(url, encodedPathSegments);
+	}
+
+	private static URL appendEncodedPath(final URL url, final List<String> pathSegments) {
+		assertNotNull("url", url);
+
+		if (pathSegments == null || pathSegments.isEmpty())
+			return url;
+
+		try {
+			final StringBuilder urlString = new StringBuilder(url.toExternalForm());
+
+			for (final String ps : pathSegments) {
+				if (ps == null || ps.isEmpty())
+					continue;
+
+				if (ps.startsWith("/") && getLastChar(urlString) == '/')
+					urlString.append(ps.substring(1));
+				else if (!ps.startsWith("/") && getLastChar(urlString) != '/')
+					urlString.append('/').append(ps);
+				else
+					urlString.append(ps);
+			}
+
+			return new URL(urlString.toString());
+		} catch (final MalformedURLException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
+
+	private static char getLastChar(final StringBuilder stringBuilder) {
+		assertNotNull("stringBuilder", stringBuilder);
+
+		final int index = stringBuilder.length() - 1;
+		if (index < 0)
+			return 0;
+
+		return stringBuilder.charAt(index);
+	}
+
+//	/**
+//	 * @param uri The URI to append to.
+//	 * @param pathToAppend A relative path. Must not start with a '/' character.
+//	 * @param pathToAppendIsEncoded
+//	 * @return
+//	 */
+//	public static URI appendPath(final URI uri, String pathToAppend, final boolean pathToAppendIsEncoded) {
+//		if (pathToAppend == null || pathToAppend.length() < 1)
+//			return uri;
+//		try {
+//			if (pathToAppendIsEncoded) {
+//				pathToAppend = pathToAppend.replaceAll("\\+", "%2b"); // URLDecoder.decode would subset the '+' with ' ';
+//				pathToAppend = URLDecoder.decode(pathToAppend, "UTF-8");
+//			}
+//			if (pathToAppend.startsWith("/") && uri.getPath().endsWith("/"))
+//				pathToAppend = pathToAppend.substring(1);
+//			if (!pathToAppend.startsWith("/") && !uri.getPath().endsWith("/"))
+//				pathToAppend = "/" + pathToAppend;
+//			return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath() + pathToAppend, uri.getFragment());
+//		} catch (URISyntaxException | UnsupportedEncodingException e) {
+//			throw new IllegalArgumentException(e);
+//		}
+//	}
 }

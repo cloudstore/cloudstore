@@ -2,8 +2,6 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -35,7 +33,7 @@ public class RequestRepoConnectionService
 
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(RepositoryDto clientRepositoryDto)
+	public void requestConnection(final RepositoryDto clientRepositoryDto)
 	{
 		requestConnection("", clientRepositoryDto);
 	}
@@ -43,22 +41,16 @@ public class RequestRepoConnectionService
 	@POST
 	@Path("{pathPrefix:.*}")
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(@PathParam("pathPrefix") String pathPrefix, RepositoryDto clientRepositoryDto)
+	public void requestConnection(@PathParam("pathPrefix") final String pathPrefix, final RepositoryDto clientRepositoryDto)
 	{
 		assertNotNull("pathPrefix", pathPrefix);
 		assertNotNull("repositoryDto", clientRepositoryDto);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
-		if (!"".equals(pathPrefix)) {
-			try {
-				localRootURL = UrlUtil.appendPath(localRootURL.toURI(), pathPrefix, false).toURL();
-			} catch (URISyntaxException | MalformedURLException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);
 
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
+		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
+		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
 		try {
 			repoTransport.requestRepoConnection(clientRepositoryDto.getPublicKey());
 		} finally {

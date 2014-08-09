@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -58,27 +57,14 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		if (localPathPrefix.isEmpty())
 			return localRoot;
 
-		URI uri = UrlUtil.appendPath(localRoot.toURI(), localPathPrefix, false);
-		File file;
-		try {
-			file = UrlUtil.getFile(uri.toURL());
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		return file;
+		return new File(localRoot, localPathPrefix);
 	}
 
 	private File getRemoteRootWithPathPrefix() {
 		if (remotePathPrefix.isEmpty())
 			return remoteRoot;
 
-		URI uri = UrlUtil.appendPath(remoteRoot.toURI(), remotePathPrefix, true);
-		File file;
-		try {
-			file = UrlUtil.getFile(uri.toURL());
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
+		final File file = new File(remoteRoot, remotePathPrefix);
 		return file;
 	}
 
@@ -105,7 +91,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	}
 
 	private URL getRemoteRootURLWithPathPrefix(final UUID remoteRepositoryId) throws MalformedURLException {
-		final URL remoteRootURL = new URL(getSecureUrl() + "/" + remoteRepositoryId + remotePathPrefix);
+		final URL remoteRootURL = UrlUtil.appendNonEncodedPath(new URL(getSecureUrl() + "/" + remoteRepositoryId), remotePathPrefix);
 		return remoteRootURL;
 	}
 
@@ -369,12 +355,14 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar() throws Exception {
-		remotePathPrefix = "/%234";
+//		remotePathPrefix = "/%234";
+		remotePathPrefix = "/#4";
 		syncFromRemoteToLocal();
 	}
 	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar2() throws Exception {
-		remotePathPrefix = "/5%23";
+//		remotePathPrefix = "/5%23";
+		remotePathPrefix = "/5#";
 		syncFromRemoteToLocal();
 	}
 

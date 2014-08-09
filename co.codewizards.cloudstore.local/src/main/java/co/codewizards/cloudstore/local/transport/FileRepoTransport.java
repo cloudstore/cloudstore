@@ -243,7 +243,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
-			return UrlUtil.getFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
+			return new File(getLocalRepoManager().getLocalRoot(), pathPrefix);
 	}
 
 	@Override
@@ -845,7 +845,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
-		final File file = UrlUtil.getFile(getLocalRepoManager().getLocalRoot(), path);
+		final File file = new File(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 

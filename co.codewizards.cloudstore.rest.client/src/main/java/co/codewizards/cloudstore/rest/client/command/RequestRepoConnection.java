@@ -23,7 +23,7 @@ public class RequestRepoConnection extends VoidCommand {
 
 	@Override
 	public Response _execute() {
-		return createWebTarget("_requestRepoConnection", urlEncode(repositoryName), pathPrefix)
+		return createWebTarget("_requestRepoConnection", urlEncode(repositoryName), urlEncode(pathPrefix))
 				.request().post(Entity.entity(clientRepositoryDto, MediaType.APPLICATION_XML));
 	}
 
