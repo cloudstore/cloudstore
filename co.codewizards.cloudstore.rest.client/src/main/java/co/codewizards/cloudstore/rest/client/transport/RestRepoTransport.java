@@ -95,7 +95,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public byte[] getPublicKey() {
 		getRepositoryId(); // ensure, the public key is loaded
-		return publicKey;
+		return assertNotNull("publicKey", publicKey);
 	}
 
 	@Override

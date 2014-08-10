@@ -6,8 +6,11 @@ import java.util.Date;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.DirectoryDto;
+import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -16,6 +19,18 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  * The naming in this interface assumes a local client talking to a remote repository. But the
  * repository accessed via this transport does not need to be remote - it might be in the local
  * file system!
+ * <p>
+ * More precisely:
+ * <p>
+ * "Remote repository" references the repository which is accessed via this transport layer. The word
+ * "remote" thus indicates that there <b>might</b> be some distance between here and wherever this repository
+ * is located.
+ * <p>
+ * "Client" should primarily be understood as <i>API client</i>, i.e. the code using the methods of this
+ * interface. The "client repository" is the repository for which some client code accesses this
+ * {@code RepoTransport}, therefore the "client repository" is used for repo-to-repo-authentication. Some
+ * methods in this interface can be used without authentication (i.e. anonymously) - therefore a "client
+ * repository" is optional.
  * <p>
  * The synchronisation logic accesses all repositories through this abstraction layer. Therefore,
  * the synchronisation logic does not need to know any details about how to communicate with
@@ -29,7 +44,7 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  * Further implementations might be written later.
  * <p>
  * An instance of an implementation of {@code RepoTransport} is obtained via the
- * {@link co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory RepoTransportFactory}.
+ * {@link RepoTransportFactory}.
  * <p>
  * <b>Important:</b> Implementors should <i>not</i> directly implement this interface, but instead sub-class
  * {@link AbstractRepoTransport}!
@@ -40,11 +55,13 @@ public interface RepoTransport extends AutoCloseable {
 	/**
 	 * Gets the factory which created this instance.
 	 * @return the factory which created this instance. Should never be <code>null</code>, if properly initialised.
+	 * @see #setRepoTransportFactory(RepoTransportFactory)
 	 */
 	RepoTransportFactory getRepoTransportFactory();
 	/**
 	 * Sets the factory which created this instance.
 	 * @param repoTransportFactory the factory which created this instance. Must not be <code>null</code>.
+	 * @see #getRepoTransportFactory()
 	 */
 	void setRepoTransportFactory(RepoTransportFactory repoTransportFactory);
 
@@ -60,11 +77,43 @@ public interface RepoTransport extends AutoCloseable {
 	 * root of the connected repository.
 	 * @return the remote repository's root URL, maybe including a {@linkplain #getPathPrefix() path-prefix}.
 	 * Never <code>null</code>, if properly initialised.
+	 * @see #setRemoteRoot(URL)
 	 */
 	URL getRemoteRoot();
+	/**
+	 * Sets the remote repository's root URL.
+	 * <p>
+	 * This URL is the point where the {@linkplain #getClientRepositoryId() client-repository} is connected
+	 * to the repository managed by this {@code RepoTransport}.
+	 * <p>
+	 * You should never directly invoke this method! It is automatically called when creating a
+	 * {@code RepoTransport} instance via the {@link RepoTransportFactory}.
+	 * <p>
+	 * Invoking this method twice with different {@code remoteRoot} values is not allowed. The {@code remoteRoot}
+	 * cannot be changed after it was once set.
+	 * @param remoteRoot the remote repository's root URL. It may be <code>null</code>, but this
+	 * {@code RepoTransport} is only usable, after this method was invoked with a non-<code>null</code> value.
+	 * @see #getRemoteRoot()
+	 */
 	void setRemoteRoot(URL remoteRoot);
 
+	/**
+	 * Gets the client repository's unique identifier.
+	 * <p>
+	 * The word "client" does not necessarily mean a remote JVM. It merely means the API client accessing
+	 * this {@code RepoTransport} API.
+	 * <p>
+	 * This property might be <code>null</code>. If it is not set, only operations which do not require
+	 * repo-to-repo-authentication can be used.
+	 * @return the client repository's identifier. Might be <code>null</code>.
+	 * @see #setClientRepositoryId(UUID)
+	 */
 	UUID getClientRepositoryId();
+	/**
+	 * Sets the client's repository identifier.
+	 * @param clientRepositoryId the client's repository identifier. May be <code>null</code>.
+	 * @see #getClientRepositoryId()
+	 */
 	void setClientRepositoryId(UUID clientRepositoryId);
 
 	/**
@@ -86,7 +135,7 @@ public interface RepoTransport extends AutoCloseable {
 	 * {@code pathPrefix}.
 	 * <p>
 	 * For example, if the {@link #getRemoteRoot() remoteRoot} is
-	 * <code>"https://some.host/some/repo/Private+pictures/Wedding+%26%+honeymoon"</code> and the
+	 * <code>"https://some.host/some/repo/Private+pictures/Wedding+%26+honeymoon"</code> and the
 	 * {@link #getRemoteRootWithoutPathPrefix() remoteRootWithoutPathPrefix} is
 	 * <code>"https://some.host/some/repo"</code>,
 	 * then this {@code pathPrefix} will be <code>"/Private pictures/Wedding &amp; honeymoon"</code>.
@@ -99,29 +148,83 @@ public interface RepoTransport extends AutoCloseable {
 	 */
 	String getPathPrefix();
 
+	/**
+	 * Prepend the {@link #getPathPrefix() pathPrefix} to the given {@code path}.
+	 * @param path the path to be prepended. Must not be <code>null</code>.
+	 * @return the complete path composed of the {@link #getPathPrefix() pathPrefix} and the given
+	 * {@code path}. Never <code>null</code>.
+	 * @see #unprefixPath(String)
+	 * @see #getPathPrefix()
+	 */
+	String prefixPath(String path);
+
+	/**
+	 * Cut the {@link #getPathPrefix() pathPrefix} from the given {@code path}.
+	 * @param path the path to be shortened. Must not be <code>null</code>. Of course, this path
+	 * must start with {@link #getPathPrefix() pathPrefix}.
+	 * @return the new shortened path without the {@link #getPathPrefix() pathPrefix}. Never
+	 * <code>null</code>.
+	 * @see #prefixPath(String)
+	 * @see #getPathPrefix()
+	 */
+	String unprefixPath(String path);
+
+	/**
+	 * Gets the remote repository's repository-descriptor.
+	 * <p>
+	 * This operation does not require authentication! It can (and is regularly) invoked anonymously.
+	 * @return the remote repository's repository-descriptor. Never <code>null</code>.
+	 */
 	RepositoryDto getRepositoryDto();
 
 	/**
-	 * Get the repository's unique ID.
-	 * @return the repository's unique ID.
+	 * Get the remote repository's unique identifier.
+	 * @return the repository's unique identifier.
 	 */
 	UUID getRepositoryId();
 
+	/**
+	 * Gets the remote repository's public key.
+	 * @return the remote repository's public key. Never <code>null</code>.
+	 */
 	byte[] getPublicKey();
 
-	@Override
-	void close();
-
 	/**
-	 * Request to connect this repository with the remote repository identified by the given {@code remoteRepositoryId}.
-	 * @param publicKey the public key of the client-repository which requests the connection.
+	 * Request to connect the {@linkplain #getClientRepositoryId() client repository} with
+	 * {@linkplain #getRepositoryId() the remote repository}.
+	 * @param publicKey the public key of the client repository which requests the connection. Must not be
+	 * <code>null</code>.
 	 */
 	void requestRepoConnection(byte[] publicKey);
 
+	/**
+	 * Gets the change-set from the remote repository.
+	 * <p>
+	 * The invocation of this method marks the beginning of a synchronisation. After the synchronisation is
+	 * complete, the {@link #endSyncFromRepository()} method must be invoked to notify the remote repository
+	 * that all changes contained in the change set have been successfully and completely written to the
+	 * client repository.
+	 * <p>
+	 * The change-set is dependent on the client repository: Every client repository gets its own individual
+	 * change-set. The remote repository tracks which changes need to be sent to the client. In normal
+	 * operation, the same change is transferred only once. Under certain circumstances, however, the same
+	 * change might be transferred multiple times and the client must cope with this! Such duplicate
+	 * transfers happen, if the transfer is interrupted - i.e. the {@link #endSyncFromRepository()} was not
+	 * invoked.
+	 * <p>
+	 * Please note that the DTOs in this {@link ChangeSetDto} do not need to be completely resolved. They
+	 * might be incomplete in order to reduce the size of the {@link ChangeSetDto}. For example,
+	 * {@link NormalFileDto#getFileChunkDtos() NormalFileDto.fileChunkDtos} is not populated. These details
+	 * are separately requested, later - e.g. by {@link #getRepoFileDto(String)}.
+	 * @param localSync <code>true</code> indicates that the remote repository should perform a local sync
+	 * before calculating the change set. <code>false</code> indicates that the remote repository should
+	 * abstain from a local sync. This flag is a hint and the remote repository does not need to adhere it.
+	 * @return the change-set from the remote repository. Never <code>null</code>.
+	 */
 	ChangeSetDto getChangeSetDto(boolean localSync);
 
 	/**
-	 * Creates the specified directory (including all parent-directories).
+	 * Creates the specified directory (including all parent-directories as needed).
 	 * <p>
 	 * If the directory already exists, this is a noop.
 	 * <p>
@@ -138,6 +241,8 @@ public interface RepoTransport extends AutoCloseable {
 	 */
 	void makeDirectory(String path, Date lastModified);
 
+	void makeSymlink(String path, String target, Date lastModified);
+
 	void copy(String fromPath, String toPath);
 	void move(String fromPath, String toPath);
 
@@ -153,6 +258,12 @@ public interface RepoTransport extends AutoCloseable {
 	 */
 	void delete(String path);
 
+	/**
+	 * Gets the data of the {@linkplain NormalFileDto file} (or {@linkplain DirectoryDto directory} or
+	 * {@linkplain SymlinkDto symlink}) identified by the given {@code path}.
+	 * @param path the path to the file.
+	 * @return the data of the file referenced by {@code path}. Never <code>null</code>.
+	 */
 	RepoFileDto getRepoFileDto(String path);
 
 	/**
@@ -169,7 +280,7 @@ public interface RepoTransport extends AutoCloseable {
 	byte[] getFileData(String path, long offset, int length);
 
 	/**
-	 * Begins a file transfer to this {@code RepoTransport}.
+	 * Begins a file transfer to this {@code RepoTransport} (more precisely the remote repository behind it).
 	 * <p>
 	 * Usually, this method creates the specified file in the file system (if necessary with parent-directories)
 	 * and in the database. But this operation may be deferred until {@link #endPutFile(String, Date, long, String)}.
@@ -200,7 +311,7 @@ public interface RepoTransport extends AutoCloseable {
 	void putFileData(String path, long offset, byte[] fileData);
 
 	/**
-	 * Ends a file transfer to this {@code RepoTransport}.
+	 * Ends a file transfer to this {@code RepoTransport} (more precisely the remote repository behind it).
 	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
@@ -213,11 +324,34 @@ public interface RepoTransport extends AutoCloseable {
 	 */
 	void endPutFile(String path, Date lastModified, long length, String sha1);
 
+	/**
+	 * Marks the end of a synchronisation <b>from</b> the remote repository behind this {@code RepoTransport}.
+	 * <p>
+	 * This method should be invoked after all changes indicated by {@link #getChangeSetDto(boolean)} have
+	 * been completely written into the client repository.
+	 * <p>
+	 * After this method was invoked, {@link #getChangeSetDto(boolean)} will return the new changes only.
+	 * New changes means all those changes that were accumulated after its last invocation - not after the
+	 * invocation of this method! This method might be called some time after {@code getChangeSetDto(...)}
+	 * and it must be guaranteed that changes done between {@code getChangeSetDto(...)} and
+	 * {@code endSyncFromRepository()} are contained in the next invocation of {@code getChangeSetDto(...)}.
+	 * <p>
+	 * This method must not be invoked, if an error was encountered during the synchronisation! It must thus
+	 * not be used in a finally block! More invocations of {@code getChangeSetDto(...)} than of
+	 * {@code endSyncFromRepository()} are totally fine.
+	 */
 	void endSyncFromRepository();
 
+	/**
+	 * Marks the end of a synchronisation <b>to</b> the remote repository behind this {@code RepoTransport}.
+	 * <p>
+	 * This method should be invoked after all changes in the client repository have been completely written
+	 * into the remote repository behind this {@code RepoTransport}.
+	 * @param fromLocalRevision the {@code localRevision} of the source-repository to which the destination
+	 * repository is now synchronous.
+	 */
 	void endSyncToRepository(long fromLocalRevision);
-	String prefixPath(String path);
-	String unprefixPath(String path);
 
-	void makeSymlink(String path, String target, Date lastModified);
+	@Override
+	public void close();
 }
