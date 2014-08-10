@@ -42,7 +42,6 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	private File remoteRoot;
 
 	private String localPathPrefix;
-	/** Must be URL-encoded. */
 	private String remotePathPrefix;
 	private URL remoteRootURLWithPathPrefix;
 
@@ -355,13 +354,11 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar() throws Exception {
-//		remotePathPrefix = "/%234";
 		remotePathPrefix = "/#4";
 		syncFromRemoteToLocal();
 	}
 	@Test
 	public void syncFromRemoteToLocalWithRemotePathPrefix_specialChar2() throws Exception {
-//		remotePathPrefix = "/5%23";
 		remotePathPrefix = "/5#";
 		syncFromRemoteToLocal();
 	}

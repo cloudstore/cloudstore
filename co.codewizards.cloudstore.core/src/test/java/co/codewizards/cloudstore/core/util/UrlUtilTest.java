@@ -95,19 +95,37 @@ public class UrlUtilTest {
 		assertEquals(fileFromString, file);
 	}
 
-//	@Test
-//	public void getFile_fileString() throws Exception {
-//		File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
-//
-//		File fileFromString = new File(tmpDir, "#Cumbia");
-//		if (!fileFromString.exists() && fileFromString.createNewFile())
-//			System.out.println("File created: " + fileFromString.getCanonicalPath());
-//		else
-//			System.out.println("File already existed: " + fileFromString.getCanonicalPath());
-//
-//		File file = UrlUtil.getFile(tmpDir, "/%23Cumbia");
-//		assertTrue(file.exists());
-//		assertEquals(fileFromString, file);
-//	}
+	@Test
+	public void appendEncodedPath_getFile() throws Exception {
+		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
+		final File fileFromString = new File(tmpDir, "#Cumbia");
+		if (!fileFromString.exists() && fileFromString.createNewFile())
+			System.out.println("File created: " + fileFromString.getCanonicalPath());
+		else
+			System.out.println("File already existed: " + fileFromString.getCanonicalPath());
+
+		final URL url = UrlUtil.appendEncodedPath(tmpDir.toURI().toURL(), "%23Cumbia");
+
+		final File file = UrlUtil.getFile(url);
+		assertTrue(file.exists());
+		assertEquals(fileFromString, file);
+	}
+
+	@Test
+	public void appendNonEncodedPath_getFile() throws Exception {
+		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
+
+		final File fileFromString = new File(tmpDir, "#Cumbia");
+		if (!fileFromString.exists() && fileFromString.createNewFile())
+			System.out.println("File created: " + fileFromString.getCanonicalPath());
+		else
+			System.out.println("File already existed: " + fileFromString.getCanonicalPath());
+
+		final URL url = UrlUtil.appendNonEncodedPath(tmpDir.toURI().toURL(), "#Cumbia");
+
+		final File file = UrlUtil.getFile(url);
+		assertTrue(file.exists());
+		assertEquals(fileFromString, file);
+	}
 }
