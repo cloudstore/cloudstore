@@ -13,6 +13,15 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.util.IOUtil;
 
+/**
+ * Thread used to log standard-out or standard-error from a child-process.
+ * <p>
+ * Besides logging, it can write all data to a {@link StringBuffer}.
+ * <p>
+ * An instance of this class is usally not created explicitly, but implicitly via an instance of
+ * {@link DumpStreamThread}.
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class LogDumpedStreamThread extends Thread
 {
 	private static final Logger logger = LoggerFactory.getLogger(LogDumpedStreamThread.class);
@@ -44,12 +53,16 @@ public class LogDumpedStreamThread extends Thread
 
 	private Logger childProcessLogger;
 
-	public LogDumpedStreamThread(final String childProcessLoggerName)
+	public LogDumpedStreamThread(final String childProcessLoggerName) {
+		this(childProcessLoggerName == null ? null : LoggerFactory.getLogger(childProcessLoggerName));
+	}
+
+	public LogDumpedStreamThread(final Logger childProcessLogger)
 	{
-		if (childProcessLoggerName == null)
-			childProcessLogger = logger;
+		if (childProcessLogger == null)
+			this.childProcessLogger = logger;
 		else
-			childProcessLogger = LoggerFactory.getLogger(childProcessLoggerName);
+			this.childProcessLogger = childProcessLogger;
 	}
 
 	public void write(final byte[] data, final int length)

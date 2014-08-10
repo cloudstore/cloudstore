@@ -1558,7 +1558,7 @@ public final class IOUtil {
 			final Process process = processBuilder.start();
 			final ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
 			final int processExitCode;
-			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, null);
+			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, logger);
 			try {
 				dumpInputStreamThread.start();
 				processExitCode = process.waitFor();
