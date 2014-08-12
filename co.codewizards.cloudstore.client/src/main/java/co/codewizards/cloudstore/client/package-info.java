@@ -1,5 +1,5 @@
 /**
- * Command-line client.
+ * Command-line client (separate program).
  * <p>
  * The CloudStore command-line client is able to synchronise data between two local repositories using direct
  * file-access as well as to synchronise a local repository with a remote repository accessible via REST.
