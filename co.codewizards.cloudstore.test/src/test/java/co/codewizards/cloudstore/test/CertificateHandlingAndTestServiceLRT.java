@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.net.SocketException;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
-import co.codewizards.cloudstore.rest.client.command.TestCommand;
+import co.codewizards.cloudstore.rest.client.request.TestRequest;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
@@ -37,7 +37,7 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		final File trustStoreFile = CertificateHandlingAndTestServiceIT.getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final long sleepInMsec = 1000 * (30 + 1);
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackSleepUntilTimeout(
 				handleCertificateExceptionCounter, sleepInMsec);
@@ -45,7 +45,7 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(0);
 
-		cloudStoreRestClient.execute(new TestCommand(false));
+		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 	}
 
@@ -54,7 +54,7 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		final File trustStoreFile = CertificateHandlingAndTestServiceIT.getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final long sleepInMsec = 1000 * (60 + 1);
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackSleepUntilTimeout(
 				handleCertificateExceptionCounter, sleepInMsec);
@@ -62,7 +62,7 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(0);
 
-		cloudStoreRestClient.execute(new TestCommand(false));
+		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 	}
 
@@ -71,14 +71,14 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		final File trustStoreFile = CertificateHandlingAndTestServiceIT.getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final long sleepInMsec = 1000 * (60 * 5 - 3);
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackSleepUntilTimeout(
 				handleCertificateExceptionCounter, sleepInMsec);
 		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(0);
-		cloudStoreRestClient.execute(new TestCommand(false));
+		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 	}
 
@@ -89,7 +89,7 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		final File trustStoreFile = CertificateHandlingAndTestServiceIT.getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final long sleepInMsec = 1000 * (300 + 1);
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackSleepUntilTimeout(
 				handleCertificateExceptionCounter, sleepInMsec);
@@ -97,9 +97,9 @@ public class CertificateHandlingAndTestServiceLRT extends AbstractIT {
 		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(0);
 		try {
-			cloudStoreRestClient.execute(new TestCommand(false));
+			cloudStoreRestClient.execute(new TestRequest(false));
 			Assert.fail("Should throw exception!");
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			LOGGER.info(x.toString(), x);
 			assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 			assertThat(x).isInstanceOf(ProcessingException.class);
