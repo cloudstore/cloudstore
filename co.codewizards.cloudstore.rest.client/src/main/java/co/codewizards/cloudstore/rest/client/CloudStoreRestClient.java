@@ -34,7 +34,6 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
-import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
 import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
 import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
@@ -43,7 +42,11 @@ import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
  * Client for executing REST requests.
  * <p>
  * An instance of this class is used to send data to, query data from or execute logic on the server.
- *
+ * <p>
+ * If a series of multiple requests is to be sent to the server, it is recommended to keep an instance of
+ * this class (because it caches resources) and invoke multiple requests with it.
+ * <p>
+ * This class is thread-safe.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class CloudStoreRestClient {
@@ -83,7 +86,7 @@ public class CloudStoreRestClient {
 
 	private CredentialsProvider credentialsProvider;
 
-	public Integer getSocketConnectTimeout() {
+	public synchronized Integer getSocketConnectTimeout() {
 		if (socketConnectTimeout == null)
 			socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
@@ -91,14 +94,14 @@ public class CloudStoreRestClient {
 
 		return socketConnectTimeout;
 	}
-	public void setSocketConnectTimeout(Integer socketConnectTimeout) {
+	public synchronized void setSocketConnectTimeout(Integer socketConnectTimeout) {
 		if (socketConnectTimeout != null && socketConnectTimeout < 0)
 			socketConnectTimeout = null;
 
 		this.socketConnectTimeout = socketConnectTimeout;
 	}
 
-	public Integer getSocketReadTimeout() {
+	public synchronized Integer getSocketReadTimeout() {
 		if (socketReadTimeout == null)
 			socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_READ_TIMEOUT,
@@ -106,7 +109,7 @@ public class CloudStoreRestClient {
 
 		return socketReadTimeout;
 	}
-	public void setSocketReadTimeout(Integer socketReadTimeout) {
+	public synchronized void setSocketReadTimeout(Integer socketReadTimeout) {
 		if (socketReadTimeout != null && socketReadTimeout < 0)
 			socketReadTimeout = null;
 

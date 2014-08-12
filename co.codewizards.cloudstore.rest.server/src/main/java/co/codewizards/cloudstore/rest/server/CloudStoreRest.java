@@ -6,9 +6,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.rest.server.jersey.CloudStoreBinder;
-import co.codewizards.cloudstore.rest.server.jersey.CloudStoreJaxbContextResolver;
-import co.codewizards.cloudstore.rest.server.jersey.DefaultExceptionMapper;
 import co.codewizards.cloudstore.rest.server.service.BeginPutFileService;
 import co.codewizards.cloudstore.rest.server.service.ChangeSetDtoService;
 import co.codewizards.cloudstore.rest.server.service.CopyService;

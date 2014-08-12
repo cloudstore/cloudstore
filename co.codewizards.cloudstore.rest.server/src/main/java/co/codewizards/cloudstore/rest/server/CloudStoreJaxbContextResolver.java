@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.server.jersey;
+package co.codewizards.cloudstore.rest.server;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;

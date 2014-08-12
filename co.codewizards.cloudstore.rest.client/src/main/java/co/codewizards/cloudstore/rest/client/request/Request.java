@@ -15,6 +15,8 @@ import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
  * <p>
  * <pre>return getCloudStoreRestClient().execute(new DoThisAndThatOnServer(param1, param2));</pre>
  * <p>
+ * Implementations of this interface are <i>not</i> thread-safe.
+ * <p>
  * <b>Important:</b> Please do <i>not</i> directly implement this interface! If the REST request queries a
  * response from the server, it is recommended to sub-class {@link AbstractRequest}. If there is no response,
  * implementors should sub-class {@link VoidRequest} instead.
