@@ -4,11 +4,16 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.SocketException;
 import java.net.URL;
+import java.security.InvalidAlgorithmParameterException;
+import java.util.Date;
 import java.util.LinkedList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -26,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.command.Command;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
@@ -36,7 +42,7 @@ public class CloudStoreRestClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRestClient.class);
 
-	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 60 * 1000;
+	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
 	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
 
 	/**
@@ -115,7 +121,18 @@ public class CloudStoreRestClient {
 	 */
 	public synchronized String getBaseURL() {
 		if (baseURL == null) {
-			determineBaseURL();
+			try {
+				determineBaseURL();
+			} catch (Exception e) {
+				final SocketException socketException = ExceptionUtil.getCause(e, SocketException.class);
+				if (socketException != null) {
+					// After a while of waiting, the server aborts the connection and the client receives
+					// a SocketException; so we make a clean retry with a newly acquired client.
+					logger.warn("getBaseURL: will retry one more time determineBaseURL!");
+					determineBaseURL();
+				} else
+					throw e;
+			}
 		}
 		return baseURL;
 	}
@@ -151,15 +168,33 @@ public class CloudStoreRestClient {
 		try {
 			final Client client = getClientOrFail();
 			String url = appendFinalSlashIfNeeded(this.url);
-			while (true) {
+			int retryCounter = 0;
+			final int retryMax = 10; // if timeout is 30sec, it will be 5min
+			while (retryCounter <= retryMax) {
 				final String testUrl = url + "_test";
 				try {
+					Date start = new Date();
+					logger.info("Request starting: {}/{}", retryCounter, retryMax);
 					final String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
+					logger.info("Request ended: took {}msec", (new Date().getTime() - start.getTime()));
 					if ("SUCCESS".equals(response)) {
 						baseURL = url;
 						break;
 					}
-				} catch (final WebApplicationException x) { doNothing(); }
+				} catch (final WebApplicationException wax) {
+					doNothing();
+				} catch (ProcessingException x) {
+					final InvalidAlgorithmParameterException invalidAlgorithmParameterException = ExceptionUtil.getCause(x, InvalidAlgorithmParameterException.class);
+					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
+					if (sslException != null && invalidAlgorithmParameterException != null)
+						throw x;
+					if (sslException != null && "Received close_notify during handshake".equals(sslException.getMessage())) {
+						++retryCounter;
+						logger.warn("Request timed out, current retry: {}/{}", retryCounter, retryMax);
+						continue;
+					}
+					throw x;
+				}
 
 				if (!url.endsWith("/"))
 					throw new IllegalStateException("url does not end with '/'!");

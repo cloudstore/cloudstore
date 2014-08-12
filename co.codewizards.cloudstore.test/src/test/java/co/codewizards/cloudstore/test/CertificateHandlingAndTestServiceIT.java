@@ -35,7 +35,7 @@ import co.codewizards.cloudstore.rest.server.service.TestService;
 public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(CertificateHandlingAndTestServiceIT.class);
 
-	private File getRandomTrustStoreFile() throws IOException {
+	static File getRandomTrustStoreFile() throws IOException {
 		final File dir = new File(ConfigDir.getInstance().getFile(), "ssl.client");
 		dir.mkdirs();
 		final File trustStoreFile = File.createTempFile("truststore_", null, dir);

@@ -342,6 +342,9 @@ public class CloudStoreServer implements Runnable {
 
 		final ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpConfigurationForHTTPS));
 		sslConnector.setPort(getSecurePort());
+//		sslConnector.setIdleTimeout(300*1000);
+//		sslConnector.setStopTimeout(30*1000);
+//		sslConnector.setSoLingerTime(10);
 		return sslConnector;
 	}
 

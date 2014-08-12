@@ -94,28 +94,60 @@
 	</profiles>
 -->
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<configuration>
-					<includes>
-						<include>**/IT*.java</include>
- <include>**/*IT.java</include>
- <include>**/*ITCase.java</include>
-						<include>**/Test*.java</include>
-						<include>**/*Test.java</include>
-					</includes>
-				</configuration>
-			</plugin>
+	<profiles>
+		<profile>
+			<id>includeLRTs</id>
+				<build>
+					<plugins>
+						<plugin>
+							<artifactId>maven-failsafe-plugin</artifactId>
+							<!-- by default, failsafe will include these patterns:
+								"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
+							 -->
+							<configuration>
+								<includes>
+									<include>**/IT*.java</include>
+									<include>**/*IT.java</include>
+									<include>**/*ITCase.java</include>
+									<include>**/*LRT.java</include><!-- LRT: "LongRunningTest" -->
+								</includes>
+							</configuration>
+						</plugin>
 
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<!-- All tests in this project are integration tests. We therefore disable the maven-surefire-plugin entirely. -->
-					<skipTests>true</skipTests>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+						<plugin>
+							<artifactId>maven-surefire-plugin</artifactId>
+							<configuration>
+								<!-- All tests in this project are integration tests. We therefore disable the maven-surefire-plugin entirely. -->
+								<skipTests>true</skipTests>
+							</configuration>
+						</plugin>
+					</plugins>
+				</build>
+		</profile>
+	
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<!-- by default, failsafe will include these patterns:
+							"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
+						 -->
+					</plugin>
+
+					<plugin>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<!-- All tests in this project are integration tests. We therefore disable the maven-surefire-plugin entirely. -->
+							<skipTests>true</skipTests>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
