@@ -1,11 +1,11 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
-public class GetFileData extends AbstractCommand<byte[]> {
+public class GetFileData extends AbstractRequest<byte[]> {
 	private final String repositoryName;
 	private final String path;
 	private final long offset;

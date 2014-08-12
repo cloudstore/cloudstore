@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -8,7 +8,7 @@ import javax.ws.rs.core.Response;
 
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 
-public class RequestRepoConnection extends VoidCommand {
+public class RequestRepoConnection extends VoidRequest {
 	private final String repositoryName;
 	private final String pathPrefix;
 	private final RepositoryDto clientRepositoryDto;

@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -7,7 +7,7 @@ import javax.ws.rs.core.MediaType;
 
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 
-public class GetRepoFileDto extends AbstractCommand<RepoFileDto> {
+public class GetRepoFileDto extends AbstractRequest<RepoFileDto> {
 	private final String repositoryName;
 	private final String path;
 

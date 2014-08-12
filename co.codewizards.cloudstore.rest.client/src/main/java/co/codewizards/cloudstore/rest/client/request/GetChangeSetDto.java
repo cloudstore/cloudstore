@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -7,7 +7,7 @@ import javax.ws.rs.core.MediaType;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 
-public class GetChangeSetDto extends AbstractCommand<ChangeSetDto> {
+public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 
 	private final String repositoryName;
 	private final boolean localSync;

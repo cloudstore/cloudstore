@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -6,7 +6,7 @@ import javax.ws.rs.core.Response;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
 
-public class EndPutFile extends VoidCommand {
+public class EndPutFile extends VoidRequest {
 
 	private final String repositoryName;
 	private final String path;

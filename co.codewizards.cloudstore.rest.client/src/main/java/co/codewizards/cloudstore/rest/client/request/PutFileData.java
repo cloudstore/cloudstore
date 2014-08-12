@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -7,7 +7,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class PutFileData extends VoidCommand {
+public class PutFileData extends VoidRequest {
 	private final String repositoryName;
 	private final String path;
 	private final long offset;

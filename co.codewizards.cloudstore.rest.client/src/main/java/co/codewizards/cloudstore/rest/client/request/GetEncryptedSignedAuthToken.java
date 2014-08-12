@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -8,7 +8,7 @@ import javax.ws.rs.core.MediaType;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 
-public class GetEncryptedSignedAuthToken extends AbstractCommand<EncryptedSignedAuthToken> {
+public class GetEncryptedSignedAuthToken extends AbstractRequest<EncryptedSignedAuthToken> {
 
 	private final String repositoryName;
 	private final UUID clientRepositoryId;

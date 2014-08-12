@@ -1,10 +1,10 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.ws.rs.core.Response;
 
-public class Delete extends VoidCommand {
+public class Delete extends VoidRequest {
 
 	private final String repositoryName;
 	private final String path;

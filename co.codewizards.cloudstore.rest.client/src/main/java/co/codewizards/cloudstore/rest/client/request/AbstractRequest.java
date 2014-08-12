@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -18,8 +18,8 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.RemoteException;
 
-public abstract class AbstractCommand<R> implements Command<R> {
-	private static final Logger logger = LoggerFactory.getLogger(AbstractCommand.class);
+public abstract class AbstractRequest<R> implements Request<R> {
+	private static final Logger logger = LoggerFactory.getLogger(AbstractRequest.class);
 
 	private CloudStoreRestClient cloudStoreRestClient;
 

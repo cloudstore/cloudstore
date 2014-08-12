@@ -1,8 +1,8 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import javax.ws.rs.core.Response;
 
-public abstract class VoidCommand extends AbstractCommand<Void> {
+public abstract class VoidRequest extends AbstractRequest<Void> {
 
 	@Override
 	public final Void execute() {

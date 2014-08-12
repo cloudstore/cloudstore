@@ -1,13 +1,13 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class TestCommand extends AbstractCommand<Void> {
+public class TestRequest extends AbstractRequest<Void> {
 
 	private final boolean testException;
 
-	public TestCommand(final boolean testException) {
+	public TestRequest(final boolean testException) {
 		this.testException = testException;
 	}
 

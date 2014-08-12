@@ -1,9 +1,9 @@
-package co.codewizards.cloudstore.rest.client.command;
+package co.codewizards.cloudstore.rest.client.request;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 
-public class GetRepositoryDto extends AbstractCommand<RepositoryDto> {
+public class GetRepositoryDto extends AbstractRequest<RepositoryDto> {
 
 	private final String repositoryName;
 

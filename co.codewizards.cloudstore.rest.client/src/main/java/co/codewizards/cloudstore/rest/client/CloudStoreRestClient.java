@@ -33,8 +33,8 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
-import co.codewizards.cloudstore.rest.client.command.Command;
 import co.codewizards.cloudstore.rest.client.jersey.CloudStoreJaxbContextResolver;
+import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
 import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
@@ -210,7 +210,7 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	public <R> R execute(final Command<R> command) {
+	public <R> R execute(final Request<R> command) {
 		assertNotNull("command", command);
 		acquireClient();
 		try {
