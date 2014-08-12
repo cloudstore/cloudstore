@@ -3,16 +3,16 @@ package co.codewizards.cloudstore.rest.client.request;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 
 /**
- * REST request to be executed via {@link CloudStoreRestClient#execute(Request)}.
+ * REST request sending data to / querying data from / invoking logic on the server.
  * <p>
  * Every REST request should be a separate class implementing this interface. It should be instantiated for
  * an individual invocation, parameterised (usually directly via the constructor) and passed to
- * {@code CloudStoreRestClient.execute(...)}.
+ * {@link CloudStoreRestClient#execute(Request)}.
  * <p>
- * <b>Important:</b> Please do <i>not</i> directly implement this interface! If the REST request queries a 
+ * <b>Important:</b> Please do <i>not</i> directly implement this interface! If the REST request queries a
  * response from the server, it is recommended to sub-class {@link AbstractRequest}. If there is no response,
  * implementors should sub-class {@link VoidRequest} instead.
- * 
+ *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  *
  * @param <R> the response type, i.e. the type of the object sent from the server back to the client.
@@ -29,7 +29,7 @@ public interface Request<R> {
 	 * @see #setCloudStoreRESTClient(CloudStoreRestClient)
 	 */
 	CloudStoreRestClient getCloudStoreRESTClient();
-	
+
 	/**
 	 * Sets the {@code CloudStoreRestClient}.
 	 * @param cloudStoreRestClient the {@code CloudStoreRestClient}. May be <code>null</code>.
@@ -47,6 +47,17 @@ public interface Request<R> {
 	 */
 	R execute();
 
+	/**
+	 * Indicates, if the result of the invocation can be <code>null</code>.
+	 * <p>
+	 * If the server <i>must</i> send a response, i.e. the invocation must not return empty-handed, this
+	 * should be <code>false</code>. In case, the server still does not send a reply, it is considered an
+	 * error causing an exception.
+	 * <p>
+	 * Please note: If a request <i>never</i> returns a response (like a Java void method), it is recommended
+	 * that you sub-class {@link VoidRequest}.
+	 * @return <code>true</code> if <code>null</code> as response is allowed; <code>false</code> otherwise.
+	 */
 	boolean isResultNullable();
 
 }

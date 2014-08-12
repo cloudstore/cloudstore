@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.net.URI;
 
@@ -18,6 +18,16 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.RemoteException;
 
+/**
+ * Abstract base class for REST requests.
+ * <p>
+ * Implementors are encouraged to sub-class {@code AbstractRequest} or {@link VoidRequest} instead of
+ * directly implementing {@link Request}.
+ *
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ *
+ * @param <R> the response type, i.e. the type of the object sent from the server back to the client.
+ */
 public abstract class AbstractRequest<R> implements Request<R> {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRequest.class);
 
@@ -33,6 +43,13 @@ public abstract class AbstractRequest<R> implements Request<R> {
 		this.cloudStoreRestClient = cloudStoreRestClient;
 	}
 
+	/**
+	 * Gets the {@link CloudStoreRestClient} or throws an exception, if it was not assigned.
+	 * <p>
+	 * Implementors are encouraged to use this method instead of {@link #getCloudStoreRESTClient()} in their
+	 * {@link #execute()} method.
+	 * @return the {@link CloudStoreRestClient}. Never <code>null</code>.
+	 */
 	protected CloudStoreRestClient getCloudStoreRESTClientOrFail() {
 		final CloudStoreRestClient cloudStoreRestClient = getCloudStoreRESTClient();
 		assertNotNull("cloudStoreRestClient", cloudStoreRestClient);

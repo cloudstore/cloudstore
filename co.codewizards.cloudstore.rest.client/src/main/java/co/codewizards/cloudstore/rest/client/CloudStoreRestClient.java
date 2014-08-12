@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -123,7 +124,7 @@ public class CloudStoreRestClient {
 		if (baseURL == null) {
 			try {
 				determineBaseURL();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				final SocketException socketException = ExceptionUtil.getCause(e, SocketException.class);
 				if (socketException != null) {
 					// After a while of waiting, the server aborts the connection and the client receives
@@ -173,7 +174,7 @@ public class CloudStoreRestClient {
 			while (retryCounter <= retryMax) {
 				final String testUrl = url + "_test";
 				try {
-					Date start = new Date();
+					final Date start = new Date();
 					logger.info("Request starting: {}/{}", retryCounter, retryMax);
 					final String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
 					logger.info("Request ended: took {}msec", (new Date().getTime() - start.getTime()));
@@ -183,7 +184,7 @@ public class CloudStoreRestClient {
 					}
 				} catch (final WebApplicationException wax) {
 					doNothing();
-				} catch (ProcessingException x) {
+				} catch (final ProcessingException x) {
 					final InvalidAlgorithmParameterException invalidAlgorithmParameterException = ExceptionUtil.getCause(x, InvalidAlgorithmParameterException.class);
 					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
 					if (sslException != null && invalidAlgorithmParameterException != null)
@@ -210,22 +211,22 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	public <R> R execute(final Request<R> command) {
-		assertNotNull("command", command);
+	public <R> R execute(final Request<R> request) {
+		assertNotNull("request", request);
 		acquireClient();
 		try {
-			command.setCloudStoreRESTClient(this);
-			final R result = command.execute();
+			request.setCloudStoreRESTClient(this);
+			final R result = request.execute();
 			return result;
 		} catch (final RuntimeException x) {
 			handleException(x);
-			if (command.isResultNullable())
+			if (request.isResultNullable())
 				return null;
 			else
 				throw x;
 		} finally {
 			releaseClient();
-			command.setCloudStoreRESTClient(null);
+			request.setCloudStoreRESTClient(null);
 		}
 	}
 
