@@ -1,4 +1,4 @@
 /**
- * REST-based {@link co.codewizards.cloudstore.core.repo.transport.RepoTransport RepoTransport} implementation.
+ * REST-based transport implementation.
  */
 package co.codewizards.cloudstore.rest.client.transport;

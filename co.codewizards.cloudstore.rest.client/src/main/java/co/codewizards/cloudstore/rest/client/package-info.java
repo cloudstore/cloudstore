@@ -1,5 +1,5 @@
 /**
- * REST client for REST-based client-server-communication.
+ * Client for REST-based client-server-communication.
  * <p>
  * The most important class in this package is
  * {@link co.codewizards.cloudstore.rest.client.CloudStoreRestClient CloudStoreRestClient} facilitating the
