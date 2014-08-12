@@ -39,6 +39,13 @@ import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
 import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
+/**
+ * Client for executing REST requests.
+ * <p>
+ * An instance of this class is used to send data to, query data from or execute logic on the server.
+ *
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class CloudStoreRestClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRestClient.class);

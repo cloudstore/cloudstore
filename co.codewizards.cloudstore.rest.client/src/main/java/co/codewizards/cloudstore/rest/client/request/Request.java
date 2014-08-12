@@ -9,6 +9,12 @@ import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
  * an individual invocation, parameterised (usually directly via the constructor) and passed to
  * {@link CloudStoreRestClient#execute(Request)}.
  * <p>
+ * Objects of this type are therefore short-lived: They normally are only used for one single invocation and
+ * forgotten afterwards. In most cases, anonymous instances are directly passed to the
+ * {@code CloudStoreRestClient.execute(...)} method as shown in this example:
+ * <p>
+ * <pre>return getCloudStoreRestClient().execute(new DoThisAndThatOnServer(param1, param2));</pre>
+ * <p>
  * <b>Important:</b> Please do <i>not</i> directly implement this interface! If the REST request queries a
  * response from the server, it is recommended to sub-class {@link AbstractRequest}. If there is no response,
  * implementors should sub-class {@link VoidRequest} instead.
