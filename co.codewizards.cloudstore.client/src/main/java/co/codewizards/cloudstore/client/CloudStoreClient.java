@@ -84,49 +84,49 @@ public class CloudStoreClient {
 	 */
 	private final String[] args;
 
-    public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
-        @Override
-        public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
-            final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
-            String certificateSha1 = null;
-            try {
-                certificateSha1 = HashUtil.sha1ForHuman(context.getCertificateChain()[0].getEncoded());
-            } catch (final Exception e) {
-                // we're in the console client, hence we can and should print the exception here and then exit.
-                e.printStackTrace();
-                System.exit(66);
-            }
-            System.out.println("You are connecting to this server for the first time or someone is tampering with your");
-            System.out.println("connection to this server!");
-            System.out.println();
-            System.out.println("The server presented a certificate with the following fingerprint (SHA1):");
-            System.out.println();
-            System.out.println("    " + certificateSha1);
-            System.out.println();
-            System.out.println("Please verify that this is really your server's certificate and not a man in the middle!");
-            System.out.println("Your server shows its certificate's fingerprint during startup.");
-            System.out.println();
-            final String trustedString = prompt(">>> Do you want to register this certificate and trust this connection? (y/n) ");
-            if ("y".equals(trustedString)) {
-                result.setTrusted(true);
-            }
-            else if ("n".equals(trustedString)) {
-                result.setTrusted(false);
-            }
-            return result;
-        }
+	public static class ConsoleDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
+		@Override
+		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
+			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+			String certificateSha1 = null;
+			try {
+				certificateSha1 = HashUtil.sha1ForHuman(context.getCertificateChain()[0].getEncoded());
+			} catch (final Exception e) {
+				// we're in the console client, hence we can and should print the exception here and then exit.
+				e.printStackTrace();
+				System.exit(66);
+			}
+			System.out.println("You are connecting to this server for the first time or someone is tampering with your");
+			System.out.println("connection to this server!");
+			System.out.println();
+			System.out.println("The server presented a certificate with the following fingerprint (SHA1):");
+			System.out.println();
+			System.out.println("	" + certificateSha1);
+			System.out.println();
+			System.out.println("Please verify that this is really your server's certificate and not a man in the middle!");
+			System.out.println("Your server shows its certificate's fingerprint during startup.");
+			System.out.println();
+			final String trustedString = prompt(">>> Do you want to register this certificate and trust this connection? (y/n) ");
+			if ("y".equals(trustedString)) {
+				result.setTrusted(true);
+			}
+			else if ("n".equals(trustedString)) {
+				result.setTrusted(false);
+			}
+			return result;
+		}
 
-        protected String prompt(final String question, final Object ... args) {
-            final TimeoutConsoleReader consoleInput = new TimeoutConsoleReader(question, 300*1000, "n");
-            String result;
-            try {
-                result = consoleInput.readLine();
-            } catch (final InterruptedException e) {
-                throw new IllegalStateException("A problem occured, while reading from console!");
-            }
-            return result;
-        }
-    }
+		protected String prompt(final String question, final Object ... args) {
+			final TimeoutConsoleReader consoleInput = new TimeoutConsoleReader(question, 300*1000, "n");
+			String result;
+			try {
+				result = consoleInput.readLine();
+			} catch (final InterruptedException e) {
+				throw new IllegalStateException("A problem occured, while reading from console!");
+			}
+			return result;
+		}
+	}
 
 	private static final String[] stripSubCommand(final String[] args)
 	{
@@ -276,17 +276,17 @@ public class CloudStoreClient {
 		}
 
 		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-	    try {
-	      final JoranConfigurator configurator = new JoranConfigurator();
-	      configurator.setContext(context);
-	      // Call context.reset() to clear any previous configuration, e.g. default
-	      // configuration. For multi-step configuration, omit calling context.reset().
-	      context.reset();
-	      configurator.doConfigure(logbackXmlFile);
-	    } catch (final JoranException je) {
-	    	// StatusPrinter will handle this
-	    	doNothing();
-	    }
-	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+		try {
+		  final JoranConfigurator configurator = new JoranConfigurator();
+		  configurator.setContext(context);
+		  // Call context.reset() to clear any previous configuration, e.g. default
+		  // configuration. For multi-step configuration, omit calling context.reset().
+		  context.reset();
+		  configurator.doConfigure(logbackXmlFile);
+		} catch (final JoranException je) {
+			// StatusPrinter will handle this
+			doNothing();
+		}
+		StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 	}
 }

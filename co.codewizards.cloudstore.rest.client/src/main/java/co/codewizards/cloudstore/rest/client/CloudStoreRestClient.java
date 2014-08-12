@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -179,32 +178,16 @@ public class CloudStoreRestClient {
 		try {
 			final Client client = getClientOrFail();
 			String url = appendFinalSlashIfNeeded(this.url);
-			int retryCounter = 0;
-			final int retryMax = 10; // if timeout is 30sec, it will be 5min
-			while (retryCounter <= retryMax) {
+			while (true) {
 				final String testUrl = url + "_test";
 				try {
-					final Date start = new Date();
-					logger.info("Request starting: {}/{}", retryCounter, retryMax);
 					final String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
-					logger.info("Request ended: took {}msec", (new Date().getTime() - start.getTime()));
 					if ("SUCCESS".equals(response)) {
 						baseURL = url;
 						break;
 					}
 				} catch (final WebApplicationException wax) {
 					doNothing();
-				} catch (final ProcessingException x) {
-					final InvalidAlgorithmParameterException invalidAlgorithmParameterException = ExceptionUtil.getCause(x, InvalidAlgorithmParameterException.class);
-					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
-					if (sslException != null && invalidAlgorithmParameterException != null)
-						throw x;
-					if (sslException != null && "Received close_notify during handshake".equals(sslException.getMessage())) {
-						++retryCounter;
-						logger.warn("Request timed out, current retry: {}/{}", retryCounter, retryMax);
-						continue;
-					}
-					throw x;
 				}
 
 				if (!url.endsWith("/"))
@@ -225,15 +208,36 @@ public class CloudStoreRestClient {
 		assertNotNull("request", request);
 		acquireClient();
 		try {
-			request.setCloudStoreRESTClient(this);
-			final R result = request.execute();
-			return result;
-		} catch (final RuntimeException x) {
-			handleException(x);
-			if (request.isResultNullable())
-				return null;
-			else
-				throw x;
+			int retryCounter = 0;
+			final int retryMax = 3;
+			while (retryCounter <= retryMax) {
+				final Date start = new Date();
+				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
+				try {
+					request.setCloudStoreRESTClient(this);
+					final R result = request.execute();
+					logger.info("Execution ended: took {}msec", (new Date().getTime() - start.getTime()));
+					return result;
+				} catch (final ProcessingException x) {
+					final InvalidAlgorithmParameterException invalidAlgorithmParameterException = ExceptionUtil.getCause(x, InvalidAlgorithmParameterException.class);
+					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
+					if (sslException != null && invalidAlgorithmParameterException != null)
+						throw x;
+					if (sslException != null && "Received close_notify during handshake".equals(sslException.getMessage())) {
+						++retryCounter;
+						logger.warn("Execution timed out, current retry: {}/{}", retryCounter, retryMax);
+						continue;
+					}
+					throw x;
+				} catch (final RuntimeException x) {
+					handleException(x);
+					if (request.isResultNullable())
+						return null;
+					else
+						throw x;
+				}
+			}
+			throw new IllegalStateException("execute was not succesfull.");
 		} finally {
 			releaseClient();
 			request.setCloudStoreRESTClient(null);
