@@ -131,18 +131,7 @@ public class CloudStoreRestClient {
 	 */
 	public synchronized String getBaseURL() {
 		if (baseURL == null) {
-			try {
-				determineBaseURL();
-			} catch (final Exception e) {
-				final SocketException socketException = ExceptionUtil.getCause(e, SocketException.class);
-				if (socketException != null) {
-					// After a while of waiting, the server aborts the connection and the client receives
-					// a SocketException; so we make a clean retry with a newly acquired client.
-					logger.warn("getBaseURL: will retry one more time determineBaseURL!");
-					determineBaseURL();
-				} else
-					throw e;
-			}
+			determineBaseURL();
 		}
 		return baseURL;
 	}
@@ -153,8 +142,7 @@ public class CloudStoreRestClient {
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final URL url)
-	{
+	public CloudStoreRestClient(final URL url) {
 		this(assertNotNull("url", url).toExternalForm());
 	}
 
@@ -164,8 +152,7 @@ public class CloudStoreRestClient {
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final String url)
-	{
+	public CloudStoreRestClient(final String url) {
 		this.url = assertNotNull("url", url);
 	}
 
@@ -223,6 +210,15 @@ public class CloudStoreRestClient {
 					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
 					if (sslException != null && invalidAlgorithmParameterException != null)
 						throw x;
+					final SocketException socketException = ExceptionUtil.getCause(x, SocketException.class);
+					if (socketException != null) {
+						// After a while of waiting, the server aborts the connection and the client receives
+						// a SocketException; ==> retry!
+						++retryCounter;
+						logger.warn("Execution timed out, socketException occured, current retry: {}/{}",
+								retryCounter, retryMax);
+						continue;
+					}
 					if (sslException != null && "Received close_notify during handshake".equals(sslException.getMessage())) {
 						++retryCounter;
 						logger.warn("Execution timed out, current retry: {}/{}", retryCounter, retryMax);
