@@ -14,7 +14,7 @@ import java.util.concurrent.locks.Lock;
  * All methods of this interface are thread-safe.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public interface LockFile {
+public interface LockFile extends AutoCloseable {
 
 	/**
 	 * Gets the underlying file being locked.
@@ -40,6 +40,16 @@ public interface LockFile {
 	 *  @throws IllegalStateException if this method is invoked more than once on the same instance.
 	 */
 	void release();
+
+	/**
+	 * Equivalent to {@link #release()}.
+	 * <p>
+	 * Implementations must make sure that invoking {@code close()} means exactly the same as invoking
+	 * {@code release()}. This method was added to make the usage of {@code LockFile} possible in a
+	 * try-with-resources-clause. See {@link AutoCloseable} for more details.
+	 */
+	@Override
+	public void close();
 
 	Lock getLock();
 

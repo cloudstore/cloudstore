@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
 import java.io.File;
 import java.io.IOException;
@@ -127,6 +128,11 @@ class LockFileImpl implements LockFile {
 			}
 		}
 		lockFileFactory.postRelease(this);
+	}
+
+	@Override
+	public void close() {
+		throw new UnsupportedOperationException("Only the LockFileProxy should be used! This method should therefore never be invoked!");
 	}
 
 	protected int getLockCounter() {
