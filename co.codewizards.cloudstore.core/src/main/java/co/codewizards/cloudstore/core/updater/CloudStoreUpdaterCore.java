@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -119,7 +119,7 @@ public class CloudStoreUpdaterCore {
 					final URL url = new URL(resolvedRemoteVersionURL);
 					final InputStream in = url.openStream();
 					try {
-						BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+						final BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 						final String line = r.readLine();
 						if (line == null || line.isEmpty())
 							throw new IllegalStateException("Failed to read version from: " + resolvedRemoteVersionURL);
@@ -134,7 +134,7 @@ public class CloudStoreUpdaterCore {
 						in.close();
 					}
 					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(new Date())));
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
@@ -169,7 +169,7 @@ public class CloudStoreUpdaterCore {
 			try {
 				final Properties properties = PropertiesUtil.load(installationPropertiesFile);
 				installationProperties = properties;
-			} catch (IOException x) {
+			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
 		}
@@ -186,7 +186,7 @@ public class CloudStoreUpdaterCore {
 	 * @param template the template to be resolved. Must not be <code>null</code>.
 	 * @return
 	 */
-	protected String resolve(String template) {
+	protected String resolve(final String template) {
 		assertNotNull("template", template);
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 		assertNotNull("artifactId", artifactId);
@@ -245,7 +245,7 @@ public class CloudStoreUpdaterCore {
 			throw new IllegalStateException("Class 'CloudStoreUpdaterCore' was not loaded from a local JAR or class file!");
 	}
 
-	private File createFileFromFileURL(URL url) {
+	private File createFileFromFileURL(final URL url) {
 		assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
@@ -253,25 +253,25 @@ public class CloudStoreUpdaterCore {
 		try {
 			final File file = Paths.get(url.toURI()).toFile();
 			return file;
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private URL removePrefixAndSuffixFromJarURL(URL url) {
+	private URL removePrefixAndSuffixFromJarURL(final URL url) {
 		assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
 			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
 
 		String urlStrWithoutJarPrefix = url.getFile();
-		int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
+		final int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
 		if (exclamationMarkIndex >= 0) {
 			urlStrWithoutJarPrefix = urlStrWithoutJarPrefix.substring(0, exclamationMarkIndex);
 		}
 		try {
 			final URL urlWithoutJarPrefixAndSuffix = new URL(urlStrWithoutJarPrefix);
 			return urlWithoutJarPrefixAndSuffix;
-		} catch (MalformedURLException e) {
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -314,8 +314,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private RemoteVersionCache readRemoteVersionCacheFromProperties() {
-		final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000);
-		try {
+		try ( final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000); ) {
 			final Properties properties = new Properties();
 			try {
 				final InputStream in = lockFile.createInputStream();
@@ -336,7 +335,7 @@ public class CloudStoreUpdaterCore {
 				final Version remoteVersion;
 				try {
 					remoteVersion = new Version(versionStr.trim());
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("readRemoteVersionFromProperties: Version-String '{}' could not be parsed into a Version! Returning null!", versionStr.trim());
 					return null;
 				}
@@ -344,17 +343,15 @@ public class CloudStoreUpdaterCore {
 				final DateTime remoteVersionTimestamp;
 				try {
 					remoteVersionTimestamp = new DateTime(timestampStr.trim());
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("readRemoteVersionFromProperties: Timestamp-String '{}' could not be parsed into a DateTime! Returning null!", timestampStr.trim());
 					return null;
 				}
 
 				return new RemoteVersionCache(remoteVersion, remoteVersionTimestamp);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
-		} finally {
-			lockFile.release();
 		}
 	}
 
@@ -388,7 +385,7 @@ public class CloudStoreUpdaterCore {
 					} finally {
 						out.close();
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			} finally {
@@ -435,25 +432,25 @@ public class CloudStoreUpdaterCore {
 				copyInstallationDirectoryForUpdater();
 				logger.debug("createUpdaterDirIfUpdateNeeded: updaterDir='{}'", updaterDir);
 			}
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			logger.error("createUpdaterDirIfUpdateNeeded: " + x, x);
 			if (updaterDir != null) {
 				try {
 					IOUtil.deleteDirectoryRecursively(updaterDir);
-				} catch (Exception y) {
+				} catch (final Exception y) {
 					logger.error("createUpdaterDirIfUpdateNeeded: " + y, y);
 				}
 			}
 		}
 	}
 
-	private boolean canWriteAll(File fileOrDir) {
+	private boolean canWriteAll(final File fileOrDir) {
 		if (!fileOrDir.canWrite())
 			return false;
 
-		File[] children = fileOrDir.listFiles(fileFilterIgnoringBackupDir);
+		final File[] children = fileOrDir.listFiles(fileFilterIgnoringBackupDir);
 		if (children != null) {
-			for (File child : children) {
+			for (final File child : children) {
 				if (!canWriteAll(child))
 					return false;
 			}
@@ -495,7 +492,7 @@ public class CloudStoreUpdaterCore {
 			IOUtil.deleteDirectoryRecursively(updaterDir);
 			IOUtil.copyDirectory(getInstallationDir(), updaterDir, fileFilterIgnoringBackupAndUpdaterDir);
 			return updaterDir;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
