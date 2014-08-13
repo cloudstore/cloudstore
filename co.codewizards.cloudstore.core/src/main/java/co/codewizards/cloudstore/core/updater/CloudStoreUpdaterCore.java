@@ -356,8 +356,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private void writeRemoteVersionCacheToProperties(final RemoteVersionCache remoteVersionCache) {
-		final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000);
-		try {
+		try ( final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000); ) {
 			final Lock lock = lockFile.getLock();
 			lock.lock();
 			try {
@@ -391,8 +390,6 @@ public class CloudStoreUpdaterCore {
 			} finally {
 				lock.unlock();
 			}
-		} finally {
-			lockFile.release();
 		}
 	}
 

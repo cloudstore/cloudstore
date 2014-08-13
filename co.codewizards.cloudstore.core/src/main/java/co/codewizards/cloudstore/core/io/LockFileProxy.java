@@ -38,7 +38,7 @@ class LockFileProxy implements LockFile {
 	}
 
 	@Override
-	public void close() {
+	public final void close() {
 		release();
 	}
 
