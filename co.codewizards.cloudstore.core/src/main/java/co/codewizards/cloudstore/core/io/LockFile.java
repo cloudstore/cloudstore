@@ -41,7 +41,11 @@ public interface LockFile extends AutoCloseable {
 	 *  <p>
 	 *  This method is thread-safe and thus might be invoked on a different thread than the instance
 	 *  was created. However, it should be invoked exactly once (per {@code LockFile} instance).
+	 *  <p>
+	 *  Please note: It is possible to use the new try-with-resources-clause introduced by Java 7. See
+	 *  {@link #close()}.
 	 *  @see LockFileFactory#acquire(File, long)
+	 *  @see #close()
 	 *  @throws IllegalStateException if this method is invoked more than once on the same instance.
 	 */
 	void release();
@@ -51,7 +55,12 @@ public interface LockFile extends AutoCloseable {
 	 * <p>
 	 * Implementations must make sure that invoking {@code close()} means exactly the same as invoking
 	 * {@code release()}. This method was added to make the usage of {@code LockFile} possible in a
-	 * try-with-resources-clause. See {@link AutoCloseable} for more details.
+	 * try-with-resources-clause. See {@link AutoCloseable} for more details. Here's a code example:
+	 * <pre>  try ( LockFile lockFile = LockFileFactory.acquire(theFile, theTimeout); ) {
+	 *    // do something while the file represented by 'lockFile' is locked.
+	 *  }</pre>
+	 * <p>
+	 * @see #release()
 	 */
 	@Override
 	public void close();

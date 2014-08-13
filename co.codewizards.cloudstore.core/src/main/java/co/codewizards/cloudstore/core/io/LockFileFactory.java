@@ -40,6 +40,12 @@ public class LockFileFactory {
 	 *  } finally {
 	 *    lockFile.release();
 	 *  }</pre>
+	 * <p>
+	 * Since Java 7, it is alternatively possible to use the try-with-resources clause like this:
+	 * <pre>  try ( LockFile lockFile = LockFileFactory.acquire(theFile, theTimeout); ) {
+	 *    // do something while the file represented by 'lockFile' is locked.
+	 *  }</pre>
+	 * <p>
 	 * If the JVM is interrupted or shut down before {@code release()}, the file-lock is released by the
 	 * operating system, but a missing {@code release()} causes the file to be locked for the entire remaining runtime
 	 * of the JVM!
@@ -48,6 +54,8 @@ public class LockFileFactory {
 	 * Multiple {@link LockFile}s on the same {@link File} are possible within the same JVM! This locking mechanism
 	 * only locks against separate processes! Since this implementation is based on {@link java.nio.channels.FileLock FileLock},
 	 * please consult its Javadoc for further information.
+	 * <p>
+	 * To make it possible to synchronise multiple threads in the same JVM, too, there's {@link LockFile#getLock()}.
 	 * <p>
 	 * Multiple invocations of this method on the same given {@code file} return multiple different {@code LockFile} instances.
 	 * The actual lock is held until the last {@code LockFile} instance was {@linkplain LockFile#release() released}.
