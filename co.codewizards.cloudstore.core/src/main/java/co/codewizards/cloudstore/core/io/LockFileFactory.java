@@ -48,7 +48,7 @@ public class LockFileFactory {
 	 * <p>
 	 * If the JVM is interrupted or shut down before {@code release()}, the file-lock is released by the
 	 * operating system, but a missing {@code release()} causes the file to be locked for the entire remaining runtime
-	 * of the JVM!
+	 * of the JVM! This problem does not exist using the new try-with-resources-clause (since Java 7).
 	 * <p>
 	 * <b>Important:</b> This is <i>not</i> usable for the synchronization of multiple threads within the same Java virtual machine!
 	 * Multiple {@link LockFile}s on the same {@link File} are possible within the same JVM! This locking mechanism
