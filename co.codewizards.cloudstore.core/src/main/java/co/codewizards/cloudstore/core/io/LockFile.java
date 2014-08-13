@@ -12,6 +12,11 @@ import java.util.concurrent.locks.Lock;
  * An instance is acquired by invoking {@link LockFileFactory#acquire(File, long)}.
  * <p>
  * All methods of this interface are thread-safe.
+ * <p>
+ * <b>Important:</b> You should never access the {@linkplain #getFile() locked file} directly. Though this
+ * works fine on some operating systems (e.g. on GNU/Linux), it fails on others (e.g. on Windows). If you
+ * want to read from / write to the locked file, please use {@link #createInputStream()} or
+ * {@link #createOutputStream()} instead.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public interface LockFile extends AutoCloseable {
@@ -35,7 +40,7 @@ public interface LockFile extends AutoCloseable {
 	 *  }</pre>
 	 *  <p>
 	 *  This method is thread-safe and thus might be invoked on a different thread than the instance
-	 *  was created. However, it must be invoked exactly once (per {@code LockFile} instance).
+	 *  was created. However, it should be invoked exactly once (per {@code LockFile} instance).
 	 *  @see LockFileFactory#acquire(File, long)
 	 *  @throws IllegalStateException if this method is invoked more than once on the same instance.
 	 */
@@ -51,10 +56,41 @@ public interface LockFile extends AutoCloseable {
 	@Override
 	public void close();
 
+	/**
+	 * Gets the {@code Lock} corresponding to the underlying file to synchronise multiple threads of the same
+	 * process.
+	 * <p>
+	 * A {@code LockFile} (usually implemented using {@link java.nio.channels.FileLock FileLock}) is not
+	 * guaranteed to exclude multiple threads from accessing a single file. In order to additionally provide
+	 * thread-synchronisation (as is pretty straight-forward and needed in many situations), there is a
+	 * {@link Lock} associated to every {@code LockFile}. It is highly recommended to synchronise additionally
+	 * on this {@code Lock}. Note, that {@link #createInputStream()} and {@link #createOutputStream()} are
+	 * expected to implicitly do this.
+	 * @return the {@code Lock} corresponding to the underlying file. Never <code>null</code>.
+	 */
 	Lock getLock();
 
+	/**
+	 * Creates an {@link InputStream} reading from the {@linkplain #getFile() locked file}.
+	 * <p>
+	 * <b>Important:</b> You must {@linkplain InputStream#close() close} the {@code InputStream}! Locks held
+	 * are released only when doing so.
+	 * @return an {@link InputStream} reading from the {@linkplain #getFile() locked file}. Never
+	 * <code>null</code>.
+	 * @throws IOException if creating the {@link InputStream} fails.
+	 */
 	InputStream createInputStream() throws IOException;
 
+	/**
+	 * Creates an {@link OutputStream} writing into the {@linkplain #getFile() locked file} (overwriting
+	 * all old content).
+	 * <p>
+	 * <b>Important:</b> You must {@linkplain OutputStream#close() close} the {@code OutputStream}! Locks
+	 * held are released only when doing so.
+	 * @return an {@link OutputStream} writing into the {@linkplain #getFile() locked file}. Never
+	 * <code>null</code>.
+	 * @throws IOException if creating the {@link OutputStream} fails.
+	 */
 	OutputStream createOutputStream() throws IOException;
 
 }
