@@ -194,7 +194,7 @@ public class CloudStoreRestClient {
 		assertNotNull("request", request);
 		acquireClient();
 		try {
-			int retryCounter = -1; // it's called *re*try => first try = 0, first retry = 1.
+			int retryCounter = 0;
 			final int retryMax = 3;
 			while (true) {
 				final long start = System.currentTimeMillis();
