@@ -32,6 +32,7 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.request.Request;
+import co.codewizards.cloudstore.rest.client.ssl.CallbackDeniedTrustException;
 import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
 import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
@@ -195,7 +196,7 @@ public class CloudStoreRestClient {
 		try {
 			int retryCounter = -1; // it's called *re*try => first try = 0, first retry = 1.
 			final int retryMax = 3;
-			while (++retryCounter <= retryMax) {
+			while (true) {
 				final long start = System.currentTimeMillis();
 				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
 				try {
@@ -204,7 +205,7 @@ public class CloudStoreRestClient {
 					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
 					return result;
 				} catch (final RuntimeException x) {
-					if (retryExecuteAfterException(x))
+					if (++retryCounter <= retryMax && retryExecuteAfterException(x))
 						continue;
 
 					handleAndRethrowException(x);
@@ -214,7 +215,6 @@ public class CloudStoreRestClient {
 						throw x;
 				}
 			}
-			throw new IllegalStateException("execute was not succesfull.");
 		} finally {
 			releaseClient();
 			request.setCloudStoreRESTClient(null);
@@ -222,6 +222,11 @@ public class CloudStoreRestClient {
 	}
 
 	private boolean retryExecuteAfterException(final Exception x) {
+		// If the user explicitly denied trust, we do not retry, because we don't want to ask the user
+		// multiple times.
+		if (ExceptionUtil.getCause(x, CallbackDeniedTrustException.class) != null)
+			return false;
+
 		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
 				SSLException.class,
 				SocketException.class
@@ -230,8 +235,8 @@ public class CloudStoreRestClient {
 			@SuppressWarnings("unchecked")
 			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
 			if (ExceptionUtil.getCause(x, xc) != null) {
-				logger.warn(String.format(
-						"retryExecuteAfterException: Encountered %s and will retry (if maximum number of retries is not yet reached).", xc.getSimpleName()),
+				logger.warn(
+						String.format("retryExecuteAfterException: Encountered %s and will retry.", xc.getSimpleName()),
 						x);
 				return true;
 			}
