@@ -192,6 +192,7 @@ public class CloudStoreRestClient {
 
 	public <R> R execute(final Request<R> request) {
 		assertNotNull("request", request);
+		request.setCloudStoreRESTClient(this);
 		int retryCounter = 0;
 		final int retryMax = 3;
 		while (true) {
@@ -200,7 +201,6 @@ public class CloudStoreRestClient {
 				final long start = System.currentTimeMillis();
 				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
 				try {
-					request.setCloudStoreRESTClient(this);
 					final R result = request.execute();
 					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
 					return result;
