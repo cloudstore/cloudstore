@@ -112,9 +112,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 	private KeyStore readTrustStore() {
 		try {
 			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			@SuppressWarnings("resource") // wrongly detected - there is NO leak! there is a finally block closing it!
-			final
-			InputStream in = trustStoreFile.exists() ? new FileInputStream(trustStoreFile) : null;
+			final InputStream in = trustStoreFile.exists() && trustStoreFile.length() > 0 ? new FileInputStream(trustStoreFile) : null;
 			try {
 				ks.load(in, null);
 			} finally {
@@ -131,11 +129,18 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	private void writeTrustStore(final KeyStore trustStore) {
 		try {
-			final FileOutputStream out = new FileOutputStream(trustStoreFile);
+			final File tmpFile = new File(trustStoreFile.getParentFile(), trustStoreFile.getName() + ".new");
 			try {
-				trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
+				final FileOutputStream out = new FileOutputStream(tmpFile);
+				try {
+					trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
+				} finally {
+					out.close();
+				}
+				trustStoreFile.delete();
+				tmpFile.renameTo(trustStoreFile);
 			} finally {
-				out.close();
+				tmpFile.delete();
 			}
 		} catch (final RuntimeException x) {
 			throw x;
