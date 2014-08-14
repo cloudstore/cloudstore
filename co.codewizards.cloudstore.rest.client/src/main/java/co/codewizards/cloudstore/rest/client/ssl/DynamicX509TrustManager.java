@@ -1,12 +1,11 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
@@ -14,14 +13,20 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import co.codewizards.cloudstore.core.io.LockFile;
+import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.util.EmptyInputStreamException;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.StreamUtil;
 
 class DynamicX509TrustManager implements X509TrustManager {
+	private static final int LOCKFILE_TIMEOUT_MS = 1000 * 10;
 	private static final char[] TRUST_STORE_PASSWORD_CHAR_ARRAY = "CloudStore".toCharArray();
 	private final File trustStoreFile;
 	private final DynamicX509TrustManagerCallback callback;
@@ -110,11 +115,16 @@ class DynamicX509TrustManager implements X509TrustManager {
 	}
 
 	private KeyStore readTrustStore() {
-		try {
+		try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
 			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			final InputStream in = trustStoreFile.exists() && trustStoreFile.length() > 0 ? new FileInputStream(trustStoreFile) : null;
+			InputStream in;
 			try {
-				ks.load(in, null);
+				in = StreamUtil.checkStreamIsNotEmpty(trustStoreLockFile.createInputStream());
+			} catch(final EmptyInputStreamException e) {
+				in = null;
+			}
+			try {
+				ks.load(in, TRUST_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
 				if (in != null)
 					in.close();
@@ -128,19 +138,20 @@ class DynamicX509TrustManager implements X509TrustManager {
 	}
 
 	private void writeTrustStore(final KeyStore trustStore) {
-		try {
+		// Use another try-block for trustStoreLockFile, to prevent missing unlock in the inner finally block.
+		try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
 			final File tmpFile = new File(trustStoreFile.getParentFile(), trustStoreFile.getName() + ".new");
+			final LockFile tmpLockFile = LockFileFactory.getInstance().acquire(tmpFile, LOCKFILE_TIMEOUT_MS);
 			try {
-				final FileOutputStream out = new FileOutputStream(tmpFile);
-				try {
+				try (final OutputStream out = tmpLockFile.createOutputStream();) {
 					trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
-				} finally {
-					out.close();
 				}
 				trustStoreFile.delete();
 				tmpFile.renameTo(trustStoreFile);
 			} finally {
+				//by intention in finally block because of order: first delete, than release.
 				tmpFile.delete();
+				tmpLockFile.release();
 			}
 		} catch (final RuntimeException x) {
 			throw x;
@@ -152,9 +163,17 @@ class DynamicX509TrustManager implements X509TrustManager {
 	private void addServerCertAndReload(final Certificate cert, final boolean permanent) {
 		try {
 			if (permanent) {
-				final KeyStore trustStore = readTrustStore();
-				trustStore.setCertificateEntry(sha1(cert), cert);
-				writeTrustStore(trustStore);
+				try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
+					final Lock lock = trustStoreLockFile.getLock();
+					lock.lock();
+					try {
+						final KeyStore trustStore = readTrustStore();
+						trustStore.setCertificateEntry(sha1(cert), cert);
+						writeTrustStore(trustStore);
+					} finally {
+						lock.unlock();
+					}
+				}
 			} else {
 				tempCertList.add(cert);
 			}
@@ -165,4 +184,5 @@ class DynamicX509TrustManager implements X509TrustManager {
 			throw new RuntimeException(x);
 		}
 	}
+
 }
