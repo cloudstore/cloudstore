@@ -46,7 +46,6 @@ public interface LockFile extends AutoCloseable {
 	 *  {@link #close()}.
 	 *  @see LockFileFactory#acquire(File, long)
 	 *  @see #close()
-	 *  @throws IllegalStateException if this method is invoked more than once on the same instance.
 	 */
 	void release();
 
