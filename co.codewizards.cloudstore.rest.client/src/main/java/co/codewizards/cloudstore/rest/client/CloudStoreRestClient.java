@@ -1,19 +1,17 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.SocketException;
 import java.net.URL;
-import java.security.InvalidAlgorithmParameterException;
-import java.util.Date;
 import java.util.LinkedList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
-import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -195,38 +193,21 @@ public class CloudStoreRestClient {
 		assertNotNull("request", request);
 		acquireClient();
 		try {
-			int retryCounter = 0;
+			int retryCounter = -1; // it's called *re*try => first try = 0, first retry = 1.
 			final int retryMax = 3;
-			while (retryCounter <= retryMax) {
-				final Date start = new Date();
+			while (++retryCounter <= retryMax) {
+				final long start = System.currentTimeMillis();
 				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
 				try {
 					request.setCloudStoreRESTClient(this);
 					final R result = request.execute();
-					logger.info("Execution ended: took {}msec", (new Date().getTime() - start.getTime()));
+					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
 					return result;
-				} catch (final ProcessingException x) {
-					final InvalidAlgorithmParameterException invalidAlgorithmParameterException = ExceptionUtil.getCause(x, InvalidAlgorithmParameterException.class);
-					final SSLException sslException = ExceptionUtil.getCause(x, SSLException.class);
-					if (sslException != null && invalidAlgorithmParameterException != null)
-						throw x;
-					final SocketException socketException = ExceptionUtil.getCause(x, SocketException.class);
-					if (socketException != null) {
-						// After a while of waiting, the server aborts the connection and the client receives
-						// a SocketException; ==> retry!
-						++retryCounter;
-						logger.warn("Execution timed out, socketException occured, current retry: {}/{}",
-								retryCounter, retryMax);
-						continue;
-					}
-					if (sslException != null && "Received close_notify during handshake".equals(sslException.getMessage())) {
-						++retryCounter;
-						logger.warn("Execution timed out, current retry: {}/{}", retryCounter, retryMax);
-						continue;
-					}
-					throw x;
 				} catch (final RuntimeException x) {
-					handleException(x);
+					if (retryExecuteAfterException(x))
+						continue;
+
+					handleAndRethrowException(x);
 					if (request.isResultNullable())
 						return null;
 					else
@@ -238,6 +219,24 @@ public class CloudStoreRestClient {
 			releaseClient();
 			request.setCloudStoreRESTClient(null);
 		}
+	}
+
+	private boolean retryExecuteAfterException(final Exception x) {
+		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
+				SSLException.class,
+				SocketException.class
+		};
+		for (final Class<?> exceptionClass : exceptionClassesCausingRetry) {
+			@SuppressWarnings("unchecked")
+			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
+			if (ExceptionUtil.getCause(x, xc) != null) {
+				logger.warn(String.format(
+						"retryExecuteAfterException: Encountered %s and will retry (if maximum number of retries is not yet reached).", xc.getSimpleName()),
+						x);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public Invocation.Builder assignCredentials(final Invocation.Builder builder) {
@@ -356,7 +355,7 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	public void handleException(final RuntimeException x)
+	public void handleAndRethrowException(final RuntimeException x)
 	{
 		Response response = null;
 		if (x instanceof WebApplicationException)

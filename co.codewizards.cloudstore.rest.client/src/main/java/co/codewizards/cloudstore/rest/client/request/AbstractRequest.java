@@ -57,7 +57,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	}
 
 	protected void handleException(final RuntimeException x) {
-		getCloudStoreRESTClientOrFail().handleException(x);
+		getCloudStoreRESTClientOrFail().handleAndRethrowException(x);
 	}
 
 	protected Invocation.Builder assignCredentials(final Invocation.Builder builder) {
