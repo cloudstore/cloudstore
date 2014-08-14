@@ -203,17 +203,17 @@ public class CloudStoreRestClient {
 					request.setCloudStoreRESTClient(this);
 					final R result = request.execute();
 					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
+
+					if (result == null && !request.isResultNullable())
+						throw new IllegalStateException("result == null, but request.resultNullable == false!");
+
 					return result;
 				} catch (final RuntimeException x) {
 					markClientBroken(); // make sure we do not reuse this client
-					if (++retryCounter <= retryMax && retryExecuteAfterException(x))
-						continue;
-
-					handleAndRethrowException(x);
-					if (request.isResultNullable())
-						return null;
-					else
+					if (++retryCounter > retryMax || !retryExecuteAfterException(x)) {
+						handleAndRethrowException(x);
 						throw x;
+					}
 				}
 			} finally {
 				releaseClient();
@@ -382,11 +382,6 @@ public class CloudStoreRestClient {
 
 		if (response == null)
 			throw x;
-
-		// Instead of returning null, jersey throws a com.sun.jersey.api.client.UniformInterfaceException
-		// when the server does not send a result. We therefore check for the result code 204 here.
-		if (Response.Status.NO_CONTENT.getStatusCode() == response.getStatus())
-			return;
 
 		Error error = null;
 		try {
