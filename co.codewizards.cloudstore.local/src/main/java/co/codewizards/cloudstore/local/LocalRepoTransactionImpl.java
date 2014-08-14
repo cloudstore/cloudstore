@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +91,11 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	public synchronized void rollbackIfActive() {
 		if (isActive())
 			rollback();
+	}
+
+	@Override
+	public void close() {
+		rollbackIfActive();
 	}
 
 	@Override

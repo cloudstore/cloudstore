@@ -49,10 +49,10 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 		if (remote != null && !remote.isEmpty()) {
 			try {
 				remoteRepositoryId = UUID.fromString(remote);
-			} catch (IllegalArgumentException x) {
+			} catch (final IllegalArgumentException x) {
 				try {
 					remoteRoot = new URL(remote);
-				} catch (MalformedURLException y) {
+				} catch (final MalformedURLException y) {
 					throw new IllegalArgumentException(String.format("<remote> '%s' is neither a valid repositoryId nor a valid URL!", remote));
 				}
 			}
@@ -68,23 +68,23 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	@Override
 	public void run() throws Exception {
 		if (isAll()) {
-			for (UUID repositoryId : LocalRepoRegistry.getInstance().getRepositoryIds())
+			for (final UUID repositoryId : LocalRepoRegistry.getInstance().getRepositoryIds())
 				sync(repositoryId);
 		}
 		else
 			sync(localRoot);
 	}
 
-	private void sync(UUID repositoryId) {
-		File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(repositoryId);
+	private void sync(final UUID repositoryId) {
+		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(repositoryId);
 		sync(localRoot);
 	}
 
 	private void sync(File localRoot) {
-		List<URL> remoteRoots = new ArrayList<URL>();
-		Map<UUID, URL> filteredRemoteRepositoryId2RemoteRoot = new HashMap<UUID, URL>();
+		final List<URL> remoteRoots = new ArrayList<URL>();
+		final Map<UUID, URL> filteredRemoteRepositoryId2RemoteRoot = new HashMap<UUID, URL>();
 		UUID repositoryId;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			if (localOnly) {
 				localRepoManager.localSync(new LoggerProgressMonitor(logger));
@@ -93,10 +93,9 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 
 			repositoryId = localRepoManager.getRepositoryId();
 			localRoot = localRepoManager.getLocalRoot();
-			LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
-			try {
-				Collection<RemoteRepository> remoteRepositories = transaction.getDao(RemoteRepositoryDao.class).getObjects();
-				for (RemoteRepository remoteRepository : remoteRepositories) {
+			try ( LocalRepoTransaction transaction = localRepoManager.beginReadTransaction(); ) {
+				final Collection<RemoteRepository> remoteRepositories = transaction.getDao(RemoteRepositoryDao.class).getObjects();
+				for (final RemoteRepository remoteRepository : remoteRepositories) {
 					if (remoteRepository.getRemoteRoot() == null)
 						continue;
 
@@ -108,8 +107,6 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 				}
 
 				transaction.commit();
-			} finally {
-				transaction.rollbackIfActive();
 			}
 		} finally {
 			localRepoManager.close();
@@ -120,13 +117,13 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 		else if (filteredRemoteRepositoryId2RemoteRoot.isEmpty())
 			System.err.println(String.format("WARNING: The repository %s ('%s') is not connected to the specified remote repository ('%s')!", repositoryId, localRoot, remote));
 		else {
-			for (Map.Entry<UUID, URL> me : filteredRemoteRepositoryId2RemoteRoot.entrySet()) {
-				UUID remoteRepositoryId = me.getKey();
-				URL remoteRoot = me.getValue();
+			for (final Map.Entry<UUID, URL> me : filteredRemoteRepositoryId2RemoteRoot.entrySet()) {
+				final UUID remoteRepositoryId = me.getKey();
+				final URL remoteRoot = me.getValue();
 				System.out.println("********************************************************************************");
 				System.out.println(String.format("Syncing %s ('%s') with %s ('%s').", repositoryId, localRoot, remoteRepositoryId, remoteRoot));
 				System.out.println("********************************************************************************");
-				RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot);
+				final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRoot);
 				try {
 					repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 				} finally {
