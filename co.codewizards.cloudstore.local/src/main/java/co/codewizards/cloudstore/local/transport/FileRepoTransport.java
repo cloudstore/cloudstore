@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.deleteOrFail;
+import static co.codewizards.cloudstore.core.util.IOUtil.isSymlink;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -162,15 +163,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 	@Override
 	public RepositoryDto getRepositoryDto() {
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
 			final LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
 			final LocalRepository localRepository = localRepositoryDao.getLocalRepositoryOrFail();
 			final RepositoryDto repositoryDto = toRepositoryDto(localRepository);
 			transaction.commit();
 			return repositoryDto;
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -181,8 +179,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final ChangeSetDto changeSetDto = new ChangeSetDto();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // It writes the LastSyncToRemoteRepo!
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+			// We use a WRITE tx, because we write the LastSyncToRemoteRepo!
+
 			final LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 			final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
@@ -233,8 +232,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			transaction.commit();
 			return changeSetDto;
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -267,8 +264,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		assertNotNull("target", target);
 		final File file = getFile(path);
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 
 			final File parentFile = file.getParentFile();
@@ -343,8 +339,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			}
 
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -379,8 +373,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			return;
 
 		final File toParentFile = toFile.getParentFile();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
 			try {
 				try {
@@ -400,8 +393,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -421,8 +412,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 		final File fromParentFile = fromFile.getParentFile();
 		final File toParentFile = toFile.getParentFile();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(fromParentFile);
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(toParentFile);
 			try {
@@ -448,8 +438,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -460,8 +448,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final boolean fileIsLocalRoot = getLocalRepoManager().getLocalRoot().equals(file);
 		final File parentFile = file.getParentFile();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
@@ -488,8 +475,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -515,8 +500,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		RepoFileDto repoFileDto = null;
 		path = prefixPath(path);
 		final File file = getFile(path);
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); // it performs a local sync!
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+			// WRITE tx, because it performs a local sync!
+
 			final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
 
@@ -532,8 +518,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			throw x;
 		} catch (final Exception x) {
 			throw new RuntimeException(x);
-		} finally {
-			transaction.rollbackIfActive();
 		}
 		return repoFileDto;
 	}
@@ -892,8 +876,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final File parentFile = file.getParentFile();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				if (isSymlink(file) || (file.exists() && !file.isFile())) { // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
@@ -948,8 +931,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -1079,8 +1060,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final File file = getFile(path);
 		final File parentFile = file.getParentFile();
 		final File localRoot = getLocalRepoManager().getLocalRoot();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); // It writes into the file system, but it only reads from the DB.
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
+			// READ tx: It writes into the file system, but it only reads from the DB.
+
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				final RepoFile repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(localRoot, file);
@@ -1112,8 +1094,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -1347,8 +1327,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final File file = getFile(path);
 		final File parentFile = file.getParentFile();
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				final RepoFile repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(getLocalRepoManager().getLocalRoot(), file);
@@ -1452,8 +1431,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
@@ -1552,8 +1529,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	@Override
 	public void endSyncFromRepository() {
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			final PersistenceManager pm = ((co.codewizards.cloudstore.local.LocalRepoTransactionImpl)transaction).getPersistenceManager();
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 			final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
@@ -1578,16 +1554,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transferDoneMarkerDao.deleteRepoFileTransferDones(getRepositoryId(), clientRepositoryId);
 
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
 	@Override
 	public void endSyncToRepository(final long fromLocalRevision) {
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 			final TransferDoneMarkerDao transferDoneMarkerDao = transaction.getDao(TransferDoneMarkerDao.class);
 
@@ -1597,16 +1570,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transferDoneMarkerDao.deleteRepoFileTransferDones(clientRepositoryId, getRepositoryId());
 
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 
 	@Override
 	public boolean isTransferDone(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId, final long fromLocalRevision) {
 		boolean result = false;
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
 			final TransferDoneMarkerDao dao = transaction.getDao(TransferDoneMarkerDao.class);
 			final TransferDoneMarker transferDoneMarker = dao.getTransferDoneMarker(
 					fromRepositoryId, toRepositoryId, transferDoneMarkerType, fromEntityId);
@@ -1614,16 +1584,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				result = fromLocalRevision == transferDoneMarker.getFromLocalRevision();
 
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 		return result;
 	}
 
 	@Override
 	public void markTransferDone(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId, final long fromLocalRevision) {
-		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
-		try {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			final TransferDoneMarkerDao dao = transaction.getDao(TransferDoneMarkerDao.class);
 			TransferDoneMarker transferDoneMarker = dao.getTransferDoneMarker(
 					fromRepositoryId, toRepositoryId, transferDoneMarkerType, fromEntityId);
@@ -1638,8 +1605,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			dao.makePersistent(transferDoneMarker);
 
 			transaction.commit();
-		} finally {
-			transaction.rollbackIfActive();
 		}
 	}
 }
