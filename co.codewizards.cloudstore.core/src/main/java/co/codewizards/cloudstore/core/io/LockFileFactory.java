@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class LockFileFactory {
 	 * <p>
 	 * <b>Important:</b> You <i>must</i> invoke {@link LockFile#release()} on the returned object! Use a try-finally-block
 	 * to ensure it:
-	 * <pre>  LockFile lockFile = LockFileFactory.acquire(theFile, theTimeout);
+	 * <pre>  LockFile lockFile = LockFileFactory.getInstance().acquire(theFile, theTimeout);
 	 *  try {
 	 *    // do something
 	 *  } finally {
@@ -42,7 +42,7 @@ public class LockFileFactory {
 	 *  }</pre>
 	 * <p>
 	 * Since Java 7, it is alternatively possible to use the try-with-resources clause like this:
-	 * <pre>  try ( LockFile lockFile = LockFileFactory.acquire(theFile, theTimeout); ) {
+	 * <pre>  try ( LockFile lockFile = LockFileFactory.getInstance().acquire(theFile, theTimeout); ) {
 	 *    // do something while the file represented by 'lockFile' is locked.
 	 *  }</pre>
 	 * <p>
@@ -89,7 +89,7 @@ public class LockFileFactory {
 			lockFileImpl.acquireRunningCounter.incrementAndGet();
 		}
 		try {
-			// The following must NOT be synchronized! Otherwise we might wait here longer than the current timeout
+			// The following must NOT be synchronised! Otherwise we might wait here longer than the current timeout
 			// (as long as the longest timeout of all acquire methods running concurrently).
 			lockFileImpl.acquire(timeoutMillis);
 		} finally {
