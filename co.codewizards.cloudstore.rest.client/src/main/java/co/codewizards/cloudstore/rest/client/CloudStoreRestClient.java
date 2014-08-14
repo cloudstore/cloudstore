@@ -192,11 +192,11 @@ public class CloudStoreRestClient {
 
 	public <R> R execute(final Request<R> request) {
 		assertNotNull("request", request);
-		acquireClient();
-		try {
-			int retryCounter = 0;
-			final int retryMax = 3;
-			while (true) {
+		int retryCounter = 0;
+		final int retryMax = 3;
+		while (true) {
+			acquireClient();
+			try {
 				final long start = System.currentTimeMillis();
 				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
 				try {
@@ -205,6 +205,7 @@ public class CloudStoreRestClient {
 					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
 					return result;
 				} catch (final RuntimeException x) {
+					markClientBroken(); // make sure we do not reuse this client
 					if (++retryCounter <= retryMax && retryExecuteAfterException(x))
 						continue;
 
@@ -214,10 +215,10 @@ public class CloudStoreRestClient {
 					else
 						throw x;
 				}
+			} finally {
+				releaseClient();
+				request.setCloudStoreRESTClient(null);
 			}
-		} finally {
-			releaseClient();
-			request.setCloudStoreRESTClient(null);
 		}
 	}
 
@@ -276,6 +277,7 @@ public class CloudStoreRestClient {
 	private static class ClientRef {
 		public final Client client;
 		public int refCount = 1;
+		public boolean broken;
 
 		public ClientRef(final Client client) {
 			this.client = assertNotNull("client", client);
@@ -356,8 +358,18 @@ public class CloudStoreRestClient {
 
 		if (--clientRef.refCount == 0) {
 			clientThreadLocal.remove();
-			clientCache.add(clientRef.client);
+
+			if (!clientRef.broken)
+				clientCache.add(clientRef.client);
 		}
+	}
+
+	private void markClientBroken() {
+		final ClientRef clientRef = clientThreadLocal.get();
+		if (clientRef == null)
+			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() called more often than acquireClient())!");
+
+		clientRef.broken = true;
 	}
 
 	public void handleAndRethrowException(final RuntimeException x)
