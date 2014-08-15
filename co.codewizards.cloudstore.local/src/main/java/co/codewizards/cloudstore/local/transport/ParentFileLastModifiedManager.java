@@ -2,9 +2,10 @@ package co.codewizards.cloudstore.local.transport;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 class ParentFileLastModifiedManager {
 	private static class ParentFileEntry {

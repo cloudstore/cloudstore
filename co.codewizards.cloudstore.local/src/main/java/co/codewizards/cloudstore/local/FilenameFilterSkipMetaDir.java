@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FilenameFilter;
 
 public class FilenameFilterSkipMetaDir implements FilenameFilter {

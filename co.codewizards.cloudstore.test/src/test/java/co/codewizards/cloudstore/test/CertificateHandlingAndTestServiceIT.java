@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 
@@ -36,7 +36,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(CertificateHandlingAndTestServiceIT.class);
 
 	static File getRandomTrustStoreFile() throws IOException {
-		final File dir = new File(ConfigDir.getInstance().getFile(), "ssl.client");
+		final File dir = newFile(ConfigDir.getInstance().getFile(), "ssl.client");
 		dir.mkdirs();
 		final File trustStoreFile = File.createTempFile("truststore_", null, dir);
 		trustStoreFile.delete(); // It must not exist (reading it fails).

@@ -1,11 +1,10 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.deleteOrFail;
-import static co.codewizards.cloudstore.core.util.IOUtil.isSymlink;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,8 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -43,6 +40,7 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -240,7 +238,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
-			return new File(getLocalRepoManager().getLocalRoot(), pathPrefix);
+			return newFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
 	}
 
 	@Override
@@ -272,20 +270,20 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			try {
 				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 
-				if (file.exists() && !isSymlink(file))
+				if (file.exists() && !file.isSymbolicLink())
 					file.renameTo(IOUtil.createCollisionFile(file));
 
-				if (file.exists() && !isSymlink(file))
+				if (file.exists() && !file.isSymbolicLink())
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				final File localRoot = getLocalRepoManager().getLocalRoot();
 
 				try {
 					final boolean currentTargetEqualsNewTarget;
-					final Path symlinkPath = file.toPath();
-					if (Files.isSymbolicLink(file.toPath()) || file.exists()) {
-						final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
-						final String currentTarget = IOUtil.toPathString(currentTargetPath);
+//					final Path symlinkPath = file.toPath();
+					if (file.isSymbolicLink() || file.exists()) {
+//						final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
+						final String currentTarget = file.readSymbolicLinkToPathString();
 						currentTargetEqualsNewTarget = currentTarget.equals(target);
 						if (!currentTargetEqualsNewTarget) {
 							final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
@@ -305,10 +303,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 						currentTargetEqualsNewTarget = false;
 
 					if (!currentTargetEqualsNewTarget)
-						Files.createSymbolicLink(symlinkPath, Paths.get(target));
+						file.createSymbolicLink(target);
 
 					if (lastModified != null)
-						IOUtil.setLastModifiedNoFollow(file, lastModified.getTime());
+						file.setLastModifiedNoFollow(lastModified.getTime());
 
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
@@ -380,7 +378,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					if (!toParentFile.isDirectory())
 						toParentFile.mkdirs();
 
-					Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+//					Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+					fromFile.copyToCopyAttributes(toFile);
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -420,7 +419,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					if (!toParentFile.isDirectory())
 						toParentFile.mkdirs();
 
-					Files.move(fromFile.toPath(), toFile.toPath());
+					fromFile.move(toFile);
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -564,7 +563,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
 			File remoteRootFile;
 			try {
-				remoteRootFile = new File(getRemoteRootWithoutPathPrefix().toURI());
+				remoteRootFile = newFile(getRemoteRootWithoutPathPrefix().toURI());
 			} catch (final URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
@@ -829,7 +828,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', File.separatorChar);
-		final File file = new File(getLocalRepoManager().getLocalRoot(), path);
+		final File file = newFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 
@@ -1236,7 +1235,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //	}
 //
 //	private File getTempChunkFileDtoFile(final File file) {
-//		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
+//		return newFile(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 //	}
 
 	private String sha1(final byte[] data) {
@@ -1275,7 +1274,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //		if (!tempDir.isDirectory())
 //			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
 //
-//		final File tempFile = new File(tempDir, String.format("%s%s_%s",
+//		final File tempFile = newFile(tempDir, String.format("%s%s_%s",
 //				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
 //		try {
 //			tempFile.createNewFile();
@@ -1303,7 +1302,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //	private File getTempDir(final File destFile) {
 //		assertNotNull("destFile", destFile);
 //		final File parentDir = destFile.getParentFile();
-//		return new File(parentDir, LocalRepoManager.TEMP_DIR_NAME);
+//		return newFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
 //	}
 
 	private final Map<File, FileWriteStrategy> file2FileWriteStrategy = new WeakHashMap<>();
@@ -1345,12 +1344,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				logger.debug("endPutFile: fileWriteStrategy={}", fileWriteStrategy);
 
 				final File destFile = (fileWriteStrategy == FileWriteStrategy.replaceAfterTransfer
-						? new File(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
+						? newFile(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
 
 				final InputStream fileIn;
 				if (destFile != file) {
 					try {
-						fileIn = new FileInputStream(file);
+						fileIn = file.createFileInputStream();
 						destFile.createNewFile();
 					} catch (final IOException e) {
 						throw new RuntimeException(e);
@@ -1392,7 +1391,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, length - destFileWriteOffset);
 
 				try {
-					final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+					final RandomAccessFile raf = destFile.createRandomAccessFile("rw");
 					try {
 						raf.setLength(length);
 					} finally {

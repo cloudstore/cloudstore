@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.core.config;
 import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 import static co.codewizards.cloudstore.core.util.Util.assertNotNullAndNoNullElement;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
@@ -106,7 +106,7 @@ public class Config {
 	private static final class ConfigHolder {
 		public static final Config instance = new Config(
 				null, null,
-				new File[] { new File(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
+				new File[] { newFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
 	}
 
 	private final Config parentConfig;
@@ -227,14 +227,14 @@ public class Config {
 	private static File[] createPropertiesFiles(final File file, final boolean isDirectory) {
 		if (isDirectory) {
 			return new File[] {
-				new File(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				new File(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
+				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
+				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
 			};
 		}
 		else {
 			return new File[] {
-				new File(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
-				new File(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
+				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
+				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
 			};
 		}
 	}

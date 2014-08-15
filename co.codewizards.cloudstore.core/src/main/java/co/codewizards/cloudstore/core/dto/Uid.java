@@ -49,13 +49,13 @@ public class Uid implements Comparable<Uid> {
 	private final long lo;
 
 	private static class RandomHolder {
-        static final SecureRandom random = new SecureRandom();
-        static final byte[] next16Bytes() {
-        	final byte[] bytes = new byte[16];
-        	random.nextBytes(bytes);
-        	return bytes;
-        }
-    }
+		static final SecureRandom random = new SecureRandom();
+		static final byte[] next16Bytes() {
+			final byte[] bytes = new byte[16];
+			random.nextBytes(bytes);
+			return bytes;
+		}
+	}
 
 	/**
 	 * Creates a new random {@code Uid}.
@@ -81,16 +81,16 @@ public class Uid implements Comparable<Uid> {
 			throw new IllegalArgumentException("bytes.length != 16");
 
 		long hi = 0;
-        long lo = 0;
+		long lo = 0;
 
-        for (int i = 0; i < Math.min(8, bytes.length); ++i)
-            hi = (hi << 8) | (bytes[i] & 0xff);
+		for (int i = 0; i < Math.min(8, bytes.length); ++i)
+			hi = (hi << 8) | (bytes[i] & 0xff);
 
-        for (int i = 8; i < Math.min(16, bytes.length); ++i)
-            lo = (lo << 8) | (bytes[i] & 0xff);
+		for (int i = 8; i < Math.min(16, bytes.length); ++i)
+			lo = (lo << 8) | (bytes[i] & 0xff);
 
-        this.hi = hi;
-        this.lo = lo;
+		this.hi = hi;
+		this.lo = lo;
 	}
 
 	private static final String assertValidUidString(final String uidString) {
@@ -118,13 +118,13 @@ public class Uid implements Comparable<Uid> {
 		final byte[] bytes = new byte[16];
 
 		int idx = -1;
-        for (int i = 7; i >= 0; --i)
-        	bytes[++idx] = (byte) (hi >> (8 * i));
+		for (int i = 7; i >= 0; --i)
+			bytes[++idx] = (byte) (hi >> (8 * i));
 
-        for (int i = 7; i >= 0; --i)
-        	bytes[++idx] = (byte) (lo >> (8 * i));
+		for (int i = 7; i >= 0; --i)
+			bytes[++idx] = (byte) (lo >> (8 * i));
 
-        return bytes;
+		return bytes;
 	}
 
 	@Override
@@ -172,10 +172,10 @@ public class Uid implements Comparable<Uid> {
 	public int compareTo(final Uid other) {
 		assertNotNull("other", other);
 		// Same semantics as for normal numbers.
-        return (this.hi < other.hi ? -1 :
-                (this.hi > other.hi ? 1 :
-                 (this.lo < other.lo ? -1 :
-                  (this.lo > other.lo ? 1 :
-                   0))));
+		return (this.hi < other.hi ? -1 :
+				(this.hi > other.hi ? 1 :
+				 (this.lo < other.lo ? -1 :
+				  (this.lo > other.lo ? 1 :
+				   0))));
 	}
 }

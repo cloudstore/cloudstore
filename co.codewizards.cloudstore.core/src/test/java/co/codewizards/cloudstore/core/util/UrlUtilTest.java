@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -83,7 +83,7 @@ public class UrlUtilTest {
 	public void getFile_url() throws Exception {
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
-		final File fileFromString = new File(tmpDir, "#Cumbia");
+		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else
@@ -99,7 +99,7 @@ public class UrlUtilTest {
 	public void appendEncodedPath_getFile() throws Exception {
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
-		final File fileFromString = new File(tmpDir, "#Cumbia");
+		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else
@@ -116,7 +116,7 @@ public class UrlUtilTest {
 	public void appendNonEncodedPath_getFile() throws Exception {
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
-		final File fileFromString = new File(tmpDir, "#Cumbia");
+		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else

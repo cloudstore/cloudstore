@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
@@ -56,14 +56,14 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		if (localPathPrefix.isEmpty())
 			return localRoot;
 
-		return new File(localRoot, localPathPrefix);
+		return newFile(localRoot, localPathPrefix);
 	}
 
 	private File getRemoteRootWithPathPrefix() {
 		if (remotePathPrefix.isEmpty())
 			return remoteRoot;
 
-		final File file = new File(remoteRoot, remotePathPrefix);
+		final File file = newFile(remoteRoot, remotePathPrefix);
 		return file;
 	}
 
@@ -231,16 +231,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = new File(remoteRoot, "2");
+		final File r_child_2 = newFile(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File l_child_2 = new File(localRoot, "2");
+		final File l_child_2 = newFile(localRoot, "2");
 		assertThat(l_child_2).isDirectory();
 
-		final File l_child_2_1 = new File(l_child_2, "1 {11 11ä11#+} 1");
+		final File l_child_2_1 = newFile(l_child_2, "1 {11 11ä11#+} 1");
 		assertThat(l_child_2_1).isDirectory();
 
-		final File l_child_2_1_a = new File(l_child_2_1, "a");
+		final File l_child_2_1_a = newFile(l_child_2_1, "a");
 		assertThat(l_child_2_1_a).isFile();
 
 		modifyFileRandomly(l_child_2_1_a);
@@ -271,16 +271,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncWithFileModificationInsideDeletedDirectoryCollisionInverse() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = new File(remoteRoot, "2");
+		final File r_child_2 = newFile(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
-		final File r_child_2_1_a = new File(r_child_2_1, "a");
+		final File r_child_2_1_a = newFile(r_child_2_1, "a");
 		assertThat(r_child_2_1_a).isFile();
 
-		final File l_child_2 = new File(localRoot, "2");
+		final File l_child_2 = newFile(localRoot, "2");
 		assertThat(l_child_2).isDirectory();
 
 		modifyFileRandomly(r_child_2_1_a);
@@ -367,16 +367,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncMovedFile() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = new File(remoteRoot, "2");
+		final File r_child_2 = newFile(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
-		final File r_child_2_1_b = new File(r_child_2_1, "b");
+		final File r_child_2_1_b = newFile(r_child_2_1, "b");
 		assertThat(r_child_2_1_b).isFile();
 
-		final File r_child_2_b = new File(r_child_2, "b");
+		final File r_child_2_b = newFile(r_child_2, "b");
 		assertThat(r_child_2_b).doesNotExist();
 
 		Files.move(r_child_2_1_b.toPath(), r_child_2_b.toPath());
@@ -397,21 +397,21 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncMovedFileToNewDir() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = new File(remoteRoot, "2");
+		final File r_child_2 = newFile(remoteRoot, "2");
 		assertThat(r_child_2).isDirectory();
 
-		final File r_child_2_1 = new File(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1).isDirectory();
 
-		final File r_child_2_1_b = new File(r_child_2_1, "b");
+		final File r_child_2_1_b = newFile(r_child_2_1, "b");
 		assertThat(r_child_2_1_b).isFile();
 
-		final File r_child_2_new = new File(r_child_2, "new");
+		final File r_child_2_new = newFile(r_child_2, "new");
 		assertThat(r_child_2_new).doesNotExist();
 		r_child_2_new.mkdir();
 		assertThat(r_child_2_new).isDirectory();
 
-		final File r_child_2_new_xxx = new File(r_child_2_new, "xxx");
+		final File r_child_2_new_xxx = newFile(r_child_2_new, "xxx");
 
 		Files.move(r_child_2_1_b.toPath(), r_child_2_new_xxx.toPath());
 		assertThat(r_child_2_1_b).doesNotExist();
@@ -435,9 +435,9 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(remoteRoot, "1");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "a");
-		createRelativeSymlink(new File(child_1, "b"), child_1_a);
+		createRelativeSymlink(newFile(child_1, "b"), child_1_a);
 
-		createRelativeSymlink(new File(child_1, "broken"), new File(child_1, "doesNotExist"));
+		createRelativeSymlink(newFile(child_1, "broken"), newFile(child_1, "doesNotExist"));
 
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);
@@ -486,9 +486,9 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(localRoot, "1");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "a");
-		createRelativeSymlink(new File(child_1, "b"), child_1_a);
+		createRelativeSymlink(newFile(child_1, "b"), child_1_a);
 
-		createRelativeSymlink(new File(child_1, "broken"), new File(child_1, "doesNotExist"));
+		createRelativeSymlink(newFile(child_1, "broken"), newFile(child_1, "doesNotExist"));
 
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);
@@ -510,7 +510,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(localRoot, "A ä Ä { + } x ( << ))]] [ #");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "Öü ß ? # + {{ d d } (( > << ]] )");
-		createRelativeSymlink(new File(child_1, "Öü ß ? # + {{ d d } (( > << ]] ).new"), child_1_a);
+		createRelativeSymlink(newFile(child_1, "Öü ß ? # + {{ d d } (( > << ]] ).new"), child_1_a);
 
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);

@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.core.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +26,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
@@ -159,7 +159,7 @@ public class CloudStoreUpdaterCore {
 
 	protected Properties getInstallationProperties() {
 		if (installationProperties == null) {
-			final File installationPropertiesFile = new File(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
+			final File installationPropertiesFile = newFile(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
 			if (!installationPropertiesFile.exists())
 				throw new IllegalArgumentException(String.format("installationPropertiesFile '%s' does not exist!", installationPropertiesFile.getAbsolutePath()));
 
@@ -230,7 +230,7 @@ public class CloudStoreUpdaterCore {
 				dir = dir.getParentFile();
 
 			while (dir != null) {
-				final File installationPropertiesFile = new File(dir, INSTALLATION_PROPERTIES_FILE_NAME);
+				final File installationPropertiesFile = newFile(dir, INSTALLATION_PROPERTIES_FILE_NAME);
 				if (installationPropertiesFile.exists()) {
 					logger.debug("determineInstallationDirFromClass: Found installationPropertiesFile in this directory: {}", dir);
 					return dir;
@@ -251,7 +251,7 @@ public class CloudStoreUpdaterCore {
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
 		try {
-			final File file = Paths.get(url.toURI()).toFile();
+			final File file = newFile(url.toURI());
 			return file;
 		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
@@ -297,7 +297,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File getUpdaterPropertiesFile() {
-		return new File(ConfigDir.getInstance().getFile(), "updater.properties");
+		return newFile(ConfigDir.getInstance().getFile(), "updater.properties");
 	}
 
 	private static final String PROPERTY_KEY_REMOTE_VERSION_TIMESTAMP = "remoteVersionTimestamp";
@@ -457,14 +457,14 @@ public class CloudStoreUpdaterCore {
 
 	protected File getUpdaterDir() {
 		if (updaterDir == null)
-			updaterDir = new File(getInstallationDir(), "updater");
+			updaterDir = newFile(getInstallationDir(), "updater");
 
 		return updaterDir;
 	}
 
 	protected File getBackupDir() {
 		if (backupDir == null)
-			backupDir = new File(getInstallationDir(), "backup");
+			backupDir = newFile(getInstallationDir(), "backup");
 
 		return backupDir;
 	}

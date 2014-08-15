@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.updater;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedInputStream;
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 

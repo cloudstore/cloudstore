@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.rest.client.ssl;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 
@@ -92,7 +92,7 @@ public final class SSLContextBuilder {
 
 		trustStoreFileName += ".truststore";
 
-		File sslClient = new File(ConfigDir.getInstance().getFile(), "ssl.client");
+		File sslClient = newFile(ConfigDir.getInstance().getFile(), "ssl.client");
 
 		if (!sslClient.isDirectory())
 			sslClient.mkdirs();
@@ -100,6 +100,6 @@ public final class SSLContextBuilder {
 		if (!sslClient.isDirectory())
 			throw new IllegalStateException("Could not create directory (permissions?): " + sslClient);
 
-		return getSSLContext(new File(sslClient, trustStoreFileName), callback);
+		return getSSLContext(newFile(sslClient, trustStoreFileName), callback);
 	}
 }

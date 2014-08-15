@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -18,7 +18,7 @@ public class DefaultTarGzEntryNameConverter implements TarGzEntryNameConverter {
 
 	@Override
 	public File getFile(final File rootDir, final String entryName) {
-		return new File(rootDir, entryName);
+		return newFile(rootDir, entryName);
 	}
 
 }

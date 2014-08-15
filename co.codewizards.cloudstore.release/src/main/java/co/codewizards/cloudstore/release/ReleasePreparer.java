@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.release;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,7 +59,7 @@ public class ReleasePreparer {
 
 	public void run() throws Exception {
 		logger.info("run: Entered.");
-		rootDirFile = new File(this.rootDir);
+		rootDirFile = newFile(this.rootDir);
 
 		initProperties();
 

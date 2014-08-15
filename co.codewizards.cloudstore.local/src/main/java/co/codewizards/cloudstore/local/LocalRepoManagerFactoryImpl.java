@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
@@ -31,8 +31,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
  * {@code LocalRepoManager}s.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory
-{
+public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerFactoryImpl.class);
 
 	private final Map<File, LocalRepoManagerImpl> localRoot2LocalRepoManagerImpl = new HashMap<File, LocalRepoManagerImpl>();

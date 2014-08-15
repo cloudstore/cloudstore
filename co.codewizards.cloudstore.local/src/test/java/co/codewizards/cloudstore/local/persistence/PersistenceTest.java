@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collection;
 
 import org.junit.AfterClass;

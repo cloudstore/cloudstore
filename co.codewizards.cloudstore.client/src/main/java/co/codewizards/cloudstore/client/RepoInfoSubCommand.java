@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.client;
 
 import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collection;
 
 import co.codewizards.cloudstore.core.dto.DateTime;

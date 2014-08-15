@@ -5,7 +5,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
@@ -18,12 +18,12 @@ public class IOUtilTest {
 
 	@Test
 	public void testInTmp() throws IOException {
-		File testDir = new File(new File("/tmp/IOUtilTest"), "testDir");
+		File testDir = newFile(new File("/tmp/IOUtilTest"), "testDir");
 		testDir.mkdirs();
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		File subFolder = new File(testDir, "subFolder");
-		File fileName = new File(subFolder, "fileName");
+		File subFolder = newFile(testDir, "subFolder");
+		File fileName = newFile(subFolder, "fileName");
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 
 		String relPath = IOUtil.getRelativePath(testDir, fileName);
@@ -42,9 +42,9 @@ public class IOUtilTest {
 		File testDir = tmpDir;
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		File subFolder = new File(testDir, "subFolder");
+		File subFolder = newFile(testDir, "subFolder");
 		subFolder.mkdirs();
-		File fileName = new File(subFolder, "fileName");
+		File fileName = newFile(subFolder, "fileName");
 		fileName.createNewFile();
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 

@@ -1,9 +1,7 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,6 +13,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 class LockFileImpl implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileImpl.class);
@@ -48,7 +48,7 @@ class LockFileImpl implements LockFile {
 			try {
 				if (randomAccessFile == null) {
 					logger.trace("[{}]tryAcquire: acquiring underlying FileLock.", thisID);
-					randomAccessFile = new RandomAccessFile(file, "rw");
+					randomAccessFile = file.createRandomAccessFile("rw");
 					try {
 						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
 					} finally {

@@ -17,6 +17,8 @@
 		<module>../co.codewizards.cloudstore.parent</module>
 		<module>../co.codewizards.cloudstore.core</module>
 		<module>../co.codewizards.cloudstore.local</module>
+		<module>../co.codewizards.cloudstore.oio.io</module>
+		<module>../co.codewizards.cloudstore.oio.nio</module>
 		<module>../co.codewizards.cloudstore.site.skin</module>
 		<module>../co.codewizards.cloudstore.rest.client</module>
 		<module>../co.codewizards.cloudstore.rest.server</module>

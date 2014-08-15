@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
+
 
 /**
  * Thrown if a {@link LocalRepoManager} could not be created for a given {@link File}, because the file does not exist.
@@ -9,14 +10,14 @@ import java.io.File;
 public class FileNotFoundException extends LocalRepoManagerException {
 	private static final long serialVersionUID = 1L;
 
-	private File file;
+	private final File file;
 
-	public FileNotFoundException(File file) {
+	public FileNotFoundException(final File file) {
 		super(createMessage(file));
 		this.file = file;
 	}
 
-	public FileNotFoundException(File file, Throwable cause) {
+	public FileNotFoundException(final File file, final Throwable cause) {
 		super(createMessage(file), cause);
 		this.file = file;
 	}
@@ -25,7 +26,7 @@ public class FileNotFoundException extends LocalRepoManagerException {
 		return file;
 	}
 
-	protected static String createMessage(File file) {
+	protected static String createMessage(final File file) {
 		return String.format("File does not exist: %s", file == null ? null : file.getAbsolutePath());
 	}
 }

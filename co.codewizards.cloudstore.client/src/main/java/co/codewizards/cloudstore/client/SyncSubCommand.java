@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;

@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
