@@ -71,14 +71,14 @@ public class LockFileTest {
 
 		private void acquireAndRelease(final int invocationId) {
 			System.out.printf("[%s].acquireAndRelease[%s]: entered\n", threadId, invocationId);
-			int time = random.nextInt(500);
+			int time = random.nextInt(200);
 			if (time > 0) {
 				try { Thread.sleep(time); } catch (final InterruptedException e) { doNothing(); }
 			}
 			System.out.printf("[%s].acquireAndRelease[%s]: waited before lock\n", threadId, invocationId);
 			try ( LockFile lockFile = LockFileFactory.getInstance().acquire(file, 10000); ) {
 				System.out.printf("[%s].acquireAndRelease[%s]: locked\n", threadId, invocationId);
-				time = random.nextInt(1000);
+				time = random.nextInt(500);
 				if (time > 0) {
 					try { Thread.sleep(time); } catch (final InterruptedException e) { doNothing(); }
 				}
