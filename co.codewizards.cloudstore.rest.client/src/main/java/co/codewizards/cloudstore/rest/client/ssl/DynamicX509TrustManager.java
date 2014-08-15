@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -21,9 +22,7 @@ import javax.net.ssl.X509TrustManager;
 
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
-import co.codewizards.cloudstore.core.util.EmptyInputStreamException;
 import co.codewizards.cloudstore.core.util.HashUtil;
-import co.codewizards.cloudstore.core.util.StreamUtil;
 
 class DynamicX509TrustManager implements X509TrustManager {
 	private static final int LOCKFILE_TIMEOUT_MS = 1000 * 10;
@@ -115,19 +114,15 @@ class DynamicX509TrustManager implements X509TrustManager {
 	}
 
 	private KeyStore readTrustStore() {
-		try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
+		try (final LockFile lockFile = acquireTrustStoreFileLockFile();) {
 			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			InputStream in;
-			try {
-				in = StreamUtil.checkStreamIsNotEmpty(trustStoreLockFile.createInputStream());
-			} catch(final EmptyInputStreamException e) {
-				in = null;
-			}
-			try {
-				ks.load(in, TRUST_STORE_PASSWORD_CHAR_ARRAY);
-			} finally {
-				if (in != null)
-					in.close();
+
+			try (final InputStream in = new BufferedInputStream(lockFile.createInputStream());) {
+				in.mark(1);
+				final boolean empty = in.read() < 0;
+				in.reset();
+
+				ks.load(empty ? null : in, TRUST_STORE_PASSWORD_CHAR_ARRAY);
 			}
 			return ks;
 		} catch (final RuntimeException x) {
@@ -138,20 +133,9 @@ class DynamicX509TrustManager implements X509TrustManager {
 	}
 
 	private void writeTrustStore(final KeyStore trustStore) {
-		// Use another try-block for trustStoreLockFile, to prevent missing unlock in the inner finally block.
-		try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
-			final File tmpFile = new File(trustStoreFile.getParentFile(), trustStoreFile.getName() + ".new");
-			final LockFile tmpLockFile = LockFileFactory.getInstance().acquire(tmpFile, LOCKFILE_TIMEOUT_MS);
-			try {
-				try (final OutputStream out = tmpLockFile.createOutputStream();) {
-					trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
-				}
-				trustStoreFile.delete();
-				tmpFile.renameTo(trustStoreFile);
-			} finally {
-				//by intention in finally block because of order: first delete, than release.
-				tmpFile.delete();
-				tmpLockFile.release();
+		try (final LockFile lockFile = acquireTrustStoreFileLockFile();) {
+			try (final OutputStream out = lockFile.createOutputStream();) {
+				trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
 			}
 		} catch (final RuntimeException x) {
 			throw x;
@@ -163,8 +147,8 @@ class DynamicX509TrustManager implements X509TrustManager {
 	private void addServerCertAndReload(final Certificate cert, final boolean permanent) {
 		try {
 			if (permanent) {
-				try (final LockFile trustStoreLockFile = LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);) {
-					final Lock lock = trustStoreLockFile.getLock();
+				try (final LockFile lockFile = acquireTrustStoreFileLockFile();) {
+					final Lock lock = lockFile.getLock();
 					lock.lock();
 					try {
 						final KeyStore trustStore = readTrustStore();
@@ -185,4 +169,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 		}
 	}
 
+	private LockFile acquireTrustStoreFileLockFile() {
+		return LockFileFactory.getInstance().acquire(trustStoreFile, LOCKFILE_TIMEOUT_MS);
+	}
 }
