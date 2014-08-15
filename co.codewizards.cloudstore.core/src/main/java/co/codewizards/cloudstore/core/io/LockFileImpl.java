@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -53,6 +54,13 @@ class LockFileImpl implements LockFile {
 					randomAccessFile = new RandomAccessFile(file, "rw");
 					try {
 						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
+					} catch (final OverlappingFileLockException x) {
+						// It was not successfully locked - no need to do anything.
+						// This should IMHO not happen when working with the LockFileImpl alone, because this
+						// is a synchronized block, but it may definitely happen due to external causes.
+						// Fact is, it does happen (we just encountered it) and it should IMHO be correct to simply
+						// handle it the same as if the tryLock(...) failed "normally" to acquire the lock.
+						doNothing();
 					} finally {
 						if (fileLock == null) {
 							logger.trace("[{}]tryAcquire: fileLock was NOT acquired. Closing randomAccessFile now.", thisID);
