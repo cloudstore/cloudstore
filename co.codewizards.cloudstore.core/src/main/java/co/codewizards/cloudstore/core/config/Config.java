@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.assertNotNullAndNoNullElement;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,21 +40,21 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  * not be detected.
  * <p>
  * There is a global properties file in the user's home directory (or wherever {@link ConfigDir}
- * points to): <code>${user.home}/.cloudstore/cloudstore.properties</code>
+ * points to): <code>&#36;{user.home}/.cloudstore/cloudstore.properties</code>
  * <p>
  * Additionally, every directory can optionally contain the following files:
  * <ol>
  * <li><code>.cloudstore.properties</code>
  * <li><code>cloudstore.properties</code>
- * <li><code>.${anyFileName}.cloudstore.properties</code>
- * <li><code>${anyFileName}.cloudstore.properties</code>
+ * <li><code>.&#36;{anyFileName}.cloudstore.properties</code>
+ * <li><code>&#36;{anyFileName}.cloudstore.properties</code>
  * </ol>
  * <p>
  * The files 1. and 2. are applicable to the entire directory and all sub-directories and files in it.
  * Usually, on GNU/Linux people will prefer 1., but when using Windows, files starting with a "." are
  * sometimes a bit hard to deal with. Therefore, we support both. The file 2. overrides the settings of file 1..
  * <p>
- * The files 3. and 4. are applicable only to the file <code>${anyFileName}</code>. Thus, if you want
+ * The files 3. and 4. are applicable only to the file <code>&#36;{anyFileName}</code>. Thus, if you want
  * to set special behaviour for the file <code>example.db</code> only, you can create the file
  * <code>.example.db.cloudstore.properties</code> in the same directory.
  *

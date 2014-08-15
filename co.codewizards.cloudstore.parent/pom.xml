@@ -553,7 +553,7 @@
 
 				<plugin>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.7</version>
+					<version>2.9.1</version>
 					<configuration>
 						<detectLinks>true</detectLinks>
 						<doctitle><![CDATA[<a target="_blank" href="http://cloudstore.codewizards.co/${project.version}/">CloudStore</a> API (version ${project.version})]]></doctitle>
@@ -572,14 +572,15 @@
 -->
             			<header><![CDATA[<b><a target="_blank" href="http://cloudstore.codewizards.co/${project.version}/">CloudStore</a> API</b><br />(${project.version})]]></header>
             			<links>
-            				<!-- The Legion of the Bouncy Castle
-            				<link>http://www.bouncycastle.org/docs/docs1.6</link>
-            				<link>http://www.bouncycastle.org/docs/mdocs1.6</link>
-            				<link>http://www.bouncycastle.org/docs/pgdocs1.6</link>
-            				<link>http://www.bouncycastle.org/docs/tspdocs1.6</link>
-            				-->
+            				<!-- The Legion of the Bouncy Castle -->
+            				<link>http://www.bouncycastle.org/docs/docs1.5on</link>
+            				<link>http://www.bouncycastle.org/docs/mdocs1.5on</link>
+            				<link>http://www.bouncycastle.org/docs/pgdocs1.5on</link>
+            				<link>http://www.bouncycastle.org/docs/pkixdocs1.5on</link>
 
             				<!-- DataNucleus
+            				We don't import DN's classes directly, because we use the JDO API only. Hence,
+            				DN should not occur in Javadoc anywhere, anyway. No need to reference it here.
             				<link>http://www.datanucleus.org/javadocs/core/${datanucleus.javadoc.version}</link>
             				<link>http://www.datanucleus.org/javadocs/api.jdo/${datanucleus.javadoc.version}</link>
             				<link>http://www.datanucleus.org/javadocs/store.rdbms/${datanucleus.javadoc.version}</link>
@@ -587,9 +588,6 @@
 
             				<!-- JDO (javax.jdo.*) -->
             				<link>http://db.apache.org/jdo/api30/apidocs</link>
-
-            				<!-- Jersey (REST implementation) -->
-            				<link>http://jersey.java.net/nonav/apidocs/${jersey.version}/jersey</link>
             			</links>
             			<linksource>true</linksource>
 					</configuration>

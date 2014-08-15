@@ -18,7 +18,7 @@ public class ConfigDir {
 	/**
 	 * System property controlling the location of the central configuration directory.
 	 * <p>
-	 * If this system property is not set, it defaults to: <code>${user.home}/.cloudstore</code>
+	 * If this system property is not set, it defaults to: <code>&#36;{user.home}/.cloudstore</code>
 	 * <p>
 	 * Note that this property is always set during runtime. If it is not set by the caller (via a <code>-D</code> JVM argument)
 	 * from the outside, then it is set by the code inside the running application. Therefore, this property
@@ -32,7 +32,7 @@ public class ConfigDir {
 	 * System property controlling the location of the log directory.
 	 * <p>
 	 * If this system property is not set, it defaults to:
-	 * <code>${user.home}/.cloudstore/log</code>
+	 * <code>&#36;{user.home}/.cloudstore/log</code>
 	 * <p>
 	 * Note that this property is always set during runtime. If it is not set by the caller (via a <code>-D</code> JVM argument)
 	 * from the outside, then it is set by the code inside the running application. Therefore, this property
@@ -45,8 +45,8 @@ public class ConfigDir {
 		public static ConfigDir instance = new ConfigDir();
 	}
 
-	private String value;
-	private File file;
+	private final String value;
+	private final File file;
 	private File logDir;
 
 	/**
@@ -58,7 +58,7 @@ public class ConfigDir {
 	private ConfigDir() {
 		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
-		String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
+		final String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
 		file = new File(resolvedValue).getAbsoluteFile();
 		if (!file.isDirectory())
 			file.mkdirs();
@@ -80,7 +80,7 @@ public class ConfigDir {
 	 * <p>
 	 * This is the <i>non-resolved</i> (as is) value of the system property {@link #SYSTEM_PROPERTY_CONFIG_DIR}.
 	 * Even if this property was not set (from the outside), it is initialised by default to:
-	 * <code>${user.home}/.cloudstore</code>
+	 * <code>&#36;{user.home}/.cloudstore</code>
 	 * @return the central configuration directory as {@code String}. Never <code>null</code>.
 	 * @see #SYSTEM_PROPERTY_CONFIG_DIR
 	 * @see #getFile()
@@ -93,7 +93,7 @@ public class ConfigDir {
 	 * Gets the central configuration directory as <i>absolute</i> {@code File}.
 	 * <p>
 	 * In contrast to {@link #getValue()}, this file's path is <i>resolved</i>; i.e. all system properties
-	 * occurring in it (e.g. "${user.home}") were replaced by their actual values.
+	 * occurring in it (e.g. "&#36;{user.home}") were replaced by their actual values.
 	 * @return the central configuration directory as <i>absolute</i> {@code File}. Never <code>null</code>.
 	 * @see #SYSTEM_PROPERTY_CONFIG_DIR
 	 * @see #getValue()
@@ -112,11 +112,11 @@ public class ConfigDir {
 	 */
 	public File getLogDir() {
 		if (logDir == null) {
-			String sysPropVal = System.getProperty(SYSTEM_PROPERTY_LOG_DIR);
+			final String sysPropVal = System.getProperty(SYSTEM_PROPERTY_LOG_DIR);
 			if (isEmpty(sysPropVal))
 				logDir = new File(getFile(), "log");
 			else {
-				String resolvedSysPropVal = IOUtil.replaceTemplateVariables(sysPropVal, System.getProperties());
+				final String resolvedSysPropVal = IOUtil.replaceTemplateVariables(sysPropVal, System.getProperties());
 				logDir = new File(resolvedSysPropVal).getAbsoluteFile();
 			}
 
