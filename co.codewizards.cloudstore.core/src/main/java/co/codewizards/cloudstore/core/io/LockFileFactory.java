@@ -88,17 +88,25 @@ public class LockFileFactory {
 			}
 			lockFileImpl.acquireRunningCounter.incrementAndGet();
 		}
+		boolean exceptionThrown = true;
 		try {
 			// The following must NOT be synchronised! Otherwise we might wait here longer than the current timeout
 			// (as long as the longest timeout of all acquire methods running concurrently).
 			lockFileImpl.acquire(timeoutMillis);
+			exceptionThrown = false;
 		} finally {
 			synchronized (mutex) {
 				final int lockCounter = lockFileImpl.getLockCounter();
 				final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
 
-				if (lockCounter < 1 && acquireRunningCounter < 1)
-					file2LockFileImpl.remove(file);
+				if (lockCounter < 1 && acquireRunningCounter < 1) {
+					final LockFileImpl removed = file2LockFileImpl.remove(file);
+					if (removed != lockFileImpl)
+						throw new IllegalStateException(String.format("file2LockFileImpl.remove(file) != lockFileImpl :: %s != %s", removed, lockFileImpl));
+				}
+
+				if (lockCounter < 1 && ! exceptionThrown)
+					throw new IllegalStateException("lockCounter < 1, but no exception thrown!");
 			}
 		}
 		return new LockFileProxy(lockFileImpl);
@@ -108,7 +116,7 @@ public class LockFileFactory {
 		synchronized (mutex) {
 			final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
 			if (lockFileImpl != lockFileImpl2)
-				throw new IllegalArgumentException("Unknown lockFileImpl instance (not managed by this registry): " + lockFileImpl);
+				throw new IllegalArgumentException(String.format("Unknown lockFileImpl instance (not managed by this registry)! file2LockFileImpl.get(lockFileImpl.getFile()) != lockFileImpl :: %s != %s ", lockFileImpl2, lockFileImpl));
 
 			final int lockCounter = lockFileImpl.getLockCounter();
 			final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
