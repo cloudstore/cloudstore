@@ -663,6 +663,8 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
 		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
+		localRepoManagerLocal.close();
+
 		final File child_1 = createDirectory(remoteRoot, "1");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "a");

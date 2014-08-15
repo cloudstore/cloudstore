@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
+import static java.lang.System.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -9,14 +10,23 @@ import java.net.URL;
 import java.nio.file.Files;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sebastian Schefczyk
  */
 public class UrlUtilTest {
 
+	private static final Logger logger = LoggerFactory.getLogger(UrlUtilTest.class);
+
+	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
+	}
+
 	@Test
 	public void canonicalizeURL_http_removeFragments() throws MalformedURLException {
+		logger.debug("[{}]canonicalizeURL_http_removeFragments: entered.", Integer.toHexString(identityHashCode(this)));
 		final URL input = new URL("http", "codewizwards.co", 123, "/asdf/qwer/#Yxcv");
 		assertEquals(input.toExternalForm(), "http://codewizwards.co:123/asdf/qwer/#Yxcv");
 		//anchors/fragments will be removed!
@@ -27,6 +37,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void canonicalizeURL_http_escaped() throws MalformedURLException {
+		logger.debug("[{}]canonicalizeURL_http_escaped: entered.", Integer.toHexString(identityHashCode(this)));
 		final URL input = new URL("http", "codewizwards.co", 123, "/asdf/qwer/%23Yxcv");
 		assertEquals(input.toExternalForm(), "http://codewizwards.co:123/asdf/qwer/%23Yxcv");
 		final URL result = UrlUtil.canonicalizeURL(input);
@@ -35,6 +46,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void canonicalizeURL_file_escaped() throws MalformedURLException {
+		logger.debug("[{}]canonicalizeURL_file_escaped: entered.", Integer.toHexString(identityHashCode(this)));
 		final String fileString = "file:/tmp/asdf/qwer/\\#Yxcv";
 		final URL input = new URL(fileString);
 		assertEquals(input.toExternalForm(), fileString);
@@ -44,6 +56,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void canonicalizeURL_file_encoded() throws MalformedURLException {
+		logger.debug("[{}]canonicalizeURL_file_encoded: entered.", Integer.toHexString(identityHashCode(this)));
 		final String fileString = "file:/tmp/asdf/qwer/%23Yxcv";
 		final URL input = new URL(fileString);
 		assertEquals(input.toExternalForm(), fileString);
@@ -53,6 +66,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void canonicalizeURL_file_unescaped() throws MalformedURLException {
+		logger.debug("[{}]canonicalizeURL_file_unescaped: entered.", Integer.toHexString(identityHashCode(this)));
 		final String fileString = "file:/tmp/asdf/qwer/#Yxcv";
 		final URL input = new URL(fileString);
 		assertEquals(input.toExternalForm(), fileString);
@@ -63,6 +77,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void appendPath_encoded() throws Exception {
+		logger.debug("[{}]appendPath_encoded: entered.", Integer.toHexString(identityHashCode(this)));
 		final String encodedPath = "/%23Tag"; //%23 is the '#' character
 		final URL url = new URI("file", "/tmp/UrlUtilTest/parentFolder", null).toURL();
 		final String expected = "file:/tmp/UrlUtilTest/parentFolder/%23Tag";
@@ -72,6 +87,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void appendPath_decoded() throws Exception {
+		logger.debug("[{}]appendPath_decoded: entered.", Integer.toHexString(identityHashCode(this)));
 		final String unencodedPath = "/#Tag"; //%23 is the '#' character
 		final URL url = new URI("file", "/tmp/UrlUtilTest/parentFolder", null).toURL();
 		final String expected = "file:/tmp/UrlUtilTest/parentFolder/%23Tag";
@@ -81,6 +97,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void getFile_url() throws Exception {
+		logger.debug("[{}]getFile_url: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
 		final File fileFromString = new File(tmpDir, "#Cumbia");
@@ -97,6 +114,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void appendEncodedPath_getFile() throws Exception {
+		logger.debug("[{}]appendEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
 		final File fileFromString = new File(tmpDir, "#Cumbia");
@@ -114,6 +132,7 @@ public class UrlUtilTest {
 
 	@Test
 	public void appendNonEncodedPath_getFile() throws Exception {
+		logger.debug("[{}]appendNonEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
 
 		final File fileFromString = new File(tmpDir, "#Cumbia");

@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,12 +27,12 @@ class LockFileImpl implements LockFile {
 	private RandomAccessFile randomAccessFile;
 	private FileLock fileLock;
 	private final Lock lock = new ReentrantLock();
-	private final Object mutex;
+	private final Object mutex = this;
 
 	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
 		this.lockFileFactory = assertNotNull("lockFileFactory", lockFileFactory);
 		this.file = assertNotNull("file", file);
-		this.mutex = lockFileFactory.mutex;
+//		this.mutex = lockFileFactory.mutex;
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}
 
@@ -135,8 +134,8 @@ class LockFileImpl implements LockFile {
 			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
-			lockFileFactory.postRelease(this);
 		}
+		lockFileFactory.postRelease(this);
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.auth;
 
+import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.security.KeyPair;
@@ -8,64 +9,75 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthTokenSignAndVerifyTest {
 	private static SecureRandom random = new SecureRandom();
 
+	private static final Logger logger = LoggerFactory.getLogger(AuthTokenSignAndVerifyTest.class);
+
+	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
+	}
+
 	@Test
 	public void signAndVerifyWithValidPublicKey() throws Exception {
-		AuthToken authToken = AuthTokenIOTest.createAuthToken();
-		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-		KeyPair keyPair = createKeyPair();
-		SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
+		logger.debug("[{}]signAndVerifyWithValidPublicKey: entered.", Integer.toHexString(identityHashCode(this)));
+		final AuthToken authToken = AuthTokenIOTest.createAuthToken();
+		final byte[] authTokenData = new AuthTokenIO().serialise(authToken);
+		final KeyPair keyPair = createKeyPair();
+		final SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
 		assertThat(signedAuthToken).isNotNull();
 		assertThat(signedAuthToken.getAuthTokenData()).isNotNull();
 		assertThat(signedAuthToken.getSignature()).isNotNull();
 
-		AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair.getPublic().getEncoded());
+		final AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair.getPublic().getEncoded());
 		verifier.verify(signedAuthToken);
 	}
 
 	@Test(expected=SignatureException.class)
 	public void signAndVerifyWithDifferentPublicKey() throws Exception {
-		AuthToken authToken = AuthTokenIOTest.createAuthToken();
-		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-		KeyPair keyPair = createKeyPair();
-		KeyPair keyPair2 = createKeyPair();
-		SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
+		logger.debug("[{}]signAndVerifyWithDifferentPublicKey: entered.", Integer.toHexString(identityHashCode(this)));
+		final AuthToken authToken = AuthTokenIOTest.createAuthToken();
+		final byte[] authTokenData = new AuthTokenIO().serialise(authToken);
+		final KeyPair keyPair = createKeyPair();
+		final KeyPair keyPair2 = createKeyPair();
+		final SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
 		assertThat(signedAuthToken).isNotNull();
 		assertThat(signedAuthToken.getAuthTokenData()).isNotNull();
 		assertThat(signedAuthToken.getSignature()).isNotNull();
 
-		AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair2.getPublic().getEncoded());
+		final AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair2.getPublic().getEncoded());
 		verifier.verify(signedAuthToken);
 	}
 
 	@Test(expected=SignatureException.class)
 	public void signAndVerifyCorruptData() throws Exception {
-		AuthToken authToken = AuthTokenIOTest.createAuthToken();
-		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-		KeyPair keyPair = createKeyPair();
-		SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
+		logger.debug("[{}]signAndVerifyCorruptData: entered.", Integer.toHexString(identityHashCode(this)));
+		final AuthToken authToken = AuthTokenIOTest.createAuthToken();
+		final byte[] authTokenData = new AuthTokenIO().serialise(authToken);
+		final KeyPair keyPair = createKeyPair();
+		final SignedAuthToken signedAuthToken = new AuthTokenSigner(keyPair.getPrivate().getEncoded()).sign(authTokenData);
 		assertThat(signedAuthToken).isNotNull();
 		assertThat(signedAuthToken.getAuthTokenData()).isNotNull();
 		assertThat(signedAuthToken.getSignature()).isNotNull();
 
-		int index = random.nextInt(signedAuthToken.getAuthTokenData().length);
-		byte oldValue = signedAuthToken.getAuthTokenData()[index];
+		final int index = random.nextInt(signedAuthToken.getAuthTokenData().length);
+		final byte oldValue = signedAuthToken.getAuthTokenData()[index];
 		do {
 			signedAuthToken.getAuthTokenData()[index] = (byte) random.nextInt();
 		} while (oldValue == signedAuthToken.getAuthTokenData()[index]);
 
-		AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair.getPublic().getEncoded());
+		final AuthTokenVerifier verifier = new AuthTokenVerifier(keyPair.getPublic().getEncoded());
 		verifier.verify(signedAuthToken);
 	}
 
 	private KeyPair createKeyPair() throws NoSuchAlgorithmException {
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 //		keyGen.initialize(4096, random);
 		keyGen.initialize(1024, random); // much faster - we don't need high security for testing only!
-		KeyPair pair = keyGen.generateKeyPair();
+		final KeyPair pair = keyGen.generateKeyPair();
 		return pair;
 	}
 }

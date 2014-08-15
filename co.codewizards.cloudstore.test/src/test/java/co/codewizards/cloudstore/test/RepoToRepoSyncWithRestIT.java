@@ -13,10 +13,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +24,11 @@ import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
-import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
 
 public class RepoToRepoSyncWithRestIT extends AbstractIT
 {
@@ -74,19 +70,6 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 			result.setTrusted(true);
 			return result;
 		}
-	}
-
-	private static RestRepoTransportFactory restRepoTransportFactory;
-
-	@BeforeClass
-	public static void beforeClass() throws Exception {
-		restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
-		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
-	}
-
-	@AfterClass
-	public static void afterClass() {
-		restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
 	}
 
 	private URL getRemoteRootURLWithPathPrefix(final UUID remoteRepositoryId) throws MalformedURLException {

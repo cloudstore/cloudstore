@@ -27,6 +27,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.persistence.Directory;
@@ -34,6 +35,8 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
+import co.codewizards.cloudstore.test.RepoToRepoSyncWithRestIT.TestDynamicX509TrustManagerCallback;
 
 public abstract class AbstractIT {
 	static {
@@ -52,14 +55,24 @@ public abstract class AbstractIT {
 		return cloudStoreServerTestSupport.getSecureUrl();
 	}
 
+	private static RestRepoTransportFactory restRepoTransportFactory;
+
 	@BeforeClass
 	public static void abstractIT_beforeClass() {
-		cloudStoreServerTestSupport.beforeClass();
+		if (cloudStoreServerTestSupport.beforeClass()) {
+			// *IMPORTANT* We run *all* tests in parallel in the same JVM. Therefore, we must - in this entire project - *not*
+			// set any other dynamicX509TrustManagerCallbackClass!!! This setting is JVM-wide!
+			restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
+		}
 	}
 
 	@AfterClass
 	public static void abstractIT_afterClass() {
-		cloudStoreServerTestSupport.afterClass();
+		if (cloudStoreServerTestSupport.afterClass()) {
+			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
+			restRepoTransportFactory = null;
+		}
 	}
 
 	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.Helper.getInstance();

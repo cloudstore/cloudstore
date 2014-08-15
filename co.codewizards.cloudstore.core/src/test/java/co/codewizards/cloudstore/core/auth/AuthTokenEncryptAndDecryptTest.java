@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.auth;
 
+import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.security.KeyPair;
@@ -8,28 +9,36 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthTokenEncryptAndDecryptTest {
+	private static final Logger logger = LoggerFactory.getLogger(AuthTokenEncryptAndDecryptTest.class);
 	private static SecureRandom random = new SecureRandom();
+
+	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
+	}
 
 	@Test
 	public void encryptAndDecrypt() throws Exception {
-		KeyPair keyPairSender = createKeyPair();
-		KeyPair keyPairReceiver = createKeyPair();
+		logger.debug("[{}]encryptAndDecrypt: entered.", Integer.toHexString(identityHashCode(this)));
+		final KeyPair keyPairSender = createKeyPair();
+		final KeyPair keyPairReceiver = createKeyPair();
 
 
 		// On sender's side:
-		AuthToken authToken1 = AuthTokenIOTest.createAuthToken();
-		byte[] authTokenData1 = new AuthTokenIO().serialise(authToken1);
+		final AuthToken authToken1 = AuthTokenIOTest.createAuthToken();
+		final byte[] authTokenData1 = new AuthTokenIO().serialise(authToken1);
 
-		SignedAuthToken signedAuthToken1 = new AuthTokenSigner(keyPairSender.getPrivate().getEncoded()).sign(authTokenData1);
+		final SignedAuthToken signedAuthToken1 = new AuthTokenSigner(keyPairSender.getPrivate().getEncoded()).sign(authTokenData1);
 		assertThat(signedAuthToken1).isNotNull();
 		assertThat(signedAuthToken1.getAuthTokenData()).isNotNull();
 		assertThat(signedAuthToken1.getSignature()).isNotNull();
 
-		byte[] signedAuthTokenData1 = new SignedAuthTokenIO().serialise(signedAuthToken1);
+		final byte[] signedAuthTokenData1 = new SignedAuthTokenIO().serialise(signedAuthToken1);
 
-		EncryptedSignedAuthToken encryptedSignedAuthToken =
+		final EncryptedSignedAuthToken encryptedSignedAuthToken =
 				new SignedAuthTokenEncrypter(keyPairReceiver.getPublic().getEncoded()).encrypt(signedAuthTokenData1);
 
 		assertThat(encryptedSignedAuthToken).isNotNull();
@@ -38,24 +47,24 @@ public class AuthTokenEncryptAndDecryptTest {
 
 
 		// On receiver's side:
-		byte[] signedAuthTokenData2 =
+		final byte[] signedAuthTokenData2 =
 				new SignedAuthTokenDecrypter(keyPairReceiver.getPrivate().getEncoded()).decrypt(encryptedSignedAuthToken);
 
 		assertThat(signedAuthTokenData2).isEqualTo(signedAuthTokenData1);
 
-		SignedAuthToken signedAuthToken2 = new SignedAuthTokenIO().deserialise(signedAuthTokenData2);
+		final SignedAuthToken signedAuthToken2 = new SignedAuthTokenIO().deserialise(signedAuthTokenData2);
 		assertThat(signedAuthToken2).isNotNull();
 		assertThat(signedAuthToken2.getAuthTokenData()).isNotNull().isEqualTo(signedAuthToken1.getAuthTokenData());
 		assertThat(signedAuthToken2.getSignature()).isNotNull().isEqualTo(signedAuthToken1.getSignature());
 
-		AuthTokenVerifier verifier = new AuthTokenVerifier(keyPairSender.getPublic().getEncoded());
+		final AuthTokenVerifier verifier = new AuthTokenVerifier(keyPairSender.getPublic().getEncoded());
 		verifier.verify(signedAuthToken2);
 	}
 
 	private KeyPair createKeyPair() throws NoSuchAlgorithmException {
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		keyGen.initialize(1024, random); // Productively, we should always use 4096 by default! But for testing, this is fine and much faster.
-		KeyPair pair = keyGen.generateKeyPair();
+		final KeyPair pair = keyGen.generateKeyPair();
 		return pair;
 	}
 }

@@ -1,15 +1,25 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UidTest {
 
+	private static final Logger logger = LoggerFactory.getLogger(UidTest.class);
+
+	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
+	}
+
 	@Test
 	public void toAndFromBytes() {
+		logger.debug("[{}]toAndFromBytes: entered.", Integer.toHexString(identityHashCode(this)));
 		for (int i = 0; i < 1000; ++i) {
 			final Uid uid1 = new Uid();
 			final byte[] bytes1 = uid1.toBytes();
@@ -23,6 +33,7 @@ public class UidTest {
 
 	@Test
 	public void toAndFromString() {
+		logger.debug("[{}]toAndFromString: entered.", Integer.toHexString(identityHashCode(this)));
 		for (int i = 0; i < 1000; ++i) {
 			final Uid uid1 = new Uid();
 			final String string1 = uid1.toString();
@@ -38,6 +49,7 @@ public class UidTest {
 
 	@Test
 	public void toAndFromStringSpecialValues() {
+		logger.debug("[{}]toAndFromStringSpecialValues: entered.", Integer.toHexString(identityHashCode(this)));
 		final Uid uid1 = new Uid(0, 0);
 		System.out.println(uid1);
 
@@ -59,6 +71,7 @@ public class UidTest {
 
 	@Test
 	public void toAndFromStringUUIDComparison() {
+		logger.debug("[{}]toAndFromStringUUIDComparison: entered.", Integer.toHexString(identityHashCode(this)));
 		for (int i = 0; i < 1000; ++i) {
 			final UUID uid1 = UUID.randomUUID();
 			final String string1 = uid1.toString();

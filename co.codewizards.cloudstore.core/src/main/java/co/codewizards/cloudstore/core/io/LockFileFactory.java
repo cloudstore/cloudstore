@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class LockFileFactory {
 		public static final LockFileFactory instance = new LockFileFactory();
 	}
 
-	protected final Object mutex = new Object();
+	private final Object mutex = this;
 
 	protected LockFileFactory() { }
 
@@ -121,23 +121,23 @@ public class LockFileFactory {
 
 	/**
 	 * Callback from {@link LockFileImpl#release()}.
-	 * <p>
-	 * This method must be invoked inside a synchronized block using {@link #mutex}!
 	 * @param lockFileImpl the {@code LockFileImpl} which notifies this factory about being released.
 	 */
 	protected void postRelease(final LockFileImpl lockFileImpl) {
-		final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
-		if (lockFileImpl != lockFileImpl2)
-			throw new IllegalArgumentException(String.format("Unknown lockFileImpl instance (not managed by this registry)! file2LockFileImpl.get(lockFileImpl.getFile()) != lockFileImpl :: %s != %s ", lockFileImpl2, lockFileImpl));
+		synchronized (mutex) {
+			final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
+			if (lockFileImpl != lockFileImpl2)
+				throw new IllegalArgumentException(String.format("Unknown lockFileImpl instance (not managed by this registry)! file2LockFileImpl.get(lockFileImpl.getFile()) != lockFileImpl :: %s != %s ", lockFileImpl2, lockFileImpl));
 
-		final int lockCounter = lockFileImpl.getLockCounter();
-		final int acquireRunningCounter = lockFileImpl.acquireRunningCounter;
+			final int lockCounter = lockFileImpl.getLockCounter();
+			final int acquireRunningCounter = lockFileImpl.acquireRunningCounter;
 
-		if (lockCounter < 1 && acquireRunningCounter < 1) {
-			logger.trace("postRelease: Removing lockFileImpl={}", lockFileImpl);
-			final LockFileImpl removed = file2LockFileImpl.remove(lockFileImpl.getFile());
-			if (removed != lockFileImpl)
-				throw new IllegalStateException(String.format("file2LockFileImpl.remove(file) != lockFileImpl :: %s != %s", removed, lockFileImpl));
+			if (lockCounter < 1 && acquireRunningCounter < 1) {
+				logger.trace("postRelease: Removing lockFileImpl={}", lockFileImpl);
+				final LockFileImpl removed = file2LockFileImpl.remove(lockFileImpl.getFile());
+				if (removed != lockFileImpl)
+					throw new IllegalStateException(String.format("file2LockFileImpl.remove(file) != lockFileImpl :: %s != %s", removed, lockFileImpl));
+			}
 		}
 	}
 

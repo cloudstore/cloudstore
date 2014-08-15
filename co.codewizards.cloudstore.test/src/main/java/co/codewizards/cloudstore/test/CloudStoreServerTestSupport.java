@@ -20,6 +20,11 @@ public class CloudStoreServerTestSupport {
 	private final Timer cloudStoreServerStopTimer = new Timer("cloudStoreServerStopTimer-" + cloudStoreServerStopTimerIndex.incrementAndGet(), true);
 	private TimerTask cloudStoreServerStopTimerTask;
 
+	/**
+	 * When running tests in parallel, the beforeClass() and afterClass() seem to be invoked multiple times.
+	 */
+	private int testInstanceCounter;
+
 	private int securePort;
 
 	public int getSecurePort() {
@@ -30,8 +35,13 @@ public class CloudStoreServerTestSupport {
 		return "https://localhost:" + getSecurePort();
 	}
 
-	public void beforeClass() {
+	/**
+	 * @return <code>true</code>, if this is the first invocation. <code>false</code> afterwards.
+	 */
+	public boolean beforeClass() {
 		synchronized (cloudStoreServerMutex) {
+			final boolean first = testInstanceCounter++ == 0;
+
 			if (cloudStoreServerStopTimerTask != null) {
 				cloudStoreServerStopTimerTask.cancel();
 				cloudStoreServerStopTimerTask = null;
@@ -49,6 +59,8 @@ public class CloudStoreServerTestSupport {
 				cloudStoreServerThread.start();
 				waitForServerToOpenSecurePort();
 			}
+
+			return first;
 		}
 	}
 
@@ -73,8 +85,14 @@ public class CloudStoreServerTestSupport {
 		}
 	}
 
-	public void afterClass() {
+	/**
+	 * @return <code>true</code>, if this is the last invocation. <code>false</code> before.
+	 */
+	public boolean afterClass() {
 		synchronized (cloudStoreServerMutex) {
+			if (--testInstanceCounter > 0)
+				return false;
+
 			if (cloudStoreServerStopTimerTask == null) {
 				cloudStoreServerStopTimerTask = new TimerTask() {
 					@Override
@@ -90,6 +108,8 @@ public class CloudStoreServerTestSupport {
 				};
 				cloudStoreServerStopTimer.schedule(cloudStoreServerStopTimerTask, 60000L);
 			}
+
+			return true;
 		}
 	}
 
