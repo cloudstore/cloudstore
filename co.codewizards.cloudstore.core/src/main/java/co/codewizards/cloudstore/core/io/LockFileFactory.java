@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class LockFileFactory {
 		}
 
 		LockFileImpl lockFileImpl;
-		synchronized (this) {
+		synchronized (mutex) {
 			lockFileImpl = file2LockFileImpl.get(file);
 			if (lockFileImpl == null) {
 				lockFileImpl = new LockFileImpl(this, file);
@@ -93,7 +93,7 @@ public class LockFileFactory {
 			// (as long as the longest timeout of all acquire methods running concurrently).
 			lockFileImpl.acquire(timeoutMillis);
 		} finally {
-			synchronized (this) {
+			synchronized (mutex) {
 				final int lockCounter = lockFileImpl.getLockCounter();
 				final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
 
@@ -104,16 +104,18 @@ public class LockFileFactory {
 		return new LockFileProxy(lockFileImpl);
 	}
 
-	protected synchronized void postRelease(final LockFileImpl lockFileImpl) {
-		final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
-		if (lockFileImpl != lockFileImpl2)
-			throw new IllegalArgumentException("Unknown lockFileImpl instance (not managed by this registry): " + lockFileImpl);
+	protected void postRelease(final LockFileImpl lockFileImpl) {
+		synchronized (mutex) {
+			final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
+			if (lockFileImpl != lockFileImpl2)
+				throw new IllegalArgumentException("Unknown lockFileImpl instance (not managed by this registry): " + lockFileImpl);
 
-		final int lockCounter = lockFileImpl.getLockCounter();
-		final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
+			final int lockCounter = lockFileImpl.getLockCounter();
+			final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
 
-		if (lockCounter < 1 && acquireRunningCounter < 1)
-			file2LockFileImpl.remove(lockFileImpl.getFile());
+			if (lockCounter < 1 && acquireRunningCounter < 1)
+				file2LockFileImpl.remove(lockFileImpl.getFile());
+		}
 	}
 
 }

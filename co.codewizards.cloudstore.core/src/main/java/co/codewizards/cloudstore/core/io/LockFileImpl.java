@@ -29,10 +29,12 @@ class LockFileImpl implements LockFile {
 	private RandomAccessFile randomAccessFile;
 	private FileLock fileLock;
 	private final Lock lock = new ReentrantLock();
+	private final Object mutex;
 
 	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
 		this.lockFileFactory = assertNotNull("lockFileFactory", lockFileFactory);
 		this.file = assertNotNull("file", file);
+		this.mutex = lockFileFactory.mutex;
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}
 
@@ -43,7 +45,7 @@ class LockFileImpl implements LockFile {
 
 	private boolean tryAcquire() {
 		logger.trace("[{}]tryAcquire: entered. lockCounter={}", thisID, lockCounter);
-		synchronized (this) {
+		synchronized (mutex) {
 			logger.trace("[{}]tryAcquire: inside synchronized", thisID);
 			try {
 				if (randomAccessFile == null) {
@@ -101,7 +103,7 @@ class LockFileImpl implements LockFile {
 	@Override
 	public void release() {
 		logger.trace("[{}]release: entered. lockCounter={}", thisID, lockCounter);
-		synchronized (this) {
+		synchronized (mutex) {
 			logger.trace("[{}]release: inside synchronized", thisID);
 			final int lockCounterValue = --lockCounter;
 			if (lockCounterValue > 0) {
@@ -126,8 +128,8 @@ class LockFileImpl implements LockFile {
 			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
+			lockFileFactory.postRelease(this);
 		}
-		lockFileFactory.postRelease(this);
 	}
 
 	@Override
