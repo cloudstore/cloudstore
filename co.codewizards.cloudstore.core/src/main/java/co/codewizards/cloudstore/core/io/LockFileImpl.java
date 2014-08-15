@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,7 +23,7 @@ class LockFileImpl implements LockFile {
 	private final File file;
 	private final String thisID = Integer.toHexString(System.identityHashCode(this));
 
-	protected final AtomicInteger acquireRunningCounter = new AtomicInteger();
+	protected int acquireRunningCounter = 0;
 
 	private int lockCounter = 0;
 	private RandomAccessFile randomAccessFile;

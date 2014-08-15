@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Factory creating {@link LockFile} instances.
  * <p>
@@ -14,6 +17,8 @@ import java.util.Map;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class LockFileFactory {
+
+	private static final Logger logger = LoggerFactory.getLogger(LockFileFactory.class);
 
 	private static class LockFileFactoryHolder {
 		public static final LockFileFactory instance = new LockFileFactory();
@@ -85,8 +90,9 @@ public class LockFileFactory {
 			if (lockFileImpl == null) {
 				lockFileImpl = new LockFileImpl(this, file);
 				file2LockFileImpl.put(file, lockFileImpl);
+				logger.trace("acquire: Adding file='{}' lockFileImpl={}", file, lockFileImpl);
 			}
-			lockFileImpl.acquireRunningCounter.incrementAndGet();
+			++lockFileImpl.acquireRunningCounter;
 		}
 		boolean exceptionThrown = true;
 		try {
@@ -97,9 +103,10 @@ public class LockFileFactory {
 		} finally {
 			synchronized (mutex) {
 				final int lockCounter = lockFileImpl.getLockCounter();
-				final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
+				final int acquireRunningCounter = --lockFileImpl.acquireRunningCounter;
 
 				if (lockCounter < 1 && acquireRunningCounter < 1) {
+					logger.trace("acquire: Removing lockFileImpl={}", lockFileImpl);
 					final LockFileImpl removed = file2LockFileImpl.remove(file);
 					if (removed != lockFileImpl)
 						throw new IllegalStateException(String.format("file2LockFileImpl.remove(file) != lockFileImpl :: %s != %s", removed, lockFileImpl));
@@ -112,17 +119,25 @@ public class LockFileFactory {
 		return new LockFileProxy(lockFileImpl);
 	}
 
+	/**
+	 * Callback from {@link LockFileImpl#release()}.
+	 * <p>
+	 * This method must be invoked inside a synchronized block using {@link #mutex}!
+	 * @param lockFileImpl the {@code LockFileImpl} which notifies this factory about being released.
+	 */
 	protected void postRelease(final LockFileImpl lockFileImpl) {
-		synchronized (mutex) {
-			final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
-			if (lockFileImpl != lockFileImpl2)
-				throw new IllegalArgumentException(String.format("Unknown lockFileImpl instance (not managed by this registry)! file2LockFileImpl.get(lockFileImpl.getFile()) != lockFileImpl :: %s != %s ", lockFileImpl2, lockFileImpl));
+		final LockFileImpl lockFileImpl2 = file2LockFileImpl.get(lockFileImpl.getFile());
+		if (lockFileImpl != lockFileImpl2)
+			throw new IllegalArgumentException(String.format("Unknown lockFileImpl instance (not managed by this registry)! file2LockFileImpl.get(lockFileImpl.getFile()) != lockFileImpl :: %s != %s ", lockFileImpl2, lockFileImpl));
 
-			final int lockCounter = lockFileImpl.getLockCounter();
-			final int acquireRunningCounter = lockFileImpl.acquireRunningCounter.decrementAndGet();
+		final int lockCounter = lockFileImpl.getLockCounter();
+		final int acquireRunningCounter = lockFileImpl.acquireRunningCounter;
 
-			if (lockCounter < 1 && acquireRunningCounter < 1)
-				file2LockFileImpl.remove(lockFileImpl.getFile());
+		if (lockCounter < 1 && acquireRunningCounter < 1) {
+			logger.trace("postRelease: Removing lockFileImpl={}", lockFileImpl);
+			final LockFileImpl removed = file2LockFileImpl.remove(lockFileImpl.getFile());
+			if (removed != lockFileImpl)
+				throw new IllegalStateException(String.format("file2LockFileImpl.remove(file) != lockFileImpl :: %s != %s", removed, lockFileImpl));
 		}
 	}
 
