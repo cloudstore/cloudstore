@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.client;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -28,12 +28,12 @@ public abstract class AbstractTest {
 		long timestamp = System.currentTimeMillis();
 		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+		File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		File dir = new File(new File("target"), "repo");
+		File dir = newFile(new File("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -54,8 +54,8 @@ public abstract class AbstractTest {
 		assertThat(children1).containsOnly(children2);
 
 		for (String childName : children1) {
-			File child1 = new File(dir1, childName);
-			File child2 = new File(dir2, childName);
+			File child1 = newFile(dir1, childName);
+			File child2 = newFile(dir2, childName);
 
 			if (child1.isFile()) {
 				assertThat(child2.isFile());

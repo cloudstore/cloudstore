@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,10 +70,10 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		File child_1_1 = createDirectory(child_1, "1");
 		File child_1_2 = createDirectory(child_1, "2");
-		File child_2 = new File(localRoot, "2");
+		File child_2 = newFile(localRoot, "2");
 
 		createFileWithRandomContent(child_1, "d");
 
@@ -101,23 +101,23 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		assertThat(child_1).isDirectory();
-		File child_1_b = new File(child_1, "b");
+		File child_1_b = newFile(child_1, "b");
 		assertThat(child_1_b).isFile();
-		File child_1_c = new File(child_1, "c");
+		File child_1_c = newFile(child_1, "c");
 		assertThat(child_1_c).isFile();
 
-		File child_2 = new File(localRoot, "2");
+		File child_2 = newFile(localRoot, "2");
 		assertThat(child_2).isDirectory();
 
-		File child_2_1 = new File(child_2, "1");
+		File child_2_1 = newFile(child_2, "1");
 		assertThat(child_2_1).isDirectory();
 
-		File child_2_1_a = new File(child_2_1, "a");
+		File child_2_1_a = newFile(child_2_1, "a");
 		assertThat(child_2_1_a).isFile();
 
-		File child_2_a = new File(child_2, "a");
+		File child_2_a = newFile(child_2, "a");
 		assertThat(child_2_a).isFile();
 
 		deleteFile(child_1_b);
@@ -140,23 +140,23 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		assertThat(child_1).isDirectory();
-		File child_1_b = new File(child_1, "b");
+		File child_1_b = newFile(child_1, "b");
 		assertThat(child_1_b).isFile();
-		File child_1_c = new File(child_1, "c");
+		File child_1_c = newFile(child_1, "c");
 		assertThat(child_1_c).isFile();
 
-		File child_2 = new File(localRoot, "2");
+		File child_2 = newFile(localRoot, "2");
 		assertThat(child_2).isDirectory();
 
-		File child_2_1 = new File(child_2, "1");
+		File child_2_1 = newFile(child_2, "1");
 		assertThat(child_2_1).isDirectory();
 
-		File child_2_1_a = new File(child_2_1, "a");
+		File child_2_1_a = newFile(child_2_1, "a");
 		assertThat(child_2_1_a).isFile();
 
-		File child_2_a = new File(child_2, "a");
+		File child_2_a = newFile(child_2, "a");
 		assertThat(child_2_a).isFile();
 
 		deleteFile(child_1_b);
@@ -187,9 +187,9 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		assertThat(child_1).isDirectory();
-		File child_1_b = new File(child_1, "b");
+		File child_1_b = newFile(child_1, "b");
 		assertThat(child_1_b).isFile();
 
 		long localRepositoryRevisionBeforeSync;
@@ -245,9 +245,9 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
 		localRepoManager.putRemoteRepository(localRepoManager2.getRepositoryId(), null, localRepoManager2.getPublicKey(), "");
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		assertThat(child_1).isDirectory();
-		File child_1_b = new File(child_1, "b");
+		File child_1_b = newFile(child_1, "b");
 		assertThat(child_1_b).isFile();
 
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
@@ -303,7 +303,7 @@ public class LocalRepoManagerTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		File child_1 = new File(localRoot, "1");
+		File child_1 = newFile(localRoot, "1");
 		assertThat(child_1).isDirectory();
 
 		long localRepositoryRevisionBeforeSync;

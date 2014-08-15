@@ -1,12 +1,12 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.FileChunkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
@@ -51,7 +52,7 @@ public class TempChunkFileManager {
 			// the temp-chunk-file or the chunk was already written into the final destination.
 			deleteOrFail(tempChunkFileDtoFile);
 
-			final FileOutputStream out = new FileOutputStream(tempChunkFile);
+			final OutputStream out = tempChunkFile.createFileOutputStream();
 			try {
 				out.write(fileData);
 			} finally {
@@ -122,7 +123,7 @@ public class TempChunkFileManager {
 	}
 
 	public File getTempChunkFileDtoFile(final File file) {
-		return new File(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
+		return newFile(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 	}
 
 	private String sha1(final byte[] data) {
@@ -161,7 +162,7 @@ public class TempChunkFileManager {
 		if (!tempDir.isDirectory())
 			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
 
-		final File tempFile = new File(tempDir, String.format("%s%s_%s",
+		final File tempFile = newFile(tempDir, String.format("%s%s_%s",
 				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
 		try {
 			tempFile.createNewFile();
@@ -189,7 +190,7 @@ public class TempChunkFileManager {
 	public File getTempDir(final File destFile) {
 		assertNotNull("destFile", destFile);
 		final File parentDir = destFile.getParentFile();
-		return new File(parentDir, LocalRepoManager.TEMP_DIR_NAME);
+		return newFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
 	}
 
 	/**

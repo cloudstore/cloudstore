@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local.dto;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.local;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

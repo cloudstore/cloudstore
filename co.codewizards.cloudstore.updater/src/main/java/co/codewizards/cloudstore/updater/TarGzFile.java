@@ -4,7 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

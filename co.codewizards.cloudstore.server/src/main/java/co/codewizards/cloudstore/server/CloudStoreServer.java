@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.server;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -154,7 +154,7 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized File getKeyStoreFile() {
 		if (keyStoreFile == null) {
-			final File sslServer = new File(ConfigDir.getInstance().getFile(), "ssl.server");
+			final File sslServer = newFile(ConfigDir.getInstance().getFile(), "ssl.server");
 
 			if (!sslServer.isDirectory())
 				sslServer.mkdirs();
@@ -162,7 +162,7 @@ public class CloudStoreServer implements Runnable {
 			if (!sslServer.isDirectory())
 				throw new IllegalStateException("Could not create directory: " + sslServer);
 
-			keyStoreFile = new File(sslServer, "keystore");
+			keyStoreFile = newFile(sslServer, "keystore");
 		}
 		return keyStoreFile;
 	}
@@ -350,10 +350,10 @@ public class CloudStoreServer implements Runnable {
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();
-		DerbyUtil.setLogFile(new File(logDir, "derby.log"));
+		DerbyUtil.setLogFile(newFile(logDir, "derby.log"));
 
 		final String logbackXmlName = "logback.server.xml";
-		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreServer.class, logbackXmlName, logbackXmlFile);
 

@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.SocketException;
 
 import javax.ws.rs.ProcessingException;

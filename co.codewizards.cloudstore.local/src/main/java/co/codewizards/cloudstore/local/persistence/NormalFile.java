@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.HashSet;
 import java.util.Set;
 

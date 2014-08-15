@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.URL;
 import java.util.Date;
 import java.util.UUID;

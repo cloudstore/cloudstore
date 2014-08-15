@@ -4,9 +4,6 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,6 +14,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import co.codewizards.cloudstore.core.oio.file.File;
+
 public abstract class DtoIo <D> {
 
 	private final Class<D> dtoClass;
@@ -25,24 +24,25 @@ public abstract class DtoIo <D> {
 	private Unmarshaller unmarshaller;
 
 	protected DtoIo() {
-		ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
-		Type[] actualTypeArguments = superclass.getActualTypeArguments();
+		final ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
+		final Type[] actualTypeArguments = superclass.getActualTypeArguments();
 		if (actualTypeArguments == null || actualTypeArguments.length < 1)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 
 		@SuppressWarnings("unchecked")
+		final
 		Class<D> c = (Class<D>) actualTypeArguments[0];
 		this.dtoClass = c;
 		if (this.dtoClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 	}
 
-	public void serialize(D dto, OutputStream out) {
+	public void serialize(final D dto, final OutputStream out) {
 		assertNotNull("dto", dto);
 		assertNotNull("out", out);
 		try {
 			getMarshaller().marshal(dto, out);
-		} catch (JAXBException e) {
+		} catch (final JAXBException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -53,7 +53,7 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+			final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());
 			try {
 				getMarshaller().marshal(dto, out);
 			} finally {
@@ -64,11 +64,11 @@ public abstract class DtoIo <D> {
 		}
 	}
 
-	public D deserialize(InputStream in) {
+	public D deserialize(final InputStream in) {
 		assertNotNull("in", in);
 		try {
 			return dtoClass.cast(getUnmarshaller().unmarshal(in));
-		} catch (JAXBException e) {
+		} catch (final JAXBException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -77,7 +77,7 @@ public abstract class DtoIo <D> {
 		assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			final InputStream in = new BufferedInputStream(new FileInputStream(file));
+			final InputStream in = new BufferedInputStream(file.createFileInputStream());
 			try {
 				return dtoClass.cast(getUnmarshaller().unmarshal(in));
 			} finally {
@@ -92,7 +92,7 @@ public abstract class DtoIo <D> {
 		if (marshaller == null) {
 			try {
 				marshaller = CloudStoreJaxbContext.getJaxbContext().createMarshaller();
-			} catch (JAXBException e) {
+			} catch (final JAXBException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -103,7 +103,7 @@ public abstract class DtoIo <D> {
 		if (unmarshaller == null) {
 			try {
 				unmarshaller = CloudStoreJaxbContext.getJaxbContext().createUnmarshaller();
-			} catch (JAXBException e) {
+			} catch (final JAXBException e) {
 				throw new RuntimeException(e);
 			}
 		}

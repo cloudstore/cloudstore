@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.rest.client.transport;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;

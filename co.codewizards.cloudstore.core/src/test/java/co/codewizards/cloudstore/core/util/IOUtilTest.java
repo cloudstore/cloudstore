@@ -3,16 +3,17 @@
  */
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static java.lang.System.*;
 import static org.junit.Assert.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 /**
  * @author Sebastian Schefczyk
@@ -28,12 +29,12 @@ public class IOUtilTest {
 	@Test
 	public void testInTmp() throws IOException {
 		logger.debug("[{}]testInTmp: entered.", Integer.toHexString(identityHashCode(this)));
-		final File testDir = new File(new File("/tmp/IOUtilTest"), "testDir");
+		final File testDir = newFile(newFile("/tmp/IOUtilTest"), "testDir");
 		testDir.mkdirs();
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		final File subFolder = new File(testDir, "subFolder");
-		final File fileName = new File(subFolder, "fileName");
+		final File subFolder = newFile(testDir, "subFolder");
+		final File fileName = newFile(subFolder, "fileName");
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 
 		final String relPath = IOUtil.getRelativePath(testDir, fileName);
@@ -49,13 +50,14 @@ public class IOUtilTest {
 	public void testInTargetDir() throws IOException {
 		logger.debug("[{}]testInTargetDir: entered.", Integer.toHexString(identityHashCode(this)));
 		System.out.println("#######   testInTargetDir   #######");
-		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
+		final File tmpDir = createTempDirectory(this.getClass().getSimpleName()).toFile();
 		final File testDir = tmpDir;
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		final File subFolder = new File(testDir, "subFolder");
+		final File subFolder = newFile(testDir, "subFolder");
 		subFolder.mkdirs();
-		final File fileName = new File(subFolder, "fileName");
+		final File fileName = newFile(subFolder, "fileName");
+
 		fileName.createNewFile();
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 

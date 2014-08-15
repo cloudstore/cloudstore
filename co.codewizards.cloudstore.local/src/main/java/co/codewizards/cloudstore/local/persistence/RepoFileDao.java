@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,6 +12,8 @@ import javax.jdo.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFileDao.class);

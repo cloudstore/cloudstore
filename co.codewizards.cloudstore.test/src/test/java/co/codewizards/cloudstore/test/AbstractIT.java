@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -94,13 +94,13 @@ public abstract class AbstractIT {
 		final long timestamp = System.currentTimeMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		final File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = new File(new File("target"), "repo");
+		final File dir = newFile(new File("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -111,7 +111,7 @@ public abstract class AbstractIT {
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {
-		final File dir = new File(parent, name);
+		final File dir = newFile(parent, name);
 		return createDirectory(dir);
 	}
 	protected File createDirectory(final File dir) throws IOException {
@@ -139,7 +139,7 @@ public abstract class AbstractIT {
 	}
 
 	protected File createFileWithRandomContent(final File parent, final String name) throws IOException {
-		final File file = new File(parent, name);
+		final File file = newFile(parent, name);
 		return createFileWithRandomContent(file);
 	}
 
@@ -265,8 +265,8 @@ public abstract class AbstractIT {
 		assertThat(children1).containsOnly(children2);
 
 		for (final String childName : children1) {
-			final File child1 = new File(dir1, childName);
-			final File child2 = new File(dir2, childName);
+			final File child1 = newFile(dir1, childName);
+			final File child2 = newFile(dir2, childName);
 
 			final boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
 			final boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());

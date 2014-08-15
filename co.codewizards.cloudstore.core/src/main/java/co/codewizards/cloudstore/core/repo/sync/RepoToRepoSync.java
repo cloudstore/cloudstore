@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -86,7 +86,7 @@ public class RepoToRepoSync {
 		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
 		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
-		this.localRoot = localRoot = new File(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
+		this.localRoot = localRoot = newFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
 		localRepositoryId = localRepoManager.getRepositoryId();
 		if (localRepositoryId == null)

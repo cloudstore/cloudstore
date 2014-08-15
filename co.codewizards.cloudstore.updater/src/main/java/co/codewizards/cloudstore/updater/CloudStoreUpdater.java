@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.updater;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -93,7 +93,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		ConfigDir.getInstance().getLogDir();
 
 		final String logbackXmlName = "logback.updater.xml";
-		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreUpdater.class, logbackXmlName, logbackXmlFile);
 
@@ -127,7 +127,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 			final File backupDir = getBackupDir();
 			backupDir.mkdirs();
-			final File backupTarGzFile = new File(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(System.currentTimeMillis(), 36))));
+			final File backupTarGzFile = newFile(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(System.currentTimeMillis(), 36))));
 			System.out.println("Creating backup: " + backupTarGzFile);
 
 			new TarGzFile(backupTarGzFile)
@@ -192,7 +192,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				if (child.isDirectory())
 					renameFiles(child, fileFilter);
 				else {
-					final File newChild = new File(dir, child.getName() + RENAMED_FILE_SUFFIX);
+					final File newChild = newFile(dir, child.getName() + RENAMED_FILE_SUFFIX);
 					logger.debug("renameFiles: file='{}', newName='{}'", child, newChild.getName());
 					if (!child.renameTo(newChild)) {
 						final String msg = String.format("Failed to rename the file '%s' to '%s' (in the same directory)!", child, newChild.getName());
@@ -211,7 +211,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				if (child.isDirectory())
 					restoreRenamedFiles(child);
 				else if (child.getName().endsWith(RENAMED_FILE_SUFFIX)) {
-					final File newChild = new File(dir, child.getName().substring(0, child.getName().length() - RENAMED_FILE_SUFFIX.length()));
+					final File newChild = newFile(dir, child.getName().substring(0, child.getName().length() - RENAMED_FILE_SUFFIX.length()));
 					logger.debug("restoreRenamedFiles: file='{}', newName='{}'", child, newChild.getName());
 					newChild.delete();
 					if (!child.renameTo(newChild))
@@ -246,7 +246,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			if (entryName.startsWith(prefix))
 				entryName = entryName.substring(prefix.length());
 
-			return entryName.isEmpty() ? rootDir : new File(rootDir, entryName);
+			return entryName.isEmpty() ? rootDir : newFile(rootDir, entryName);
 		}
 	}
 
@@ -307,7 +307,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				throw new IllegalStateException("No '/' found in URL?!");
 
 			final String fileName = path.substring(lastSlashIndex + 1);
-			final File downloadFile = new File(tempDownloadDir, fileName);
+			final File downloadFile = newFile(tempDownloadDir, fileName);
 
 			boolean successful = false;
 			final InputStream in = url.openStream();
@@ -349,8 +349,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	@Override
 	protected File getInstallationDir() {
 		if (installationDirFile == null) {
-			final String path = IOUtil.simplifyPath(new File(assertNotNull("installationDir", installationDir)));
-			final File f = new File(path);
+			final String path = IOUtil.simplifyPath(newFile(assertNotNull("installationDir", installationDir)));
+			final File f = newFile(path);
 			if (!f.exists())
 				throw new IllegalArgumentException(String.format("installationDir '%s' (specified as '%s') does not exist!", f, installationDir));
 

@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -143,7 +143,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 			if (repoFile.getParent() == null) // skip the root
 				continue;
 
-			result = new File(result, repoFile.getName());
+			result = newFile(result, repoFile.getName());
 		}
 		return result;
 	}

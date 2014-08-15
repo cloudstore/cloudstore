@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>co.codewizards.cloudstore</groupId>
@@ -109,6 +109,16 @@
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.core</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.oio.io</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
 			<dependency>
@@ -461,7 +471,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore/>
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -475,7 +485,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore/>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
