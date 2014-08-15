@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -12,6 +12,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 public final class UrlUtil {
 
@@ -48,7 +50,7 @@ public final class UrlUtil {
 
 	public static File getFile(final URL url) {
 		try {
-			return new File(url.toURI());
+			return newFile(url.toURI());
 		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
 		}

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collection;
 import java.util.UUID;
 

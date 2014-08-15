@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class LocalRepoRegistry
@@ -61,8 +62,8 @@ public class LocalRepoRegistry
 
 	private File getRegistryFile() {
 		if (registryFile == null) {
-			final File old = new File(ConfigDir.getInstance().getFile(), "repositoryList.properties"); // old name until 0.9.0
-			registryFile = new File(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
+			final File old = newFile(ConfigDir.getInstance().getFile(), "repositoryList.properties"); // old name until 0.9.0
+			registryFile = newFile(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
 			if (old.exists() && !registryFile.exists())
 				old.renameTo(registryFile);
 		}
@@ -167,7 +168,7 @@ public class LocalRepoRegistry
 		if (localRootString == null)
 			return null;
 
-		final File localRoot = new File(localRootString);
+		final File localRoot = newFile(localRootString);
 		return localRoot;
 	}
 
@@ -438,19 +439,19 @@ public class LocalRepoRegistry
 				continue;
 			}
 
-			final File localRoot = new File(localRootString);
+			final File localRoot = newFile(localRootString);
 			if (!localRoot.isDirectory()) {
 				evictDeadEntry(key);
 				continue;
 			}
 
-			final File repoMetaDir = new File(localRoot, LocalRepoManager.META_DIR_NAME);
+			final File repoMetaDir = newFile(localRoot, LocalRepoManager.META_DIR_NAME);
 			if (!repoMetaDir.isDirectory()) {
 				evictDeadEntry(key);
 				continue;
 			}
 
-			final File repositoryPropertiesFile = new File(repoMetaDir, LocalRepoManager.REPOSITORY_PROPERTIES_FILE_NAME);
+			final File repositoryPropertiesFile = newFile(repoMetaDir, LocalRepoManager.REPOSITORY_PROPERTIES_FILE_NAME);
 			if (!repositoryPropertiesFile.exists()) {
 				logger.warn("evictDeadEntries: File does not exist (repo corrupt?!): {}", repositoryPropertiesFile);
 				continue;

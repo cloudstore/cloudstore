@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlRootElement;

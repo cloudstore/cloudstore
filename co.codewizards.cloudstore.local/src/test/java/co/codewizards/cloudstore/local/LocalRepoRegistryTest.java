@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

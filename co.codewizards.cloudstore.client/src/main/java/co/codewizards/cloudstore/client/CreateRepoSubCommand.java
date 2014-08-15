@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -45,13 +45,13 @@ public class CreateRepoSubCommand extends SubCommand
 		if (localRoot == null)
 			localRootFile = new File("").getAbsoluteFile();
 		else
-			localRootFile = new File(localRoot).getAbsoluteFile();
+			localRootFile = newFile(localRoot).getAbsoluteFile();
 
 		localRoot = localRootFile.getPath();
 
 		if (!noAlias && (alias == null || alias.isEmpty())) { // empty alias means the same as alias not specified.
 			String simplified = IOUtil.simplifyPath(localRootFile);
-			alias = new File(simplified).getName();
+			alias = newFile(simplified).getName();
 		}
 
 		if (alias != null && alias.isEmpty())

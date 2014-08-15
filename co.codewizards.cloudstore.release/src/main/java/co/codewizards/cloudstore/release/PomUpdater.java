@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.release;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,7 +46,7 @@ class PomUpdater {
 
 		LinkedList<String> tagStack = new LinkedList<String>();
 
-		File tmpFile = new File(pomFile.getParentFile(), pomFile.getName() + ".tmp");
+		File tmpFile = newFile(pomFile.getParentFile(), pomFile.getName() + ".tmp");
 		OutputStream out = null;
 		InputStream in = new FileInputStream(pomFile);
 		try {

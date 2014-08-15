@@ -1,11 +1,11 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import java.io.File;
 import java.lang.reflect.InvocationHandler;
 import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public interface LocalRepoManager extends AutoCloseable {

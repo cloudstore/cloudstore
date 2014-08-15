@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -267,10 +267,10 @@ public class CloudStoreClient {
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();
-		DerbyUtil.setLogFile(new File(logDir, "derby.log"));
+		DerbyUtil.setLogFile(newFile(logDir, "derby.log"));
 
 		final String logbackXmlName = "logback.client.xml";
-		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists()) {
 			IOUtil.copyResource(CloudStoreClient.class, logbackXmlName, logbackXmlFile);
 		}

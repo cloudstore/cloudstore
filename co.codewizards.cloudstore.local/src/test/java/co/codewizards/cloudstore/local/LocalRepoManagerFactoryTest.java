@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 
@@ -37,7 +37,7 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(new File(new File(localRoot, "bla"), ".."));
+		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(newFile(newFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
@@ -64,7 +64,7 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 		localRepoManager.close();
 
-		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(new File(new File(localRoot, "bla"), ".."));
+		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(newFile(newFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
@@ -145,8 +145,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 		assertThat(localRepoManager.getLocalRoot()).isEqualTo(localRoot.getCanonicalFile());
 
-		File sub1Dir = new File(localRepoManager.getLocalRoot(), "sub1");
-		File sub1SubAaaDir = new File(sub1Dir, "aaa");
+		File sub1Dir = newFile(localRepoManager.getLocalRoot(), "sub1");
+		File sub1SubAaaDir = newFile(sub1Dir, "aaa");
 
 		sub1SubAaaDir.mkdirs();
 		assertThat(sub1SubAaaDir).isDirectory();

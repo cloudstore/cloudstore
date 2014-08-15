@@ -4,7 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;

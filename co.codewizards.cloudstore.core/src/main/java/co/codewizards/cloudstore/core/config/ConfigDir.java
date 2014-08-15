@@ -1,9 +1,8 @@
 package co.codewizards.cloudstore.core.config;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
-
-import java.io.File;
-
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -59,7 +58,7 @@ public class ConfigDir {
 		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
 		final String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
-		file = new File(resolvedValue).getAbsoluteFile();
+		file = newFile(resolvedValue).getAbsoluteFile();
 		if (!file.isDirectory())
 			file.mkdirs();
 
@@ -114,10 +113,10 @@ public class ConfigDir {
 		if (logDir == null) {
 			final String sysPropVal = System.getProperty(SYSTEM_PROPERTY_LOG_DIR);
 			if (isEmpty(sysPropVal))
-				logDir = new File(getFile(), "log");
+				logDir = newFile(getFile(), "log");
 			else {
 				final String resolvedSysPropVal = IOUtil.replaceTemplateVariables(sysPropVal, System.getProperties());
-				logDir = new File(resolvedSysPropVal).getAbsoluteFile();
+				logDir = newFile(resolvedSysPropVal).getAbsoluteFile();
 			}
 
 			System.setProperty(SYSTEM_PROPERTY_LOG_DIR, logDir.getPath());

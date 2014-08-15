@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,13 +49,13 @@ public abstract class AbstractTest {
 		long timestamp = System.currentTimeMillis();
 		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+		File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		File dir = new File(new File("target"), "repo");
+		File dir = newFile(new File("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -70,7 +70,7 @@ public abstract class AbstractTest {
 	}
 
 	protected File createDirectory(File parent, String name) throws IOException {
-		File dir = new File(parent, name);
+		File dir = newFile(parent, name);
 		return createDirectory(dir);
 	}
 	protected File createDirectory(File dir) throws IOException {
@@ -102,7 +102,7 @@ public abstract class AbstractTest {
 	}
 
 	protected File createFileWithRandomContent(File parent, String name, long minLength) throws IOException {
-		File file = new File(parent, name);
+		File file = newFile(parent, name);
 		return createFileWithRandomContent(file, minLength);
 	}
 
@@ -239,8 +239,8 @@ public abstract class AbstractTest {
 		assertThat(children1).isEqualTo(children2);
 
 		for (String childName : children1) {
-			File child1 = new File(dir1, childName);
-			File child2 = new File(dir2, childName);
+			File child1 = newFile(dir1, childName);
+			File child2 = newFile(dir2, childName);
 
 			boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
 			boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());

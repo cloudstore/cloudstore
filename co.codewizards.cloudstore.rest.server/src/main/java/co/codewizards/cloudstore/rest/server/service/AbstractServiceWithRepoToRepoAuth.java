@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.rest.server.service;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
