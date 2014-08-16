@@ -35,8 +35,10 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
+import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
+import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
-import co.codewizards.cloudstore.test.RepoToRepoSyncWithRestIT.TestDynamicX509TrustManagerCallback;
 
 public abstract class AbstractIT {
 	static {
@@ -56,6 +58,15 @@ public abstract class AbstractIT {
 	}
 
 	private static RestRepoTransportFactory restRepoTransportFactory;
+
+	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
+		@Override
+		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
+			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+			result.setTrusted(true);
+			return result;
+		}
+	}
 
 	@BeforeClass
 	public static void abstractIT_beforeClass() {

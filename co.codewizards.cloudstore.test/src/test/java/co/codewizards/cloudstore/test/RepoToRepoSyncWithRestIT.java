@@ -26,9 +26,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
-import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
-import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
-import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 
 public class RepoToRepoSyncWithRestIT extends AbstractIT
 {
@@ -61,15 +58,6 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 
 		final File file = new File(remoteRoot, remotePathPrefix);
 		return file;
-	}
-
-	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
-		@Override
-		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
-			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
-			result.setTrusted(true);
-			return result;
-		}
 	}
 
 	private URL getRemoteRootURLWithPathPrefix(final UUID remoteRepositoryId) throws MalformedURLException {
