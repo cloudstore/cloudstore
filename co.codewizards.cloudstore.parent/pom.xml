@@ -381,9 +381,9 @@
 					<version>2.17</version>
 					<configuration>
 						<!--
-						<parallel>methods</parallel>
-						-->
 						<parallel>all</parallel>
+						-->
+						<parallel>methods</parallel>
 						<threadCount>7</threadCount>
 					</configuration>
 					<executions>
@@ -406,9 +406,9 @@
 					<version>2.17</version>
 					<configuration>
 						<!--
-						<parallel>methods</parallel>
-						-->
 						<parallel>all</parallel>
+						-->
+						<parallel>methods</parallel>
 						<threadCount>7</threadCount>
 					</configuration>
 				</plugin>
