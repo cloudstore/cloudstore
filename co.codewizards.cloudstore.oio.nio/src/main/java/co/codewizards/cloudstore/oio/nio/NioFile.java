@@ -385,7 +385,6 @@ public class NioFile implements File {
 		return ioFile.toPath().relativize(NioFileUtil.castOrFail(target).ioFile.toPath()).toString();
 	}
 
-
 	@Override
 	public long getUsableSpace() {
 		return this.ioFile.getUsableSpace();
