@@ -12,8 +12,6 @@ import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -827,7 +825,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @return the file in the local repository. Never <code>null</code>.
 	 */
 	protected File getFile(String path) {
-		path = assertNotNull("path", path).replace('/', File.separatorChar);
+		path = assertNotNull("path", path).replace('/', FILE_SEPARATOR_CHAR);
 		final File file = newFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
@@ -837,7 +835,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		path = prefixPath(path);
 		final File file = getFile(path);
 		try {
-			final RandomAccessFile raf = new RandomAccessFile(file, "r");
+			final RandomAccessFile raf = file.createRandomAccessFile("r");
 			try {
 				raf.seek(offset);
 				if (length < 0) {
@@ -878,14 +876,14 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				if (isSymlink(file) || (file.exists() && !file.isFile())) { // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
+				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) { // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
 					logger.info("beginPutFile: Collision: Destination file already exists and is a symlink or a directory! file='{}'", file.getAbsolutePath());
 					final File collisionFile = IOUtil.createCollisionFile(file);
 					file.renameTo(collisionFile);
 					new LocalRepoSync(transaction).sync(collisionFile, new NullProgressMonitor());
 				}
 
-				if (isSymlink(file) || (file.exists() && !file.isFile()))
+				if (file.isSymbolicLink() || (file.exists() && !file.isFile()))
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				final File localRoot = getLocalRepoManager().getLocalRoot();
@@ -966,7 +964,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				throw new IllegalStateException("Could not rename file to resolve collision: " + file);
 
 			try {
-				Files.copy(collisionFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+				collisionFile.copyToCopyAttributes(file);
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -981,7 +979,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		assertNotNull("fileOrDirectory", fileOrDirectory);
 
 		// we handle symlinks before invoking exists() below, because this method and most other File methods resolve symlinks!
-		if (Files.isSymbolicLink(fileOrDirectory.toPath())) {
+		if (fileOrDirectory.isSymbolicLink()) {
 			final RepoFile repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fileOrDirectory);
 			if (!(repoFile instanceof Symlink))
 				return true; // We had a change after the last local sync (symlink => directory or normal file)!
@@ -1103,7 +1101,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final long offset = assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()).getOffset();
 		final byte[] fileData = new byte[(int) tempChunkFile.length()];
 		try {
-			final InputStream in = new FileInputStream(tempChunkFile);
+			final InputStream in = tempChunkFile.createFileInputStream();
 			try {
 				int off = 0;
 				while (off < fileData.length) {
@@ -1139,7 +1137,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		assertNotNull("destFile", destFile);
 		assertNotNull("fileData", fileData);
 		try {
-			final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+			final RandomAccessFile raf = destFile.createRandomAccessFile("rw");
 			try {
 				raf.seek(offset);
 				raf.write(fileData);
@@ -1501,7 +1499,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		long lengthDone = 0;
 
 		try {
-			final RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+			final RandomAccessFile raf = destFile.createRandomAccessFile("rw");
 			try {
 				raf.seek(offset);
 

@@ -64,6 +64,11 @@ public class NioFile implements File {
 	}
 
 	@Override
+	public File createNewFile(final java.io.File file) {
+		return new NioFile(file);
+	}
+
+	@Override
 	public File createNewFile(final URI uri) {
 		return new NioFile(uri);
 	}
@@ -92,6 +97,16 @@ public class NioFile implements File {
 	@Override
 	public File getParentFile() {
 		return new NioFile(this.ioFile.getParentFile());
+	}
+
+	@Override
+	public String[] list() {
+		return this.ioFile.list();
+	}
+
+	@Override
+	public String[] list(final FilenameFilter filenameFilter) {
+		return this.ioFile.list(filenameFilter);
 	}
 
 	@Override
@@ -124,6 +139,10 @@ public class NioFile implements File {
 		return ioFile.exists();
 	}
 
+	@Override
+	public boolean existsNoFollow() {
+		return Files.exists(ioFile.toPath(), LinkOption.NOFOLLOW_LINKS);
+	}
 	@Override
 	public boolean createNewFile() throws IOException {
 		return ioFile.createNewFile();
@@ -257,13 +276,18 @@ public class NioFile implements File {
 	}
 
 	@Override
-	public void renameTo(final File dest) {
-		ioFile.renameTo(castOrFail(dest).ioFile);
+	public boolean renameTo(final File dest) {
+		return ioFile.renameTo(castOrFail(dest).ioFile);
 	}
 
 	@Override
 	public void setLastModified(final long lastModified) {
 		ioFile.setLastModified(lastModified);
+	}
+
+	@Override
+	public boolean setExecutable(final boolean executable, final boolean ownerOnly) {
+		return ioFile.setExecutable(executable, ownerOnly);
 	}
 
 	@Override
@@ -277,13 +301,18 @@ public class NioFile implements File {
 	}
 
 	@Override
+	public OutputStream createFileOutputStream(final boolean append) throws FileNotFoundException {
+		return new FileOutputStream(ioFile, append);
+	}
+
+	@Override
 	public String getName() {
 		return ioFile.getName();
 	}
 
 	@Override
-	public void createSymbolicLink(final String targetPath) throws IOException {
-		Files.createSymbolicLink(ioFile.toPath(), Paths.get(targetPath));
+	public String createSymbolicLink(final String targetPath) throws IOException {
+		return Files.createSymbolicLink(ioFile.toPath(), Paths.get(targetPath)).toString();
 	}
 
 	@Override
@@ -394,6 +423,36 @@ public class NioFile implements File {
 				LOGGER.error("" + error, error);
 			}
 		}
+	}
+
+	@Override
+	public String relativize(final File target) {
+		return ioFile.toPath().relativize(castOrFail(target).ioFile.toPath()).toString();
+	}
+
+	@Override
+	public File createTempDirectory(final String prefix) throws IOException {
+		return new NioFile(Files.createTempDirectory(prefix).toFile());
+	}
+
+	@Override
+	public File createTempFile(final String prefix, final String suffix) throws IOException {
+		return new NioFile(java.io.File.createTempFile (prefix, suffix));
+	}
+
+	@Override
+	public File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
+		return new NioFile(java.io.File.createTempFile (prefix, suffix, castOrFail(dir).ioFile));
+	}
+
+	@Override
+	public long getUsableSpace() {
+		return this.ioFile.getUsableSpace();
+	}
+
+	@Override
+	public java.io.File getIoFile() {
+		return ioFile;
 	}
 
 }

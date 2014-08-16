@@ -24,10 +24,15 @@ public interface File extends OioService {
 	File createNewFile(String parent, String child);
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
 	File createNewFile(URI uri);
-
+	/** Factory method, substitutes the constructor of {@link java.io.File}.
+	 * <p>
+	 * <b>Caution: </b><i>Use this creator only for 3rd-party interfaces!</i> */
+	File createNewFile(java.io.File file);
 
 	File getParentFile();
 
+	String[] list();
+	String[] list(FilenameFilter filenameFilter);
 	File[] listFiles();
 	File[] listFiles(FileFilter fileFilter);
 	File[] listFiles(FilenameFilter fileFilter);
@@ -38,6 +43,7 @@ public interface File extends OioService {
 
 	String readSymbolicLinkToPathString() throws IOException;
 	boolean exists();
+	boolean existsNoFollow();
 	boolean canWrite();
 	boolean canRead();
 	boolean canExecute();
@@ -55,13 +61,15 @@ public interface File extends OioService {
 	boolean isDirectory();
 	boolean isDirectoryFileNoFollowSymLinks();
 	boolean isDirectoryFollowSymLinks();
+	long getUsableSpace();
 	long length();
-	void renameTo(File newFileName);
+	boolean renameTo(File newFileName);
 	void setLastModified(long lastModified);
 	OutputStream createFileOutputStream() throws FileNotFoundException;
+	OutputStream createFileOutputStream(boolean append) throws FileNotFoundException;
 	InputStream createFileInputStream() throws FileNotFoundException;
 	String getName();
-	void createSymbolicLink(String targetPath) throws IOException;
+	String createSymbolicLink(String targetPath) throws IOException;
 
 	long lastModified();
 	long getLastModifiedNoFollow();
@@ -74,5 +82,13 @@ public interface File extends OioService {
 	RandomAccessFile createRandomAccessFile(String mode) throws FileNotFoundException;
 	boolean isFile();
 	void setLastModifiedNoFollow(long time);
+	String relativize(File target);
+
+	File createTempDirectory(String prefix) throws IOException;
+	File createTempFile(final String prefix, final String suffix) throws IOException;
+	File createTempFile(String prefix, String suffix, File dir) throws IOException;
+	boolean setExecutable(boolean executable, boolean ownerOnly);
+	/** <b>Caution:</b> <i>Only use this when forced by 3rd party interface!</i> */
+	java.io.File getIoFile();
 
 }

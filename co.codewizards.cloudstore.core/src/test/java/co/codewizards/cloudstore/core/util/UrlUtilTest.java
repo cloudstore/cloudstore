@@ -1,17 +1,18 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static java.lang.System.*;
 import static org.junit.Assert.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Files;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 /**
  * @author Sebastian Schefczyk
@@ -98,7 +99,7 @@ public class UrlUtilTest {
 	@Test
 	public void getFile_url() throws Exception {
 		logger.debug("[{}]getFile_url: entered.", Integer.toHexString(identityHashCode(this)));
-		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
+		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
 		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
@@ -115,7 +116,7 @@ public class UrlUtilTest {
 	@Test
 	public void appendEncodedPath_getFile() throws Exception {
 		logger.debug("[{}]appendEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
-		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
+		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
 		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
@@ -133,7 +134,7 @@ public class UrlUtilTest {
 	@Test
 	public void appendNonEncodedPath_getFile() throws Exception {
 		logger.debug("[{}]appendNonEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
-		final File tmpDir = Files.createTempDirectory(this.getClass().getSimpleName()).toFile();
+		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
 		final File fileFromString = newFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())

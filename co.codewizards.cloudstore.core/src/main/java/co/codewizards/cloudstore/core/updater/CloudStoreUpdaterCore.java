@@ -471,14 +471,14 @@ public class CloudStoreUpdaterCore {
 
 	protected final FileFilter fileFilterIgnoringBackupDir = new FileFilter() {
 		@Override
-		public boolean accept(final File file) {
+		public boolean accept(final java.io.File file) {
 			return !getBackupDir().equals(file);
 		}
 	};
 
 	protected final FileFilter fileFilterIgnoringBackupAndUpdaterDir = new FileFilter() {
 		@Override
-		public boolean accept(final File file) {
+		public boolean accept(final java.io.File file) {
 			return !(getBackupDir().equals(file) || getUpdaterDir().equals(file));
 		}
 	};
