@@ -1,11 +1,9 @@
 package co.codewizards.cloudstore.core.config;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static org.assertj.core.api.Assertions.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,6 +11,7 @@ import java.util.Properties;
 
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
@@ -26,7 +25,8 @@ public class ConfigTest extends AbstractTest {
 	public void after() {
 		for (final File file : Config.getInstance().propertiesFiles) {
 			file.delete();
-			assertThat(file).doesNotExist();
+//			assertThat(file).doesNotExist();
+			assertThat(file.exists()).isFalse();
 		}
 	}
 
@@ -65,19 +65,19 @@ public class ConfigTest extends AbstractTest {
 	@Test
 	public void testConfigInheritance() throws Exception {
 		final File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
 		final File child_1 = newFile(localRoot, "1");
-		assertThat(child_1).doesNotExist();
+		assertThat(child_1.exists()).isFalse();
 		final Config config_1 = Config.getInstanceForDirectory(child_1);
 		assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
 		createDirectory(child_1);
-		assertThat(child_1).isDirectory();
+		assertThat(child_1.isDirectory()).isTrue();
 		setProperty(newFile(child_1, ".cloudstore.properties"), testKey1, "   testValueAAA     ");
 		assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueAAA");
 		setProperty(newFile(child_1, "cloudstore.properties"), testKey1, "    testValueBBB  ");
@@ -188,7 +188,7 @@ public class ConfigTest extends AbstractTest {
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {
-			final InputStream in = new FileInputStream(propertiesFile);
+			final InputStream in = propertiesFile.createFileInputStream();
 			properties.load(in);
 			in.close();
 		}
@@ -198,7 +198,7 @@ public class ConfigTest extends AbstractTest {
 		else
 			properties.setProperty(key, value);
 
-		final OutputStream out = new FileOutputStream(propertiesFile);
+		final OutputStream out = propertiesFile.createFileOutputStream();
 		properties.store(out, null);
 		out.close();
 	}

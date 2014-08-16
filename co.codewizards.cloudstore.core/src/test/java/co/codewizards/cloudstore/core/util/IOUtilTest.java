@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.file.File;
 
+
 /**
  * @author Sebastian Schefczyk
  */
@@ -50,7 +51,7 @@ public class IOUtilTest {
 	public void testInTargetDir() throws IOException {
 		logger.debug("[{}]testInTargetDir: entered.", Integer.toHexString(identityHashCode(this)));
 		System.out.println("#######   testInTargetDir   #######");
-		final File tmpDir = createTempDirectory(this.getClass().getSimpleName()).toFile();
+		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 		final File testDir = tmpDir;
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.release;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,13 +53,13 @@ public class ReleasePreparer {
 
 	protected ReleasePreparer() { }
 
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		new ReleasePreparer().run();
 	}
 
 	public void run() throws Exception {
 		logger.info("run: Entered.");
-		rootDirFile = newFile(this.rootDir);
+		rootDirFile = new File(this.rootDir);
 
 		initProperties();
 
@@ -78,20 +78,20 @@ public class ReleasePreparer {
 	}
 
 	protected void updatePomFiles() throws Exception {
-		for (File  f : pomFiles) {
+		for (final File  f : pomFiles) {
 			new PomUpdater(f).setArtifactIdPrefix(artifactIdPrefix).setNewMavenVersion(newMavenVersion).update();
 		}
 	}
 
-	protected void collectFiles(File dir) throws IOException {
+	protected void collectFiles(final File dir) throws IOException {
 		pomFiles = new ArrayList<File>();
 		_collectFiles(dir.getCanonicalFile());
 	}
-	protected void _collectFiles(File dirOrFile) {
+	protected void _collectFiles(final File dirOrFile) {
 		if (dirOrFile.getName().startsWith("."))
 			return;
 
-		for (Pattern excludePathPattern : excludePathPatterns) {
+		for (final Pattern excludePathPattern : excludePathPatterns) {
 			if (excludePathPattern.matcher(dirOrFile.getAbsolutePath()).matches()) {
 				logger.debug("_collectFiles: excludePathPattern '{}' matches '{}'. Skipping.", excludePathPattern, dirOrFile);
 				return;
@@ -103,29 +103,29 @@ public class ReleasePreparer {
 			return;
 		}
 
-		File[] listFiles = dirOrFile.listFiles();
+		final File[] listFiles = dirOrFile.listFiles();
 		if (listFiles != null) {
-			for (File child : listFiles)
+			for (final File child : listFiles)
 				_collectFiles(child);
 		}
 	}
 
-	protected static void setTagValue(Document document, Node node, String value) {
+	protected static void setTagValue(final Document document, final Node node, final String value) {
 		setTagValue(document, node, value, null);
 	}
 
-	protected static void setTagValue(Document document, Node node, String value, Map<?, ?> valueVariables) {
+	protected static void setTagValue(final Document document, final Node node, final String value, final Map<?, ?> valueVariables) {
 		while (node.getFirstChild() != null)
 			node.removeChild(node.getFirstChild());
 
-		String v = (valueVariables == null || valueVariables.isEmpty()) ?
+		final String v = (valueVariables == null || valueVariables.isEmpty()) ?
 				value : IOUtil.replaceTemplateVariables(value, valueVariables);
 
-		Text textNode = document.createTextNode(v);
+		final Text textNode = document.createTextNode(v);
 		node.appendChild(textNode);
 	}
 
-	protected static Map<String, String> resolveProperties(Map<?, ?> properties, int depth) {
+	protected static Map<String, String> resolveProperties(final Map<?, ?> properties, final int depth) {
 		if (depth < 1)
 			throw new IllegalArgumentException("depth < 1");
 
@@ -136,11 +136,11 @@ public class ReleasePreparer {
 		return result;
 	}
 
-	protected static Map<String, String> resolveProperties(Map<?, ?> properties) {
-		Map<String, String> result = new HashMap<String, String>(properties.size());
-		for (Map.Entry<?, ?> me : properties.entrySet()) {
-			String key = me.getKey().toString();
-			String value = IOUtil.replaceTemplateVariables(me.getValue().toString(), properties);
+	protected static Map<String, String> resolveProperties(final Map<?, ?> properties) {
+		final Map<String, String> result = new HashMap<String, String>(properties.size());
+		for (final Map.Entry<?, ?> me : properties.entrySet()) {
+			final String key = me.getKey().toString();
+			final String value = IOUtil.replaceTemplateVariables(me.getValue().toString(), properties);
 			result.put(key, value);
 		}
 		return result;
