@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -57,20 +58,20 @@ class LockFileImpl implements LockFile {
 					randomAccessFile = new RandomAccessFile(file, "rw");
 					try {
 						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
-//					} catch (final OverlappingFileLockException x) {
-//						doNothing();
-//						// It was not successfully locked - no need to do anything.
-//						//
-//						// This should never happen when working with the LockFileImpl alone, because we're
-//						// in a synchronized block, but it may happen due to external causes: If some other
-//						// code in the same JVM sets a FileLock onto the file, this exception might be thrown
-//						// here.
-//						//
-//						// We encountered this exception already with LockFileImpl alone, but this was caused
-//						// by another bug. After we fixed the other bug, this exception did not fly, anymore
-//						// (I temporarily commented this block out for testing). Thus, it's sure now, that
-//						// only external reasons (in the same JVM but outside the LockFileImpl) can cause this
-//						// exception to happen.
+					} catch (final OverlappingFileLockException x) {
+						doNothing();
+						// It was not successfully locked - no need to do anything.
+						//
+						// This should never happen when working with the LockFileImpl alone, because we're
+						// in a synchronized block, but it may happen due to external causes: If some other
+						// code in the same JVM sets a FileLock onto the file, this exception might be thrown
+						// here.
+						//
+						// We encountered this exception already with LockFileImpl alone, but this was caused
+						// by another bug. After we fixed the other bug, this exception did not fly, anymore
+						// (I temporarily commented this block out for testing). Thus, it's sure now, that
+						// only external reasons (in the same JVM but outside the LockFileImpl) can cause this
+						// exception to happen.
 					} finally {
 						if (fileLock == null) {
 							logger.trace("[{}]tryAcquire: fileLock was NOT acquired. Closing randomAccessFile now.", thisID);
