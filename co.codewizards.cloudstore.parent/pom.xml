@@ -384,7 +384,7 @@
 						<parallel>methods</parallel>
 						-->
 						<parallel>all</parallel>
-						<threadCount>7</threadCount>
+						<threadCount>4</threadCount>
 					</configuration>
 					<executions>
 						<execution>
@@ -409,7 +409,7 @@
 						<parallel>methods</parallel>
 						-->
 						<parallel>all</parallel>
-						<threadCount>7</threadCount>
+						<threadCount>4</threadCount>
 					</configuration>
 				</plugin>
 
