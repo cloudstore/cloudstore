@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.client;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
@@ -282,7 +283,7 @@ public class CloudStoreClient {
 		  // Call context.reset() to clear any previous configuration, e.g. default
 		  // configuration. For multi-step configuration, omit calling context.reset().
 		  context.reset();
-		  configurator.doConfigure(logbackXmlFile);
+		  configurator.doConfigure(logbackXmlFile.createFileInputStream());
 		} catch (final JoranException je) {
 			// StatusPrinter will handle this
 			doNothing();

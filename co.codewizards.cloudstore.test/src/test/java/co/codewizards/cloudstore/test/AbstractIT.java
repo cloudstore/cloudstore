@@ -1,15 +1,11 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,6 +20,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -76,7 +73,7 @@ public abstract class AbstractIT {
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = newFile(new File("target"), "repo");
+		final File dir = newFile(newFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -91,9 +88,9 @@ public abstract class AbstractIT {
 		return createDirectory(dir);
 	}
 	protected File createDirectory(final File dir) throws IOException {
-		assertThat(dir).doesNotExist();
+		assertThat(dir.exists()).isFalse();
 		dir.mkdir();
-		assertThat(dir).isDirectory();
+		assertThat(dir.isDirectory()).isTrue();
 		addToFilesInRepo(dir);
 		return dir;
 	}
@@ -120,8 +117,8 @@ public abstract class AbstractIT {
 	}
 
 	protected File createFileWithRandomContent(final File file) throws IOException {
-		assertThat(file).doesNotExist(); // prevent accidentally overwriting important data ;-)
-		final OutputStream out = new FileOutputStream(file);
+		assertThat(file.exists()).isFalse(); // prevent accidentally overwriting important data ;-)
+		final OutputStream out = file.createFileOutputStream();
 		final byte[] buf = new byte[1 + random.nextInt(10241)];
 		final int loops = 1 + random.nextInt(100);
 		for (int i = 0; i < loops; ++i) {
@@ -129,28 +126,36 @@ public abstract class AbstractIT {
 			out.write(buf);
 		}
 		out.close();
-		assertThat(file).isFile();
+		assertThat(file.isFile()).isTrue();
 		addToFilesInRepo(file);
 		return file;
 	}
 
+	/** TODO Remove duplicate code: AbstractIT.java and AbstractTest.java */
 	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
-		assertThat(symlink).doesNotExist();
-		final Path symlinkParentPath = symlink.getParentFile().toPath();
-		final Path symlinkPath = symlink.toPath();
-		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
-		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
-		assertThat(symbolicLink.toFile().getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
-		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		assertThat(symlink.exists()).isFalse();
+		final File symlinkParent = symlink.getParentFile();
+
+//		final Path symlinkParentPath = symlink.getParentFile().toPath();
+//		final Path symlinkPath = symlink.toPath();
+//		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
+//		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
+
+		final String relativeTargetString = symlinkParent.relativize(target);
+		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
+		final File symLinkFile = newFile(symbolicLinkString);
+		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+//		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		assertThat(symLinkFile.existsNoFollow()).isTrue();
 		addToFilesInRepo(symlink);
 		return symlink;
 	}
 
 	protected void deleteFile(File file) throws IOException {
 		file = file.getAbsoluteFile();
-		assertThat(file).exists();
+		assertThat(file.exists()).isTrue();
 		file.delete();
-		assertThat(file).doesNotExist();
+		assertThat(file.exists()).isFalse();;
 
 		final File localRoot = getLocalRootOrFail(file);
 		final Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
@@ -187,7 +192,7 @@ public abstract class AbstractIT {
 				if (repoFile == null) {
 					Assert.fail("Corresponding RepoFile missing in repository for file: " + file);
 				}
-				if (Files.isSymbolicLink(file.toPath()))
+				if (file.isSymbolicLink())
 					assertThat(repoFile).isInstanceOf(Symlink.class);
 				else if (file.isFile())
 					assertThat(repoFile).isInstanceOf(NormalFile.class);
@@ -214,17 +219,17 @@ public abstract class AbstractIT {
 	}
 
 	protected void assertDirectoriesAreEqualRecursively(final File dir1, final File dir2) throws IOException {
-		assertThat(dir1).isDirectory();
-		assertThat(dir2).isDirectory();
+		assertThat(dir1.isDirectory()).isTrue();
+		assertThat(dir2.isDirectory()).isTrue();
 
-		final boolean dir1IsSymbolicLink = Files.isSymbolicLink(dir1.toPath());
-		final boolean dir2IsSymbolicLink = Files.isSymbolicLink(dir2.toPath());
+		final boolean dir1IsSymbolicLink = dir1.isSymbolicLink();
+		final boolean dir2IsSymbolicLink = dir2.isSymbolicLink();
 
 		assertThat(dir1IsSymbolicLink).isEqualTo(dir2IsSymbolicLink);
 
 		if (dir1IsSymbolicLink) {
-			final Path target1 = Files.readSymbolicLink(dir1.toPath());
-			final Path target2 = Files.readSymbolicLink(dir2.toPath());
+			final String target1 = dir1.readSymbolicLinkToPathString();
+			final String target2 = dir2.readSymbolicLinkToPathString();
 			assertThat(target1).isEqualTo(target2);
 			return;
 		}
@@ -244,14 +249,14 @@ public abstract class AbstractIT {
 			final File child1 = newFile(dir1, childName);
 			final File child2 = newFile(dir2, childName);
 
-			final boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
-			final boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());
+			final boolean child1IsSymbolicLink = child1.isSymbolicLink();
+			final boolean child2IsSymbolicLink = child2.isSymbolicLink();
 
 			assertThat(child1IsSymbolicLink).isEqualTo(child2IsSymbolicLink);
 
 			if (child1IsSymbolicLink) {
-				final Path target1 = Files.readSymbolicLink(child1.toPath());
-				final Path target2 = Files.readSymbolicLink(child2.toPath());
+				final String target1 = child1.readSymbolicLinkToPathString();
+				final String target2 = child2.readSymbolicLinkToPathString();
 				assertThat(target1).isEqualTo(target2);
 			}
 			else if (child1.isFile()) {

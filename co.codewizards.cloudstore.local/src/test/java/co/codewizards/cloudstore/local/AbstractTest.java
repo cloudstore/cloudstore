@@ -1,15 +1,11 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,6 +19,7 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -42,20 +39,20 @@ public abstract class AbstractTest {
 
 	protected static final Random random = new Random();
 	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.Helper.getInstance();
-	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
+	private final Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
 
-	protected File newTestRepositoryLocalRoot(String suffix) throws IOException {
+	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		long timestamp = System.currentTimeMillis();
-		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
-		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
+		final long timestamp = System.currentTimeMillis();
+		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
+		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
+		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		File dir = newFile(new File("target"), "repo");
+		final File dir = newFile(newFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -69,21 +66,21 @@ public abstract class AbstractTest {
 	public void after() {
 	}
 
-	protected File createDirectory(File parent, String name) throws IOException {
-		File dir = newFile(parent, name);
+	protected File createDirectory(final File parent, final String name) throws IOException {
+		final File dir = newFile(parent, name);
 		return createDirectory(dir);
 	}
-	protected File createDirectory(File dir) throws IOException {
-		assertThat(dir).doesNotExist();
+	protected File createDirectory(final File dir) throws IOException {
+		assertThat(dir.exists()).isFalse();
 		dir.mkdir();
-		assertThat(dir).isDirectory();
+		assertThat(dir.isDirectory()).isTrue();
 		addToFilesInRepo(dir);
 		return dir;
 	}
 
 	protected void addToFilesInRepo(File file) throws IOException {
 		file = file.getAbsoluteFile();
-		File localRoot = getLocalRootOrFail(file);
+		final File localRoot = getLocalRootOrFail(file);
 		addToFilesInRepo(localRoot, file);
 	}
 	protected void addToFilesInRepo(File localRoot, File file) throws IOException {
@@ -97,24 +94,24 @@ public abstract class AbstractTest {
 		filesInRepo.add(file);
 	}
 
-	protected File createFileWithRandomContent(File parent, String name) throws IOException {
+	protected File createFileWithRandomContent(final File parent, final String name) throws IOException {
 		return createFileWithRandomContent(parent, name, 0);
 	}
 
-	protected File createFileWithRandomContent(File parent, String name, long minLength) throws IOException {
-		File file = newFile(parent, name);
+	protected File createFileWithRandomContent(final File parent, final String name, final long minLength) throws IOException {
+		final File file = newFile(parent, name);
 		return createFileWithRandomContent(file, minLength);
 	}
 
-	protected File createFileWithRandomContent(File file) throws IOException {
+	protected File createFileWithRandomContent(final File file) throws IOException {
 		return createFileWithRandomContent(file, 0);
 	}
 
-	protected File createFileWithRandomContent(File file, long minLength) throws IOException {
-		assertThat(file).doesNotExist(); // prevent accidentally overwriting important data ;-)
-		OutputStream out = new FileOutputStream(file);
-		byte[] buf = new byte[1 + random.nextInt(10241)];
-		int loops = 1 + random.nextInt(100);
+	protected File createFileWithRandomContent(final File file, final long minLength) throws IOException {
+		assertThat(file.exists()).isFalse(); // prevent accidentally overwriting important data ;-)
+		final OutputStream out = file.createFileOutputStream();
+		final byte[] buf = new byte[1 + random.nextInt(10241)];
+		final int loops = 1 + random.nextInt(100);
 		for (int i = 0; i < loops; ++i) {
 			random.nextBytes(buf);
 			out.write(buf);
@@ -126,31 +123,39 @@ public abstract class AbstractTest {
 			out.flush();
 		}
 		out.close();
-		assertThat(file).isFile();
+		assertThat(file.isFile()).isTrue();
 		addToFilesInRepo(file);
 		return file;
 	}
 
+	/** TODO Remove duplicate code: AbstractIT.java and AbstractTest.java */
 	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
-		assertThat(symlink).doesNotExist();
-		final Path symlinkParentPath = symlink.getParentFile().toPath();
-		final Path symlinkPath = symlink.toPath();
-		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
-		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
-		assertThat(symbolicLink.toFile().getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
-		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		assertThat(symlink.exists()).isFalse();
+		final File symlinkParent = symlink.getParentFile();
+
+//		final Path symlinkParentPath = symlink.getParentFile().toPath();
+//		final Path symlinkPath = symlink.toPath();
+//		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
+//		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
+
+		final String relativeTargetString = symlinkParent.relativize(target);
+		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
+		final File symLinkFile = newFile(symbolicLinkString);
+		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+//		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		assertThat(symLinkFile.existsNoFollow()).isTrue();
 		addToFilesInRepo(symlink);
 		return symlink;
 	}
 
 	protected void deleteFile(File file) throws IOException {
 		file = file.getAbsoluteFile();
-		assertThat(file).exists();
+		assertThat(file.exists()).isTrue();
 		file.delete();
-		assertThat(file).doesNotExist();
+		assertThat(file.exists()).isFalse();
 
-		File localRoot = getLocalRootOrFail(file);
-		Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
+		final File localRoot = getLocalRootOrFail(file);
+		final Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 		if (filesInRepo == null)
 			throw new IllegalStateException("No filesInRepo for localRoot: " + localRoot);
 
@@ -158,11 +163,11 @@ public abstract class AbstractTest {
 			throw new IllegalStateException("File did not exist in filesInRepo: " + file);
 	}
 
-	private File getLocalRootOrFail(File file) throws IOException {
-		String filePath = file.getCanonicalPath();
-		Set<File> localRoots = localRepoManagerFactory.getLocalRoots();
-		for (File localRoot : localRoots) {
-			String localRootPath = localRoot.getPath();
+	private File getLocalRootOrFail(final File file) throws IOException {
+		final String filePath = file.getCanonicalPath();
+		final Set<File> localRoots = localRepoManagerFactory.getLocalRoots();
+		for (final File localRoot : localRoots) {
+			final String localRootPath = localRoot.getPath();
 			if (filePath.startsWith(localRootPath)) {
 				return localRoot;
 			}
@@ -171,20 +176,20 @@ public abstract class AbstractTest {
 	}
 
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
-		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
+		final LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
-			RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 			assertThat(filesInRepo).isNotNull();
 
-			for (File file : filesInRepo) {
-				RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
+			for (final File file : filesInRepo) {
+				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile == null) {
 					Assert.fail("Corresponding RepoFile missing in repository for file: " + file);
 				}
-				if (Files.isSymbolicLink(file.toPath()))
+				if (file.isSymbolicLink())
 					assertThat(repoFile).isInstanceOf(Symlink.class);
 				else if (file.isFile())
 					assertThat(repoFile).isInstanceOf(NormalFile.class);
@@ -193,11 +198,11 @@ public abstract class AbstractTest {
 			}
 
 			filesInRepo = new HashSet<File>(filesInRepo);
-			Collection<RepoFile> repoFiles = repoFileDao.getObjects();
-			Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
-			for (RepoFile repoFile : repoFiles) {
-				File file = repoFile.getFile(localRoot);
-				RepoFile duplicateRepoFile = file2RepoFile.put(file, repoFile);
+			final Collection<RepoFile> repoFiles = repoFileDao.getObjects();
+			final Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
+			for (final RepoFile repoFile : repoFiles) {
+				final File file = repoFile.getFile(localRoot);
+				final RepoFile duplicateRepoFile = file2RepoFile.put(file, repoFile);
 				if (duplicateRepoFile != null)
 					Assert.fail("There are 2 RepoFile instances for the same file! " + repoFile + " " + duplicateRepoFile + " " + file);
 
@@ -210,26 +215,26 @@ public abstract class AbstractTest {
 		}
 	}
 
-	protected void assertDirectoriesAreEqualRecursively(File dir1, File dir2) throws IOException {
-		assertThat(dir1).isDirectory();
-		assertThat(dir2).isDirectory();
+	protected void assertDirectoriesAreEqualRecursively(final File dir1, final File dir2) throws IOException {
+		assertThat(dir1.isDirectory()).isTrue();
+		assertThat(dir2.isDirectory()).isTrue();
 
-		boolean dir1IsSymbolicLink = Files.isSymbolicLink(dir1.toPath());
-		boolean dir2IsSymbolicLink = Files.isSymbolicLink(dir2.toPath());
+		final boolean dir1IsSymbolicLink = dir1.isSymbolicLink();
+		final boolean dir2IsSymbolicLink = dir2.isSymbolicLink();
 
 		assertThat(dir1IsSymbolicLink).isEqualTo(dir2IsSymbolicLink);
 
 		if (dir1IsSymbolicLink) {
-			Path target1 = Files.readSymbolicLink(dir1.toPath());
-			Path target2 = Files.readSymbolicLink(dir2.toPath());
+			final String target1 = dir1.readSymbolicLinkToPathString();
+			final String target2 = dir2.readSymbolicLinkToPathString();
 			assertThat(target1).isEqualTo(target2);
 			return;
 		}
 
-		String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
+		final String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
 		assertThat(children1).isNotNull();
 
-		String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
+		final String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
 		assertThat(children2).isNotNull();
 
 		Arrays.sort(children1);
@@ -238,22 +243,22 @@ public abstract class AbstractTest {
 //		assertThat(children1).containsOnly(children2);
 		assertThat(children1).isEqualTo(children2);
 
-		for (String childName : children1) {
-			File child1 = newFile(dir1, childName);
-			File child2 = newFile(dir2, childName);
+		for (final String childName : children1) {
+			final File child1 = newFile(dir1, childName);
+			final File child2 = newFile(dir2, childName);
 
-			boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
-			boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());
+			final boolean child1IsSymbolicLink = child1.isSymbolicLink();
+			final boolean child2IsSymbolicLink = child2.isSymbolicLink();
 
 			assertThat(child1IsSymbolicLink).isEqualTo(child2IsSymbolicLink);
 
-			if (IOUtil.getLastModifiedNoFollow(child1) != IOUtil.getLastModifiedNoFollow(child2))
+			if (child1.getLastModifiedNoFollow() != child2.getLastModifiedNoFollow())
 				fail("Different 'lastModified' timestamps: " + child1 + " vs. " + child2);
 
 			if (child1IsSymbolicLink) {
-				Path target1 = Files.readSymbolicLink(child1.toPath());
-				Path target2 = Files.readSymbolicLink(child2.toPath());
-				assertThat(target1).isEqualTo(target2);
+				final String child1Symlink = child1.readSymbolicLinkToPathString();
+				final String child2Symlink = child2.readSymbolicLinkToPathString();
+				assertThat(child1Symlink).isEqualTo(child2Symlink);
 			}
 			else if (child1.isFile()) {
 				assertThat(child2.isFile());

@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.core.io;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class LockFileTest {

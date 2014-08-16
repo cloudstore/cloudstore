@@ -1,12 +1,14 @@
 package co.codewizards.cloudstore.client;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+
 import java.io.IOException;
 import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
@@ -43,14 +45,14 @@ public class CreateRepoSubCommand extends SubCommand
 		super.prepare();
 
 		if (localRoot == null)
-			localRootFile = new File("").getAbsoluteFile();
+			localRootFile = newFile("").getAbsoluteFile();
 		else
 			localRootFile = newFile(localRoot).getAbsoluteFile();
 
 		localRoot = localRootFile.getPath();
 
 		if (!noAlias && (alias == null || alias.isEmpty())) { // empty alias means the same as alias not specified.
-			String simplified = IOUtil.simplifyPath(localRootFile);
+			final String simplified = IOUtil.simplifyPath(localRootFile);
 			alias = newFile(simplified).getName();
 		}
 
@@ -72,10 +74,10 @@ public class CreateRepoSubCommand extends SubCommand
 				throw new IOException("Could not create directory (permissions?): " + localRoot);
 		}
 
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
 		try {
 			if (!noAlias && alias != null) {
-				LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+				final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
 				UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
 
 				File oldLocalRoot = null;

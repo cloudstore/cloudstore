@@ -1,14 +1,13 @@
 package co.codewizards.cloudstore.local.sync;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
@@ -69,14 +69,14 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	@Test
 	public void syncFromRemoteToLocal() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 
 		remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
 		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
@@ -138,17 +138,17 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		final File child_2 = newFile(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		assertThat(child_2.isDirectory()).isTrue();
 
 		final File child_2_1 = newFile(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		assertThat(child_2_1.isDirectory()).isTrue();
 
 		final File child_2_1_5 = createDirectory(child_2_1, "5");
 		createFileWithRandomContent(child_2_1_5, "aaa");
 		createFileWithRandomContent(child_2_1_5, "bbb");
 
 		final File child_3 = newFile(remoteRoot, "3");
-		assertThat(child_3).isDirectory();
+		assertThat(child_3.isDirectory()).isTrue();
 
 		createFileWithRandomContent(child_3, "e");
 
@@ -178,22 +178,22 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		final File child_2 = newFile(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		assertThat(child_2.isDirectory()).isTrue();
 
 		final File child_2_1 = newFile(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		assertThat(child_2_1.isDirectory()).isTrue();
 
 		final File child_2_1_a = newFile(child_2_1, "a");
-		assertThat(child_2_1_a).isFile();
+		assertThat(child_2_1_a.isFile()).isTrue();
 
 		final File child_2_1_b = newFile(child_2_1, "b");
-		assertThat(child_2_1_b).isFile();
+		assertThat(child_2_1_b.isFile()).isTrue();
 
 		modifyFileRandomly(child_2_1_a);
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
-		final FileOutputStream out = new FileOutputStream(child_2_1_b);
+		final OutputStream out = child_2_1_b.createFileOutputStream();
 		out.write(random.nextInt());
 		out.close();
 
@@ -312,7 +312,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		} catch (final InterruptedException e) {
 			logger.error("Interrupted!", e);
 		}
-		final RandomAccessFile raf = new RandomAccessFile(file, "rw");
+		final RandomAccessFile raf = file.createRandomAccessFile("rw");
 		try {
 			if (file.length() > 0)
 				raf.seek(random.nextInt((int)file.length()));
@@ -334,13 +334,13 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		final File child_2 = newFile(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		assertThat(child_2.isDirectory()).isTrue();
 
 		final File child_2_1 = newFile(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		assertThat(child_2_1.isDirectory()).isTrue();
 
 		final File child_2_1_a = newFile(child_2_1, "a");
-		assertThat(child_2_1_a).isFile();
+		assertThat(child_2_1_a.isFile()).isTrue();
 
 		deleteFile(child_2_1_a);
 
@@ -370,10 +370,10 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		final File child_2 = newFile(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		assertThat(child_2.isDirectory()).isTrue();
 
 		final File child_2_1 = newFile(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		assertThat(child_2_1.isDirectory()).isTrue();
 
 		for (final File child : child_2_1.listFiles()) {
 			deleteFile(child);
@@ -404,7 +404,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		try {
 			if (!getRemoteRootWithPathPrefix().exists()) {
 				getRemoteRootWithPathPrefix().mkdirs();
-				assertThat(getRemoteRootWithPathPrefix()).isDirectory();
+				assertThat(getRemoteRootWithPathPrefix().isDirectory()).isTrue();
 				deleteThisFile = getRemoteRootWithPathPrefix();
 			}
 
@@ -421,22 +421,22 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocal();
 
 		final File r_child_2 = newFile(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		assertThat(r_child_2.isDirectory()).isTrue();
 
 		final File r_child_2_1 = newFile(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
 		final File r_child_2_1_a = newFile(r_child_2_1, "a");
-		assertThat(r_child_2_1_a).isFile();
+		assertThat(r_child_2_1_a.isFile()).isTrue();
 
 		final File l_child_2 = newFile(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		assertThat(l_child_2.isDirectory()).isTrue();
 
 		final File l_child_2_1 = newFile(l_child_2, "1");
-		assertThat(l_child_2_1).isDirectory();
+		assertThat(l_child_2_1.isDirectory()).isTrue();
 
 		final File l_child_2_1_a = newFile(l_child_2_1, "a");
-		assertThat(l_child_2_1_a).isFile();
+		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
 		modifyFileRandomly(l_child_2_1_a);
@@ -497,16 +497,16 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocal();
 
 		final File r_child_2 = newFile(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		assertThat(r_child_2.isDirectory()).isTrue();
 
 		final File l_child_2 = newFile(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		assertThat(l_child_2.isDirectory()).isTrue();
 
 		final File l_child_2_1 = newFile(l_child_2, "1");
-		assertThat(l_child_2_1).isDirectory();
+		assertThat(l_child_2_1.isDirectory()).isTrue();
 
 		final File l_child_2_1_a = newFile(l_child_2_1, "a");
-		assertThat(l_child_2_1_a).isFile();
+		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(l_child_2_1_a);
 		IOUtil.deleteDirectoryRecursively(r_child_2);
@@ -537,16 +537,16 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocal();
 
 		final File r_child_2 = newFile(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		assertThat(r_child_2.isDirectory()).isTrue();
 
 		final File r_child_2_1 = newFile(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
 		final File r_child_2_1_a = newFile(r_child_2_1, "a");
-		assertThat(r_child_2_1_a).isFile();
+		assertThat(r_child_2_1_a.isFile()).isTrue();
 
 		final File l_child_2 = newFile(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		assertThat(l_child_2.isDirectory()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
 		IOUtil.deleteDirectoryRecursively(l_child_2);
@@ -583,27 +583,27 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocal();
 
 		final File r_child_2 = newFile(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		assertThat(r_child_2.isDirectory()).isTrue();
 
 		final File r_child_2_1 = newFile(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
 		final File r_child_2_1_b = newFile(r_child_2_1, "b");
-		assertThat(r_child_2_1_b).isFile();
+		assertThat(r_child_2_1_b.isFile()).isTrue();
 
 		final File r_child_2_b = newFile(r_child_2, "b");
-		assertThat(r_child_2_b).doesNotExist();
+		assertThat(r_child_2_b.exists()).isFalse();
 
-		Files.move(r_child_2_1_b.toPath(), r_child_2_b.toPath());
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_b).isFile();
+		r_child_2_1_b.move(r_child_2_b);
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_b.isFile()).isTrue();
 
 		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_b).isFile();
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_b.isFile()).isTrue();
 
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
@@ -613,31 +613,31 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		syncFromRemoteToLocal();
 
 		final File r_child_2 = newFile(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		assertThat(r_child_2.isDirectory()).isTrue();
 
 		final File r_child_2_1 = newFile(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
 		final File r_child_2_1_b = newFile(r_child_2_1, "b");
-		assertThat(r_child_2_1_b).isFile();
+		assertThat(r_child_2_1_b.isFile()).isTrue();
 
 		final File r_child_2_new = newFile(r_child_2, "new");
-		assertThat(r_child_2_new).doesNotExist();
+		assertThat(r_child_2_new.exists()).isFalse();
 		r_child_2_new.mkdir();
-		assertThat(r_child_2_new).isDirectory();
+		assertThat(r_child_2_new.isDirectory()).isTrue();
 
 		final File r_child_2_new_xxx = newFile(r_child_2_new, "xxx");
 
-		Files.move(r_child_2_1_b.toPath(), r_child_2_new_xxx.toPath());
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_new_xxx).isFile();
+		r_child_2_1_b.move(r_child_2_new_xxx);
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
 		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_new_xxx).isFile();
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
@@ -645,14 +645,14 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	@Test
 	public void syncSymlinkFile() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 
 		remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
 		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
@@ -674,17 +674,17 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		final long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
 		final long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
 
-		IOUtil.setLastModifiedNoFollow(child_1_a, child_1_a_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+		child_1_a.setLastModifiedNoFollow(child_1_a_lastModified);
+		assertThat(child_1_a.getLastModifiedNoFollow()).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
 
-		IOUtil.setLastModifiedNoFollow(b, symlink_b_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(b)).isBetween(symlink_b_lastModified - 2000, symlink_b_lastModified + 2000);
+		b.setLastModifiedNoFollow(symlink_b_lastModified);
+		assertThat(b.getLastModifiedNoFollow()).isBetween(symlink_b_lastModified - 2000, symlink_b_lastModified + 2000);
 
 		// Assert that changing the symlink's timestamp did not affect the real file.
-		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+		assertThat(child_1_a.getLastModifiedNoFollow()).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
 
-		IOUtil.setLastModifiedNoFollow(broken, symlink_broken_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(broken)).isBetween(symlink_broken_lastModified - 2000, symlink_broken_lastModified + 2000);
+		broken.setLastModifiedNoFollow(symlink_broken_lastModified);
+		assertThat(broken.getLastModifiedNoFollow()).isBetween(symlink_broken_lastModified - 2000, symlink_broken_lastModified + 2000);
 
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);

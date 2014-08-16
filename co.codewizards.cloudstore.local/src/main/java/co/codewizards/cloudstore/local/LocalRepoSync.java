@@ -2,11 +2,8 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -29,7 +26,6 @@ import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
-import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
@@ -194,7 +190,7 @@ public class LocalRepoSync {
 		assertNotNull("repoFile", repoFile);
 		assertNotNull("file", file);
 
-		if (Files.isSymbolicLink(file.toPath()))
+		if (file.isSymbolicLink())
 			return repoFile instanceof Symlink;
 
 		if (file.isFile())
@@ -207,7 +203,7 @@ public class LocalRepoSync {
 	}
 
 	public boolean isModified(final RepoFile repoFile, final File file) {
-		final long fileLastModified = IOUtil.getLastModifiedNoFollow(file);
+		final long fileLastModified = file.getLastModifiedNoFollow();
 		if (repoFile.getLastModified().getTime() != fileLastModified) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("isModified: repoFile.lastModified != file.lastModified: repoFile.lastModified={} file.lastModified={} file={}",
@@ -216,13 +212,18 @@ public class LocalRepoSync {
 			return true;
 		}
 
-		final Path filePath = file.toPath();
-		if (Files.isSymbolicLink(filePath)) {
+		if (file.isSymbolicLink()) {
 			if (!(repoFile instanceof Symlink))
 				throw new IllegalArgumentException("repoFile is not an instance of Symlink! file=" + file);
 
 			final Symlink symlink = (Symlink) repoFile;
-			final String fileSymlinkTarget = readSymbolicLink(filePath);
+			String fileSymlinkTarget;
+			try {
+				fileSymlinkTarget = file.readSymbolicLinkToPathString();
+			} catch (final IOException e) {
+				//as this is already checked as symbolicLink, this should never happen!
+				throw new IllegalArgumentException(e);
+			}
 			return !fileSymlinkTarget.equals(symlink.getTarget());
 		}
 		else if (file.isFile()) {
@@ -245,15 +246,6 @@ public class LocalRepoSync {
 		return false;
 	}
 
-	private String readSymbolicLink(final Path path) {
-		try {
-			final Path targetPath = Files.readSymbolicLink(path);
-			return IOUtil.toPathString(targetPath);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	private RepoFile createRepoFile(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
@@ -261,10 +253,13 @@ public class LocalRepoSync {
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile;
-			final Path filePath = file.toPath();
-			if (Files.isSymbolicLink(filePath)) {
+			if (file.isSymbolicLink()) {
 				final Symlink symlink = (Symlink) (repoFile = new Symlink());
-				symlink.setTarget(readSymbolicLink(filePath));
+				try {
+					symlink.setTarget(file.readSymbolicLinkToPathString());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 			} else if (file.isDirectory()) {
 				repoFile = new Directory();
 			} else if (file.isFile()) {
@@ -281,7 +276,7 @@ public class LocalRepoSync {
 
 			repoFile.setParent(parentRepoFile);
 			repoFile.setName(file.getName());
-			repoFile.setLastModified(new Date(IOUtil.getLastModifiedNoFollow(file)));
+			repoFile.setLastModified(new Date(file.getLastModifiedNoFollow()));
 
 			if (repoFile instanceof NormalFile)
 				createCopyModificationsIfPossible((NormalFile)repoFile);
@@ -296,13 +291,16 @@ public class LocalRepoSync {
 		logger.debug("updateRepoFile: id={} file={}", repoFile.getId(), file);
 		monitor.beginTask("Local sync...", 100);
 		try {
-			final Path filePath = file.toPath();
-			if (Files.isSymbolicLink(filePath)) {
+			if (file.isSymbolicLink()) {
 				if (!(repoFile instanceof Symlink))
 					throw new IllegalArgumentException("repoFile is not an instance of Symlink! file=" + file);
 
 				final Symlink symlink = (Symlink) repoFile;
-				symlink.setTarget(readSymbolicLink(filePath));
+				try {
+					symlink.setTarget(file.readSymbolicLinkToPathString());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 			else if (file.isFile()) {
 				if (!(repoFile instanceof NormalFile))
@@ -312,7 +310,7 @@ public class LocalRepoSync {
 				sha(normalFile, file, new SubProgressMonitor(monitor, 100));
 			}
 			repoFile.setLastSyncFromRepositoryId(null);
-			repoFile.setLastModified(new Date(IOUtil.getLastModifiedNoFollow(file)));
+			repoFile.setLastModified(new Date(file.getLastModifiedNoFollow()));
 		} finally {
 			monitor.done();
 		}
@@ -526,7 +524,7 @@ public class LocalRepoSync {
 			final int chunkLength = 32 * bufLength; // 1 MiB chunk size
 
 			long offset = 0;
-			final InputStream in = new FileInputStream(file);
+			final InputStream in = file.createFileInputStream();
 			try {
 				FileChunk fileChunk = null;
 

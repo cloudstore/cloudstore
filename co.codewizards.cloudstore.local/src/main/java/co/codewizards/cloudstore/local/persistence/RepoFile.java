@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -23,6 +23,8 @@ import javax.jdo.annotations.Unique;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.file.File;
 
 @PersistenceCapable
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP)

@@ -1,8 +1,7 @@
 package co.codewizards.cloudstore.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.URL;
 import java.util.UUID;
 
@@ -12,6 +11,7 @@ import org.junit.Test;
 
 import co.codewizards.cloudstore.client.CloudStoreClient;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -49,9 +49,9 @@ public class RestRepoTransportIT extends AbstractIT {
 	@Test
 	public void getRepositoryId_Rest() throws Exception {
 		final File remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
@@ -71,7 +71,7 @@ public class RestRepoTransportIT extends AbstractIT {
 	@Test
 	public void getRepoFileDtoForNonExistingFile() throws Exception {
 		final File localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
 
 		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
@@ -79,9 +79,9 @@ public class RestRepoTransportIT extends AbstractIT {
 		localRepoManagerLocal.close();
 
 		final File remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
 		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
@@ -105,9 +105,9 @@ public class RestRepoTransportIT extends AbstractIT {
 	@Test
 	public void getRepositoryId_File() throws Exception {
 		final File localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 		final URL localRootURL = localRoot.toURI().toURL();
 
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);

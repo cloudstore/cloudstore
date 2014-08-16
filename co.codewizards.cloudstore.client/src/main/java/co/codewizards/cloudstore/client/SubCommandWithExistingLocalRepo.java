@@ -1,11 +1,11 @@
 package co.codewizards.cloudstore.client;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-
-import co.codewizards.cloudstore.core.oio.file.File;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -69,7 +69,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			if (localRoot.equals(localFile))
 				localPathPrefix = "";
 			else
-				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile).replace(File.separatorChar, '/');
+				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile).replace(FILE_SEPARATOR_CHAR, '/');
 		}
 		assertLocalRootNotNull();
 	}

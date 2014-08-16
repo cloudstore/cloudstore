@@ -1,11 +1,11 @@
 package co.codewizards.cloudstore.server;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
@@ -51,6 +51,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -228,7 +229,7 @@ public class CloudStoreServer implements Runnable {
 			final PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
 			ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
 
-			final FileOutputStream fos = new FileOutputStream(getKeyStoreFile());
+			final OutputStream fos = getKeyStoreFile().createFileOutputStream();
 			try {
 				ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
@@ -241,7 +242,7 @@ public class CloudStoreServer implements Runnable {
 		}
 
 		final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		final FileInputStream fis = new FileInputStream(getKeyStoreFile());
+		final InputStream fis = getKeyStoreFile().createFileInputStream();
 		try {
 			ks.load(fis, KEY_STORE_PASSWORD_CHAR_ARRAY);
 		} finally {
@@ -364,7 +365,7 @@ public class CloudStoreServer implements Runnable {
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
-	      configurator.doConfigure(logbackXmlFile);
+	      configurator.doConfigure(logbackXmlFile.createFileInputStream());
 	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();

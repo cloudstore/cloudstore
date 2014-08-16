@@ -1,12 +1,12 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,6 +24,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -104,7 +105,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
-	      configurator.doConfigure(logbackXmlFile);
+	      configurator.doConfigure(logbackXmlFile.createFileInputStream());
 	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();
@@ -229,9 +230,9 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		}
 
 		@Override
-		public boolean accept(final File file) {
-			files.add(file);
-			files.add(file.getParentFile()); // just in case the parent didn't have its own entry and was created implicitly
+		public boolean accept(final java.io.File file) {
+			files.add(newFile(file));
+			files.add(newFile(file.getParentFile())); // just in case the parent didn't have its own entry and was created implicitly
 			return true;
 		}
 	}
@@ -312,7 +313,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			boolean successful = false;
 			final InputStream in = url.openStream();
 			try {
-				final FileOutputStream out = new FileOutputStream(downloadFile);
+				final OutputStream out = downloadFile.createFileOutputStream();
 				try {
 					IOUtil.transferStreamData(in, out);
 				} finally {
