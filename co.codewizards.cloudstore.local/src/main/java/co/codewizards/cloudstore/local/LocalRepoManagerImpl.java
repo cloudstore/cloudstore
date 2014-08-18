@@ -69,9 +69,9 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
-import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 import co.codewizards.cloudstore.local.persistence.Repository;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 
 /**
  * Manager of a repository.
@@ -571,7 +571,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	protected boolean open() {
 		boolean result;
-		synchronized(this) {
+		lock.lock();
+		try {
 			logger.debug("[{}]open: closing={} closeAbortable={}", id, closing, closeAbortable);
 			result = !closing || closeAbortable;
 			if (result) {
@@ -587,6 +588,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					closeDeferredTimer = null;
 				}
 			}
+		} finally {
+			lock.unlock();
 		}
 		if (result)
 			openReferenceCounter.incrementAndGet();
@@ -611,8 +614,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void close() {
-		synchronized(this) {
+		lock.lock();
+		try {
 			closing = true;
+		} finally {
+			lock.unlock();
 		}
 
 		final int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
@@ -627,7 +633,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final long closeDeferredMillis = getCloseDeferredMillis();
 		if (closeDeferredMillis > 0) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
-			synchronized(this) {
+			lock.lock();
+			try {
 // Because of this error:
 //		Caused by: java.lang.IllegalStateException: Timer already cancelled.
 //	       at java.util.Timer.sched(Timer.java:397) ~[na:1.7.0_45]
@@ -642,6 +649,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					closeDeferredTimerTask = new CloseTimerTask();
 					closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
 				}
+			} finally {
+				lock.unlock();
 			}
 		}
 		else
@@ -649,7 +658,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void _close() {
-		synchronized(this) {
+		lock.lock();
+		try {
 			if (!closing) { // closing was aborted
 				logger.info("[{}]_close: Closing was aborted. Returning immediately.", id);
 				return;
@@ -660,6 +670,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				closeDeferredTimerTask.cancel();
 				closeDeferredTimerTask = null;
 			}
+		} finally {
+			lock.unlock();
 		}
 
 		logger.info("[{}]_close: Shutting down real LocalRepoManager.", id);
@@ -672,7 +684,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 		deleteExpiredRemoteRepositoryRequestsTimer.cancel();
 
-		synchronized (this) {
+		lock.lock();
+		try {
 			if (persistenceManagerFactory != null) {
 				try {
 					persistenceManagerFactory.close();
@@ -694,6 +707,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				}
 				lockFile = null;
 			}
+		} finally {
+			lock.unlock();
 		}
 
 		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
@@ -731,8 +746,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized boolean isOpen() {
-		return persistenceManagerFactory != null;
+	public boolean isOpen() {
+		lock.lock();
+		try {
+			return persistenceManagerFactory != null;
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	protected void assertOpen() {
@@ -741,15 +761,25 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized LocalRepoTransactionImpl beginReadTransaction() {
-		assertOpen();
-		return new LocalRepoTransactionImpl(this, false);
+	public LocalRepoTransactionImpl beginReadTransaction() {
+		lock.lock();
+		try {
+			assertOpen();
+			return new LocalRepoTransactionImpl(this, false);
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized LocalRepoTransactionImpl beginWriteTransaction() {
-		assertOpen();
-		return new LocalRepoTransactionImpl(this, true);
+	public LocalRepoTransactionImpl beginWriteTransaction() {
+		lock.lock();
+		try {
+			assertOpen();
+			return new LocalRepoTransactionImpl(this, true);
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override

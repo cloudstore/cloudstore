@@ -53,7 +53,7 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
  * Logic for synchronising a local with a remote repository.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class RepoToRepoSync {
+public class RepoToRepoSync implements AutoCloseable {
 	private static final Logger logger = LoggerFactory.getLogger(RepoToRepoSync.class);
 
 	/**
@@ -626,6 +626,7 @@ public class RepoToRepoSync {
 				&& equal(fromNormalFileDto.getSha1(), toNormalFileDto.getSha1());
 	}
 
+	@Override
 	public void close() {
 		localRepoManager.close();
 		localRepoTransport.close();

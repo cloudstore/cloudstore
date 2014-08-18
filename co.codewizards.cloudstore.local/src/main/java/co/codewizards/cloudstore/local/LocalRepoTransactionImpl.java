@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +25,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final boolean write;
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
-	private Lock lock;
+	private final Lock lock;
 	private long localRevision = -1;
 	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
 
@@ -34,63 +34,100 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
 		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
 		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
+		this.lock = localRepoManager.getLock();
 		this.write = write;
 		begin();
 	}
 
-	private synchronized void begin() {
-		if (isActive())
-			throw new IllegalStateException("Transaction is already active!");
+	private void begin() {
+		lock.lock();
+		try {
+			if (isActive())
+				throw new IllegalStateException("Transaction is already active!");
 
+			lockIfWrite();
+
+			persistenceManager = persistenceManagerFactory.getPersistenceManager();
+			jdoTransaction = persistenceManager.currentTransaction();
+			jdoTransaction.begin();
+			listenerRegistry.onBegin();
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	private final void lockIfWrite() {
 		if (write)
-			lock();
+			lock.lock(); // UNbalance lock to keep it after method returns!
+	}
 
-		persistenceManager = persistenceManagerFactory.getPersistenceManager();
-		jdoTransaction = persistenceManager.currentTransaction();
-		jdoTransaction.begin();
-		listenerRegistry.onBegin();
+	private final void unlockIfWrite() {
+		if (write)
+			lock.unlock(); // UNbalance unlock to counter the unbalanced lock in lockIfWrite().
 	}
 
 	@Override
-	public synchronized void commit() {
-		if (!isActive())
-			throw new IllegalStateException("Transaction is not active!");
+	public void commit() {
+		lock.lock();
+		try {
+			if (!isActive())
+				throw new IllegalStateException("Transaction is not active!");
 
-		listenerRegistry.onCommit();
-		daoClass2Dao.clear();
-		persistenceManager.flush();
-		jdoTransaction.commit();
-		persistenceManager.close();
-		jdoTransaction = null;
-		persistenceManager = null;
-		localRevision = -1;
-		unlock();
+			listenerRegistry.onCommit();
+			daoClass2Dao.clear();
+			persistenceManager.flush();
+			jdoTransaction.commit();
+			persistenceManager.close();
+			jdoTransaction = null;
+			persistenceManager = null;
+			localRevision = -1;
+
+			unlockIfWrite();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized boolean isActive() {
-		return jdoTransaction != null && jdoTransaction.isActive();
+	public boolean isActive() {
+		lock.lock();
+		try {
+			return jdoTransaction != null && jdoTransaction.isActive();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized void rollback() {
-		if (!isActive())
-			throw new IllegalStateException("Transaction is not active!");
+	public void rollback() {
+		lock.lock();
+		try {
+			if (!isActive())
+				throw new IllegalStateException("Transaction is not active!");
 
-		listenerRegistry.onRollback();
-		daoClass2Dao.clear();
-		jdoTransaction.rollback();
-		persistenceManager.close();
-		jdoTransaction = null;
-		persistenceManager = null;
-		localRevision = -1;
-		unlock();
+			listenerRegistry.onRollback();
+			daoClass2Dao.clear();
+			jdoTransaction.rollback();
+			persistenceManager.close();
+			jdoTransaction = null;
+			persistenceManager = null;
+			localRevision = -1;
+
+			unlockIfWrite();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized void rollbackIfActive() {
-		if (isActive())
-			rollback();
+	public void rollbackIfActive() {
+		lock.lock();
+		try {
+			if (isActive())
+				rollback();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
@@ -120,20 +157,6 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 			persistenceManager.flush();
 		}
 		return localRevision;
-	}
-
-	private synchronized void lock() {
-		if (lock == null) {
-			lock = localRepoManager.getLock();
-			lock.lock();
-		}
-	}
-
-	private synchronized void unlock() {
-		if (lock != null) {
-			lock.unlock();
-			lock = null;
-		}
 	}
 
 	@Override
