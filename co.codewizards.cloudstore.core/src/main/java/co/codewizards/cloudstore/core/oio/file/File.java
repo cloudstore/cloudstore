@@ -14,22 +14,21 @@ import java.net.URI;
  * @author Sebastian Schefczyk
  *
  */
-public interface File extends OioService {
+public interface File {
 
-	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	File createNewFile(String pathname);
-	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	File createNewFile(File parent, String child);
-	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	File createNewFile(String parent, String child);
-	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	File createNewFile(URI uri);
-	/** Factory method, substitutes the constructor of {@link java.io.File}.
-	 * <p>
-	 * <b>Caution: </b><i>Use this creator only for 3rd-party interfaces!</i> */
-	File createNewFile(java.io.File file);
+//	/** Factory method, substitutes the constructor of {@link java.io.File}. */
+//	File createNewFile(String pathname);
+//	/** Factory method, substitutes the constructor of {@link java.io.File}. */
+//	File createNewFile(File parent, String child);
+//	/** Factory method, substitutes the constructor of {@link java.io.File}. */
+//	File createNewFile(String parent, String child);
+//	/** Factory method, substitutes the constructor of {@link java.io.File}. */
+//	File createNewFile(URI uri);
+//	/** Factory method, substitutes the constructor of {@link java.io.File}.
+//	 * <p>
+//	 * <b>Caution: </b><i>Use this creator only for 3rd-party interfaces!</i> */
+//	File createNewFile(java.io.File file);
 
-	File getParentFile();
 
 	String[] list();
 	String[] list(FilenameFilter filenameFilter);
@@ -38,6 +37,7 @@ public interface File extends OioService {
 	File[] listFiles(FilenameFilter fileFilter);
 
 	File getAbsoluteFile();
+	File getParentFile();
 
 	boolean isSymbolicLink();
 
@@ -84,9 +84,9 @@ public interface File extends OioService {
 	void setLastModifiedNoFollow(long time);
 	String relativize(File target);
 
-	File createTempDirectory(String prefix) throws IOException;
-	File createTempFile(final String prefix, final String suffix) throws IOException;
-	File createTempFile(String prefix, String suffix, File dir) throws IOException;
+//	File createTempDirectory(String prefix) throws IOException;
+//	File createTempFile(final String prefix, final String suffix) throws IOException;
+//	File createTempFile(String prefix, String suffix, File dir) throws IOException;
 	boolean setExecutable(boolean executable, boolean ownerOnly);
 	/** <b>Caution:</b> <i>Only use this when forced by 3rd party interface!</i> */
 	java.io.File getIoFile();
