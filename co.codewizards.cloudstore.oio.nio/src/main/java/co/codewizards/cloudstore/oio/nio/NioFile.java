@@ -73,6 +73,11 @@ public class NioFile implements File {
 		return new NioFile(uri);
 	}
 
+	/** DO NOT USE! Needed for ServiceLoader. */
+	public NioFile() {
+		this.ioFile = null;
+	}
+
 	private NioFile(final String pathname) {
 		this.ioFile = new java.io.File(pathname);
 	}
