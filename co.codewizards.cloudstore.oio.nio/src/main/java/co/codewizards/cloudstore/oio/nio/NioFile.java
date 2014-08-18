@@ -400,6 +400,7 @@ public class NioFile implements File {
 		if ( !(obj instanceof NioFile) ) return false;
 		return this.ioFile.equals(obj);
 	}
+
 	@Override
 	public int hashCode() {
 		return ioFile.hashCode();
