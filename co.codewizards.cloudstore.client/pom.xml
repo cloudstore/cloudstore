@@ -29,6 +29,16 @@
 			<artifactId>args4j</artifactId>
 		</dependency>
 		
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.oio.io</artifactId>
+		</dependency>
+		<!-- TODO need for a profile: Packaging for RoboVM must not have co.codewizards.cloudstore.oio.nio !!! -->
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
+		</dependency>
+
 		<!-- BEGIN logging -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
