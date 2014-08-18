@@ -41,63 +41,30 @@ public class NioFile implements File {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NioFile.class);
 
-	private final java.io.File ioFile;
+	final java.io.File ioFile;
 
-	@Override
-	public int getPriority() {
-		return 10;
-	}
 
-	@Override
-	public File createNewFile(final String pathname) {
-		return new NioFile(pathname);
-	}
-
-	@Override
-	public File createNewFile(final String parent, final String child) {
-		return new NioFile(parent, child);
-	}
-
-	@Override
-	public File createNewFile(final File parent, final String child) {
-		return new NioFile(parent, child);
-	}
-
-	@Override
-	public File createNewFile(final java.io.File file) {
-		return new NioFile(file);
-	}
-
-	@Override
-	public File createNewFile(final URI uri) {
-		return new NioFile(uri);
-	}
-
-	/** DO NOT USE! Needed for ServiceLoader. */
-	public NioFile() {
-		this.ioFile = null;
-	}
-
-	private NioFile(final String pathname) {
+	NioFile(final String pathname) {
 		this.ioFile = new java.io.File(pathname);
 	}
 
-	private NioFile(final File parent, final String child) {
-		final java.io.File ioParent = castOrFail(parent).ioFile;
+	NioFile(final File parent, final String child) {
+		final java.io.File ioParent = NioFileUtil.castOrFail(parent).ioFile;
 		this.ioFile = new java.io.File(ioParent, child);
 	}
 
-	private NioFile(final String parent, final String child) {
+	NioFile(final String parent, final String child) {
 		this.ioFile = new java.io.File(parent, child);
 	}
 
-	private NioFile(final URI uri) {
+	NioFile(final URI uri) {
 		this.ioFile = new java.io.File(uri);
 	}
 
-	private NioFile(final java.io.File ioFile) {
+	NioFile(final java.io.File ioFile) {
 		this.ioFile = ioFile;
 	}
+
 
 	@Override
 	public File getParentFile() {
@@ -170,7 +137,7 @@ public class NioFile implements File {
 
 	@Override
 	public int compareTo(final File otherFile) {
-		return ioFile.compareTo(castOrFail(otherFile).ioFile);
+		return ioFile.compareTo(NioFileUtil.castOrFail(otherFile).ioFile);
 	}
 
 	@Override
@@ -253,14 +220,6 @@ public class NioFile implements File {
 		}
 	}
 
-	private static NioFile castOrFail(final File file) {
-		if (file instanceof NioFile)
-			return (NioFile) file;
-		else
-			throw new IllegalArgumentException("Could not cast file: "
-					+ file.getClass().getCanonicalName());
-	}
-
 	private static String toPathString(final Path path) {
 		assertNotNull("path", path);
 		return path.toString().replace(java.io.File.separatorChar, '/');
@@ -282,7 +241,7 @@ public class NioFile implements File {
 
 	@Override
 	public boolean renameTo(final File dest) {
-		return ioFile.renameTo(castOrFail(dest).ioFile);
+		return ioFile.renameTo(NioFileUtil.castOrFail(dest).ioFile);
 	}
 
 	@Override
@@ -352,17 +311,17 @@ public class NioFile implements File {
 
 	@Override
 	public void move(final File toFile) throws IOException {
-		Files.move(ioFile.toPath(), castOrFail(toFile).ioFile.toPath());
+		Files.move(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath());
 	}
 
 	@Override
 	public void copyToCopyAttributes(final File toFile) throws IOException {
-		Files.copy(ioFile.toPath(), castOrFail(toFile).ioFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+		Files.copy(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 	}
 
 	@Override
 	public RandomAccessFile createRandomAccessFile(final String mode) throws FileNotFoundException {
-		return new RandomAccessFile(ioFile, "rw");
+		return new RandomAccessFile(ioFile, mode);
 	}
 
 	@Override
@@ -432,23 +391,9 @@ public class NioFile implements File {
 
 	@Override
 	public String relativize(final File target) {
-		return ioFile.toPath().relativize(castOrFail(target).ioFile.toPath()).toString();
+		return ioFile.toPath().relativize(NioFileUtil.castOrFail(target).ioFile.toPath()).toString();
 	}
 
-	@Override
-	public File createTempDirectory(final String prefix) throws IOException {
-		return new NioFile(Files.createTempDirectory(prefix).toFile());
-	}
-
-	@Override
-	public File createTempFile(final String prefix, final String suffix) throws IOException {
-		return new NioFile(java.io.File.createTempFile (prefix, suffix));
-	}
-
-	@Override
-	public File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
-		return new NioFile(java.io.File.createTempFile (prefix, suffix, castOrFail(dir).ioFile));
-	}
 
 	@Override
 	public long getUsableSpace() {
