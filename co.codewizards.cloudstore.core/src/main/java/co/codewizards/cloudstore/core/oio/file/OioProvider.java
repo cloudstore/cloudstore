@@ -10,19 +10,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sebastian Schefczyk
  */
-public class OioProvider {
+class OioProvider {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OioProvider.class);
 
-	private final File file;
+	private final FileFactoryService fileFactoryService;
 
 	private static class OioProviderHolder {
 		public static final OioProvider instance = new OioProvider();
 	}
 
 	protected OioProvider() {
-		this.file = getPrioritizedService(File.class);
-		LOGGER.info("Preferred implementation '{}' for file", this.file.getClass().getSimpleName());
+		this.fileFactoryService = getPrioritizedService(FileFactoryService.class);
+		LOGGER.info("Preferred implementation '{}' for fileFactoryService", this.fileFactoryService.getClass().getSimpleName());
 	}
 
 	private <N extends OioService> N getPrioritizedService(final Class<N> n) {
@@ -51,9 +51,8 @@ public class OioProvider {
 		return OioProviderHolder.instance;
 	}
 
-	/** Replacement for java.nio.file.Files */
-	public File file() {
-		return file;
+	public FileFactoryService getFileFactory() {
+		return fileFactoryService;
 	}
 
 	/** Checks for java.nio.file.Files at the current class loader. */
