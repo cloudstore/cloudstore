@@ -8,10 +8,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * Is the package 'java.nio' available?
- *
- * Operation dependent stuff: are symlinks available in this directory? For example: An USB stick with fat32, even under Linux.
- *
  * @author Sebastian Schefczyk
  */
 public class OioProvider {
