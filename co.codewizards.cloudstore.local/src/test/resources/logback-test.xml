@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{5} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+<!--
+	<logger name="com.lordofthejars.foo" level="INFO" additivity="false">
+		<appender-ref ref="STDOUT" />
+	</logger>
+-->
+
+	<!-- BEGIN DataNucleus http://www.datanucleus.org/products/datanucleus/logging.html -->
+	<logger name="DataNucleus" level="INFO" />
+	<!--
+	<logger name="DataNucleus.Datastore" level="INFO" />
+	<logger name="DataNucleus.Datastore.Schema" level="INFO" />
+	<logger name="DataNucleus.Datastore.Native" level="ALL" />
+	<logger name="DataNucleus.Query" level="INFO" />
+	<logger name="DataNucleus.Datastore.Native" level="ALL" />
+	-->
+	<!-- END DataNucleus -->
+
+	<logger name="co.codewizards.cloudstore.core.repo.sync" level="ALL" />
+	<logger name="co.codewizards.cloudstore.core.persistence" level="ALL" />
+	<logger name="co.codewizards.cloudstore.local.transport.file.FileRepoTransport" level="ALL" />
+
+	<!-- The level of the root logger is set to DEBUG by default. But we want to be able to change it here. -->
+	<!--
+	<root level="ALL">
+		<appender-ref ref="STDOUT" />
+	</root>
+	-->
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
