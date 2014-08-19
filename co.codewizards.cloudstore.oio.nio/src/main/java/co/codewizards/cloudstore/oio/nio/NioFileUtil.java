@@ -1,7 +1,10 @@
 package co.codewizards.cloudstore.oio.nio;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import co.codewizards.cloudstore.core.oio.file.File;
 
@@ -31,5 +34,16 @@ public final class NioFileUtil {
 		else
 			throw new IllegalArgumentException("Could not cast file: "
 					+ file.getClass().getCanonicalName());
+	}
+
+	static String toPathString(final Path path) {
+		assertNotNull("path", path);
+		return path.toString().replace(java.io.File.separatorChar, '/');
+	}
+
+	static String toPathString(final java.io.File file) {
+		final Path path = file.toPath();
+		assertNotNull("path", path);
+		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 }

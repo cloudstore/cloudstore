@@ -226,9 +226,7 @@ public class NioFile implements File {
 	}
 
 	private String toPathString() {
-		final Path path = ioFile.toPath();
-		assertNotNull("path", path);
-		return path.toString().replace(java.io.File.separatorChar, '/');
+		return NioFileUtil.toPathString(ioFile);
 	}
 
 	private File[] convert(final java.io.File[] ioFilesListFiles) {
@@ -245,8 +243,8 @@ public class NioFile implements File {
 	}
 
 	@Override
-	public void setLastModified(final long lastModified) {
-		ioFile.setLastModified(lastModified);
+	public boolean setLastModified(final long lastModified) {
+		return ioFile.setLastModified(lastModified);
 	}
 
 	@Override
@@ -310,13 +308,17 @@ public class NioFile implements File {
 	}
 
 	@Override
-	public void move(final File toFile) throws IOException {
-		Files.move(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath());
+	public String move(final File toFile) throws IOException {
+		return NioFileUtil.toPathString(
+				Files.move(ioFile.toPath(),NioFileUtil.castOrFail(toFile).ioFile.toPath())
+		);
 	}
 
 	@Override
-	public void copyToCopyAttributes(final File toFile) throws IOException {
-		Files.copy(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+	public String copyToCopyAttributes(final File toFile) throws IOException {
+		return NioFileUtil.toPathString(
+				Files.copy(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES)
+		);
 	}
 
 	@Override
@@ -403,6 +405,22 @@ public class NioFile implements File {
 	@Override
 	public java.io.File getIoFile() {
 		return ioFile;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if ( !(obj instanceof NioFile) ) return false;
+		if ( this == obj ) return true;
+		return this.ioFile.equals(obj);
+	}
+	@Override
+	public int hashCode() {
+		return ioFile.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return this.ioFile.toString();
 	}
 
 }
