@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.file.File;
 
-
 /**
  * @author Sebastian Schefczyk
  */
