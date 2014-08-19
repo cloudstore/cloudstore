@@ -46,4 +46,12 @@ public final class NioFileUtil {
 		assertNotNull("path", path);
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
+
+	static File[] convert(final java.io.File[] ioFilesListFiles) {
+		final File[] listFiles = new NioFile[ioFilesListFiles.length];
+		for (int i = 0; i < ioFilesListFiles.length; i++) {
+			listFiles[i] = new NioFile(ioFilesListFiles[i]);
+		}
+		return listFiles;
+	}
 }

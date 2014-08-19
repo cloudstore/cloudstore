@@ -68,7 +68,8 @@ public class NioFile implements File {
 
 	@Override
 	public File getParentFile() {
-		return new NioFile(this.ioFile.getParentFile());
+		final java.io.File parentFile = this.ioFile.getParentFile();
+		return parentFile != null ? new NioFile(parentFile) : null;
 	}
 
 	@Override
@@ -84,21 +85,21 @@ public class NioFile implements File {
 	@Override
 	public File[] listFiles() {
 		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles();
-		return convert(ioFilesListFiles);
+		return NioFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FileFilter fileFilter) {
 		final java.io.File[] ioFilesListFiles = this.ioFile
 				.listFiles(fileFilter);
-		return convert(ioFilesListFiles);
+		return NioFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FilenameFilter fileFilter) {
 		final java.io.File[] ioFilesListFiles = this.ioFile
 				.listFiles(fileFilter);
-		return convert(ioFilesListFiles);
+		return NioFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
@@ -223,18 +224,6 @@ public class NioFile implements File {
 	private static String toPathString(final Path path) {
 		assertNotNull("path", path);
 		return path.toString().replace(java.io.File.separatorChar, '/');
-	}
-
-	private String toPathString() {
-		return NioFileUtil.toPathString(ioFile);
-	}
-
-	private File[] convert(final java.io.File[] ioFilesListFiles) {
-		final File[] listFiles = new NioFile[ioFilesListFiles.length];
-		for (int i = 0; i < ioFilesListFiles.length; i++) {
-			listFiles[i] = new NioFile(ioFilesListFiles[i]);
-		}
-		return listFiles;
 	}
 
 	@Override
