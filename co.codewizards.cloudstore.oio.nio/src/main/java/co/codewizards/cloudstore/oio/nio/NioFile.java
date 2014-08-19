@@ -399,7 +399,6 @@ public class NioFile implements File {
 	@Override
 	public boolean equals(final Object obj) {
 		if ( !(obj instanceof NioFile) ) return false;
-		if ( this == obj ) return true;
 		return this.ioFile.equals(obj);
 	}
 	@Override
