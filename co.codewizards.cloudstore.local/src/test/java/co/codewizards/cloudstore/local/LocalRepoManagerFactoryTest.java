@@ -32,7 +32,7 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 	@Test
 	public void createLocalRepoManagerForExistingNonRepoDirectory() throws Exception {
 		final File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot.exists()).isTrue();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
 		assertThat(localRoot.isDirectory()).isTrue();
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
