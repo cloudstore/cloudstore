@@ -16,6 +16,7 @@
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.core</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

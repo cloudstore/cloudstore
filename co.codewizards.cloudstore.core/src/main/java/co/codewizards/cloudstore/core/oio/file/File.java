@@ -64,7 +64,7 @@ public interface File {
 	long getUsableSpace();
 	long length();
 	boolean renameTo(File newFileName);
-	void setLastModified(long lastModified);
+	boolean setLastModified(long lastModified);
 	OutputStream createFileOutputStream() throws FileNotFoundException;
 	OutputStream createFileOutputStream(boolean append) throws FileNotFoundException;
 	InputStream createFileInputStream() throws FileNotFoundException;
@@ -76,17 +76,14 @@ public interface File {
 	boolean isAbsolute();
 	String getPath();
 	boolean mkdirs();
-	void copyToCopyAttributes(File toFile) throws IOException;
-	void move(File toFile) throws IOException;
+	String copyToCopyAttributes(File toFile) throws IOException;
+	String move(File toFile) throws IOException;
 	URI toURI();
 	RandomAccessFile createRandomAccessFile(String mode) throws FileNotFoundException;
 	boolean isFile();
 	void setLastModifiedNoFollow(long time);
 	String relativize(File target);
 
-//	File createTempDirectory(String prefix) throws IOException;
-//	File createTempFile(final String prefix, final String suffix) throws IOException;
-//	File createTempFile(String prefix, String suffix, File dir) throws IOException;
 	boolean setExecutable(boolean executable, boolean ownerOnly);
 	/** <b>Caution:</b> <i>Only use this when forced by 3rd party interface!</i> */
 	java.io.File getIoFile();
