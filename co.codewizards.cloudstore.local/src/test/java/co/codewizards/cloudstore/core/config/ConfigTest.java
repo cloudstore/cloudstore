@@ -18,6 +18,7 @@ import co.codewizards.cloudstore.local.AbstractTest;
 import co.codewizards.cloudstore.oio.api.File;
 
 public class ConfigTest extends AbstractTest {
+
 	private static final String testKey1 = "testKey1";
 	private static final String testKey2 = "testKey2";
 
@@ -25,7 +26,6 @@ public class ConfigTest extends AbstractTest {
 	public void after() {
 		for (final File file : Config.getInstance().propertiesFiles) {
 			file.delete();
-//			assertThat(file).doesNotExist();
 			assertThat(file.exists()).isFalse();
 		}
 	}

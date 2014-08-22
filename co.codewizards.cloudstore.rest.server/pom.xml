@@ -16,11 +16,6 @@
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.rest.shared</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>co.codewizards.cloudstore.oio</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.api</artifactId>
-			<scope>provided</scope>
-		</dependency>
 	
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
