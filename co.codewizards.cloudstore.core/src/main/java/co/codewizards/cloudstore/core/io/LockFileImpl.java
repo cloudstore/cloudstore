@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 class LockFileImpl implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileImpl.class);
@@ -55,7 +55,7 @@ class LockFileImpl implements LockFile {
 			logger.trace("[{}]tryAcquire: inside synchronized", thisID);
 			try {
 				if (randomAccessFile == null) {
-					logger.trace("[{}]tryAcquire: acquiring underlying FileLock.", thisID);
+					logger.trace("[{}]tryAcquire: acquiring underlying FileLock for file={}.", thisID, Integer.toHexString(System.identityHashCode(file)));
 					randomAccessFile = file.createRandomAccessFile("rw");
 					try {
 						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);

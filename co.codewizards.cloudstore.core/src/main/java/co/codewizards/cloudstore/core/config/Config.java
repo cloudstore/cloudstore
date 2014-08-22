@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.

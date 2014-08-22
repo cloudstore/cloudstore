@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -38,7 +38,6 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -77,6 +76,7 @@ import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarkerDao;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class FileRepoTransport extends AbstractRepoTransport implements LocalRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);

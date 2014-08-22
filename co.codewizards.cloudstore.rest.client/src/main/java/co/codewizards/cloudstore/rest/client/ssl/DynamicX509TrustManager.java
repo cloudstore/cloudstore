@@ -4,7 +4,6 @@ import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
@@ -23,6 +22,7 @@ import javax.net.ssl.X509TrustManager;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 class DynamicX509TrustManager implements X509TrustManager {
 	private static final int LOCKFILE_TIMEOUT_MS = 1000 * 10;

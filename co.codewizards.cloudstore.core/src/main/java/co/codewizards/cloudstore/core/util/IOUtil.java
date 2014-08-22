@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.FileFilter;
@@ -26,8 +26,8 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
+import co.codewizards.cloudstore.oio.api.File;
 
 public final class IOUtil {
 	/**

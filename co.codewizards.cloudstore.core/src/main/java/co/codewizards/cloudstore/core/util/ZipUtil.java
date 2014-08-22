@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -17,9 +17,9 @@ import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
+import co.codewizards.cloudstore.oio.api.File;
 
 public final class ZipUtil {
 	private static final Logger logger = LoggerFactory.getLogger(ZipUtil.class);

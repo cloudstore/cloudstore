@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 public interface LocalRepoManagerFactory {
 	class Helper {

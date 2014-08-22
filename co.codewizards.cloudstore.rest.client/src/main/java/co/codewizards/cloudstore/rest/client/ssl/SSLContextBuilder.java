@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -10,7 +10,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 public final class SSLContextBuilder {
 

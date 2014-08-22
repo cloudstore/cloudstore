@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.core.io;
 
 import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,6 +10,8 @@ import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.oio.api.File;
 
 class LockFileProxy implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileProxy.class);

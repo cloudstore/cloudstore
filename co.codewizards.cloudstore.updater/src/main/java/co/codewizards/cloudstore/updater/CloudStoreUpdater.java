@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.FileFilter;
 import java.io.IOException;
@@ -24,9 +24,9 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdater.class);

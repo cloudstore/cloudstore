@@ -2,9 +2,10 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import co.codewizards.cloudstore.oio.api.File;
 
 public class DerbyUtil {
 

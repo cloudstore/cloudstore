@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.rest.client.transport;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -32,6 +31,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
+import co.codewizards.cloudstore.oio.api.File;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
 import co.codewizards.cloudstore.rest.client.request.BeginPutFile;

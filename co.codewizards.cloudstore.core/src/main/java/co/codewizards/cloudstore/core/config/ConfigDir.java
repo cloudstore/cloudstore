@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
-import co.codewizards.cloudstore.core.oio.file.File;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@code ConfigDir} represents the central configuration directory.

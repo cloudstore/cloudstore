@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -11,11 +11,11 @@ import java.util.Properties;
 
 import org.junit.Test;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
 import co.codewizards.cloudstore.local.AbstractTest;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class ConfigTest extends AbstractTest {
 	private static final String testKey1 = "testKey1";

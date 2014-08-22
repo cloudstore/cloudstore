@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.test;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -32,6 +31,7 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.oio.api.File;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;

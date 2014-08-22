@@ -113,11 +113,21 @@
 			</dependency>
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.oio</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore.oio</groupId>
+				<artifactId>co.codewizards.cloudstore.oio.api</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore.oio</groupId>
 				<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>co.codewizards.cloudstore</groupId>
+				<groupId>co.codewizards.cloudstore.oio</groupId>
 				<artifactId>co.codewizards.cloudstore.oio.io</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
@@ -160,6 +170,11 @@
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.updater</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.util</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
 			<dependency>

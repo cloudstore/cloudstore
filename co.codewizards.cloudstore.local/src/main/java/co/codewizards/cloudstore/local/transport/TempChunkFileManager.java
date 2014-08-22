@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.FileChunkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class TempChunkFileManager {
 

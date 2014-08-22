@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -22,6 +21,7 @@ import co.codewizards.cloudstore.local.persistence.Modification;
 import co.codewizards.cloudstore.local.persistence.ModificationDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class LocalRepoManagerTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerTest.class);

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -10,12 +10,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoDirectoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNotFoundException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class LocalRepoManagerFactoryTest extends AbstractTest {
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link SubCommand} implementation for creating a repository in the local file system.

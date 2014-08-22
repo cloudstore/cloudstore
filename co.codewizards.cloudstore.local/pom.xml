@@ -16,14 +16,15 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>co.codewizards.cloudstore</groupId>
+			<groupId>co.codewizards.cloudstore.oio</groupId>
+			<artifactId>co.codewizards.cloudstore.oio.api</artifactId>
+		</dependency>
+<!-- 
+		<dependency>
+			<groupId>co.codewizards.cloudstore.oio</groupId>
 			<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.io</artifactId>
-		</dependency>
-				
+ -->
 		<dependency>
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo-api</artifactId>

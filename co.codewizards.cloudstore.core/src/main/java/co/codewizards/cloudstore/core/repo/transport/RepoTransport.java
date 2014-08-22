@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.URL;
 import java.util.Date;
 import java.util.UUID;
@@ -12,6 +11,7 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * Transport abstraction.

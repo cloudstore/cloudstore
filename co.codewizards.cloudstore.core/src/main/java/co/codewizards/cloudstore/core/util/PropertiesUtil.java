@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link java.util.Properties} utilities.

@@ -5,6 +5,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 
+/**
+ * @author Marco
+ * @author Sebastian Schefczyk
+ * @deprecated Methods of this class should go into project co.codewizards.cloudstore.util! I don't want to refactor in branch.
+ */
+@Deprecated
 public final class Util {
 	private Util() { }
 

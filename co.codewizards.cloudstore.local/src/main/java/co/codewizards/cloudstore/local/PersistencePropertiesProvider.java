@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class PersistencePropertiesProvider {
 
