@@ -91,6 +91,9 @@ public abstract class Entity implements AutoTrackChanged
 				hashCode = super.hashCode();
 			else
 				hashCode = thisOid.hashCode();
+
+			if (hashCode == 0) // very unlikely, but we want our code to be 100% robust.
+				hashCode = 1;
 		}
 		return hashCode;
 	}
