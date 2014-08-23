@@ -62,8 +62,8 @@ public class LocalRepoRegistry
 
 	private File getRegistryFile() {
 		if (registryFile == null) {
-			final File old = newFile(ConfigDir.getInstance().getFile(), "repositoryList.properties"); // old name until 0.9.0
-			registryFile = newFile(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
+			final File old = createFile(ConfigDir.getInstance().getFile(), "repositoryList.properties"); // old name until 0.9.0
+			registryFile = createFile(ConfigDir.getInstance().getFile(), LOCAL_REPO_REGISTRY_FILE);
 			if (old.exists() && !registryFile.exists())
 				old.renameTo(registryFile);
 		}
@@ -168,7 +168,7 @@ public class LocalRepoRegistry
 		if (localRootString == null)
 			return null;
 
-		final File localRoot = newFile(localRootString);
+		final File localRoot = createFile(localRootString);
 		return localRoot;
 	}
 
@@ -439,19 +439,19 @@ public class LocalRepoRegistry
 				continue;
 			}
 
-			final File localRoot = newFile(localRootString);
+			final File localRoot = createFile(localRootString);
 			if (!localRoot.isDirectory()) {
 				evictDeadEntry(key);
 				continue;
 			}
 
-			final File repoMetaDir = newFile(localRoot, LocalRepoManager.META_DIR_NAME);
+			final File repoMetaDir = createFile(localRoot, LocalRepoManager.META_DIR_NAME);
 			if (!repoMetaDir.isDirectory()) {
 				evictDeadEntry(key);
 				continue;
 			}
 
-			final File repositoryPropertiesFile = newFile(repoMetaDir, LocalRepoManager.REPOSITORY_PROPERTIES_FILE_NAME);
+			final File repositoryPropertiesFile = createFile(repoMetaDir, LocalRepoManager.REPOSITORY_PROPERTIES_FILE_NAME);
 			if (!repositoryPropertiesFile.exists()) {
 				logger.warn("evictDeadEntries: File does not exist (repo corrupt?!): {}", repositoryPropertiesFile);
 				continue;

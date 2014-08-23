@@ -159,7 +159,7 @@ public class CloudStoreUpdaterCore {
 
 	protected Properties getInstallationProperties() {
 		if (installationProperties == null) {
-			final File installationPropertiesFile = newFile(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
+			final File installationPropertiesFile = createFile(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
 			if (!installationPropertiesFile.exists())
 				throw new IllegalArgumentException(String.format("installationPropertiesFile '%s' does not exist!", installationPropertiesFile.getAbsolutePath()));
 
@@ -230,7 +230,7 @@ public class CloudStoreUpdaterCore {
 				dir = dir.getParentFile();
 
 			while (dir != null) {
-				final File installationPropertiesFile = newFile(dir, INSTALLATION_PROPERTIES_FILE_NAME);
+				final File installationPropertiesFile = createFile(dir, INSTALLATION_PROPERTIES_FILE_NAME);
 				if (installationPropertiesFile.exists()) {
 					logger.debug("determineInstallationDirFromClass: Found installationPropertiesFile in this directory: {}", dir);
 					return dir;
@@ -251,7 +251,7 @@ public class CloudStoreUpdaterCore {
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
 		try {
-			final File file = newFile(url.toURI());
+			final File file = createFile(url.toURI());
 			return file;
 		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
@@ -297,7 +297,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File getUpdaterPropertiesFile() {
-		return newFile(ConfigDir.getInstance().getFile(), "updater.properties");
+		return createFile(ConfigDir.getInstance().getFile(), "updater.properties");
 	}
 
 	private static final String PROPERTY_KEY_REMOTE_VERSION_TIMESTAMP = "remoteVersionTimestamp";
@@ -457,14 +457,14 @@ public class CloudStoreUpdaterCore {
 
 	protected File getUpdaterDir() {
 		if (updaterDir == null)
-			updaterDir = newFile(getInstallationDir(), "updater");
+			updaterDir = createFile(getInstallationDir(), "updater");
 
 		return updaterDir;
 	}
 
 	protected File getBackupDir() {
 		if (backupDir == null)
-			backupDir = newFile(getInstallationDir(), "backup");
+			backupDir = createFile(getInstallationDir(), "backup");
 
 		return backupDir;
 	}

@@ -58,7 +58,7 @@ public class ConfigDir {
 		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
 		final String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
-		file = newFile(resolvedValue).getAbsoluteFile();
+		file = createFile(resolvedValue).getAbsoluteFile();
 		if (!file.isDirectory())
 			file.mkdirs();
 
@@ -113,10 +113,10 @@ public class ConfigDir {
 		if (logDir == null) {
 			final String sysPropVal = System.getProperty(SYSTEM_PROPERTY_LOG_DIR);
 			if (isEmpty(sysPropVal))
-				logDir = newFile(getFile(), "log");
+				logDir = createFile(getFile(), "log");
 			else {
 				final String resolvedSysPropVal = IOUtil.replaceTemplateVariables(sysPropVal, System.getProperties());
-				logDir = newFile(resolvedSysPropVal).getAbsoluteFile();
+				logDir = createFile(resolvedSysPropVal).getAbsoluteFile();
 			}
 
 			System.setProperty(SYSTEM_PROPERTY_LOG_DIR, logDir.getPath());

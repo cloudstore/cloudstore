@@ -106,7 +106,7 @@ public class Config {
 	private static final class ConfigHolder {
 		public static final Config instance = new Config(
 				null, null,
-				new File[] { newFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
+				new File[] { createFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
 	}
 
 	private final Config parentConfig;
@@ -227,14 +227,14 @@ public class Config {
 	private static File[] createPropertiesFiles(final File file, final boolean isDirectory) {
 		if (isDirectory) {
 			return new File[] {
-				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
 			};
 		}
 		else {
 			return new File[] {
-				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
-				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
 			};
 		}
 	}

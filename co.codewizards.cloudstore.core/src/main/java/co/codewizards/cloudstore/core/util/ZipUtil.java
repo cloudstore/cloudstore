@@ -268,7 +268,7 @@ public final class ZipUtil {
 	public static synchronized void unzipArchiveIfModified(final URL zipArchive, final File unzipRootFolder)
 	throws IOException
 	{
-		final File metaFile = newFile(unzipRootFolder, ".archive.properties");
+		final File metaFile = createFile(unzipRootFolder, ".archive.properties");
 		long timestamp = Long.MIN_VALUE;
 		long fileSize = Long.MIN_VALUE;
 
@@ -305,7 +305,7 @@ public final class ZipUtil {
 		long zipLastModified = System.currentTimeMillis();
 
 		if ("file".equals(zipArchive.getProtocol())) {
-			final File fileToCheck = newFile(Util.urlToUri(zipArchive));
+			final File fileToCheck = createFile(Util.urlToUri(zipArchive));
 			zipLastModified = fileToCheck.lastModified();
 			zipLength = fileToCheck.length();
 			doUnzip = !unzipRootFolder.exists() || zipLastModified != timestamp || zipLength != fileSize;
@@ -341,12 +341,12 @@ public final class ZipUtil {
 			while ((entry = in.getNextEntry()) != null) {
 				if(entry.isDirectory()) {
 					// create the directory
-					final File dir = newFile(unzipRootFolder, entry.getName());
+					final File dir = createFile(unzipRootFolder, entry.getName());
 					if (!dir.exists() && !dir.mkdirs())
 						throw new IllegalStateException("Could not create directory entry, possibly permission issues.");
 				}
 				else {
-					final File file = newFile(unzipRootFolder, entry.getName());
+					final File file = createFile(unzipRootFolder, entry.getName());
 
 					final File dir = file.getParentFile();
 					if (dir.exists( )) {

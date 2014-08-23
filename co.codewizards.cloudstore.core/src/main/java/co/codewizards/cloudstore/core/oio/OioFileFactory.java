@@ -18,39 +18,39 @@ public class OioFileFactory {
 
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	public static File newFile(final String pathname) {
-		return OioProvider.getInstance().getFileFactory().createNewFile(pathname);
+	public static File createFile(final String pathname) {
+		return OioRegistry.getInstance().getFileFactory().createFile(pathname);
 	}
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	public static File newFile(final String parent, final String child) {
-		return OioProvider.getInstance().getFileFactory().createNewFile(parent, child);
+	public static File createFile(final String parent, final String child) {
+		return OioRegistry.getInstance().getFileFactory().createFile(parent, child);
 	}
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	public static File newFile(final File parent, final String child) {
-		return OioProvider.getInstance().getFileFactory().createNewFile(parent, child);
+	public static File createFile(final File parent, final String child) {
+		return OioRegistry.getInstance().getFileFactory().createFile(parent, child);
 	}
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	public static File newFile(final java.io.File file) {
-		return OioProvider.getInstance().getFileFactory().createNewFile(file);
+	public static File createFile(final java.io.File file) {
+		return OioRegistry.getInstance().getFileFactory().createFile(file);
 	}
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
-	public static File newFile(final URI uri) {
-		return OioProvider.getInstance().getFileFactory().createNewFile(uri);
+	public static File createFile(final URI uri) {
+		return OioRegistry.getInstance().getFileFactory().createFile(uri);
 	}
 
 	public static File createTempDirectory(final String prefix) throws IOException {
-		return OioProvider.getInstance().getFileFactory().createTempDirectory(prefix);
+		return OioRegistry.getInstance().getFileFactory().createTempDirectory(prefix);
 	}
 
 	public static File createTempFile(final String prefix, final String suffix) throws IOException {
-		return OioProvider.getInstance().getFileFactory().createTempFile(prefix, suffix);
+		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix);
 	}
 
 	public static File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
-		return OioProvider.getInstance().getFileFactory().createTempFile(prefix, suffix, dir);
+		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix, dir);
 	}
 }

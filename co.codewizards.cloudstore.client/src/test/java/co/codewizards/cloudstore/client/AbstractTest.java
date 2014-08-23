@@ -29,12 +29,12 @@ public abstract class AbstractTest {
 		final long timestamp = System.currentTimeMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = newFile(newFile("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -55,8 +55,8 @@ public abstract class AbstractTest {
 		assertThat(children1).containsOnly(children2);
 
 		for (final String childName : children1) {
-			final File child1 = newFile(dir1, childName);
-			final File child2 = newFile(dir2, childName);
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
 			if (child1.isFile()) {
 				assertThat(child2.isFile());

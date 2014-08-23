@@ -25,7 +25,7 @@ public final class LocalRepoHelper {
 	public static File getLocalRootContainingFile(final File file) {
 		File parentFile = assertNotNull("file", file);
 		while (parentFile != null) {
-			final File parentMetaDir = newFile(parentFile, LocalRepoManager.META_DIR_NAME);
+			final File parentMetaDir = createFile(parentFile, LocalRepoManager.META_DIR_NAME);
 			if (parentMetaDir.exists())
 				return parentFile;
 

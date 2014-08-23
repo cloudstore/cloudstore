@@ -59,9 +59,9 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
 		localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryName(repositoryName);
 		if (localRoot != null)
-			localFile = localPathPrefix.isEmpty() ? localRoot : newFile(localRoot, localPathPrefix);
+			localFile = localPathPrefix.isEmpty() ? localRoot : createFile(localRoot, localPathPrefix);
 		else {
-			localFile = newFile(local).getAbsoluteFile();
+			localFile = createFile(local).getAbsoluteFile();
 			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
 			if (localRoot == null)
 				localRoot = localFile;

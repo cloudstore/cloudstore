@@ -4,42 +4,41 @@ import java.io.IOException;
 import java.net.URI;
 
 import co.codewizards.cloudstore.oio.api.File;
-import co.codewizards.cloudstore.oio.api.FileFactoryService;
+import co.codewizards.cloudstore.oio.api.FileFactory;
 
 /**
  * @author Sebastian Schefczyk
  *
  */
-public class NioFileFactoryService implements FileFactoryService {
+public class NioFileFactory implements FileFactory {
 
 	@Override
 	public int getPriority() {
 		return 10;
 	}
 
-
 	@Override
-	public File createNewFile(final String pathname) {
+	public File createFile(final String pathname) {
 		return new NioFile(pathname);
 	}
 
 	@Override
-	public File createNewFile(final String parent, final String child) {
+	public File createFile(final String parent, final String child) {
 		return new NioFile(parent, child);
 	}
 
 	@Override
-	public File createNewFile(final File parent, final String child) {
+	public File createFile(final File parent, final String child) {
 		return new NioFile(parent, child);
 	}
 
 	@Override
-	public File createNewFile(final java.io.File file) {
+	public File createFile(final java.io.File file) {
 		return new NioFile(file);
 	}
 
 	@Override
-	public File createNewFile(final URI uri) {
+	public File createFile(final URI uri) {
 		return new NioFile(uri);
 	}
 

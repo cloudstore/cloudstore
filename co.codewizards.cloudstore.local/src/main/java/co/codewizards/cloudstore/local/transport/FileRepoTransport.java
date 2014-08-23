@@ -236,7 +236,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
-			return newFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
+			return createFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
 	}
 
 	@Override
@@ -561,7 +561,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
 			File remoteRootFile;
 			try {
-				remoteRootFile = newFile(getRemoteRootWithoutPathPrefix().toURI());
+				remoteRootFile = createFile(getRemoteRootWithoutPathPrefix().toURI());
 			} catch (final URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
@@ -826,7 +826,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', FILE_SEPARATOR_CHAR);
-		final File file = newFile(getLocalRepoManager().getLocalRoot(), path);
+		final File file = createFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 
@@ -1342,7 +1342,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				logger.debug("endPutFile: fileWriteStrategy={}", fileWriteStrategy);
 
 				final File destFile = (fileWriteStrategy == FileWriteStrategy.replaceAfterTransfer
-						? newFile(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
+						? createFile(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
 
 				final InputStream fileIn;
 				if (destFile != file) {

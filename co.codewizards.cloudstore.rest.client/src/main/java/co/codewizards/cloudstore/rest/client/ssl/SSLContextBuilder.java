@@ -93,7 +93,7 @@ public final class SSLContextBuilder {
 
 		trustStoreFileName += ".truststore";
 
-		final File sslClient = newFile(ConfigDir.getInstance().getFile(), "ssl.client");
+		final File sslClient = createFile(ConfigDir.getInstance().getFile(), "ssl.client");
 
 		if (!sslClient.isDirectory())
 			sslClient.mkdirs();
@@ -101,6 +101,6 @@ public final class SSLContextBuilder {
 		if (!sslClient.isDirectory())
 			throw new IllegalStateException("Could not create directory (permissions?): " + sslClient);
 
-		return getSSLContext(newFile(sslClient, trustStoreFileName), callback);
+		return getSSLContext(createFile(sslClient, trustStoreFileName), callback);
 	}
 }

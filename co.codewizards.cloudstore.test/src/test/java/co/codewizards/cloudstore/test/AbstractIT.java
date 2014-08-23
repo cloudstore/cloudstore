@@ -91,13 +91,13 @@ public abstract class AbstractIT {
 		final long timestamp = System.currentTimeMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = newFile(newFile("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -108,7 +108,7 @@ public abstract class AbstractIT {
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {
-		final File dir = newFile(parent, name);
+		final File dir = createFile(parent, name);
 		return createDirectory(dir);
 	}
 	protected File createDirectory(final File dir) throws IOException {
@@ -136,7 +136,7 @@ public abstract class AbstractIT {
 	}
 
 	protected File createFileWithRandomContent(final File parent, final String name) throws IOException {
-		final File file = newFile(parent, name);
+		final File file = createFile(parent, name);
 		return createFileWithRandomContent(file);
 	}
 
@@ -167,7 +167,7 @@ public abstract class AbstractIT {
 
 		final String relativeTargetString = symlinkParent.relativize(target);
 		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
-		final File symLinkFile = newFile(symbolicLinkString);
+		final File symLinkFile = createFile(symbolicLinkString);
 		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
 //		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
 		assertThat(symLinkFile.existsNoFollow()).isTrue();
@@ -270,8 +270,8 @@ public abstract class AbstractIT {
 		assertThat(children1).containsOnly(children2);
 
 		for (final String childName : children1) {
-			final File child1 = newFile(dir1, childName);
-			final File child2 = newFile(dir2, childName);
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
 			final boolean child1IsSymbolicLink = child1.isSymbolicLink();
 			final boolean child2IsSymbolicLink = child2.isSymbolicLink();

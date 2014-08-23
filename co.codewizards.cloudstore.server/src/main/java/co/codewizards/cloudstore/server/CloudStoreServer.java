@@ -155,7 +155,7 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized File getKeyStoreFile() {
 		if (keyStoreFile == null) {
-			final File sslServer = newFile(ConfigDir.getInstance().getFile(), "ssl.server");
+			final File sslServer = createFile(ConfigDir.getInstance().getFile(), "ssl.server");
 
 			if (!sslServer.isDirectory())
 				sslServer.mkdirs();
@@ -163,7 +163,7 @@ public class CloudStoreServer implements Runnable {
 			if (!sslServer.isDirectory())
 				throw new IllegalStateException("Could not create directory: " + sslServer);
 
-			keyStoreFile = newFile(sslServer, "keystore");
+			keyStoreFile = createFile(sslServer, "keystore");
 		}
 		return keyStoreFile;
 	}
@@ -351,10 +351,10 @@ public class CloudStoreServer implements Runnable {
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();
-		DerbyUtil.setLogFile(newFile(logDir, "derby.log"));
+		DerbyUtil.setLogFile(createFile(logDir, "derby.log"));
 
 		final String logbackXmlName = "logback.server.xml";
-		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreServer.class, logbackXmlName, logbackXmlFile);
 

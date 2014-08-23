@@ -50,7 +50,7 @@ public final class UrlUtil {
 
 	public static File getFile(final URL url) {
 		try {
-			return newFile(url.toURI());
+			return createFile(url.toURI());
 		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
 		}

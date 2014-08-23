@@ -101,7 +101,7 @@ public class UrlUtilTest {
 		logger.debug("[{}]getFile_url: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
-		final File fileFromString = newFile(tmpDir, "#Cumbia");
+		final File fileFromString = createFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else
@@ -118,7 +118,7 @@ public class UrlUtilTest {
 		logger.debug("[{}]appendEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
-		final File fileFromString = newFile(tmpDir, "#Cumbia");
+		final File fileFromString = createFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else
@@ -136,7 +136,7 @@ public class UrlUtilTest {
 		logger.debug("[{}]appendNonEncodedPath_getFile: entered.", Integer.toHexString(identityHashCode(this)));
 		final File tmpDir = createTempDirectory(this.getClass().getSimpleName());
 
-		final File fileFromString = newFile(tmpDir, "#Cumbia");
+		final File fileFromString = createFile(tmpDir, "#Cumbia");
 		if (!fileFromString.exists() && fileFromString.createNewFile())
 			System.out.println("File created: " + fileFromString.getCanonicalPath());
 		else

@@ -38,7 +38,7 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(newFile(newFile(localRoot, "bla"), ".."));
+		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(createFile(createFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
@@ -65,7 +65,7 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 		localRepoManager.close();
 
-		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(newFile(newFile(localRoot, "bla"), ".."));
+		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(createFile(createFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
@@ -146,8 +146,8 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 		assertThat(localRepoManager.getLocalRoot()).isEqualTo(localRoot.getCanonicalFile());
 
-		final File sub1Dir = newFile(localRepoManager.getLocalRoot(), "sub1");
-		final File sub1SubAaaDir = newFile(sub1Dir, "aaa");
+		final File sub1Dir = createFile(localRepoManager.getLocalRoot(), "sub1");
+		final File sub1SubAaaDir = createFile(sub1Dir, "aaa");
 
 		sub1SubAaaDir.mkdirs();
 		assertThat(sub1SubAaaDir.isDirectory()).isTrue();

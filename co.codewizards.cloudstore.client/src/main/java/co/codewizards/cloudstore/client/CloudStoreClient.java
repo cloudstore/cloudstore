@@ -268,10 +268,10 @@ public class CloudStoreClient {
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();
-		DerbyUtil.setLogFile(newFile(logDir, "derby.log"));
+		DerbyUtil.setLogFile(createFile(logDir, "derby.log"));
 
 		final String logbackXmlName = "logback.client.xml";
-		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists()) {
 			IOUtil.copyResource(CloudStoreClient.class, logbackXmlName, logbackXmlFile);
 		}

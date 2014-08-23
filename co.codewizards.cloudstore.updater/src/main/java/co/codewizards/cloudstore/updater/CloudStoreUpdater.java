@@ -94,7 +94,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		ConfigDir.getInstance().getLogDir();
 
 		final String logbackXmlName = "logback.updater.xml";
-		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreUpdater.class, logbackXmlName, logbackXmlFile);
 
@@ -128,7 +128,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 			final File backupDir = getBackupDir();
 			backupDir.mkdirs();
-			final File backupTarGzFile = newFile(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(System.currentTimeMillis(), 36))));
+			final File backupTarGzFile = createFile(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(System.currentTimeMillis(), 36))));
 			System.out.println("Creating backup: " + backupTarGzFile);
 
 			new TarGzFile(backupTarGzFile)
@@ -193,7 +193,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				if (child.isDirectory())
 					renameFiles(child, fileFilter);
 				else {
-					final File newChild = newFile(dir, child.getName() + RENAMED_FILE_SUFFIX);
+					final File newChild = createFile(dir, child.getName() + RENAMED_FILE_SUFFIX);
 					logger.debug("renameFiles: file='{}', newName='{}'", child, newChild.getName());
 					if (!child.renameTo(newChild)) {
 						final String msg = String.format("Failed to rename the file '%s' to '%s' (in the same directory)!", child, newChild.getName());
@@ -212,7 +212,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				if (child.isDirectory())
 					restoreRenamedFiles(child);
 				else if (child.getName().endsWith(RENAMED_FILE_SUFFIX)) {
-					final File newChild = newFile(dir, child.getName().substring(0, child.getName().length() - RENAMED_FILE_SUFFIX.length()));
+					final File newChild = createFile(dir, child.getName().substring(0, child.getName().length() - RENAMED_FILE_SUFFIX.length()));
 					logger.debug("restoreRenamedFiles: file='{}', newName='{}'", child, newChild.getName());
 					newChild.delete();
 					if (!child.renameTo(newChild))
@@ -231,8 +231,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 		@Override
 		public boolean accept(final java.io.File file) {
-			files.add(newFile(file));
-			files.add(newFile(file.getParentFile())); // just in case the parent didn't have its own entry and was created implicitly
+			files.add(createFile(file));
+			files.add(createFile(file.getParentFile())); // just in case the parent didn't have its own entry and was created implicitly
 			return true;
 		}
 	}
@@ -247,7 +247,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			if (entryName.startsWith(prefix))
 				entryName = entryName.substring(prefix.length());
 
-			return entryName.isEmpty() ? rootDir : newFile(rootDir, entryName);
+			return entryName.isEmpty() ? rootDir : createFile(rootDir, entryName);
 		}
 	}
 
@@ -308,7 +308,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				throw new IllegalStateException("No '/' found in URL?!");
 
 			final String fileName = path.substring(lastSlashIndex + 1);
-			final File downloadFile = newFile(tempDownloadDir, fileName);
+			final File downloadFile = createFile(tempDownloadDir, fileName);
 
 			boolean successful = false;
 			final InputStream in = url.openStream();
@@ -350,8 +350,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	@Override
 	protected File getInstallationDir() {
 		if (installationDirFile == null) {
-			final String path = IOUtil.simplifyPath(newFile(assertNotNull("installationDir", installationDir)));
-			final File f = newFile(path);
+			final String path = IOUtil.simplifyPath(createFile(assertNotNull("installationDir", installationDir)));
+			final File f = createFile(path);
 			if (!f.exists())
 				throw new IllegalArgumentException(String.format("installationDir '%s' (specified as '%s') does not exist!", f, installationDir));
 

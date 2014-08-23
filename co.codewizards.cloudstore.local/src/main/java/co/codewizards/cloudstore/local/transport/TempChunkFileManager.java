@@ -123,7 +123,7 @@ public class TempChunkFileManager {
 	}
 
 	public File getTempChunkFileDtoFile(final File file) {
-		return newFile(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
+		return createFile(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 	}
 
 	private String sha1(final byte[] data) {
@@ -162,7 +162,7 @@ public class TempChunkFileManager {
 		if (!tempDir.isDirectory())
 			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
 
-		final File tempFile = newFile(tempDir, String.format("%s%s_%s",
+		final File tempFile = createFile(tempDir, String.format("%s%s_%s",
 				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
 		try {
 			tempFile.createNewFile();
@@ -190,7 +190,7 @@ public class TempChunkFileManager {
 	public File getTempDir(final File destFile) {
 		assertNotNull("destFile", destFile);
 		final File parentDir = destFile.getParentFile();
-		return newFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
+		return createFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
 	}
 
 	/**

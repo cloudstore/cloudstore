@@ -37,7 +37,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(CertificateHandlingAndTestServiceIT.class);
 
 	static File getRandomTrustStoreFile() throws IOException {
-		final File dir = newFile(ConfigDir.getInstance().getFile(), "ssl.client");
+		final File dir = createFile(ConfigDir.getInstance().getFile(), "ssl.client");
 		dir.mkdirs();
 		final File trustStoreFile = createTempFile("truststore_", null, dir);
 		trustStoreFile.delete(); // It must not exist (reading it fails).

@@ -49,14 +49,14 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		if (localPathPrefix.isEmpty())
 			return localRoot;
 
-		return newFile(localRoot, localPathPrefix);
+		return createFile(localRoot, localPathPrefix);
 	}
 
 	private File getRemoteRootWithPathPrefix() {
 		if (remotePathPrefix.isEmpty())
 			return remoteRoot;
 
-		final File file = newFile(remoteRoot, remotePathPrefix);
+		final File file = createFile(remoteRoot, remotePathPrefix);
 		return file;
 	}
 
@@ -202,16 +202,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = newFile(remoteRoot, "2");
+		final File r_child_2 = createFile(remoteRoot, "2");
 		assertThat(r_child_2.isDirectory()).isTrue();
 
-		final File l_child_2 = newFile(localRoot, "2");
+		final File l_child_2 = createFile(localRoot, "2");
 		assertThat(l_child_2.isDirectory()).isTrue();
 
-		final File l_child_2_1 = newFile(l_child_2, "1 {11 11ä11#+} 1");
+		final File l_child_2_1 = createFile(l_child_2, "1 {11 11ä11#+} 1");
 		assertThat(l_child_2_1.isDirectory()).isTrue();
 
-		final File l_child_2_1_a = newFile(l_child_2_1, "a");
+		final File l_child_2_1_a = createFile(l_child_2_1, "a");
 		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(l_child_2_1_a);
@@ -242,16 +242,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncWithFileModificationInsideDeletedDirectoryCollisionInverse() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = newFile(remoteRoot, "2");
+		final File r_child_2 = createFile(remoteRoot, "2");
 		assertThat(r_child_2.isDirectory()).isTrue();
 
-		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = createFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		final File r_child_2_1_a = newFile(r_child_2_1, "a");
+		final File r_child_2_1_a = createFile(r_child_2_1, "a");
 		assertThat(r_child_2_1_a.isFile()).isTrue();
 
-		final File l_child_2 = newFile(localRoot, "2");
+		final File l_child_2 = createFile(localRoot, "2");
 		assertThat(l_child_2.isDirectory()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
@@ -338,16 +338,16 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncMovedFile() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = newFile(remoteRoot, "2");
+		final File r_child_2 = createFile(remoteRoot, "2");
 		assertThat(r_child_2.isDirectory()).isTrue();
 
-		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = createFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		final File r_child_2_1_b = newFile(r_child_2_1, "b");
+		final File r_child_2_1_b = createFile(r_child_2_1, "b");
 		assertThat(r_child_2_1_b.isFile()).isTrue();
 
-		final File r_child_2_b = newFile(r_child_2, "b");
+		final File r_child_2_b = createFile(r_child_2, "b");
 		assertThat(r_child_2_b.exists()).isFalse();
 
 		r_child_2_1_b.move(r_child_2_b);
@@ -368,21 +368,21 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 	public void syncMovedFileToNewDir() throws Exception {
 		syncFromRemoteToLocal();
 
-		final File r_child_2 = newFile(remoteRoot, "2");
+		final File r_child_2 = createFile(remoteRoot, "2");
 		assertThat(r_child_2.isDirectory()).isTrue();
 
-		final File r_child_2_1 = newFile(r_child_2, "1 {11 11ä11#+} 1");
+		final File r_child_2_1 = createFile(r_child_2, "1 {11 11ä11#+} 1");
 		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		final File r_child_2_1_b = newFile(r_child_2_1, "b");
+		final File r_child_2_1_b = createFile(r_child_2_1, "b");
 		assertThat(r_child_2_1_b.isFile()).isTrue();
 
-		final File r_child_2_new = newFile(r_child_2, "new");
+		final File r_child_2_new = createFile(r_child_2, "new");
 		assertThat(r_child_2_new.exists()).isFalse();
 		r_child_2_new.mkdir();
 		assertThat(r_child_2_new.isDirectory()).isTrue();
 
-		final File r_child_2_new_xxx = newFile(r_child_2_new, "xxx");
+		final File r_child_2_new_xxx = createFile(r_child_2_new, "xxx");
 
 		r_child_2_1_b.move(r_child_2_new_xxx);
 		assertThat(r_child_2_1_b.exists()).isFalse();
@@ -406,9 +406,9 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(remoteRoot, "1");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "a");
-		createRelativeSymlink(newFile(child_1, "b"), child_1_a);
+		createRelativeSymlink(createFile(child_1, "b"), child_1_a);
 
-		createRelativeSymlink(newFile(child_1, "broken"), newFile(child_1, "doesNotExist"));
+		createRelativeSymlink(createFile(child_1, "broken"), createFile(child_1, "doesNotExist"));
 
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);
@@ -457,9 +457,9 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(localRoot, "1");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "a");
-		createRelativeSymlink(newFile(child_1, "b"), child_1_a);
+		createRelativeSymlink(createFile(child_1, "b"), child_1_a);
 
-		createRelativeSymlink(newFile(child_1, "broken"), newFile(child_1, "doesNotExist"));
+		createRelativeSymlink(createFile(child_1, "broken"), createFile(child_1, "doesNotExist"));
 
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);
@@ -481,7 +481,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractIT
 		final File child_1 = createDirectory(localRoot, "A ä Ä { + } x ( << ))]] [ #");
 
 		final File child_1_a = createFileWithRandomContent(child_1, "Öü ß ? # + {{ d d } (( > << ]] )");
-		createRelativeSymlink(newFile(child_1, "Öü ß ? # + {{ d d } (( > << ]] ).new"), child_1_a);
+		createRelativeSymlink(createFile(child_1, "Öü ß ? # + {{ d d } (( > << ]] ).new"), child_1_a);
 
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);

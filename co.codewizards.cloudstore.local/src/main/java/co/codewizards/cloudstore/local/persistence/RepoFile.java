@@ -145,7 +145,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 			if (repoFile.getParent() == null) // skip the root
 				continue;
 
-			result = newFile(result, repoFile.getName());
+			result = createFile(result, repoFile.getName());
 		}
 		return result;
 	}

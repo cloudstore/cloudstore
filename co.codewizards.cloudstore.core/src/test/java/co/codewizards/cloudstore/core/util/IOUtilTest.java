@@ -29,12 +29,12 @@ public class IOUtilTest {
 	@Test
 	public void testInTmp() throws IOException {
 		logger.debug("[{}]testInTmp: entered.", Integer.toHexString(identityHashCode(this)));
-		final File testDir = newFile(newFile("/tmp/IOUtilTest"), "testDir");
+		final File testDir = createFile(createFile("/tmp/IOUtilTest"), "testDir");
 		testDir.mkdirs();
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		final File subFolder = newFile(testDir, "subFolder");
-		final File fileName = newFile(subFolder, "fileName");
+		final File subFolder = createFile(testDir, "subFolder");
+		final File fileName = createFile(subFolder, "fileName");
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 
 		final String relPath = IOUtil.getRelativePath(testDir, fileName);
@@ -54,9 +54,9 @@ public class IOUtilTest {
 		final File testDir = tmpDir;
 		System.out.println("testDir=  " + testDir.getAbsolutePath());
 
-		final File subFolder = newFile(testDir, "subFolder");
+		final File subFolder = createFile(testDir, "subFolder");
 		subFolder.mkdirs();
-		final File fileName = newFile(subFolder, "fileName");
+		final File fileName = createFile(subFolder, "fileName");
 
 		fileName.createNewFile();
 		System.out.println("fileName= " + fileName.getAbsolutePath());

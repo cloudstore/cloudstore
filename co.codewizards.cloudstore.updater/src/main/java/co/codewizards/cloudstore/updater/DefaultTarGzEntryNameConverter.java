@@ -20,7 +20,7 @@ public class DefaultTarGzEntryNameConverter implements TarGzEntryNameConverter {
 
 	@Override
 	public File getFile(final File rootDir, final String entryName) {
-		return newFile(rootDir, entryName);
+		return createFile(rootDir, entryName);
 	}
 
 }

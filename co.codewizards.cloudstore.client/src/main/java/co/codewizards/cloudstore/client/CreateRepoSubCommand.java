@@ -45,15 +45,15 @@ public class CreateRepoSubCommand extends SubCommand
 		super.prepare();
 
 		if (localRoot == null)
-			localRootFile = newFile("").getAbsoluteFile();
+			localRootFile = createFile("").getAbsoluteFile();
 		else
-			localRootFile = newFile(localRoot).getAbsoluteFile();
+			localRootFile = createFile(localRoot).getAbsoluteFile();
 
 		localRoot = localRootFile.getPath();
 
 		if (!noAlias && (alias == null || alias.isEmpty())) { // empty alias means the same as alias not specified.
 			final String simplified = IOUtil.simplifyPath(localRootFile);
-			alias = newFile(simplified).getName();
+			alias = createFile(simplified).getName();
 		}
 
 		if (alias != null && alias.isEmpty())
