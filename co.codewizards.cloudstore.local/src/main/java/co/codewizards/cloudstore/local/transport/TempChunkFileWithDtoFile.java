@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 
 public class TempChunkFileWithDtoFile {

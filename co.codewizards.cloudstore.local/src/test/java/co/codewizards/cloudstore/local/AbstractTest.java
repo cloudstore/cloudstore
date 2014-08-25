@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -29,6 +28,7 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.oio.api.File;
 
 public abstract class AbstractTest {
 
@@ -46,13 +46,13 @@ public abstract class AbstractTest {
 		final long timestamp = System.currentTimeMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = newFile(newFile("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -67,7 +67,7 @@ public abstract class AbstractTest {
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {
-		final File dir = newFile(parent, name);
+		final File dir = createFile(parent, name);
 		return createDirectory(dir);
 	}
 	protected File createDirectory(final File dir) throws IOException {
@@ -99,7 +99,7 @@ public abstract class AbstractTest {
 	}
 
 	protected File createFileWithRandomContent(final File parent, final String name, final long minLength) throws IOException {
-		final File file = newFile(parent, name);
+		final File file = createFile(parent, name);
 		return createFileWithRandomContent(file, minLength);
 	}
 
@@ -140,7 +140,7 @@ public abstract class AbstractTest {
 
 		final String relativeTargetString = symlinkParent.relativize(target);
 		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
-		final File symLinkFile = newFile(symbolicLinkString);
+		final File symLinkFile = createFile(symbolicLinkString);
 		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
 //		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
 		assertThat(symLinkFile.existsNoFollow()).isTrue();
@@ -244,8 +244,8 @@ public abstract class AbstractTest {
 		assertThat(children1).isEqualTo(children2);
 
 		for (final String childName : children1) {
-			final File child1 = newFile(dir1, childName);
-			final File child2 = newFile(dir2, childName);
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
 			final boolean child1IsSymbolicLink = child1.isSymbolicLink();
 			final boolean child2IsSymbolicLink = child2.isSymbolicLink();

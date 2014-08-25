@@ -1,10 +1,10 @@
 package co.codewizards.cloudstore.client;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.Collection;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link SubCommand} implementation for listing all repositories in the local file system

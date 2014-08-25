@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -38,7 +38,6 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -77,6 +76,7 @@ import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarkerDao;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class FileRepoTransport extends AbstractRepoTransport implements LocalRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
@@ -236,7 +236,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		if (pathPrefix.isEmpty())
 			return getLocalRepoManager().getLocalRoot();
 		else
-			return newFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
+			return createFile(getLocalRepoManager().getLocalRoot(), pathPrefix);
 	}
 
 	@Override
@@ -525,7 +525,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
 			File remoteRootFile;
 			try {
-				remoteRootFile = newFile(getRemoteRootWithoutPathPrefix().toURI());
+				remoteRootFile = createFile(getRemoteRootWithoutPathPrefix().toURI());
 			} catch (final URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
@@ -733,7 +733,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 */
 	protected File getFile(String path) {
 		path = assertNotNull("path", path).replace('/', FILE_SEPARATOR_CHAR);
-		final File file = newFile(getLocalRepoManager().getLocalRoot(), path);
+		final File file = createFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
 
@@ -1108,7 +1108,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				logger.debug("endPutFile: fileWriteStrategy={}", fileWriteStrategy);
 
 				final File destFile = (fileWriteStrategy == FileWriteStrategy.replaceAfterTransfer
-						? newFile(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
+						? createFile(file.getParentFile(), LocalRepoManager.TEMP_NEW_FILE_PREFIX + file.getName()) : file);
 
 				final InputStream fileIn;
 				if (destFile != file) {

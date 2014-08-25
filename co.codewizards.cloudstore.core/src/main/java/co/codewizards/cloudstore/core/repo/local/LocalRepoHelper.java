@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 
 public final class LocalRepoHelper {
@@ -25,7 +25,7 @@ public final class LocalRepoHelper {
 	public static File getLocalRootContainingFile(final File file) {
 		File parentFile = assertNotNull("file", file);
 		while (parentFile != null) {
-			final File parentMetaDir = newFile(parentFile, LocalRepoManager.META_DIR_NAME);
+			final File parentMetaDir = createFile(parentFile, LocalRepoManager.META_DIR_NAME);
 			if (parentMetaDir.exists())
 				return parentFile;
 

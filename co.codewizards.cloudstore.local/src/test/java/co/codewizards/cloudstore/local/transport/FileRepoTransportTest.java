@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.OutputStream;
@@ -20,7 +20,6 @@ import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -34,6 +33,7 @@ import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class FileRepoTransportTest extends AbstractTest {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransportTest.class);
@@ -135,8 +135,8 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
-		final File child_2 = newFile(remoteRoot, "2");
-		final File child_2_1 = newFile(child_2, "1");
+		final File child_2 = createFile(remoteRoot, "2");
+		final File child_2_1 = createFile(child_2, "1");
 		createFileWithRandomContent(child_2_1, "c");
 
 		localRepoManager.localSync(new LoggerProgressMonitor(logger));
@@ -172,9 +172,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
-		final File child_2 = newFile(remoteRoot, "2");
-		final File child_2_1 = newFile(child_2, "1");
-		final File child_2_1_b = newFile(child_2_1, "b");
+		final File child_2 = createFile(remoteRoot, "2");
+		final File child_2_1 = createFile(child_2, "1");
+		final File child_2_1_b = createFile(child_2_1, "b");
 		final OutputStream out = child_2_1_b.createFileOutputStream(true);
 		out.write(4);
 		out.close();
@@ -212,9 +212,9 @@ public class FileRepoTransportTest extends AbstractTest {
 
 		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
-		final File child_2 = newFile(remoteRoot, "2");
-		final File child_2_1 = newFile(child_2, "1");
-		final File child_2_1_b = newFile(child_2_1, "b");
+		final File child_2 = createFile(remoteRoot, "2");
+		final File child_2_1 = createFile(child_2, "1");
+		final File child_2_1_b = createFile(child_2_1, "b");
 
 		final long child_2_1LastModifiedBeforeModification = child_2_1.lastModified();
 

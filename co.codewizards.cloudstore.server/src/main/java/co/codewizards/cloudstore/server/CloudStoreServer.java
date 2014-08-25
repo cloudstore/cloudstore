@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.server;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
@@ -51,11 +51,11 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
+import co.codewizards.cloudstore.oio.api.File;
 import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
 public class CloudStoreServer implements Runnable {
@@ -155,7 +155,7 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized File getKeyStoreFile() {
 		if (keyStoreFile == null) {
-			final File sslServer = newFile(ConfigDir.getInstance().getFile(), "ssl.server");
+			final File sslServer = createFile(ConfigDir.getInstance().getFile(), "ssl.server");
 
 			if (!sslServer.isDirectory())
 				sslServer.mkdirs();
@@ -163,7 +163,7 @@ public class CloudStoreServer implements Runnable {
 			if (!sslServer.isDirectory())
 				throw new IllegalStateException("Could not create directory: " + sslServer);
 
-			keyStoreFile = newFile(sslServer, "keystore");
+			keyStoreFile = createFile(sslServer, "keystore");
 		}
 		return keyStoreFile;
 	}
@@ -351,10 +351,10 @@ public class CloudStoreServer implements Runnable {
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();
-		DerbyUtil.setLogFile(newFile(logDir, "derby.log"));
+		DerbyUtil.setLogFile(createFile(logDir, "derby.log"));
 
 		final String logbackXmlName = "logback.server.xml";
-		final File logbackXmlFile = newFile(ConfigDir.getInstance().getFile(), logbackXmlName);
+		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists())
 			IOUtil.copyResource(CloudStoreServer.class, logbackXmlName, logbackXmlFile);
 

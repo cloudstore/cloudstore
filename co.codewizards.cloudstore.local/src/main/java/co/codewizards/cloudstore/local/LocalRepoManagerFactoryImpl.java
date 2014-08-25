@@ -16,13 +16,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * Registry of {@link LocalRepoManager}s.

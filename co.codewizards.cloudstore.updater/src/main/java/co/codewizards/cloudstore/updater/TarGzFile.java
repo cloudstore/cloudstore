@@ -19,7 +19,7 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class TarGzFile {
 	private static final Logger logger = LoggerFactory.getLogger(TarGzFile.class);

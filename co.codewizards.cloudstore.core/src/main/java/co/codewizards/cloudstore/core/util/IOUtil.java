@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.FileFilter;
@@ -26,8 +26,8 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
+import co.codewizards.cloudstore.oio.api.File;
 
 public final class IOUtil {
 	/**
@@ -102,17 +102,17 @@ public final class IOUtil {
 		// Maybe we don't need to call simplifyPath in _getRelativePath anymore. Need to check later. Marco.
 		// Additionally, this method did not work without baseDir being an absolute path. Therefore, I now check and make it absolute, if it is not yet.
 		if (baseDir.isAbsolute())
-			baseDir = newFile(simplifyPath(baseDir));
+			baseDir = createFile(simplifyPath(baseDir));
 		else
-			baseDir = newFile(simplifyPath(baseDir.getAbsoluteFile()));
+			baseDir = createFile(simplifyPath(baseDir.getAbsoluteFile()));
 
 
 		File absFile;
-		final File tmpF = newFile(file);
+		final File tmpF = createFile(file);
 		if (tmpF.isAbsolute())
 			absFile = tmpF;
 		else
-			absFile = newFile(baseDir, file);
+			absFile = createFile(baseDir, file);
 
 		final File dest = absFile;
 		File b = baseDir;
@@ -171,7 +171,7 @@ public final class IOUtil {
 	public static String getRelativePath(final String baseDir, final String file)
 	throws IOException
 	{
-		return getRelativePath(newFile(baseDir), file);
+		return getRelativePath(createFile(baseDir), file);
 	}
 
 	/**
@@ -190,11 +190,11 @@ public final class IOUtil {
 //			throw new IllegalArgumentException("baseDir \""+baseDir.getPath()+"\" is not absolute!");
 
 		File absFile;
-		final File tmpF = newFile(file);
+		final File tmpF = createFile(file);
 		if (tmpF.isAbsolute())
 			absFile = tmpF;
 		else
-			absFile = newFile(baseDir, file);
+			absFile = createFile(baseDir, file);
 
 		String absFileStr = null;
 		String baseDirStr = null;
@@ -550,7 +550,7 @@ public final class IOUtil {
 	 */
 	public static boolean deleteDirectoryRecursively(final String dir)
 	{
-		final File dirF = newFile(dir);
+		final File dirF = createFile(dir);
 		return deleteDirectoryRecursively(dirF);
 	}
 
@@ -573,7 +573,7 @@ public final class IOUtil {
 	public static synchronized File createUniqueIncrementalFolder(final File rootFolder, final String prefix) throws IOException
 	{
 		for(int n=0; n<Integer.MAX_VALUE; n++) {
-			final File f = newFile(rootFolder, String.format("%s%x", prefix, n));
+			final File f = createFile(rootFolder, String.format("%s%x", prefix, n));
 			if(!f.exists()) {
 				if(!f.mkdirs())
 					throw new IOException("The directory "+f.getAbsolutePath()+" could not be created");
@@ -607,7 +607,7 @@ public final class IOUtil {
 	{
 		long count = 0;
 		while(++count <= maxIterations) {
-			final File f = newFile(rootFolder, String.format("%s%x", prefix, (long)(Math.random() * uniqueOutOf)));
+			final File f = createFile(rootFolder, String.format("%s%x", prefix, (long)(Math.random() * uniqueOutOf)));
 			if(!f.exists()) {
 				if(!f.mkdirs())
 					throw new IOException("The directory "+f.getAbsolutePath()+" could not be created");
@@ -650,7 +650,7 @@ public final class IOUtil {
 	{
 		File f = file;
 		for (final String subDir : subDirs)
-			f = newFile(f, subDir);
+			f = createFile(f, subDir);
 		return f;
 	}
 
@@ -841,7 +841,7 @@ public final class IOUtil {
 	public static File getTempDir()
 	{
 		if(tempDir == null)
-	    tempDir = newFile(System.getProperty("java.io.tmpdir"));
+	    tempDir = createFile(System.getProperty("java.io.tmpdir"));
 		return tempDir;
 	}
 
@@ -907,7 +907,7 @@ public final class IOUtil {
 			throw new RuntimeException(e);
 		}
 
-		return newFile(IOUtil.getTempDir(), userNameDir);
+		return createFile(IOUtil.getTempDir(), userNameDir);
 	}
 
 	private static String getUserName()
@@ -921,7 +921,7 @@ public final class IOUtil {
 		if (userHome == null)
 			throw new IllegalStateException("System property user.home is not set! This should never happen!"); //$NON-NLS-1$
 
-		return newFile(userHome);
+		return createFile(userHome);
 	}
 
 	/**
@@ -1027,7 +1027,7 @@ public final class IOUtil {
 
 		final File[] files = sourceDirectory.listFiles(fileFilter);
 		for (final File file : files) {
-			final File destinationFile = newFile(destinationDirectory, file.getName());
+			final File destinationFile = createFile(destinationDirectory, file.getName());
 			if(file.isDirectory()) {
 				if (destinationDirectory.getAbsoluteFile().equals(file.getAbsoluteFile()))
 					logger.warn("copyDirectory: Skipping directory, because it equals the destination: {}", file.getAbsoluteFile());
@@ -1055,7 +1055,7 @@ public final class IOUtil {
 	public static void copyResource(final Class<?> sourceResClass, final String sourceResName, final String destinationFilename)
 	throws IOException
 	{
-		copyResource(sourceResClass, sourceResName, newFile(destinationFilename));
+		copyResource(sourceResClass, sourceResName, createFile(destinationFilename));
 	}
 
 
@@ -1485,7 +1485,7 @@ public final class IOUtil {
 		if (!fileExtension.isEmpty())
 			fileExtension = '.' + fileExtension;
 
-		final File result = newFile(parentFile,
+		final File result = createFile(parentFile,
 				String.format("%s.%s%s%s",
 						fileName,
 						Long.toString(System.currentTimeMillis(), 36),

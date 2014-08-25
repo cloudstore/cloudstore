@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.lang.System.*;
 
 import java.util.LinkedList;
@@ -12,8 +12,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class LockFileTest {
 
@@ -28,7 +28,7 @@ public class LockFileTest {
 	@Test
 	public void acquireAndReleaseMultipleInstances() {
 		logger.debug("[{}]acquireAndReleaseMultipleInstances: entered.", Integer.toHexString(identityHashCode(this)));
-		final File file = newFile(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36));
+		final File file = createFile(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36));
 		try ( LockFile lockFile1 = LockFileFactory.getInstance().acquire(file, 10000); ) {
 			try ( LockFile lockFile2 = LockFileFactory.getInstance().acquire(file, 10000); ) {
 				System.out.println("Test");
@@ -39,7 +39,7 @@ public class LockFileTest {
 	@Test
 	public void multiThreadAcquireAndRelease() throws Exception {
 		logger.debug("[{}]multiThreadAcquireAndRelease: entered.", Integer.toHexString(identityHashCode(this)));
-		final File file = newFile(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36));
+		final File file = createFile(IOUtil.getTempDir(), Long.toString(System.currentTimeMillis(), 36));
 
 		final List<LockFileTestThread> threads = new LinkedList<LockFileTestThread>();
 		for (int i = 0; i < 10 + random.nextInt(90); ++i) {

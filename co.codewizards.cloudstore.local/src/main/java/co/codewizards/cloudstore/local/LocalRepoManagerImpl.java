@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
@@ -73,6 +72,7 @@ import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.Repository;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * Manager of a repository.
@@ -228,7 +228,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			initLockFile();
 			createRepositoryPropertiesFile();
 			try {
-				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, newFile(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
+				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, createFile(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -243,7 +243,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initLockFile() {
-		final File lock = newFile(getMetaDir(), "cloudstore-repository.lock");
+		final File lock = createFile(getMetaDir(), "cloudstore-repository.lock");
 		try {
 			lockFile = LockFileFactory.getInstance().acquire(lock, 100);
 		} catch (final TimeoutException x) {
@@ -259,7 +259,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void createRepositoryPropertiesFile() {
 		final int version = 2;
-		final File repositoryPropertiesFile = newFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			repositoryProperties = new Properties();
 			repositoryProperties.put(PROP_VERSION, Integer.valueOf(version).toString());
@@ -270,7 +270,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void checkRepositoryPropertiesFile() throws LocalRepoManagerException {
-		final File repositoryPropertiesFile = newFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		if (!repositoryPropertiesFile.exists())
 			throw new RepositoryCorruptException(localRoot,
 					String.format("Meta-directory does not contain '%s'!", REPOSITORY_PROPERTIES_FILE_NAME));
@@ -341,7 +341,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void updateRepositoryPropertiesFile() {
 		assertNotNull("repositoryProperties", repositoryProperties);
-		final File repositoryPropertiesFile = newFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			boolean store = false;
 			final String repositoryId = assertNotNull("repositoryId", getRepositoryId()).toString();
@@ -523,7 +523,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private File getMetaDir() {
-		return newFile(localRoot, META_DIR_NAME);
+		return createFile(localRoot, META_DIR_NAME);
 	}
 
 	private Map<String, String> getPersistenceProperties(final boolean createRepository) {

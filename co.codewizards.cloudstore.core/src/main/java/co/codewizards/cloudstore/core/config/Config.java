@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -106,7 +106,7 @@ public class Config {
 	private static final class ConfigHolder {
 		public static final Config instance = new Config(
 				null, null,
-				new File[] { newFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
+				new File[] { createFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
 	}
 
 	private final Config parentConfig;
@@ -227,14 +227,14 @@ public class Config {
 	private static File[] createPropertiesFiles(final File file, final boolean isDirectory) {
 		if (isDirectory) {
 			return new File[] {
-				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				newFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
 			};
 		}
 		else {
 			return new File[] {
-				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
-				newFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
 			};
 		}
 	}

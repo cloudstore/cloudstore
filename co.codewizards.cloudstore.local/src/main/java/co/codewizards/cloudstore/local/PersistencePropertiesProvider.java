@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class PersistencePropertiesProvider {
 
@@ -23,7 +23,7 @@ public class PersistencePropertiesProvider {
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 	}
 	private File getMetaDir() {
-		return newFile(localRoot, LocalRepoManager.META_DIR_NAME);
+		return createFile(localRoot, LocalRepoManager.META_DIR_NAME);
 	}
 
 	public Map<String, String> getPersistenceProperties(final boolean createRepository) {
@@ -31,7 +31,7 @@ public class PersistencePropertiesProvider {
 		if (!metaDirectory.isDirectory())
 			throw new IllegalStateException("The localRoot does not contain the meta-directory: " + metaDirectory.getAbsolutePath());
 
-		final File persistencePropertiesFile = newFile(metaDirectory, LocalRepoManager.PERSISTENCE_PROPERTIES_FILE_NAME);
+		final File persistencePropertiesFile = createFile(metaDirectory, LocalRepoManager.PERSISTENCE_PROPERTIES_FILE_NAME);
 		if (!persistencePropertiesFile.isFile())
 			throw new IllegalStateException("The persistencePropertiesFile does not exist or is not a file: " + persistencePropertiesFile.getAbsolutePath());
 

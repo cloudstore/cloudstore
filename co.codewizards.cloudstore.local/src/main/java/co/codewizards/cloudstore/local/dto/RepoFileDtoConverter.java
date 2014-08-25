@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local.dto;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +26,7 @@ import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
 import co.codewizards.cloudstore.local.transport.TempChunkFileWithDtoFile;
+import co.codewizards.cloudstore.oio.api.File;
 
 public class RepoFileDtoConverter {
 

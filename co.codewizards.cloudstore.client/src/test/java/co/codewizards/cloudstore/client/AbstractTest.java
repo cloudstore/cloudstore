@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -9,10 +9,10 @@ import java.util.Arrays;
 import java.util.Random;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
+import co.codewizards.cloudstore.oio.api.File;
 
 public abstract class AbstractTest {
 
@@ -29,12 +29,12 @@ public abstract class AbstractTest {
 		final long timestamp = System.currentTimeMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		final File localRoot = newFile(getTestRepositoryBaseDir(), repoName);
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		final File dir = newFile(newFile("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -55,8 +55,8 @@ public abstract class AbstractTest {
 		assertThat(children1).containsOnly(children2);
 
 		for (final String childName : children1) {
-			final File child1 = newFile(dir1, childName);
-			final File child2 = newFile(dir2, childName);
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
 			if (child1.isFile()) {
 				assertThat(child2.isFile());

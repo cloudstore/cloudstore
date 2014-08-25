@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.net.SocketException;
 
 import javax.ws.rs.ProcessingException;
@@ -14,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
+import co.codewizards.cloudstore.oio.api.File;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.request.TestRequest;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;

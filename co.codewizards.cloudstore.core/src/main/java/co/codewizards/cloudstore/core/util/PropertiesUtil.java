@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.oio.file.File;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link java.util.Properties} utilities.
@@ -118,7 +118,7 @@ public final class PropertiesUtil
 
 	public static java.util.Properties load(final String filename) throws IOException
 	{
-		return load(filename != null ? newFile(filename) : null);
+		return load(filename != null ? createFile(filename) : null);
 	}
 
 	public static java.util.Properties load(final File file) throws IOException
@@ -135,7 +135,7 @@ public final class PropertiesUtil
 
 	public static void store(final String filename, final java.util.Properties properties, final String comment) throws IOException
 	{
-		store(filename != null ? newFile(filename) : null, properties, comment);
+		store(filename != null ? createFile(filename) : null, properties, comment);
 	}
 
 	public static void store(final File file, final java.util.Properties properties, final String comment) throws IOException

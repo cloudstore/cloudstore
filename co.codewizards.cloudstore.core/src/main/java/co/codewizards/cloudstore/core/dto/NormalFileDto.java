@@ -1,10 +1,11 @@
 package co.codewizards.cloudstore.core.dto;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
+
+import co.codewizards.cloudstore.oio.api.File;
 
 @XmlRootElement
 public class NormalFileDto extends RepoFileDto {

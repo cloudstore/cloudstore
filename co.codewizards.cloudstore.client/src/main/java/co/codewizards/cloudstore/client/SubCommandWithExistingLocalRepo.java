@@ -1,14 +1,14 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import org.kohsuke.args4j.Argument;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
@@ -59,9 +59,9 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
 		localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryName(repositoryName);
 		if (localRoot != null)
-			localFile = localPathPrefix.isEmpty() ? localRoot : newFile(localRoot, localPathPrefix);
+			localFile = localPathPrefix.isEmpty() ? localRoot : createFile(localRoot, localPathPrefix);
 		else {
-			localFile = newFile(local).getAbsoluteFile();
+			localFile = createFile(local).getAbsoluteFile();
 			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
 			if (localRoot == null)
 				localRoot = localFile;

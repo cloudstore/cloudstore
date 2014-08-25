@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.file.FileFactory.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import co.codewizards.cloudstore.core.oio.file.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link SubCommand} implementation for creating a repository in the local file system.
@@ -45,15 +45,15 @@ public class CreateRepoSubCommand extends SubCommand
 		super.prepare();
 
 		if (localRoot == null)
-			localRootFile = newFile("").getAbsoluteFile();
+			localRootFile = createFile("").getAbsoluteFile();
 		else
-			localRootFile = newFile(localRoot).getAbsoluteFile();
+			localRootFile = createFile(localRoot).getAbsoluteFile();
 
 		localRoot = localRootFile.getPath();
 
 		if (!noAlias && (alias == null || alias.isEmpty())) { // empty alias means the same as alias not specified.
 			final String simplified = IOUtil.simplifyPath(localRootFile);
-			alias = newFile(simplified).getName();
+			alias = createFile(simplified).getName();
 		}
 
 		if (alias != null && alias.isEmpty())
