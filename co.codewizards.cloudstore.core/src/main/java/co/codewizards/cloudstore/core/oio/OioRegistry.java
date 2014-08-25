@@ -33,19 +33,11 @@ public class OioRegistry {
 		N highPrio = null;
 
 		while (it.hasNext()) {
-			try {
-				final N i = it.next();
-				if (highPrio == null)
-					highPrio = i;
-				else if (highPrio.getPriority() < i.getPriority())
-					highPrio = i;
-			} catch (final java.util.ServiceConfigurationError e) {
-				/* This happens because of "A concrete provider class named in a provider-configuration file cannot be
-				 * found;" (From the java.util.ServiceConfigurationError jdoc).
-				 * This should be caused by the packaging for different distros/OS;
-				 */
-				LOGGER.info(e.getMessage());
-			}
+			final N i = it.next();
+			if (highPrio == null)
+				highPrio = i;
+			else if (highPrio.getPriority() < i.getPriority())
+				highPrio = i;
 		}
 
 		if (highPrio == null)
