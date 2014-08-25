@@ -11,11 +11,11 @@ import java.util.Properties;
 
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
 import co.codewizards.cloudstore.local.AbstractTest;
-import co.codewizards.cloudstore.oio.api.File;
 
 public class ConfigTest extends AbstractTest {
 

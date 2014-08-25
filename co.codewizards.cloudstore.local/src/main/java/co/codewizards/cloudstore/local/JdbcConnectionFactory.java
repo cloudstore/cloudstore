@@ -13,7 +13,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 /**
  * Factory creating JDBC connections to the repository's derby database.

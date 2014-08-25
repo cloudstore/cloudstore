@@ -4,8 +4,8 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 public class DefaultTarGzEntryNameConverter implements TarGzEntryNameConverter {
 

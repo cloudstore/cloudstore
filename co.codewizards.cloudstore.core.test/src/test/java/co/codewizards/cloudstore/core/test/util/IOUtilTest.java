@@ -1,7 +1,7 @@
 /**
  *
  */
-package co.codewizards.cloudstore.core.util;
+package co.codewizards.cloudstore.core.test.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.lang.System.*;
@@ -13,7 +13,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * @author Sebastian Schefczyk

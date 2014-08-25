@@ -26,17 +26,17 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
-import co.codewizards.cloudstore.oio.api.File;
 
 public final class IOUtil {
 	/**
-	 * UTF-8 caracter set name.
+	 * UTF-8 character set name.
 	 */
 	public static final String CHARSET_NAME_UTF_8 = "UTF-8";
 
 	/**
-	 * UTF-8 caracter set.
+	 * UTF-8 character set.
 	 */
 	public static final Charset CHARSET_UTF_8 = Charset.forName(CHARSET_NAME_UTF_8);
 

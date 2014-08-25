@@ -17,9 +17,9 @@ import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
-import co.codewizards.cloudstore.oio.api.File;
 
 public final class ZipUtil {
 	private static final Logger logger = LoggerFactory.getLogger(ZipUtil.class);
@@ -305,7 +305,7 @@ public final class ZipUtil {
 		long zipLastModified = System.currentTimeMillis();
 
 		if ("file".equals(zipArchive.getProtocol())) {
-			final File fileToCheck = createFile(Util.urlToUri(zipArchive));
+			final File fileToCheck = createFile(UrlUtil.urlToUri(zipArchive));
 			zipLastModified = fileToCheck.lastModified();
 			zipLength = fileToCheck.length();
 			doUnzip = !unzipRootFolder.exists() || zipLastModified != timestamp || zipLength != fileSize;

@@ -5,7 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 public class DerbyUtil {
 

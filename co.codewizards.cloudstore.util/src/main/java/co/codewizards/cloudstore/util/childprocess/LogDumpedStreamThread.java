@@ -5,11 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import co.codewizards.cloudstore.util.IOUtil;
 
 /**
  * Thread used to log standard-out or standard-error from a child-process.
@@ -22,6 +21,16 @@ import co.codewizards.cloudstore.util.IOUtil;
  */
 public class LogDumpedStreamThread extends Thread
 {
+	/**
+	 * UTF-8 character set name.
+	 */
+	private static final String CHARSET_NAME_UTF_8 = "UTF-8";
+
+	/**
+	 * UTF-8 character set.
+	 */
+	private static final Charset CHARSET_UTF_8 = Charset.forName(CHARSET_NAME_UTF_8);
+
 	private static final Logger logger = LoggerFactory.getLogger(LogDumpedStreamThread.class);
 
 	/**
@@ -134,7 +143,7 @@ public class LogDumpedStreamThread extends Thread
 				if (force || firstNonLoggedWriteAge > logMaxAge || noWritePeriod > logAfterNoWritePeriod || bufferOutputStream.size() > logWhenBufferExceedsSize) {
 					String currentBufferString;
 					try {
-						currentBufferString = bufferOutputStream.toString(IOUtil.CHARSET_NAME_UTF_8);
+						currentBufferString = bufferOutputStream.toString(CHARSET_NAME_UTF_8);
 					} catch (final UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}

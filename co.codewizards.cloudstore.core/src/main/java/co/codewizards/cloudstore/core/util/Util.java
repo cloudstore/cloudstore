@@ -1,36 +1,16 @@
 package co.codewizards.cloudstore.core.util;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+
+import co.codewizards.cloudstore.util.AssertUtil;
 
 /**
  * @author Marco
  * @author Sebastian Schefczyk
- * @deprecated Methods of this class should go into project co.codewizards.cloudstore.util! I don't want to refactor in branch.
  */
-@Deprecated
 public final class Util {
 	private Util() { }
-
-	/**
-	 * Convert an URL to an URI.
-	 * @param url The URL to cenvert
-	 * @return The URI
-	 */
-	public static final URI urlToUri(final URL url) {
-		if (url == null)
-			return null;
-
-		try {
-			return new URI(url.getProtocol(), url.getAuthority(), url.getPath(), url.getQuery(), url.getRef());
-		} catch (final URISyntaxException e) {
-			// Since every URL is an URI, its transformation should never fail. But if it does, we rethrow.
-			throw new RuntimeException(e);
-		}
-	}
 
 	/**
 	 * Get the user name of the user who is currently authenticated at the operating system.
@@ -44,30 +24,15 @@ public final class Util {
 	}
 
 	public static final <T> T assertNotNull(final String name, final T object) {
-		if (object == null)
-			throw new IllegalArgumentException(String.format("%s == null", name));
-
-		return object;
+		return AssertUtil.assertNotNull(name, object);
 	}
 
 	public static final <T> T[] assertNotNullAndNoNullElement(final String name, final T[] array) {
-		assertNotNull(name, array);
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] == null)
-				throw new IllegalArgumentException(String.format("%s[%s] == null", name, i));
-		}
-		return array;
+		return AssertUtil.assertNotNullAndNoNullElement(name, array);
 	}
 
 	public static final <E, T extends Collection<E>> T assertNotNullAndNoNullElement(final String name, final T collection) {
-		assertNotNull(name, collection);
-		int i = -1;
-		for (final E element : collection) {
-			++i;
-			if (element == null)
-				throw new IllegalArgumentException(String.format("%s[%s] == null", name, i));
-		}
-		return collection;
+		return AssertUtil.assertNotNullAndNoNullElement(name, collection);
 	}
 
 	public static final boolean equal(final Object one, final Object two) {

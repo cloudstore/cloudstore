@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link SubCommand} implementation for creating a repository in the local file system.

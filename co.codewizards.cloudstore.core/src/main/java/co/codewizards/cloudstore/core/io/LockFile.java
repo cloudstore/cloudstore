@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.locks.Lock;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 /**
  * Lock-file exclusively locking a certain {@link #getFile() file}.

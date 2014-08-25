@@ -18,13 +18,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.AbstractTest;
-import co.codewizards.cloudstore.oio.api.File;
 
 public class RepoToRepoSyncTest extends AbstractTest {
 	private static Logger logger = LoggerFactory.getLogger(RepoToRepoSyncTest.class);

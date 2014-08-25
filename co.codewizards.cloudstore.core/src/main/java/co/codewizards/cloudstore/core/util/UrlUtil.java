@@ -6,6 +6,7 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 public final class UrlUtil {
 
@@ -136,5 +137,22 @@ public final class UrlUtil {
 			return 0;
 
 		return stringBuilder.charAt(index);
+	}
+
+	/**
+	 * Convert an URL to an URI.
+	 * @param url The URL to cenvert
+	 * @return The URI
+	 */
+	public static final URI urlToUri(final URL url) {
+		if (url == null)
+			return null;
+	
+		try {
+			return new URI(url.getProtocol(), url.getAuthority(), url.getPath(), url.getQuery(), url.getRef());
+		} catch (final URISyntaxException e) {
+			// Since every URL is an URI, its transformation should never fail. But if it does, we rethrow.
+			throw new RuntimeException(e);
+		}
 	}
 }

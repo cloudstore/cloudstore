@@ -3,8 +3,8 @@ package co.codewizards.cloudstore.oio.nio;
 import java.io.IOException;
 import java.net.URI;
 
-import co.codewizards.cloudstore.oio.api.File;
-import co.codewizards.cloudstore.oio.api.FileFactory;
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.oio.FileFactory;
 
 /**
  * @author Sebastian Schefczyk

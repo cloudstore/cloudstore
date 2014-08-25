@@ -5,7 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 class ParentFileLastModifiedManager {
 	private static class ParentFileEntry {

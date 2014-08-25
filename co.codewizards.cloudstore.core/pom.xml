@@ -11,18 +11,12 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>co.codewizards.cloudstore.oio</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.api</artifactId>
-		</dependency>
-		<!-- TODO move to client; but currently to much tests would fail without an implementation -->
-		<dependency>
-			<groupId>co.codewizards.cloudstore.oio</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
-		</dependency>
-		
-		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk15on</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.util</artifactId>
 		</dependency>
 	</dependencies>
 

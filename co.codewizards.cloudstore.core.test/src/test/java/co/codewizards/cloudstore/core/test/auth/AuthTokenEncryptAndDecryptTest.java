@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.auth;
+package co.codewizards.cloudstore.core.test.auth;
 
 import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
@@ -11,6 +11,16 @@ import java.security.SecureRandom;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.auth.AuthToken;
+import co.codewizards.cloudstore.core.auth.AuthTokenIO;
+import co.codewizards.cloudstore.core.auth.AuthTokenSigner;
+import co.codewizards.cloudstore.core.auth.AuthTokenVerifier;
+import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
+import co.codewizards.cloudstore.core.auth.SignedAuthToken;
+import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
+import co.codewizards.cloudstore.core.auth.SignedAuthTokenEncrypter;
+import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 
 public class AuthTokenEncryptAndDecryptTest {
 	private static final Logger logger = LoggerFactory.getLogger(AuthTokenEncryptAndDecryptTest.class);

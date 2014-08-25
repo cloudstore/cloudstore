@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 
 public final class LocalRepoHelper {

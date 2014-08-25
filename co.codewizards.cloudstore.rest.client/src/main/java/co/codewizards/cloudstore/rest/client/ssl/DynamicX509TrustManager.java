@@ -21,8 +21,8 @@ import javax.net.ssl.X509TrustManager;
 
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.HashUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 class DynamicX509TrustManager implements X509TrustManager {
 	private static final int LOCKFILE_TIMEOUT_MS = 1000 * 10;

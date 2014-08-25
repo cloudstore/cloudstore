@@ -14,8 +14,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>co.codewizards.cloudstore.oio</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.api</artifactId>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.core</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

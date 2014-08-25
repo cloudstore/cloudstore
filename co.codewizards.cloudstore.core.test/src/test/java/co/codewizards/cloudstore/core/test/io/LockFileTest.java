@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.io;
+package co.codewizards.cloudstore.core.test.io;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
@@ -12,8 +12,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.io.LockFile;
+import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 public class LockFileTest {
 

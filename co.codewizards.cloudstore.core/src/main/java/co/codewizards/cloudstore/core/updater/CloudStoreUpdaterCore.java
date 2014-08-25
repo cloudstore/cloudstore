@@ -26,9 +26,9 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 public class CloudStoreUpdaterCore {
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdaterCore.class);

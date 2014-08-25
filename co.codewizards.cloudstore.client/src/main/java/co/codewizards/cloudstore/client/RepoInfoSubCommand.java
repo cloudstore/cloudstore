@@ -5,6 +5,7 @@ import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 import java.util.Collection;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
@@ -18,7 +19,6 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
-import co.codewizards.cloudstore.oio.api.File;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.

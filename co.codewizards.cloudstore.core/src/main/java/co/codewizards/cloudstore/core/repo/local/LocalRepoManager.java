@@ -5,8 +5,8 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
-import co.codewizards.cloudstore.oio.api.File;
 
 public interface LocalRepoManager extends AutoCloseable {
 

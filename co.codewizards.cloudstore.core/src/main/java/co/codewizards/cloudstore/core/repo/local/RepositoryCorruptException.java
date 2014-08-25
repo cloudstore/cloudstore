@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import co.codewizards.cloudstore.oio.api.File;
+import co.codewizards.cloudstore.core.oio.File;
 
 public class RepositoryCorruptException extends LocalRepoManagerException {
 

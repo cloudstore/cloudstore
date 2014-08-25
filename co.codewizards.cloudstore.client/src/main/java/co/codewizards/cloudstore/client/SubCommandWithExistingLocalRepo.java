@@ -5,10 +5,10 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.oio.api.File;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
