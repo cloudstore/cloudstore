@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 
 public final class Util {
@@ -67,13 +68,59 @@ public final class Util {
 		return one == null ? two == null : one.equals(two);
 	}
 
-	public static final boolean equal(final long one, final long two) {
+	public static final boolean equal(final boolean one, final boolean two) {
+		return one == two;
+	}
+
+	public static final boolean equal(final byte one, final byte two) {
+		return one == two;
+	}
+
+	public static final boolean equal(final short one, final short two) {
+		return one == two;
+	}
+
+	public static final boolean equal(final char one, final char two) {
 		return one == two;
 	}
 
 	public static final boolean equal(final int one, final int two) {
 		return one == two;
 	}
+
+	public static final boolean equal(final long one, final long two) {
+		return one == two;
+	}
+
+
+	public static final boolean equal(final Object[] one, final Object[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final byte[] one, final byte[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final boolean[] one, final boolean[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final short[] one, final short[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final char[] one, final char[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final int[] one, final int[] two) {
+		return Arrays.equals(one, two);
+	}
+
+	public static final boolean equal(final long[] one, final long[] two) {
+		return Arrays.equals(one, two);
+	}
+
 
 	/**
 	 * Does really nothing.

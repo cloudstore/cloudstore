@@ -9,6 +9,7 @@ import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
+import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -37,6 +38,9 @@ public abstract class Entity implements AutoTrackChanged
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private Date changed = new Date();
 
+	@NotPersistent
+	private transient int hashCode;
+
 	/**
 	 * Get the unique identifier of this object.
 	 * <p>
@@ -51,7 +55,7 @@ public abstract class Entity implements AutoTrackChanged
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -59,22 +63,39 @@ public abstract class Entity implements AutoTrackChanged
 			return false;
 		}
 
-		Object thisOid = JDOHelper.getObjectId(this);
+		final Object thisOid = JDOHelper.getObjectId(this);
 		if (thisOid == null) {
 			return false;
 		}
 
-		Object otherOid = JDOHelper.getObjectId(obj);
+		final Object otherOid = JDOHelper.getObjectId(obj);
 		return thisOid.equals(otherOid);
 	}
 
 	@Override
 	public int hashCode() {
-		Object thisOid = JDOHelper.getObjectId(this);
-		if (thisOid == null) {
-			return super.hashCode();
+		if (hashCode == 0) {
+			// Freeze the hashCode.
+			//
+			// We make sure the hashCode does not change after it was once initialised, because the object might
+			// have been added to a HashSet (or Map) before being persisted. During persistence, the object's id is
+			// assigned and without freezing the hashCode, the object is thus not found in the Map/Set, anymore.
+			//
+			// This new strategy seems to be working well; messages like this do not occur anymore:
+			//
+			// Aug 22, 2014 9:44:23 AM org.datanucleus.store.rdbms.mapping.java.PersistableMapping postInsert
+			// INFO: Object "co.codewizards.cloudstore.local.persistence.FileChunk@36dccbc7" has field "co.codewizards.cloudstore.local.persistence.FileChunk.normalFile" with an N-1 bidirectional relation set to relate to "co.codewizards.cloudstore.local.persistence.NormalFile@63323bb" but the collection at "co.codewizards.cloudstore.local.persistence.NormalFile.fileChunks" doesnt contain this object.
+
+			final Object thisOid = JDOHelper.getObjectId(this);
+			if (thisOid == null)
+				hashCode = super.hashCode();
+			else
+				hashCode = thisOid.hashCode();
+
+			if (hashCode == 0) // very unlikely, but we want our code to be 100% robust.
+				hashCode = 1;
 		}
-		return thisOid.hashCode();
+		return hashCode;
 	}
 
 	@Override
@@ -97,7 +118,7 @@ public abstract class Entity implements AutoTrackChanged
 	 * This setter merely exists for extraordinary, unforeseen use cases as well as tests.
 	 * @param created the timestamp of the creation of this entity. Must not be <code>null</code>.
 	 */
-	protected void setCreated(Date created) {
+	protected void setCreated(final Date created) {
 		assertNotNull("created", created);
 		this.created = created;
 	}
@@ -107,7 +128,7 @@ public abstract class Entity implements AutoTrackChanged
 		return changed;
 	}
 	@Override
-	public void setChanged(Date changed) {
+	public void setChanged(final Date changed) {
 		assertNotNull("created", created);
 		this.changed = changed;
 	}
