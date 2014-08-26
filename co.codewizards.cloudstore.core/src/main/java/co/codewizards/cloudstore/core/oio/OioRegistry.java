@@ -39,7 +39,7 @@ public class OioRegistry {
 		}
 
 		if (highPrio == null)
-			throw new IllegalStateException("Could not get one implementation for class: " + n.getClass().getSimpleName());
+			throw new IllegalStateException("Could not get one implementation for class: " + n.getName());
 
 		return highPrio;
 	}
@@ -50,16 +50,6 @@ public class OioRegistry {
 
 	public FileFactory getFileFactory() {
 		return fileFactory;
-	}
-
-	/** Checks for java.nio.file.Files at the current class loader. */
-	private static boolean isJavaNioAvailable() {
-		try {
-			Class.forName("java.nio.file.Files");
-			return true;
-		} catch (final Exception e) {
-			return false;
-		}
 	}
 
 }
