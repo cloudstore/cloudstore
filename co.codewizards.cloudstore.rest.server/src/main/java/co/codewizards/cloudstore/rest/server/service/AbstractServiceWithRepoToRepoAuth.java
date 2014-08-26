@@ -1,14 +1,16 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.util.AssertUtil.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -65,7 +67,6 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			final String authorizationHeader = request.getHeader("Authorization");
 			if (authorizationHeader == null || authorizationHeader.isEmpty()) {
 				logger.debug("getAuth: There is no 'Authorization' header. Replying with a Status.UNAUTHORIZED response asking for 'Basic' authentication.");
-
 				throw newUnauthorizedException();
 			}
 
@@ -77,37 +78,51 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 						.entity(new Error("Only 'Basic' authentication is supported!")).build());
 
 			final String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
-			final byte[] basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_UTF_8));
+			final byte[] basicAuthDecodedBA = getBasicAuthEncodedBA(basicAuthEncoded);
 			final StringBuilder userNameSB = new StringBuilder();
 			char[] password = null;
 
 			final ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
-			final CharBuffer cb = CharBuffer.allocate(basicAuthDecodedBA.length + 1);
+			CharArrayWriter caw = new CharArrayWriter(basicAuthDecodedBA.length + 1);
+			CharArrayReader car = null;
 			try {
-				final Reader r = new InputStreamReader(in, IOUtil.CHARSET_UTF_8);
+				final Reader r = new InputStreamReader(in, IOUtil.CHARSET_NAME_UTF_8);
 				int charsReadTotal = 0;
 				int charsRead;
 				do {
-					charsRead = r.read(cb);
+					final char[] c = new char[10];
+					charsRead = r.read(c);
+					caw.write(c);
 
 					if (charsRead > 0)
 						charsReadTotal += charsRead;
 				} while (charsRead >= 0);
-				cb.position(0);
 
-				while (cb.position() < charsReadTotal) {
-					final char c = cb.get();
-					if (c == ':')
+				charsRead = 0;
+
+				car = new CharArrayReader(caw.toCharArray());
+				int charsReadTotalCheck = 0;
+
+				while (charsRead >= 0 && charsRead < charsReadTotal) {
+					final char[] cbuf = new char[1];
+					charsRead = car.read(cbuf);
+					if (charsRead > 0)
+						charsReadTotalCheck += charsRead;
+
+					if (cbuf[0] == ':')
 						break;
 
-					userNameSB.append(c);
+					userNameSB.append(cbuf[0]);
 				}
 
-				if (cb.position() < charsReadTotal) {
-					password = new char[charsReadTotal - cb.position()];
-					int idx = 0;
-					while (cb.position() < charsReadTotal)
-						password[idx++] = cb.get();
+				if (charsRead >= 0 && charsRead < charsReadTotal) {
+					password = new char[charsReadTotal - charsReadTotalCheck];
+					final int passwordSize = car.read(password);
+					if (passwordSize + charsReadTotalCheck != charsReadTotal)
+						throw new IllegalStateException("passwordSize and charsRead must match charsReadTotal!"
+								+ " passwordSize=" + passwordSize
+								+ ", charsRead=" + charsRead
+								+ ", charsReadTotal=" + charsReadTotal);//TODO for testing
 				}
 			} catch (final Exception e) {
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_XML).entity(new Error(e)).build());
@@ -115,9 +130,25 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 				// For extra safety: Overwrite all sensitive memory with 0.
 				Arrays.fill(basicAuthDecodedBA, (byte)0);
 
-				cb.position(0);
-				for (int i = 0; i < cb.capacity(); ++i)
-					cb.put((char)0);
+				final char[] zeroArray = new char[] {0};
+				// overwrite caw & car:
+				if (caw != null) {
+					final int oldCawSize = caw.size();
+					caw.reset();
+					try {
+						if (car != null) {
+							car.reset();
+						}
+						for (int i = 0; i < oldCawSize; ++i)
+							caw.write(zeroArray);
+						car = new CharArrayReader(caw.toCharArray());
+						car.close();
+						caw.reset();
+						caw = null;
+					} catch (final IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
 			}
 
 			final Auth auth = new Auth();
@@ -126,6 +157,16 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			this.auth = auth;
 		}
 		return auth;
+	}
+
+	private byte[] getBasicAuthEncodedBA(final String basicAuthEncoded) {
+		byte[] basicAuthDecodedBA;
+		try {
+			basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_NAME_UTF_8));
+		} catch (final UnsupportedEncodingException e1) {
+			throw new RuntimeException(e1);
+		}
+		return basicAuthDecodedBA;
 	}
 
 	/**

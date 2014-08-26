@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- *
  * @author Sebastian Schefczyk
  */
 public class OioRegistry {
@@ -16,6 +15,7 @@ public class OioRegistry {
 	private static final Logger logger = LoggerFactory.getLogger(OioRegistry.class);
 
 	private final FileFactory fileFactory;
+	private final FileChannelFactory fileChannelFactory;
 
 	private static class OioProviderHolder {
 		public static final OioRegistry instance = new OioRegistry();
@@ -24,9 +24,11 @@ public class OioRegistry {
 	private OioRegistry() {
 		this.fileFactory = getPrioritizedService(FileFactory.class);
 		logger.info("Preferred implementation '{}' for fileFactory", this.fileFactory.getClass().getSimpleName());
+		this.fileChannelFactory = getPrioritizedService(FileChannelFactory.class);
+		logger.info("Preferred implementation '{}' for fileChannelFactory", this.fileChannelFactory.getClass().getSimpleName());
 	}
 
-	private <N extends FileFactory> N getPrioritizedService(final Class<N> n) {
+	private <N extends FileService> N getPrioritizedService(final Class<N> n) {
 		final Iterator<N> it = ServiceLoader.load(n).iterator();
 		N highPrio = null;
 
@@ -39,7 +41,7 @@ public class OioRegistry {
 		}
 
 		if (highPrio == null)
-			throw new IllegalStateException("Could not get one implementation for class: " + n.getName());
+			throw new IllegalStateException("Could not get an implementation for interface: " + n.getName());
 
 		return highPrio;
 	}
@@ -50,6 +52,10 @@ public class OioRegistry {
 
 	public FileFactory getFileFactory() {
 		return fileFactory;
+	}
+
+	public FileChannelFactory getFileChannelFactory() {
+		return fileChannelFactory;
 	}
 
 }

@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +24,6 @@ public class LogDumpedStreamThread extends Thread
 	 * UTF-8 character set name.
 	 */
 	private static final String CHARSET_NAME_UTF_8 = "UTF-8";
-
-	/**
-	 * UTF-8 character set.
-	 */
-	private static final Charset CHARSET_UTF_8 = Charset.forName(CHARSET_NAME_UTF_8);
 
 	private static final Logger logger = LoggerFactory.getLogger(LogDumpedStreamThread.class);
 

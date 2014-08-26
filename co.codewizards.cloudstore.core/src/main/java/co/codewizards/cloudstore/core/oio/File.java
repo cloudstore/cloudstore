@@ -11,8 +11,10 @@ import java.net.URI;
 
 
 /**
- * @author Sebastian Schefczyk
+ * Substitute for java.io.File. Also there are many methods as known from
+ * java.nio.file.Files and java.nio.file.Paths.
  *
+ * @author Sebastian Schefczyk
  */
 public interface File {
 

@@ -17,7 +17,6 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
@@ -34,11 +33,6 @@ public final class IOUtil {
 	 * UTF-8 character set name.
 	 */
 	public static final String CHARSET_NAME_UTF_8 = "UTF-8";
-
-	/**
-	 * UTF-8 character set.
-	 */
-	public static final Charset CHARSET_UTF_8 = Charset.forName(CHARSET_NAME_UTF_8);
 
 	/**
 	 * 1 GB in bytes.

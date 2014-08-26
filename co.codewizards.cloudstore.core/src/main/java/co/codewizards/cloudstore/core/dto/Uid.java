@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.dto;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.nio.charset.Charset;
+import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.UUID;
 
@@ -43,7 +43,7 @@ import co.codewizards.cloudstore.core.util.Base64Url;
  */
 @XmlJavaTypeAdapter(type=Uid.class, value=UidXmlAdapter.class)
 public class Uid implements Comparable<Uid> {
-	private static final Charset ASCII = Charset.forName("ASCII");
+	private static final String CHARSET_ASCII = "ASCII";
 
 	private final long hi;
 	private final long lo;
@@ -111,7 +111,15 @@ public class Uid implements Comparable<Uid> {
 	 * @see #toString()
 	 */
 	public Uid(final String uidString) {
-		this(Base64Url.decodeBase64(assertValidUidString(uidString).getBytes(ASCII)));
+		this(uidStringToByteArray(uidString));
+	}
+
+	private static byte[] uidStringToByteArray(final String uidString) {
+		try {
+			return Base64Url.decodeBase64(assertValidUidString(uidString).getBytes(CHARSET_ASCII));
+		} catch (final UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public byte[] toBytes() {
@@ -165,7 +173,11 @@ public class Uid implements Comparable<Uid> {
 	 */
 	@Override
 	public String toString() {
-		return new String(Base64Url.encodeBase64(toBytes()), ASCII);
+		try {
+			return new String(Base64Url.encodeBase64(toBytes()), CHARSET_ASCII);
+		} catch (final UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

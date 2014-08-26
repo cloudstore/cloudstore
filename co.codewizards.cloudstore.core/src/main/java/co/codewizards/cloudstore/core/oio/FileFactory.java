@@ -2,17 +2,11 @@ package co.codewizards.cloudstore.core.oio;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ServiceLoader;
 
 /**
  * @author Sebastian Schefczyk
- *
  */
-public interface FileFactory {
-
-	/** Priority of use. Used after getting several possible Services fetched by
-	 * {@link ServiceLoader#load}. The one with the highest priority wins. */
-	int getPriority();
+public interface FileFactory extends FileService {
 
 	File createFile(final String pathname);
 
