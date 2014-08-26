@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OioRegistry {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OioRegistry.class);
+	private static final Logger logger = LoggerFactory.getLogger(OioRegistry.class);
 
 	private final FileFactory fileFactory;
 
@@ -23,11 +23,11 @@ public class OioRegistry {
 
 	private OioRegistry() {
 		this.fileFactory = getPrioritizedService(FileFactory.class);
-		LOGGER.info("Preferred implementation '{}' for fileFactory", this.fileFactory.getClass().getSimpleName());
+		logger.info("Preferred implementation '{}' for fileFactory", this.fileFactory.getClass().getSimpleName());
 	}
 
 	private <N extends FileFactory> N getPrioritizedService(final Class<N> n) {
-		final Iterator<N> it = ServiceLoader.load(n, n.getClassLoader()).iterator();
+		final Iterator<N> it = ServiceLoader.load(n).iterator();
 		N highPrio = null;
 
 		while (it.hasNext()) {
