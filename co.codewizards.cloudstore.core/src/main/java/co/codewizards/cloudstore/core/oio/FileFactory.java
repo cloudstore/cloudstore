@@ -2,11 +2,16 @@ package co.codewizards.cloudstore.core.oio;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ServiceLoader;
 
 /**
  * @author Sebastian Schefczyk
  */
-public interface FileFactory extends FileService {
+public interface FileFactory {
+
+	/** Priority of use. Used after getting more than one services fetched by
+	 * {@link ServiceLoader#load}. The one with the highest priority wins. */
+	int getPriority();
 
 	File createFile(final String pathname);
 
@@ -23,5 +28,5 @@ public interface FileFactory extends FileService {
 
 	File createTempFile(String prefix, String suffix) throws IOException;
 
-	File createTempFile(String prefix, String suffix, File dir) throws IOException;
+	File createTempFile(String prefix, String suffix, File parentDir) throws IOException;
 }

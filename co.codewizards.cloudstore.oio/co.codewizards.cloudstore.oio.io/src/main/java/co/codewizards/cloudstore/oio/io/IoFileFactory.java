@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.oio.nio;
+package co.codewizards.cloudstore.oio.io;
 
 import java.io.IOException;
 import java.net.URI;
@@ -6,56 +6,56 @@ import java.net.URI;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.FileFactory;
 
+
 /**
  * @author Sebastian Schefczyk
- *
  */
-public class NioFileFactory implements FileFactory {
+public class IoFileFactory implements FileFactory {
 
 	@Override
 	public int getPriority() {
-		return 10;
+		return 0;
 	}
 
 	@Override
 	public File createFile(final String pathname) {
-		return new NioFile(pathname);
+		return new IoFile(pathname);
 	}
 
 	@Override
 	public File createFile(final String parent, final String child) {
-		return new NioFile(parent, child);
+		return new IoFile(parent, child);
 	}
 
 	@Override
 	public File createFile(final File parent, final String child) {
-		return new NioFile(parent, child);
+		return new IoFile(parent, child);
 	}
 
 	@Override
 	public File createFile(final java.io.File file) {
-		return new NioFile(file);
+		return new IoFile(file);
 	}
 
 	@Override
 	public File createFile(final URI uri) {
-		return new NioFile(uri);
+		return new IoFile(uri);
 	}
 
 
 	@Override
 	public File createTempDirectory(final String prefix) throws IOException {
-		return NioFileUtil.createTempDirectory(prefix);
+		return IoFileUtil.createTempDirectory(prefix);
 	}
 
 	@Override
 	public File createTempFile(final String prefix, final String suffix) throws IOException {
-		return NioFileUtil.createTempFile(prefix, suffix);
+		return IoFileUtil.createTempFile(prefix, suffix);
 	}
 
 	@Override
 	public File createTempFile(final String prefix, final String suffix, final File parentDir) throws IOException {
-		return NioFileUtil.createTempFile(prefix, suffix, parentDir);
+		return IoFileUtil.createTempFile(prefix, suffix, parentDir);
 	}
 
 }

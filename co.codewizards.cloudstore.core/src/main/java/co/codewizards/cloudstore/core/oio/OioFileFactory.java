@@ -40,14 +40,16 @@ public class OioFileFactory {
 		return OioRegistry.getInstance().getFileFactory().createFile(uri);
 	}
 
+	/** Creates a temporary directory. */
 	public static File createTempDirectory(final String prefix) throws IOException {
 		return OioRegistry.getInstance().getFileFactory().createTempDirectory(prefix);
 	}
 
+	/** Creates a temporary file. */
 	public static File createTempFile(final String prefix, final String suffix) throws IOException {
 		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix);
 	}
-
+	/** Creates a temporary file within specified parent directory. */
 	public static File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
 		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix, dir);
 	}

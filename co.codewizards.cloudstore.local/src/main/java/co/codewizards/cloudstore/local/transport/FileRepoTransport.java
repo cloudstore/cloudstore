@@ -376,7 +376,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					if (!toParentFile.isDirectory())
 						toParentFile.mkdirs();
 
-//					Files.copy(fromFile.toPath(), toFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 					fromFile.copyToCopyAttributes(toFile);
 				} catch (final IOException e) {
 					throw new RuntimeException(e);

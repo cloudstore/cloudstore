@@ -132,6 +132,11 @@
 				<version>${cloudstore.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>co.codewizards.cloudstore.oio</groupId>
+				<artifactId>co.codewizards.cloudstore.oio.test</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.local</artifactId>
 				<version>${cloudstore.version}</version>

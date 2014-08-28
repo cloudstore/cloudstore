@@ -1,8 +1,5 @@
-package co.codewizards.cloudstore.oio.nio;
+package co.codewizards.cloudstore.oio.io;
 
-import static co.codewizards.cloudstore.util.AssertUtil.*;
-
-import java.io.ByteArrayOutputStream;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,55 +10,38 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.util.childprocess.DumpStreamThread;
+import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.util.FileUtils;
 
 /**
- * File object with allowed imports to "java.nio.*".
- *
  * @author Sebastian Schefczyk
+ *
  */
-public class NioFile implements File {
-
-	private static final Logger logger = LoggerFactory.getLogger(NioFile.class);
+public class IoFile implements File {
 
 	final java.io.File ioFile;
 
 
-	NioFile(final String pathname) {
+	IoFile(final String pathname) {
 		this.ioFile = new java.io.File(pathname);
 	}
 
-	NioFile(final File parent, final String child) {
-		final java.io.File ioParent = NioFileUtil.castOrFail(parent).ioFile;
+	IoFile(final File parent, final String child) {
+		final java.io.File ioParent = IoFileUtil.castOrFail(parent).ioFile;
 		this.ioFile = new java.io.File(ioParent, child);
 	}
 
-	NioFile(final String parent, final String child) {
+	IoFile(final String parent, final String child) {
 		this.ioFile = new java.io.File(parent, child);
 	}
 
-	NioFile(final URI uri) {
+	IoFile(final URI uri) {
 		this.ioFile = new java.io.File(uri);
 	}
 
-	NioFile(final java.io.File ioFile) {
+	IoFile(final java.io.File ioFile) {
 		this.ioFile = ioFile;
 	}
 
@@ -69,7 +49,7 @@ public class NioFile implements File {
 	@Override
 	public File getParentFile() {
 		final java.io.File parentFile = this.ioFile.getParentFile();
-		return parentFile != null ? new NioFile(parentFile) : null;
+		return parentFile != null ? new IoFile(parentFile) : null;
 	}
 
 	@Override
@@ -85,24 +65,24 @@ public class NioFile implements File {
 	@Override
 	public File[] listFiles() {
 		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles();
-		return NioFileUtil.convert(ioFilesListFiles);
+		return IoFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FileFilter fileFilter) {
 		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(fileFilter);
-		return NioFileUtil.convert(ioFilesListFiles);
+		return IoFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FilenameFilter fileFilter) {
 		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(fileFilter);
-		return NioFileUtil.convert(ioFilesListFiles);
+		return IoFileUtil.convert(ioFilesListFiles);
 	}
 
 	@Override
 	public File getAbsoluteFile() {
-		return new NioFile(ioFile.getAbsoluteFile());
+		return new IoFile(ioFile.getAbsoluteFile());
 	}
 
 	@Override
@@ -112,7 +92,7 @@ public class NioFile implements File {
 
 	@Override
 	public boolean existsNoFollow() {
-		return Files.exists(ioFile.toPath(), LinkOption.NOFOLLOW_LINKS);
+		return ioFile.exists();
 	}
 	@Override
 	public boolean createNewFile() throws IOException {
@@ -136,7 +116,7 @@ public class NioFile implements File {
 
 	@Override
 	public int compareTo(final File otherFile) {
-		return ioFile.compareTo(NioFileUtil.castOrFail(otherFile).ioFile);
+		return ioFile.compareTo(IoFileUtil.castOrFail(otherFile).ioFile);
 	}
 
 	@Override
@@ -156,7 +136,7 @@ public class NioFile implements File {
 
 	@Override
 	public File getCanonicalFile() throws IOException {
-		return new NioFile(ioFile.getCanonicalFile());
+		return new IoFile(ioFile.getCanonicalFile());
 	}
 
 	@Override
@@ -176,57 +156,43 @@ public class NioFile implements File {
 
 	@Override
 	public boolean isRegularFileNoFollowLinks() {
-		return Files.isRegularFile(ioFile.toPath(), LinkOption.NOFOLLOW_LINKS);
+		return this.ioFile.isFile();
 	}
 
 	@Override
 	public boolean isRegularFileFollowLinks() {
-		return Files.isRegularFile(ioFile.toPath());
+		return this.ioFile.isFile();
 	}
 
 	@Override
 	public boolean isDirectoryFileNoFollowSymLinks() {
-		return Files.isDirectory(ioFile.toPath(), LinkOption.NOFOLLOW_LINKS);
+		return this.ioFile.isDirectory();
 	}
 
 	@Override
 	public boolean isDirectoryFollowSymLinks() {
-		return Files.isDirectory(ioFile.toPath());
+		return this.ioFile.isDirectory();
 	}
 
 	@Override
 	public boolean isSymbolicLink() {
-		return Files.isSymbolicLink(ioFile.toPath());
+		// currently: no support for symlinks in this implementation
+		return false;
 	}
 
 	@Override
 	public String readSymbolicLinkToPathString() throws IOException {
-		final Path symlinkPath = ioFile.toPath();
-		final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
-		final String currentTarget = toPathString(currentTargetPath);
-		return currentTarget;
+		throw new IllegalStateException("Impossible operation within this implementation: check use method 'isSymbolicLink' before!");
 	}
 
 	@Override
 	public long getLastModifiedNoFollow() {
-		try {
-			final BasicFileAttributes attributes = Files.readAttributes(
-					ioFile.toPath(), BasicFileAttributes.class,
-					LinkOption.NOFOLLOW_LINKS);
-			return attributes.lastModifiedTime().toMillis();
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private static String toPathString(final Path path) {
-		assertNotNull("path", path);
-		return path.toString().replace(java.io.File.separatorChar, '/');
+		return this.ioFile.lastModified();
 	}
 
 	@Override
 	public boolean renameTo(final File dest) {
-		return ioFile.renameTo(NioFileUtil.castOrFail(dest).ioFile);
+		return ioFile.renameTo(IoFileUtil.castOrFail(dest).ioFile);
 	}
 
 	@Override
@@ -261,7 +227,7 @@ public class NioFile implements File {
 
 	@Override
 	public String createSymbolicLink(final String targetPath) throws IOException {
-		return Files.createSymbolicLink(ioFile.toPath(), Paths.get(targetPath)).toString();
+		throw new IllegalStateException("Impossible operation within this implementation. Check whether symlinks are available here!");
 	}
 
 	@Override
@@ -296,12 +262,66 @@ public class NioFile implements File {
 
 	@Override
 	public void move(final File toFile) throws IOException {
-		Files.move(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath());
+		if (toFile.exists())
+			throw new IOException("toFile file did already exists!");
+		if (!this.ioFile.exists())
+			throw new IllegalArgumentException("Source file did not exists!");
+		if (this.ioFile.getCanonicalPath().equals(toFile.getCanonicalPath()))
+			return; //nothing to do!
+
+		final boolean renameTo = this.ioFile.renameTo(IoFileUtil.castOrFail(toFile).ioFile);
+		// we try to do a simple rename, but this won't be successful between partitions or non-empty directories.
+		if (renameTo)
+			return;
+
+		// 2nd solution: file: copy and delete
+		if (this.ioFile.isFile()) {
+			IOUtil.copyFile(this, toFile);
+			final boolean delete = this.delete();
+			if (!delete)
+				throw new IllegalStateException("Problem on moving file from '"
+						+ this.ioFile.getCanonicalPath() +
+						"' to " + IoFileUtil.castOrFail(toFile).ioFile.getCanonicalPath());
+		} else if (this.ioFile.isDirectory()) {
+			/* If empty, but has failed the simple renameTo(), the destination
+			 * is probably on another partition (very unlikely on IOS).
+			 */
+			if (this.ioFile.listFiles().length == 0) {
+				throw new IllegalArgumentException("Should not occure!");
+			} else { // non-empty directory
+				/* remark: on IOS should be only one partition available to this app.
+				 * And a copy/delete operation of a non-empty directory could
+				 * last very long; as in Files.move(), this should be prevented.
+				 * Best solution would be to rename recursively, because renaming
+				 * also only works on same partition.
+				 * Assuming there is only on partition, we assume renaming never fails.
+				 * Partition-Detection: Its very hard to detect, whether to files are on the same
+				 * partition, in a OS independent and without java.nio.Files.
+				 * So we just assume one partition because of IOS. */
+				IoFileUtil.moveRecursively(this, toFile);
+			}
+		}
 	}
 
 	@Override
 	public void copyToCopyAttributes(final File toFile) throws IOException {
-		Files.copy(ioFile.toPath(), NioFileUtil.castOrFail(toFile).ioFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+		if (toFile.exists())
+			throw new IOException("toFile file did already exists!");
+		if (!this.ioFile.exists())
+			throw new IllegalArgumentException("Source file did not exists!");
+		if (this.ioFile.getCanonicalPath().equals(toFile.getCanonicalPath()))
+			return; //nothing to do!
+
+		if (this.ioFile.isFile()) {
+			IOUtil.copyFile(this, toFile);
+		} else {
+			// java.nio.Files.copy is non-recursive, so must this implementation be!
+			final boolean mkdir = toFile.mkdir();
+			if (!mkdir)
+				throw new IllegalStateException("Problem on moving directory from '"
+						+ this.ioFile.getCanonicalPath() +
+						"'! Could not create directory " + IoFileUtil.castOrFail(toFile).ioFile.getCanonicalPath());
+		}
 	}
 
 	@Override
@@ -321,62 +341,13 @@ public class NioFile implements File {
 
 	@Override
 	public void setLastModifiedNoFollow(final long lastModified) {
-		final Path path = ioFile.toPath().toAbsolutePath();
-		final List<Throwable> errors = new ArrayList<>();
-
-		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
-		try {
-			Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS)
-			.setTimes(lastModifiedTime, null, null);
-
-			return;
-		} catch (final IOException e) {
-			errors.add(e);
-		}
-
-		// It's currently impossible to modify the 'lastModified' timestamp of a symlink :-(
-		// http://stackoverflow.com/questions/17308363/symlink-lastmodifiedtime-in-java-1-7
-		// Therefore, we fall back to the touch command, if the above code failed.
-
-		final String timestamp = new SimpleDateFormat("YYYYMMddHHmm.ss").format(new Date(lastModified));
-		final ProcessBuilder processBuilder = new ProcessBuilder("touch", "-c", "-h", "-m", "-t", timestamp, path.toString());
-		processBuilder.redirectErrorStream(true);
-		try {
-			final Process process = processBuilder.start();
-			final ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-			final int processExitCode;
-			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, logger);
-			try {
-				dumpInputStreamThread.start();
-				processExitCode = process.waitFor();
-			} finally {
-				dumpInputStreamThread.flushBuffer();
-				dumpInputStreamThread.interrupt();
-			}
-
-			if (processExitCode != 0) {
-				final String stdOutString = new String(stdOut.toByteArray());
-				throw new IOException(String.format(
-						"Command 'touch' failed with exitCode=%s and the following message: %s",
-						processExitCode, stdOutString));
-			}
-
-			return;
-		} catch (IOException | InterruptedException e) {
-			errors.add(e);
-		}
-
-		if (!errors.isEmpty()) {
-			logger.error("Setting the lastModified timestamp of '{}' failed with the following errors:", path);
-			for (final Throwable error : errors) {
-				logger.error("" + error, error);
-			}
-		}
+		this.ioFile.setLastModified(lastModified);
 	}
 
 	@Override
-	public String relativize(final File target) {
-		return ioFile.toPath().relativize(NioFileUtil.castOrFail(target).ioFile.toPath()).toString();
+	public String relativize(final File target) throws IOException {
+//		return IOUtil.getRelativePath(this, target); // TODO result is different, should have a look; the first shared folder was appended.
+		return FileUtils.getRelativePath(this.ioFile, target.getIoFile());
 	}
 
 	@Override
@@ -391,8 +362,8 @@ public class NioFile implements File {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if ( !(obj instanceof NioFile) ) return false;
-		final NioFile nioFile = (NioFile) obj;
+		if ( !(obj instanceof IoFile) ) return false;
+		final IoFile nioFile = (IoFile) obj;
 		return this.ioFile.equals(nioFile.ioFile);
 	}
 

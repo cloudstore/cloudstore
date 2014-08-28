@@ -26,8 +26,12 @@ public final class NioFileUtil {
 		return new NioFile(java.io.File.createTempFile (prefix, suffix));
 	}
 
-	public static File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
-		return new NioFile(java.io.File.createTempFile (prefix, suffix, castOrFail(dir).ioFile));
+	public static File createTempFile(final String prefix, final String suffix, final File parentDir) throws IOException {
+		return new NioFile(java.io.File.createTempFile (prefix, suffix, castOrFail(parentDir).ioFile));
+	}
+
+	public java.io.File getIoFile(final File file) {
+		return castOrFail(file).ioFile;
 	}
 
 	static NioFile castOrFail(final File file) {

@@ -29,6 +29,11 @@ public interface File {
 
 	boolean isSymbolicLink();
 
+	/** Convenience method for the often called chain:
+	 * <p/>
+	 * java.io.File --&gt; java.nio.Path --&gt; Files.readSymbolicLink --&gt; IOUtil.toPathString
+	 * <p/>Without symlinks, this method would not be needed.
+	 */
 	String readSymbolicLinkToPathString() throws IOException;
 	boolean exists();
 	boolean existsNoFollow();
@@ -51,6 +56,7 @@ public interface File {
 	boolean isDirectoryFollowSymLinks();
 	long getUsableSpace();
 	long length();
+	/** This is platform dependent (e.g. might fail at renaming between different partitions). Plz see {@link java.io.File#renameTo(java.io.File)}. */
 	boolean renameTo(File newFileName);
 	boolean setLastModified(long lastModified);
 	OutputStream createFileOutputStream() throws FileNotFoundException;
@@ -64,13 +70,15 @@ public interface File {
 	boolean isAbsolute();
 	String getPath();
 	boolean mkdirs();
-	String copyToCopyAttributes(File toFile) throws IOException;
-	String move(File toFile) throws IOException;
+	/** Copies a file, a symlink (depends on environment/implementation) or a directory (non-recursive). */
+	void copyToCopyAttributes(File toFile) throws IOException;
+	/** This is platform independent, in contrast to {@link #renameTo(File)} respectively {@link java.io.File#renameTo(java.io.File)}. */
+	void move(File toFile) throws IOException;
 	URI toURI();
 	RandomAccessFile createRandomAccessFile(String mode) throws FileNotFoundException;
 	boolean isFile();
 	void setLastModifiedNoFollow(long time);
-	String relativize(File target);
+	String relativize(File target) throws IOException;
 
 	boolean setExecutable(boolean executable, boolean ownerOnly);
 	/** <b>Caution:</b> <i>Only use this when forced by 3rd party interface!</i> */

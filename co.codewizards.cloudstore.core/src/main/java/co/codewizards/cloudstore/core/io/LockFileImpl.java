@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,10 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.oio.FileChannel;
-import co.codewizards.cloudstore.core.oio.FileLock;
-import co.codewizards.cloudstore.core.oio.OioRegistry;
-import co.codewizards.cloudstore.core.oio.OverlappingFileLockException;
 
 class LockFileImpl implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileImpl.class);
@@ -60,8 +58,7 @@ class LockFileImpl implements LockFile {
 					logger.trace("[{}]tryAcquire: acquiring underlying FileLock for file={}.", thisID, Integer.toHexString(System.identityHashCode(file)));
 					randomAccessFile = file.createRandomAccessFile("rw");
 					try {
-						final FileChannel fileChannel = OioRegistry.getInstance().getFileChannelFactory().createFileChannel(randomAccessFile);
-						fileLock = fileChannel.tryLock(0, Long.MAX_VALUE, false);
+						fileLock = randomAccessFile.getChannel().tryLock(0, Long.MAX_VALUE, false);
 					} catch (final OverlappingFileLockException x) {
 						doNothing();
 						// It was not successfully locked - no need to do anything.
