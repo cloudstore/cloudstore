@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -53,11 +55,24 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());
-			try {
+			try (final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());) {
 				getMarshaller().marshal(dto, out);
-			} finally {
-				out.close();
+			}
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException("Writing file '" + file.getAbsolutePath() + "' failed: " + e, e);
+		}
+	}
+
+	public void serializeWithGz(final D dto, final File file) {
+		assertNotNull("dto", dto);
+		assertNotNull("file", file);
+		try {
+			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
+			// we manage the OutputStream ourself, as well.
+			try (final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());) {
+				try (GZIPOutputStream gzOut = new GZIPOutputStream(out);) {
+					getMarshaller().marshal(dto, gzOut);
+				}
 			}
 		} catch (JAXBException | IOException e) {
 			throw new RuntimeException("Writing file '" + file.getAbsolutePath() + "' failed: " + e, e);
@@ -77,11 +92,22 @@ public abstract class DtoIo <D> {
 		assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			final InputStream in = new BufferedInputStream(file.createFileInputStream());
-			try {
+			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {
 				return dtoClass.cast(getUnmarshaller().unmarshal(in));
-			} finally {
-				in.close();
+			}
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException("Reading file '" + file.getAbsolutePath() + "' failed: " + e, e);
+		}
+	}
+
+	public D deserializeWithGz(final File file) {
+		assertNotNull("file", file);
+		try {
+			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
+			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {
+				try (GZIPInputStream gzIn = new GZIPInputStream(in);) {
+					return dtoClass.cast(getUnmarshaller().unmarshal(gzIn));
+				}
 			}
 		} catch (JAXBException | IOException e) {
 			throw new RuntimeException("Reading file '" + file.getAbsolutePath() + "' failed: " + e, e);
