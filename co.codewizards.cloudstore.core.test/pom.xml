@@ -16,12 +16,29 @@
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.core</artifactId>
 		</dependency>
-		
-		<!-- currently we test only with that implementation. 
-			When there will be other implementations, all should be tested. -->
-		<dependency>
-			<groupId>co.codewizards.cloudstore.oio</groupId>
-			<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
-		</dependency>
 	</dependencies>
+	
+	<profiles>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>co.codewizards.cloudstore.oio</groupId>
+					<artifactId>co.codewizards.cloudstore.oio.nio</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>oio.io</id>
+			<dependencies>
+				<dependency>
+					<groupId>co.codewizards.cloudstore.oio</groupId>
+					<artifactId>co.codewizards.cloudstore.oio.io</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 </project>
