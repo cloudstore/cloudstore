@@ -181,7 +181,7 @@ public class FileTest {
 
 		final File tmpDestFile = fileFactory.createTempFile("asdf1-dest", "qwer");
 		final boolean renamedTmp = tmpFile.renameTo(tmpDestFile);
-		assertThat(renamedTmp).isTrue();
+		compareResults(resultsManuallyAdded, "rename_tmpFile_renamedTmp", Boolean.toString(renamedTmp));
 	}
 	@Test
 	public final void rename_tmpDir() throws IOException {
@@ -193,7 +193,7 @@ public class FileTest {
 
 		final File tmpDestDir = fileFactory.createTempDirectory("asdf2-dest");
 		final boolean renamedTmp = tmpDir.renameTo(tmpDestDir);
-		assertThat(renamedTmp).isTrue();
+		compareResults(resultsManuallyAdded, "rename_tmpFile_renamedTmp", Boolean.toString(renamedTmp));
 	}
 
 	@Test
@@ -244,16 +244,17 @@ public class FileTest {
 		// destination is in target-folder
 		final String prefix = "move-dest2-" + Math.abs(RANDOM.nextInt());
 		final File dest = createFile(prefix).getAbsoluteFile();
-		// move works even between partitions
 		try {
+			// result of move depends on partitioning of the tmp-folder.
 			tmpDir.move(dest);
-			fail("Expected IOException in any way!");
+			compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_moveWorks", Boolean.TRUE.toString());
 		} catch (final IOException e) {
-			// wonderful, no implementation should do this long duration copy/delete operation!
+			compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_moveWorks", Boolean.FALSE.toString());
 		}
-		assertThat(dest.exists()).isFalse();
-		assertThat(tmpDir.listFiles()).hasSize(2);
-		assertThat(tmpDir.exists()).isTrue();
+		compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_destExists", Boolean.toString(dest.exists()));
+		compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_tmpDirListFilesSize", getListFilesCount(tmpDir));
+		compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_destListFilesSize", getListFilesCount(dest));
+		compareResults(resultsManuallyAdded, "move_tmpDir_recursive_differentPartitions_tmpDirExists", Boolean.toString(tmpDir.exists()));
 	}
 	@Test
 	public final void move_tmpDir_recursive_samePartition() throws IOException {
@@ -278,7 +279,7 @@ public class FileTest {
 		compareResults(resultsManuallyAdded, "move_tmpDir_recursive_samePartition_dest.listFiles", getListFilesCount(dest));
 	}
 
-	/** Returns listFiles.length as String or null, or -1 one. */
+	/** Returns listFiles.length as String or appropriate describing String. */
 	private String getListFilesCount(final File dest) {
 		if (!dest.exists())
 			return "!exists";
