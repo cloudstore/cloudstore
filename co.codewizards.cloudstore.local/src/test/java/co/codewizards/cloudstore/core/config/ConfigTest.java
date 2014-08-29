@@ -19,9 +19,6 @@ import co.codewizards.cloudstore.local.AbstractTest;
 
 public class ConfigTest extends AbstractTest {
 
-	private static final String testKey1 = "testKey1";
-	private static final String testKey2 = "testKey2";
-
 	@Override
 	public void after() {
 		for (final File file : Config.getInstance().propertiesFiles) {
@@ -46,24 +43,28 @@ public class ConfigTest extends AbstractTest {
 	@Test
 	public void testGlobalConfigFileModification() throws Exception {
 		final Config globalConfig = Config.getInstance();
-		String value = globalConfig.getProperty(testKey1, null);
+		final String testKey = "testKey0";
+		String value = globalConfig.getProperty(testKey, null);
 		assertThat(value).isNull();
 
 		waitForDifferentLastModifiedTimestamp();
 
-		setGlobalProperty(testKey1, "testValueAAA");
-		value = globalConfig.getProperty(testKey1, null);
+		setGlobalProperty(testKey, "testValueAAA");
+		value = globalConfig.getProperty(testKey, null);
 		assertThat(value).isEqualTo("testValueAAA");
 
 		waitForDifferentLastModifiedTimestamp();
 
-		setGlobalProperty(testKey1, "testValueBBB");
-		value = globalConfig.getProperty(testKey1, null);
+		setGlobalProperty(testKey, "testValueBBB");
+		value = globalConfig.getProperty(testKey, null);
 		assertThat(value).isEqualTo("testValueBBB");
 	}
 
 	@Test
 	public void testConfigInheritance() throws Exception {
+		final String testKey1 = "testKey1";
+		final String testKey2 = "testKey2";
+
 		final File localRoot = newTestRepositoryLocalRoot();
 		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
