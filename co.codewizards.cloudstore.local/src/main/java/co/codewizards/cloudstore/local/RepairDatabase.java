@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepairDatabase implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(RepairDatabase.class);
@@ -25,7 +26,7 @@ public class RepairDatabase implements Runnable {
 	private Statement statement;
 
 	public RepairDatabase(File localRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
 	}
 
 	@Override

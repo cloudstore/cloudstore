@@ -9,6 +9,8 @@ import javax.jdo.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class ModificationDao extends Dao<Modification, ModificationDao> {
 	private static final Logger logger = LoggerFactory.getLogger(ModificationDao.class);
 
@@ -21,7 +23,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 * @return those {@link Modification}s matching the given criteria. Never <code>null</code>, but maybe empty.
 	 */
 	public Collection<Modification> getModificationsAfter(RemoteRepository remoteRepository, long localRevision) {
-		assertNotNull("remoteRepository", remoteRepository);
+		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
 		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();
@@ -40,7 +42,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	}
 
 	public Collection<Modification> getModificationsBeforeOrEqual(RemoteRepository remoteRepository, long localRevision) {
-		assertNotNull("remoteRepository", remoteRepository);
+		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
 		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();

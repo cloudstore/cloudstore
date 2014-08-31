@@ -14,6 +14,7 @@ import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListenerRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
@@ -32,8 +33,8 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final LocalRepoTransactionListenerRegistry listenerRegistry = new LocalRepoTransactionListenerRegistry(this);
 
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
-		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
-		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
+		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
+		this.persistenceManagerFactory = AssertUtil.assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
 		this.lock = localRepoManager.getLock();
 		this.write = write;
 		begin();

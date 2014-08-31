@@ -11,6 +11,7 @@ import java.util.Properties;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class PersistencePropertiesProvider {
@@ -18,7 +19,7 @@ public class PersistencePropertiesProvider {
 	private final File localRoot;
 
 	public PersistencePropertiesProvider(final File localRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 	}

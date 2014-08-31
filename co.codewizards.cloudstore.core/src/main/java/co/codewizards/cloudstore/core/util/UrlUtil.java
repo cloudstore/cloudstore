@@ -1,8 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -68,7 +67,7 @@ public final class UrlUtil {
 	 * @see #appendNonEncodedPath(URL, String)
 	 */
 	public static URL appendEncodedPath(final URL url, final String path) {
-		assertNotNull("url", url);
+		AssertUtil.assertNotNull("url", url);
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -86,7 +85,7 @@ public final class UrlUtil {
 	 * @see #appendEncodedPath(URL, String)
 	 */
 	public static URL appendNonEncodedPath(final URL url, final String path) {
-		assertNotNull("url", url);
+		AssertUtil.assertNotNull("url", url);
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -103,7 +102,7 @@ public final class UrlUtil {
 	}
 
 	private static URL appendEncodedPath(final URL url, final List<String> pathSegments) {
-		assertNotNull("url", url);
+		AssertUtil.assertNotNull("url", url);
 
 		if (pathSegments == null || pathSegments.isEmpty())
 			return url;
@@ -130,7 +129,7 @@ public final class UrlUtil {
 	}
 
 	private static char getLastChar(final StringBuilder stringBuilder) {
-		assertNotNull("stringBuilder", stringBuilder);
+		AssertUtil.assertNotNull("stringBuilder", stringBuilder);
 
 		final int index = stringBuilder.length() - 1;
 		if (index < 0)
@@ -147,7 +146,7 @@ public final class UrlUtil {
 	public static final URI urlToUri(final URL url) {
 		if (url == null)
 			return null;
-	
+
 		try {
 			return new URI(url.getProtocol(), url.getAuthority(), url.getPath(), url.getQuery(), url.getRef());
 		} catch (final URISyntaxException e) {

@@ -27,6 +27,7 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
@@ -111,7 +112,7 @@ public class CloudStoreUpdaterCore {
 			else {
 				final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 				// cannot use resolve(...), because it invokes this method ;-)
-				assertNotNull("artifactId", artifactId);
+				AssertUtil.assertNotNull("artifactId", artifactId);
 				final Map<String, Object> variables = new HashMap<>(1);
 				variables.put("artifactId", artifactId);
 				final String resolvedRemoteVersionURL = IOUtil.replaceTemplateVariables(remoteVersionURL, variables);
@@ -187,9 +188,9 @@ public class CloudStoreUpdaterCore {
 	 * @return
 	 */
 	protected String resolve(final String template) {
-		assertNotNull("template", template);
+		AssertUtil.assertNotNull("template", template);
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
-		assertNotNull("artifactId", artifactId);
+		AssertUtil.assertNotNull("artifactId", artifactId);
 
 		final Version remoteVersion = getRemoteVersion();
 
@@ -246,7 +247,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File createFileFromFileURL(final URL url) {
-		assertNotNull("url", url);
+		AssertUtil.assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
@@ -259,7 +260,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private URL removePrefixAndSuffixFromJarURL(final URL url) {
-		assertNotNull("url", url);
+		AssertUtil.assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
 			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
 
@@ -308,8 +309,8 @@ public class CloudStoreUpdaterCore {
 		public final DateTime remoteVersionTimestamp;
 
 		public RemoteVersionCache(final Version remoteVersion, final DateTime remoteVersionTimestamp) {
-			this.remoteVersion = assertNotNull("remoteVersion", remoteVersion);
-			this.remoteVersionTimestamp = assertNotNull("remoteVersionTimestamp", remoteVersionTimestamp);
+			this.remoteVersion = AssertUtil.assertNotNull("remoteVersion", remoteVersion);
+			this.remoteVersionTimestamp = AssertUtil.assertNotNull("remoteVersionTimestamp", remoteVersionTimestamp);
 		}
 	}
 

@@ -32,6 +32,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
 import co.codewizards.cloudstore.rest.client.request.BeginPutFile;
@@ -95,7 +96,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public byte[] getPublicKey() {
 		getRepositoryId(); // ensure, the public key is loaded
-		return assertNotNull("publicKey", publicKey);
+		return AssertUtil.assertNotNull("publicKey", publicKey);
 	}
 
 	@Override
@@ -253,8 +254,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 				verifier.verify(signedAuthToken);
 
 				authToken = new AuthTokenIO().deserialise(signedAuthToken.getAuthTokenData());
-				final Date expiryDate = assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime()).toDate();
-				final Date renewalDate = assertNotNull("authToken.renewalDateTime", authToken.getRenewalDateTime()).toDate();
+				final Date expiryDate = AssertUtil.assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime()).toDate();
+				final Date renewalDate = AssertUtil.assertNotNull("authToken.renewalDateTime", authToken.getRenewalDateTime()).toDate();
 				if (!renewalDate.before(expiryDate))
 					throw new IllegalArgumentException(
 							String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
@@ -276,7 +277,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	private boolean isAfterRenewalDate(final AuthToken authToken) {
-		assertNotNull("authToken", authToken);
+		AssertUtil.assertNotNull("authToken", authToken);
 		return System.currentTimeMillis() > authToken.getRenewalDateTime().getMillis();
 	}
 

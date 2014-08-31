@@ -160,17 +160,12 @@ public abstract class AbstractIT {
 		assertThat(symlink.exists()).isFalse();
 		final File symlinkParent = symlink.getParentFile();
 
-//		final Path symlinkParentPath = symlink.getParentFile().toPath();
-//		final Path symlinkPath = symlink.toPath();
-//		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
-//		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
-
 		final String relativeTargetString = symlinkParent.relativize(target);
-		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
-		final File symLinkFile = createFile(symbolicLinkString);
-		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
-//		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
-		assertThat(symLinkFile.existsNoFollow()).isTrue();
+		symlink.createSymbolicLink(relativeTargetString);
+
+		assertThat(symlink.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+		assertThat(symlink.existsNoFollow()).isTrue();
+		assertThat(symlink.isSymbolicLink()).isTrue();
 		addToFilesInRepo(symlink);
 		return symlink;
 	}

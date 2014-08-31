@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Factory creating {@link LockFile} instances.
@@ -78,7 +79,7 @@ public class LockFileFactory {
 	 * @see LockFile#release()
 	 */
 	public LockFile acquire(File file, final long timeoutMillis) throws TimeoutException {
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("file", file);
 		try {
 			file = file.getCanonicalFile();
 		} catch (final IOException e) {

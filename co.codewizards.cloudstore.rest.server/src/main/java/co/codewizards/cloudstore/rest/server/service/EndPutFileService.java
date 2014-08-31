@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.DateTime;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_endPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -36,8 +37,8 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 			@QueryParam("length") long length,
 			@QueryParam("sha1") String sha1)
 	{
-		assertNotNull("path", path);
-		assertNotNull("lastModified", lastModified);
+		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull("lastModified", lastModified);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

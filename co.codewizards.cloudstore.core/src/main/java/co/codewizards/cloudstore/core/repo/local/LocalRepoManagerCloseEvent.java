@@ -4,6 +4,8 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.EventObject;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class LocalRepoManagerCloseEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 
@@ -11,8 +13,8 @@ public class LocalRepoManagerCloseEvent extends EventObject {
 	private final boolean backend;
 
 	public LocalRepoManagerCloseEvent(Object source, LocalRepoManager localRepoManager, boolean backend) {
-		super(assertNotNull("source", source));
-		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
+		super(AssertUtil.assertNotNull("source", source));
+		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
 		this.backend = backend;
 	}
 

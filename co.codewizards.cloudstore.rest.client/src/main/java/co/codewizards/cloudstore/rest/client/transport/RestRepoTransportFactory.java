@@ -6,6 +6,7 @@ import java.net.URL;
 
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 
 public class RestRepoTransportFactory extends AbstractRepoTransportFactory {
@@ -34,7 +35,7 @@ public class RestRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(URL remoteRoot) {
-		return PROTOCOL_HTTP.equals(assertNotNull("remoteRoot", remoteRoot).getProtocol())
+		return PROTOCOL_HTTP.equals(AssertUtil.assertNotNull("remoteRoot", remoteRoot).getProtocol())
 				|| PROTOCOL_HTTPS.equals(remoteRoot.getProtocol());
 	}
 

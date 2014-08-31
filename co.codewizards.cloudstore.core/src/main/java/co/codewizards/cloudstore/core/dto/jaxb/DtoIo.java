@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -17,6 +15,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public abstract class DtoIo <D> {
 
@@ -40,8 +39,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serialize(final D dto, final OutputStream out) {
-		assertNotNull("dto", dto);
-		assertNotNull("out", out);
+		AssertUtil.assertNotNull("dto", dto);
+		AssertUtil.assertNotNull("out", out);
 		try {
 			getMarshaller().marshal(dto, out);
 		} catch (final JAXBException e) {
@@ -50,8 +49,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serialize(final D dto, final File file) {
-		assertNotNull("dto", dto);
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("dto", dto);
+		AssertUtil.assertNotNull("file", file);
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -64,8 +63,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serializeWithGz(final D dto, final File file) {
-		assertNotNull("dto", dto);
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("dto", dto);
+		AssertUtil.assertNotNull("file", file);
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -80,7 +79,7 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserialize(final InputStream in) {
-		assertNotNull("in", in);
+		AssertUtil.assertNotNull("in", in);
 		try {
 			return dtoClass.cast(getUnmarshaller().unmarshal(in));
 		} catch (final JAXBException e) {
@@ -89,7 +88,7 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserialize(final File file) {
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
 			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {
@@ -101,7 +100,7 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserializeWithGz(final File file) {
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
 			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class TarGzFile {
 	private static final Logger logger = LoggerFactory.getLogger(TarGzFile.class);
@@ -29,7 +30,7 @@ public class TarGzFile {
 	private FileFilter fileFilter;
 
 	public TarGzFile(final File tarGzFile) {
-		this.tarGzFile = assertNotNull("tarGzFile", tarGzFile);
+		this.tarGzFile = AssertUtil.assertNotNull("tarGzFile", tarGzFile);
 	}
 
 	/**

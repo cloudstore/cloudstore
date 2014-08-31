@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFileDao.class);
@@ -33,7 +34,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 		}
 
 		public void put(final File file, final Directory directory) {
-			file2DirectoryCache.put(assertNotNull("file", file), assertNotNull("directory", directory));
+			file2DirectoryCache.put(AssertUtil.assertNotNull("file", file), AssertUtil.assertNotNull("directory", directory));
 			directory2FileCache.put(directory, file);
 			directoryCacheList.remove(directory);
 			directoryCacheList.addLast(directory);
@@ -80,7 +81,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * is not located inside the repository - i.e. it is not a direct or indirect child of the given {@code localRoot}.
 	 */
 	public RepoFile getRepoFile(final File localRoot, final File file) throws IllegalArgumentException {
-		return _getRepoFile(assertNotNull("localRoot", localRoot), assertNotNull("file", file), file);
+		return _getRepoFile(AssertUtil.assertNotNull("localRoot", localRoot), AssertUtil.assertNotNull("file", file), file);
 	}
 
 	private RepoFile _getRepoFile(final File localRoot, final File file, final File originallySearchedFile) {
@@ -147,7 +148,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * <code>null</code>, but maybe empty.
 	 */
 	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(final long localRevision, final UUID exclLastSyncFromRepositoryId) {
-		assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
+		AssertUtil.assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();

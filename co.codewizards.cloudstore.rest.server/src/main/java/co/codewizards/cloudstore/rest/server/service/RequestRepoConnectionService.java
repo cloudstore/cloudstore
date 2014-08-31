@@ -18,6 +18,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @Path("_requestRepoConnection/{repositoryName}")
@@ -43,8 +44,8 @@ public class RequestRepoConnectionService
 	@Consumes(MediaType.APPLICATION_XML)
 	public void requestConnection(@PathParam("pathPrefix") final String pathPrefix, final RepositoryDto clientRepositoryDto)
 	{
-		assertNotNull("pathPrefix", pathPrefix);
-		assertNotNull("repositoryDto", clientRepositoryDto);
+		AssertUtil.assertNotNull("pathPrefix", pathPrefix);
+		AssertUtil.assertNotNull("repositoryDto", clientRepositoryDto);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);

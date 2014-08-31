@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class LocalRepoTransactionListenerRegistry {
 
 	private final LocalRepoTransaction transaction;
@@ -18,7 +20,7 @@ public class LocalRepoTransactionListenerRegistry {
 	private static List<Class<? extends LocalRepoTransactionListener>> listenerClasses;
 
 	public LocalRepoTransactionListenerRegistry(final LocalRepoTransaction transaction) {
-		this.transaction = assertNotNull("transaction", transaction);
+		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
 		this.listeners = createListeners();
 	}
 

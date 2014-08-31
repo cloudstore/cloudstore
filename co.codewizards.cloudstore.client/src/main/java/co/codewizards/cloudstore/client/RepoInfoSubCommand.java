@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import java.util.Collection;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
@@ -10,6 +8,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModificationDao;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
@@ -30,7 +29,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	public RepoInfoSubCommand() { }
 
 	protected RepoInfoSubCommand(final File localRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
 		this.localFile = this.localRoot;
 		this.local = localRoot.getPath();
 	}

@@ -1,11 +1,12 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.jdo.Query;
+
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class NormalFileDao extends Dao<NormalFile, NormalFileDao> {
 	/**
@@ -15,11 +16,12 @@ public class NormalFileDao extends Dao<NormalFile, NormalFileDao> {
 	 * @param length the {@link RepoFile#getLength() length} for which to query.
 	 * @return those {@link RepoFile}s matching the given criteria. Never <code>null</code>; but maybe empty.
 	 */
-	public Collection<NormalFile> getNormalFilesForSha1(String sha1, long length) {
-		assertNotNull("sha1", sha1);
-		Query query = pm().newNamedQuery(getEntityClass(), "getNormalFiles_sha1_length");
+	public Collection<NormalFile> getNormalFilesForSha1(final String sha1, final long length) {
+		AssertUtil.assertNotNull("sha1", sha1);
+		final Query query = pm().newNamedQuery(getEntityClass(), "getNormalFiles_sha1_length");
 		try {
 			@SuppressWarnings("unchecked")
+			final
 			Collection<NormalFile> repoFiles = (Collection<NormalFile>) query.execute(sha1, length);
 			return new ArrayList<NormalFile>(repoFiles);
 		} finally {
@@ -28,12 +30,12 @@ public class NormalFileDao extends Dao<NormalFile, NormalFileDao> {
 	}
 
 	@Override
-	public void deletePersistent(NormalFile entity) {
+	public void deletePersistent(final NormalFile entity) {
 		throw new UnsupportedOperationException("Use RepoFileDao for this operation!");
 	}
 
 	@Override
-	public <P extends NormalFile> P makePersistent(P entity) {
+	public <P extends NormalFile> P makePersistent(final P entity) {
 		throw new UnsupportedOperationException("Use RepoFileDao for this operation!");
 	}
 }

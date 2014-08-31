@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class DeferrableExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(DeferrableExecutor.class);
@@ -67,8 +68,8 @@ public class DeferrableExecutor {
 	// the client knows its socket's read-timeout.
 	@SuppressWarnings("unchecked")
 	public <V> V call(String callIdentifier, final CallableProvider<V> callableProvider) throws DeferredCompletionException, ExecutionException {
-		assertNotNull("callIdentifier", callIdentifier);
-		assertNotNull("callableProvider", callableProvider);
+		AssertUtil.assertNotNull("callIdentifier", callIdentifier);
+		AssertUtil.assertNotNull("callableProvider", callableProvider);
 
 		final int timeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_TIMEOUT, DEFAULT_TIMEOUT);
 
@@ -104,8 +105,8 @@ public class DeferrableExecutor {
 		private final Callable<V> delegate;
 
 		public CallableWrapper(String identifier, Callable<V> delegate) {
-			this.identifier = assertNotNull("identifier", identifier);
-			this.delegate = assertNotNull("delegate", delegate);
+			this.identifier = AssertUtil.assertNotNull("identifier", identifier);
+			this.delegate = AssertUtil.assertNotNull("delegate", delegate);
 		}
 
 		@Override

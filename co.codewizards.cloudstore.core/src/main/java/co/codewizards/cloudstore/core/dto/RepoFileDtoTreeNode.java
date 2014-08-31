@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +7,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 
@@ -33,19 +33,19 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	 * Never <code>null</code>, if {@code repoFileDtos} contains at least one element.
 	 * @throws IllegalArgumentException if the given {@code repoFileDtos} does not meet the criteria stated above.
 	 */
-	public static RepoFileDtoTreeNode createTree(Collection<RepoFileDto> repoFileDtos) throws IllegalArgumentException {
-		assertNotNull("repoFileDtos", repoFileDtos);
+	public static RepoFileDtoTreeNode createTree(final Collection<RepoFileDto> repoFileDtos) throws IllegalArgumentException {
+		AssertUtil.assertNotNull("repoFileDtos", repoFileDtos);
 		if (repoFileDtos.isEmpty())
 			return null;
 
-		Map<Long, RepoFileDtoTreeNode> id2RepoFileDtoTreeNode = new HashMap<Long, RepoFileDtoTreeNode>();
-		for (RepoFileDto repoFileDto : repoFileDtos) {
+		final Map<Long, RepoFileDtoTreeNode> id2RepoFileDtoTreeNode = new HashMap<Long, RepoFileDtoTreeNode>();
+		for (final RepoFileDto repoFileDto : repoFileDtos) {
 			id2RepoFileDtoTreeNode.put(repoFileDto.getId(), new RepoFileDtoTreeNode(repoFileDto));
 		}
 
 		RepoFileDtoTreeNode rootNode = null;
-		for (RepoFileDtoTreeNode node : id2RepoFileDtoTreeNode.values()) {
-			Long parentId = node.getRepoFileDto().getParentId();
+		for (final RepoFileDtoTreeNode node : id2RepoFileDtoTreeNode.values()) {
+			final Long parentId = node.getRepoFileDto().getParentId();
 			if (parentId == null) {
 				if (rootNode != null)
 					throw new IllegalArgumentException("Multiple root nodes!");
@@ -53,7 +53,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 				rootNode = node;
 			}
 			else {
-				RepoFileDtoTreeNode parentNode = id2RepoFileDtoTreeNode.get(parentId);
+				final RepoFileDtoTreeNode parentNode = id2RepoFileDtoTreeNode.get(parentId);
 				if (parentNode == null)
 					throw new IllegalArgumentException("parentEntityID unknown: " + parentId);
 
@@ -72,8 +72,8 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	private final List<RepoFileDtoTreeNode> children = new ArrayList<RepoFileDtoTreeNode>();
 	private List<RepoFileDtoTreeNode> flattenedTreeList;
 
-	protected RepoFileDtoTreeNode(RepoFileDto repoFileDto) {
-		this.repoFileDto = assertNotNull("repoFileDto", repoFileDto);
+	protected RepoFileDtoTreeNode(final RepoFileDto repoFileDto) {
+		this.repoFileDto = AssertUtil.assertNotNull("repoFileDto", repoFileDto);
 	}
 
 	public RepoFileDto getRepoFileDto() {
@@ -83,7 +83,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	public RepoFileDtoTreeNode getParent() {
 		return parent;
 	}
-	protected void setParent(RepoFileDtoTreeNode parent) {
+	protected void setParent(final RepoFileDtoTreeNode parent) {
 		this.parent = parent;
 	}
 
@@ -91,7 +91,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 		return Collections.unmodifiableList(children);
 	}
 
-	protected void addChild(RepoFileDtoTreeNode child) {
+	protected void addChild(final RepoFileDtoTreeNode child) {
 		child.setParent(this);
 		children.add(child);
 	}
@@ -110,16 +110,16 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	}
 
 	public List<RepoFileDtoTreeNode> getLeafs() {
-		List<RepoFileDtoTreeNode> leafs = new ArrayList<RepoFileDtoTreeNode>();
+		final List<RepoFileDtoTreeNode> leafs = new ArrayList<RepoFileDtoTreeNode>();
 		populateLeafs(this, leafs);
 		return leafs;
 	}
 
-	private void populateLeafs(RepoFileDtoTreeNode node, List<RepoFileDtoTreeNode> leafs) {
+	private void populateLeafs(final RepoFileDtoTreeNode node, final List<RepoFileDtoTreeNode> leafs) {
 		if (node.getChildren().isEmpty()) {
 			leafs.add(node);
 		}
-		for (RepoFileDtoTreeNode child : node.getChildren()) {
+		for (final RepoFileDtoTreeNode child : node.getChildren()) {
 			populateLeafs(child, leafs);
 		}
 	}
@@ -135,16 +135,16 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 
 	private List<RepoFileDtoTreeNode> getFlattenedTreeList() {
 		if (flattenedTreeList == null) {
-			List<RepoFileDtoTreeNode> list = new ArrayList<RepoFileDtoTreeNode>();
+			final List<RepoFileDtoTreeNode> list = new ArrayList<RepoFileDtoTreeNode>();
 			flattenTree(list, this);
 			flattenedTreeList = list;
 		}
 		return flattenedTreeList;
 	}
 
-	private void flattenTree(List<RepoFileDtoTreeNode> result, RepoFileDtoTreeNode node) {
+	private void flattenTree(final List<RepoFileDtoTreeNode> result, final RepoFileDtoTreeNode node) {
 		result.add(node);
-		for (RepoFileDtoTreeNode child : node.getChildren()) {
+		for (final RepoFileDtoTreeNode child : node.getChildren()) {
 			flattenTree(result, child);
 		}
 	}

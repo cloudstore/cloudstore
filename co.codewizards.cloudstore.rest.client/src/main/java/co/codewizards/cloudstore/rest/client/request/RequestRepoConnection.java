@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RequestRepoConnection extends VoidRequest {
 	private final String repositoryName;
@@ -14,11 +15,11 @@ public class RequestRepoConnection extends VoidRequest {
 	private final RepositoryDto clientRepositoryDto;
 
 	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
 		this.pathPrefix = pathPrefix;
-		this.clientRepositoryDto = assertNotNull("clientRepositoryDto", clientRepositoryDto);
-		assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
-		assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
+		this.clientRepositoryDto = AssertUtil.assertNotNull("clientRepositoryDto", clientRepositoryDto);
+		AssertUtil.assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
+		AssertUtil.assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
 	}
 
 	@Override

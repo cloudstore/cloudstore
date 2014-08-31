@@ -14,10 +14,6 @@
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk15on</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.util</artifactId>
-		</dependency>
 	</dependencies>
 
 </project>

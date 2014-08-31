@@ -6,6 +6,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 
@@ -13,7 +14,7 @@ public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 	private final boolean localSync;
 
 	public GetChangeSetDto(final String repositoryName, final boolean localSync) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
 		this.localSync = localSync;
 	}
 

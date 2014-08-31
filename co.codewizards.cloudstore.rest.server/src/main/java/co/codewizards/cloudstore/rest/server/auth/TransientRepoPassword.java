@@ -1,10 +1,9 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.auth.AuthToken;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class TransientRepoPassword {
 
@@ -13,13 +12,13 @@ public class TransientRepoPassword {
 	private final AuthToken authToken;
 	private final char[] password;
 
-	protected TransientRepoPassword(UUID serverRepositoryId, UUID clientRepositoryId, AuthToken authToken) {
-		this.serverRepositoryId = assertNotNull("serverRepositoryId", serverRepositoryId);
-		this.clientRepositoryId = assertNotNull("clientRepositoryId", clientRepositoryId);
-		this.authToken = assertNotNull("authToken", authToken);
+	protected TransientRepoPassword(final UUID serverRepositoryId, final UUID clientRepositoryId, final AuthToken authToken) {
+		this.serverRepositoryId = AssertUtil.assertNotNull("serverRepositoryId", serverRepositoryId);
+		this.clientRepositoryId = AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
+		this.authToken = AssertUtil.assertNotNull("authToken", authToken);
 		authToken.makeUnmodifiable();
-		assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime());
-		assertNotNull("authToken.password", authToken.getPassword());
+		AssertUtil.assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime());
+		AssertUtil.assertNotNull("authToken.password", authToken.getPassword());
 		this.password = authToken.getPassword().toCharArray();
 	}
 

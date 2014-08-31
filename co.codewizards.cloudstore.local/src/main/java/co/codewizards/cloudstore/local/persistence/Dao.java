@@ -21,6 +21,7 @@ import javax.jdo.identity.LongIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.ContextWithPersistenceManager;
 
 /**
@@ -201,7 +202,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public <P extends E> P makePersistent(final P entity)
 	{
-		assertNotNull("entity", entity);
+		AssertUtil.assertNotNull("entity", entity);
 		try {
 			final P result = pm().makePersistent(entity);
 			logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(result));
@@ -214,14 +215,14 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public void deletePersistent(final E entity)
 	{
-		assertNotNull("entity", entity);
+		AssertUtil.assertNotNull("entity", entity);
 		logger.debug("deletePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		pm().deletePersistent(entity);
 	}
 
 	public void deletePersistentAll(final Collection<? extends E> entities)
 	{
-		assertNotNull("entities", entities);
+		AssertUtil.assertNotNull("entities", entities);
 		if (logger.isDebugEnabled()) {
 			for (final E entity : entities) {
 				logger.debug("deletePersistentAll: entityID={}", JDOHelper.getObjectId(entity));
@@ -231,7 +232,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected Collection<E> load(final Collection<E> entities) {
-		assertNotNull("entities", entities);
+		AssertUtil.assertNotNull("entities", entities);
 		final Collection<E> result = new ArrayList<>();
 		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		for (final E entity : entities) {
@@ -279,7 +280,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);
 
 	protected <T extends Dao<?, ?>> T getDao(final Class<T> daoClass) {
-		T dao = daoClass.cast(daoClass2DaoInstance.get(assertNotNull("daoClass", daoClass)));
+		T dao = daoClass.cast(daoClass2DaoInstance.get(AssertUtil.assertNotNull("daoClass", daoClass)));
 		if (dao == null) {
 			try {
 				dao = daoClass.newInstance();

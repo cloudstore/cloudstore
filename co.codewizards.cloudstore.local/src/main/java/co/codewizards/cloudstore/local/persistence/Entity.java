@@ -15,6 +15,8 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 /**
  * Base class of all persistence-capable (a.k.a. entity) classes.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
@@ -119,7 +121,7 @@ public abstract class Entity implements AutoTrackChanged
 	 * @param created the timestamp of the creation of this entity. Must not be <code>null</code>.
 	 */
 	protected void setCreated(final Date created) {
-		assertNotNull("created", created);
+		AssertUtil.assertNotNull("created", created);
 		this.created = created;
 	}
 
@@ -129,7 +131,7 @@ public abstract class Entity implements AutoTrackChanged
 	}
 	@Override
 	public void setChanged(final Date changed) {
-		assertNotNull("created", created);
+		AssertUtil.assertNotNull("created", created);
 		this.changed = changed;
 	}
 

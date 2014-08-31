@@ -8,6 +8,7 @@ import org.kohsuke.args4j.Argument;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
@@ -38,7 +39,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	@Override
 	public void prepare() throws Exception {
 		super.prepare();
-		assertNotNull("local", local);
+		AssertUtil.assertNotNull("local", local);
 
 		String repositoryName;
 		final int slashIndex = local.indexOf('/');
@@ -75,7 +76,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	}
 
 	protected void assertLocalRootNotNull() {
-		assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull("localRoot", localRoot);
 	}
 
 }

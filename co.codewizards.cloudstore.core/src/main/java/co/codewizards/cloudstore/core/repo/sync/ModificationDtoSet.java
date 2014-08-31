@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,20 +10,21 @@ import java.util.Map;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class ModificationDtoSet {
 
 	private final Map<String, List<DeleteModificationDto>> path2DeleteModificationDtos;
 	private final Map<String, List<CopyModificationDto>> fromPath2CopyModificationDtos;
 
-	public ModificationDtoSet(Collection<ModificationDto> modificationDtos) {
-		assertNotNull("modificationDtos", modificationDtos);
+	public ModificationDtoSet(final Collection<ModificationDto> modificationDtos) {
+		AssertUtil.assertNotNull("modificationDtos", modificationDtos);
 		path2DeleteModificationDtos = new HashMap<String, List<DeleteModificationDto>>();
 		fromPath2CopyModificationDtos = new HashMap<String, List<CopyModificationDto>>();
-		for (ModificationDto modificationDto : modificationDtos) {
+		for (final ModificationDto modificationDto : modificationDtos) {
 			if (modificationDto instanceof CopyModificationDto) {
-				CopyModificationDto copyModificationDto = (CopyModificationDto) modificationDto;
-				String fromPath = copyModificationDto.getFromPath();
+				final CopyModificationDto copyModificationDto = (CopyModificationDto) modificationDto;
+				final String fromPath = copyModificationDto.getFromPath();
 				List<CopyModificationDto> list = fromPath2CopyModificationDtos.get(fromPath);
 				if (list == null) {
 					list = new LinkedList<CopyModificationDto>();
@@ -33,8 +33,8 @@ public class ModificationDtoSet {
 				list.add(copyModificationDto);
 			}
 			else if (modificationDto instanceof DeleteModificationDto) {
-				DeleteModificationDto deleteModificationDto = (DeleteModificationDto) modificationDto;
-				String path = deleteModificationDto.getPath();
+				final DeleteModificationDto deleteModificationDto = (DeleteModificationDto) modificationDto;
+				final String path = deleteModificationDto.getPath();
 				List<DeleteModificationDto> list = path2DeleteModificationDtos.get(path);
 				if (list == null) {
 					list = new LinkedList<DeleteModificationDto>();

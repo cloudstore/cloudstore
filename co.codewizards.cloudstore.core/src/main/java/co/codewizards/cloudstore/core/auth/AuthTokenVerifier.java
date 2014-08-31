@@ -9,11 +9,13 @@ import java.security.Signature;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class AuthTokenVerifier {
 	private PublicKey publicKey;
 
 	public AuthTokenVerifier(byte[] publicKeyData) {
-		assertNotNull("publicKeyData", publicKeyData);
+		AssertUtil.assertNotNull("publicKeyData", publicKeyData);
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -27,9 +29,9 @@ public class AuthTokenVerifier {
 	}
 
 	public void verify(SignedAuthToken signedAuthToken) {
-		assertNotNull("signedAuthToken", signedAuthToken);
-		assertNotNull("signedAuthToken.authTokenData", signedAuthToken.getAuthTokenData());
-		assertNotNull("signedAuthToken.signature", signedAuthToken.getSignature());
+		AssertUtil.assertNotNull("signedAuthToken", signedAuthToken);
+		AssertUtil.assertNotNull("signedAuthToken.authTokenData", signedAuthToken.getAuthTokenData());
+		AssertUtil.assertNotNull("signedAuthToken.signature", signedAuthToken.getSignature());
 		try {
 			Signature verificationEngine = Signature.getInstance(SIGNATURE_ALGORITHM);
 			verificationEngine.initVerify(publicKey);

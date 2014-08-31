@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -29,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.request.Request;
@@ -142,7 +142,7 @@ public class CloudStoreRestClient {
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
 	public CloudStoreRestClient(final URL url) {
-		this(assertNotNull("url", url).toExternalForm());
+		this(AssertUtil.assertNotNull("url", url).toExternalForm());
 	}
 
 	/**
@@ -152,7 +152,7 @@ public class CloudStoreRestClient {
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
 	public CloudStoreRestClient(final String url) {
-		this.url = assertNotNull("url", url);
+		this.url = AssertUtil.assertNotNull("url", url);
 	}
 
 	private static String appendFinalSlashIfNeeded(final String url) {
@@ -191,7 +191,7 @@ public class CloudStoreRestClient {
 	}
 
 	public <R> R execute(final Request<R> request) {
-		assertNotNull("request", request);
+		AssertUtil.assertNotNull("request", request);
 		int retryCounter = 0;
 		final int retryMax = 3;
 		while (true) {
@@ -280,7 +280,7 @@ public class CloudStoreRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = assertNotNull("client", client);
+			this.client = AssertUtil.assertNotNull("client", client);
 		}
 	}
 

@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -86,7 +85,9 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
+	@Deprecated
 	public static String getRelativePath(File baseDir, final String file)
 	throws IOException
 	{
@@ -139,7 +140,9 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
+	@Deprecated
 	public static String getRelativePath(final File baseDir, final File file)
 	throws IOException
 	{
@@ -161,7 +164,9 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
+	@Deprecated
 	public static String getRelativePath(final String baseDir, final String file)
 	throws IOException
 	{
@@ -365,105 +370,6 @@ public final class IOUtil {
 		return transferStreamData(in, out, 0, -1);
 	}
 
-//	public static enum CreateSymlinkResult {
-//		/**
-//		 * The symlink was successfully created.
-//		 */
-//		symlinked,
-//
-//		/**
-//		 * The data was copied instead of being symlinked.
-//		 */
-//		copied,
-//
-//		/**
-//		 * If the destination already exists.
-//		 */
-//		alreadyExists,
-//
-//		/**
-//		 * While waiting for the symlink to be created, we catched an {@link InterruptedException}.
-//		 */
-//		interrupted,
-//
-//		/**
-//		 * The symlink was not created and <code>copyIfSymlinksNotSupported</code> was set to <code>false</code>.
-//		 */
-//		unsupported,
-//
-//		/**
-//		 * Specifies that the existing File object neither denotes a Directory nor a File. This can only be returned
-//		 * when creation of the symlink was not possible.
-//		 */
-//		unknownFileType
-//	}
-//
-//	/**
-//	 * This method creates a symlink if supported by the operating system. Even though windows
-//	 * does support them, this method supports them only on GNU/Linux, so far. It seems, anyway,
-//	 * that symlinks on windows can cause very strange behaviour and data loss! see this for more
-//	 * details: http://shell-shocked.org/article.php?id=284
-//	 *
-//	 * @param existing The existing file or directory. If this is relative, the symlink will be relative, too.
-//	 *		If the data needs to be copied, it will be copied to <code>newFile(link, existing.getPath())</code>.
-//	 * @param link The link that shall be created.
-//	 * @param copyIfSymlinksNotSupported If this is <code>true</code> and the OS does not support symlinks, the method
-//	 *		will delegate to {@link #copyDirectory(File, File)} or {@link #copyFile(File, File)}. If it is <code>false</code>,
-//	 *		either the symlink can be created or nothing will be done.
-//	 * @return an instance of {@link CreateSymlinkResult} - never <code>null</code>.
-//	 * @throws IOException if IO fails in an underlying call.
-//	 */
-//	public static CreateSymlinkResult createSymlink(File existing, File link, boolean copyIfSymlinksNotSupported)
-//	throws IOException
-//	{
-//		Logger logger = LoggerFactory.getLogger(IOUtil.class);
-//
-//		if (logger.isDebugEnabled())
-//			logger.debug("createSymlink: begin: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//
-//		if (link.exists())
-//			return CreateSymlinkResult.alreadyExists;
-//
-//		File linkParent = link.getParentFile();
-//		if (linkParent != null && !linkParent.exists() && !linkParent.mkdirs())
-//			logger.warn("createSymlink: creating the link's parent directories failed!");
-//
-//		int processResult;
-//		Process process = Runtime.getRuntime().exec(new String[] { "/bin/ln", "-s", existing.getPath(), link.getAbsolutePath() });
-//		try {
-//			processResult = process.waitFor();
-//		} catch (InterruptedException e) {
-//			logger.warn("createSymlink: interrupted! will return immediately!", e);
-//			return CreateSymlinkResult.interrupted;
-//		}
-//
-//		if (processResult != 0)
-//			logger.warn("createSymlink: processResult != 0, but: " + processResult);
-//
-//		if (link.exists())
-//			return CreateSymlinkResult.symlinked;
-//
-//		if (!copyIfSymlinksNotSupported)
-//			return CreateSymlinkResult.unsupported;
-//
-//		logger.debug("createSymlink: symlink could not be created - will copy instead: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//
-//		// A symlink references from the ${link} to the ${existing}. Therefore, we must modify ${existing}, if it is not absolute.
-//		if (!existing.isAbsolute())
-//			existing = newFile(link, existing.getPath());
-//
-//		if (existing.isDirectory())
-//			copyDirectory(existing, link);
-//		else if (existing.isFile())
-//			copyFile(existing, link);
-//		else {
-//			logger.debug("createSymlink: ${existing} is neither a directory, nor a file! cannot create link: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//			return CreateSymlinkResult.unknownFileType;
-//		}
-//
-//		return CreateSymlinkResult.copied;
-//	}
-
 	/**
 	 * This method deletes the given directory recursively. If the given parameter
 	 * specifies a file and no directory, it will be deleted anyway. If one or more
@@ -491,7 +397,9 @@ public final class IOUtil {
 	 * 		This means it either was not existing already before or it has been
 	 * 		successfully deleted. <code>false</code> if the directory could not be
 	 * 		deleted.
+	 * @deprecated user File.deleteRecursively instead
 	 */
+	@Deprecated
 	public static boolean deleteDirectoryRecursively(final File dir)
 	{
 		if (!dir.exists())
@@ -500,7 +408,7 @@ public final class IOUtil {
 		// If we're running this on linux (that's what I just tested ;) and dir denotes a symlink,
 		// we must not dive into it and delete its contents! We can instead directly delete dir.
 		// There is no way in Java (except for calling system tools) to find out whether it is a symlink,
-		// but we can simply delete it. If the deletion succeeds, it was a symlink, otherwise it's a real directory.
+		// but we can simply delete it. If the deletion succeeds, it was a symlink or emtpy directory, otherwise it's a non-empty directory.
 		// This way, we don't delete the contents in symlinks and thus prevent data loss!
 		try {
 			if (dir.delete())
@@ -541,7 +449,9 @@ public final class IOUtil {
 	 * @return True, if the file or directory does not exist anymore. This means it either
 	 * was not existing already before or it has been successfully deleted. False, if the
 	 * directory could not be deleted.
+	 * @deprecated Plz use File.deleteRecursively instead!
 	 */
+	@Deprecated
 	public static boolean deleteDirectoryRecursively(final String dir)
 	{
 		final File dirF = createFile(dir);
@@ -1492,82 +1402,6 @@ public final class IOUtil {
 		return s == null ? "" : s;
 	}
 
-//	public static String toPathString(final Path path) {
-//		assertNotNull("path", path);
-//		return path.toString().replace(FILE_SEPARATORChar, '/');
-//	}
-
-//	public static long getLastModifiedNoFollow(final File file) {
-//		return getLastModifiedNoFollow(file.toPath());
-//	}
-
-//	public static long getLastModifiedNoFollow(final Path path) {
-//		try {
-//			final BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-//			return attributes.lastModifiedTime().toMillis();
-//		} catch (final IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
-
-//	public static void setLastModifiedNoFollow(final File file, final long lastModified) {
-//		setLastModifiedNoFollow(file.toPath(), lastModified);
-//	}
-
-//	public static void setLastModifiedNoFollow(Path path, final long lastModified) {
-//		path = path.toAbsolutePath();
-//		final List<Throwable> errors = new ArrayList<>();
-//
-//		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
-//		try {
-//			Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS)
-//			.setTimes(lastModifiedTime, null, null);
-//
-//			return;
-//		} catch (final IOException e) {
-//			errors.add(e);
-//		}
-//
-//		// It's currently impossible to modify the 'lastModified' timestamp of a symlink :-(
-//		// http://stackoverflow.com/questions/17308363/symlink-lastmodifiedtime-in-java-1-7
-//		// Therefore, we fall back to the touch command, if the above code failed.
-//
-//		final String timestamp = new SimpleDateFormat("YYYYMMddHHmm.ss").format(new Date(lastModified));
-//		final ProcessBuilder processBuilder = new ProcessBuilder("touch", "-c", "-h", "-m", "-t", timestamp, path.toString());
-//		processBuilder.redirectErrorStream(true);
-//		try {
-//			final Process process = processBuilder.start();
-//			final ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-//			final int processExitCode;
-//			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, logger);
-//			try {
-//				dumpInputStreamThread.start();
-//				processExitCode = process.waitFor();
-//			} finally {
-//				dumpInputStreamThread.flushBuffer();
-//				dumpInputStreamThread.interrupt();
-//			}
-//
-//			if (processExitCode != 0) {
-//				final String stdOutString = new String(stdOut.toByteArray());
-//				throw new IOException(String.format(
-//						"Command 'touch' failed with exitCode=%s and the following message: %s",
-//						processExitCode, stdOutString));
-//			}
-//
-//			return;
-//		} catch (IOException | InterruptedException e) {
-//			errors.add(e);
-//		}
-//
-//		if (!errors.isEmpty()) {
-//			logger.error("Setting the lastModified timestamp of '{}' failed with the following errors:", path);
-//			for (final Throwable error : errors) {
-//				logger.error("" + error, error);
-//			}
-//		}
-//	}
-
 	public static void deleteOrFail(final File file) {
 		file.delete();
 		if (file.isSymbolicLink() || file.exists())
@@ -1583,7 +1417,7 @@ public final class IOUtil {
 	}
 
 	public static void readOrFail(final InputStream in, final byte[] buf, int off, int len) throws IOException {
-		assertNotNull("buf", buf);
+		AssertUtil.assertNotNull("buf", buf);
 		if (off < 0)
 			throw new IllegalArgumentException("off < 0");
 

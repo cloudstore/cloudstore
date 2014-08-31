@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.server.webdav.COPY;
 import co.codewizards.cloudstore.rest.server.webdav.MKCOL;
 import co.codewizards.cloudstore.rest.server.webdav.MOVE;
@@ -48,7 +49,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 			@QueryParam("offset") long offset,
 			@QueryParam("length") @DefaultValue("-1") int length)
 	{
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
@@ -67,7 +68,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@DELETE
 	@Path("{path:.*}")
 	public void delete(@PathParam("path") String path) {
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
@@ -81,7 +82,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Path("{path:.*}")
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public void putFileData(@PathParam("path") String path, @QueryParam("offset") long offset, byte[] fileData) {
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
@@ -101,7 +102,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Path("{path:.*}")
 	@Produces(MediaType.TEXT_HTML)
 	public String browse(@PathParam("path") String path) {
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		authenticateAndReturnUserName();
 		return "<html><body>" + path + "</body></html>";
 	}

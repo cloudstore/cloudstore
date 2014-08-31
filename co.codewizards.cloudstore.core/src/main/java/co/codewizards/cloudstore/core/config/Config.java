@@ -21,6 +21,7 @@ import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -124,9 +125,9 @@ public class Config {
 		if (parentConfig == null)
 			fileRef = null;
 		else
-			fileRef = new WeakReference<File>(assertNotNull("file", file));
+			fileRef = new WeakReference<File>(AssertUtil.assertNotNull("file", file));
 
-		this.propertiesFiles = assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
+		this.propertiesFiles = AssertUtil.assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
 		properties = new Properties(parentConfig == null ? null : parentConfig.properties);
 		propertiesFilesLastModified = new long[propertiesFiles.length];
 		instanceMutex = properties;
@@ -194,7 +195,7 @@ public class Config {
 	}
 
 	private static Config getInstance(final File file, final boolean isDirectory) {
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("file", file);
 		cleanFileRefs();
 
 		File config_file = null;
@@ -218,7 +219,7 @@ public class Config {
 				fileSoftRefs.add(new SoftReference<File>(file));
 				config_file = config.getFile();
 			}
-			assertNotNull("config_file", config_file);
+			AssertUtil.assertNotNull("config_file", config_file);
 		}
 		refreshFileHardRefAndCleanOldHardRefs(config_file);
 		return config;
@@ -308,7 +309,7 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public String getProperty(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		AssertUtil.assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -348,7 +349,7 @@ public class Config {
 	 * @return the property's value. Never <code>null</code> unless {@code defaultValue} is <code>null</code>.
 	 */
 	public String getPropertyAsNonEmptyTrimmedString(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		AssertUtil.assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -432,7 +433,7 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final E defaultValue) {
-		assertNotNull("defaultValue", defaultValue);
+		AssertUtil.assertNotNull("defaultValue", defaultValue);
 		@SuppressWarnings("unchecked")
 		final
 		Class<E> enumClass = (Class<E>) defaultValue.getClass();
@@ -451,7 +452,7 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final Class<E> enumClass, final E defaultValue) {
-		assertNotNull("enumClass", enumClass);
+		AssertUtil.assertNotNull("enumClass", enumClass);
 		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
@@ -480,7 +481,7 @@ public class Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final Config config) {
-		final File config_file = assertNotNull("config", config).getFile();
+		final File config_file = AssertUtil.assertNotNull("config", config).getFile();
 		if (config_file != null)
 			refreshFileHardRefAndCleanOldHardRefs(config_file);
 	}
@@ -493,7 +494,7 @@ public class Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File config_file) {
-		assertNotNull("config_file", config_file);
+		AssertUtil.assertNotNull("config_file", config_file);
 		synchronized (fileHardRefs) {
 			// make sure the config_file is at the end of fileHardRefs
 			fileHardRefs.remove(config_file);

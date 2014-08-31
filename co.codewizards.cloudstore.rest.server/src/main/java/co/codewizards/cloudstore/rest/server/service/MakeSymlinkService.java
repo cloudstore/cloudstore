@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_makeSymlink/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -41,8 +42,8 @@ public class MakeSymlinkService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void makeSymlink(@PathParam("path") String path)
 	{
-		assertNotNull("path", path);
-		assertNotNull("target", target);
+		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull("target", target);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

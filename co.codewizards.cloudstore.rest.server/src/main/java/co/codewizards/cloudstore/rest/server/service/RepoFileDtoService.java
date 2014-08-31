@@ -19,6 +19,7 @@ import co.codewizards.cloudstore.core.concurrent.DeferrableExecutor;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_RepoFileDto/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -41,7 +42,7 @@ public class RepoFileDtoService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public RepoFileDto getRepoFileDto(final @PathParam("path") String path)
 	{
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
 			String callIdentifier = RepoFileDtoService.class.getName() + ".getRepoFileDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;

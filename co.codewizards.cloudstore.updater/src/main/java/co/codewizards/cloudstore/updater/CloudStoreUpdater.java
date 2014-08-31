@@ -26,6 +26,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class CloudStoreUpdater extends CloudStoreUpdaterCore {
@@ -226,7 +227,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		private final Collection<File> files;
 
 		public FileFilterTrackingExtractedFiles(final Collection<File> files) {
-			this.files = assertNotNull("files", files);
+			this.files = AssertUtil.assertNotNull("files", files);
 		}
 
 		@Override
@@ -252,8 +253,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	}
 
 	private void populateFilesRecursively(final File fileOrDir, final Set<File> files) {
-		assertNotNull("fileOrDir", fileOrDir);
-		assertNotNull("files", files);
+		AssertUtil.assertNotNull("fileOrDir", fileOrDir);
+		AssertUtil.assertNotNull("files", files);
 		files.add(fileOrDir);
 		final File[] children = fileOrDir.listFiles();
 		if (children != null) {
@@ -263,8 +264,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	}
 
 	private void deleteAllExcept(final File fileOrDir, final Set<File> keepFiles) {
-		assertNotNull("fileOrDir", fileOrDir);
-		assertNotNull("keepFiles", keepFiles);
+		AssertUtil.assertNotNull("fileOrDir", fileOrDir);
+		AssertUtil.assertNotNull("keepFiles", keepFiles);
 		if (keepFiles.contains(fileOrDir)) {
 			logger.debug("deleteAllExcept: Keeping: {}", fileOrDir);
 			final File[] children = fileOrDir.listFiles();
@@ -350,7 +351,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	@Override
 	protected File getInstallationDir() {
 		if (installationDirFile == null) {
-			final String path = IOUtil.simplifyPath(createFile(assertNotNull("installationDir", installationDir)));
+			final String path = IOUtil.simplifyPath(createFile(AssertUtil.assertNotNull("installationDir", installationDir)));
 			final File f = createFile(path);
 			if (!f.exists())
 				throw new IllegalArgumentException(String.format("installationDir '%s' (specified as '%s') does not exist!", f, installationDir));

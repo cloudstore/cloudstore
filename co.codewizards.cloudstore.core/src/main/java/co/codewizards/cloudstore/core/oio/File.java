@@ -29,6 +29,15 @@ public interface File {
 
 	boolean isSymbolicLink();
 
+	boolean canWrite();
+	boolean canRead();
+	boolean canExecute();
+	boolean setExecutable(boolean executable);
+	boolean setReadable(boolean readable);
+	boolean setReadable(boolean readable, boolean ownerOnly);
+	boolean setWritable(boolean writable);
+	boolean setWritable(boolean writable, boolean ownerOnly);
+
 	/** Convenience method for the often called chain:
 	 * <p/>
 	 * java.io.File --&gt; java.nio.Path --&gt; Files.readSymbolicLink --&gt; IOUtil.toPathString
@@ -37,13 +46,11 @@ public interface File {
 	String readSymbolicLinkToPathString() throws IOException;
 	boolean exists();
 	boolean existsNoFollow();
-	boolean canWrite();
-	boolean canRead();
-	boolean canExecute();
 	boolean createNewFile() throws IOException;
 	int compareTo(File otherFile);
 	boolean delete();
 	void deleteOnExit();
+	void deleteRecursively();
 	long getFreeSpace();
 	String getCanonicalPath() throws IOException;
 	File getCanonicalFile() throws IOException;
@@ -63,7 +70,7 @@ public interface File {
 	OutputStream createFileOutputStream(boolean append) throws FileNotFoundException;
 	InputStream createFileInputStream() throws FileNotFoundException;
 	String getName();
-	String createSymbolicLink(String targetPath) throws IOException;
+	void createSymbolicLink(String targetPath) throws IOException;
 
 	long lastModified();
 	long getLastModifiedNoFollow();

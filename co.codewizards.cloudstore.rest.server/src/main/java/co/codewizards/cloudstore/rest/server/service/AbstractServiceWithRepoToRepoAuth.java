@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayReader;

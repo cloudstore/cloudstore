@@ -14,14 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class TransferDoneMarkerDao extends Dao<TransferDoneMarker, TransferDoneMarkerDao> {
 	private static final Logger logger = LoggerFactory.getLogger(TransferDoneMarkerDao.class);
 
 	public TransferDoneMarker getTransferDoneMarker(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId) {
-		assertNotNull("fromRepositoryId", fromRepositoryId);
-		assertNotNull("toRepositoryId", toRepositoryId);
-		assertNotNull("transferDoneMarkerType", transferDoneMarkerType);
+		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
+		AssertUtil.assertNotNull("toRepositoryId", toRepositoryId);
+		AssertUtil.assertNotNull("transferDoneMarkerType", transferDoneMarkerType);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getTransferDoneMarker_fromRepositoryId_toRepositoryId_transferDoneMarkerType_fromEntityId");
 		try {
 			final Map<String, Object> m = new HashMap<String, Object>(4);
@@ -37,8 +38,8 @@ public class TransferDoneMarkerDao extends Dao<TransferDoneMarker, TransferDoneM
 	}
 
 	public Collection<TransferDoneMarker> getRepoFileTransferDones(final UUID fromRepositoryId, final UUID toRepositoryId) {
-		assertNotNull("fromRepositoryId", fromRepositoryId);
-		assertNotNull("toRepositoryId", toRepositoryId);
+		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
+		AssertUtil.assertNotNull("toRepositoryId", toRepositoryId);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getTransferDoneMarkers_fromRepositoryId_toRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();

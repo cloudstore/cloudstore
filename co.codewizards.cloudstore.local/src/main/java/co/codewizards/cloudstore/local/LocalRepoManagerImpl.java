@@ -53,6 +53,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
@@ -165,7 +166,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void putRepositoryAlias(final String repositoryAlias) {
-		assertNotNull("repositoryAlias", repositoryAlias);
+		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
@@ -181,7 +182,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void removeRepositoryAlias(final String repositoryAlias) {
-		assertNotNull("repositoryAlias", repositoryAlias);
+		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
@@ -194,7 +195,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private File assertValidLocalRoot(final File localRoot) {
-		assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull("localRoot", localRoot);
 
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
@@ -302,7 +303,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void syncWithLocalRepoRegistry() {
-		assertNotNull("repositoryId", repositoryId);
+		AssertUtil.assertNotNull("repositoryId", repositoryId);
 		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
@@ -340,11 +341,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void updateRepositoryPropertiesFile() {
-		assertNotNull("repositoryProperties", repositoryProperties);
+		AssertUtil.assertNotNull("repositoryProperties", repositoryProperties);
 		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			boolean store = false;
-			final String repositoryId = assertNotNull("repositoryId", getRepositoryId()).toString();
+			final String repositoryId = AssertUtil.assertNotNull("repositoryId", getRepositoryId()).toString();
 			if (!repositoryId.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
 				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryId);
 				store = true;
@@ -375,7 +376,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private String repositoryAliasesToString(final Set<String> repositoryAliases) {
-		assertNotNull("repositoryAliases", repositoryAliases);
+		AssertUtil.assertNotNull("repositoryAliases", repositoryAliases);
 		final StringBuilder sb = new StringBuilder();
 		sb.append('/');
 		for (final String repositoryAlias : repositoryAliases) {
@@ -494,10 +495,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void readRepositoryMainProperties(final LocalRepository localRepository) {
-		assertNotNull("localRepository", localRepository);
-		repositoryId = assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
-		publicKey = assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
-		privateKey = assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
+		AssertUtil.assertNotNull("localRepository", localRepository);
+		repositoryId = AssertUtil.assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
+		publicKey = AssertUtil.assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
+		privateKey = AssertUtil.assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
 	}
 
 	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
@@ -803,8 +804,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void putRemoteRepository(final UUID repositoryId, final URL remoteRoot, final byte[] publicKey, final String localPathPrefix) {
-		assertNotNull("entityID", repositoryId);
-		assertNotNull("publicKey", publicKey);
+		AssertUtil.assertNotNull("entityID", repositoryId);
+		AssertUtil.assertNotNull("publicKey", publicKey);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
@@ -840,7 +841,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void deleteRemoteRepository(final UUID repositoryId) {
-		assertNotNull("entityID", repositoryId);
+		AssertUtil.assertNotNull("entityID", repositoryId);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);

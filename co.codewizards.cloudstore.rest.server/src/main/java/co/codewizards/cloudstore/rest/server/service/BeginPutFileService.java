@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_beginPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -29,7 +30,7 @@ public class BeginPutFileService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void beginPutFile(@PathParam("path") String path)
 	{
-		assertNotNull("path", path);
+		AssertUtil.assertNotNull("path", path);
 		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

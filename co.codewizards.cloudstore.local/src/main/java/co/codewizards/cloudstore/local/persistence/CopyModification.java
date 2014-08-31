@@ -16,6 +16,8 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="CopyModification")
@@ -62,7 +64,7 @@ public class CopyModification extends Modification {
 		return fromPath;
 	}
 	public void setFromPath(final String fromPath) {
-		assertNotNull("fromPath", fromPath);
+		AssertUtil.assertNotNull("fromPath", fromPath);
 		if (fromPath.isEmpty())
 			throw new IllegalArgumentException("fromPath is empty! fromPath must start with '/' and thus has a minimum length of 1 char!");
 
@@ -77,7 +79,7 @@ public class CopyModification extends Modification {
 		return toPath;
 	}
 	public void setToPath(final String toPath) {
-		assertNotNull("toPath", toPath);
+		AssertUtil.assertNotNull("toPath", toPath);
 		if (toPath.isEmpty())
 			throw new IllegalArgumentException("toPath is empty! toPath must start with '/' and thus has a minimum length of 1 char!");
 

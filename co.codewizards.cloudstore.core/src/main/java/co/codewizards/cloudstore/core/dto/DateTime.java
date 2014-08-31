@@ -7,6 +7,7 @@ import java.util.Date;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import co.codewizards.cloudstore.core.dto.jaxb.DateTimeXmlAdapter;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ISO8601;
 import co.codewizards.cloudstore.core.util.Util;
 
@@ -45,7 +46,7 @@ public class DateTime {
 	 * @see #toString()
 	 */
 	public DateTime(String dateString) {
-		date = ISO8601.parseDate(assertNotNull("dateString", dateString));
+		date = ISO8601.parseDate(AssertUtil.assertNotNull("dateString", dateString));
 	}
 
 	/**
@@ -56,7 +57,7 @@ public class DateTime {
 	 * @param date the date to be cloned and wrapped in the new {@code DateTime} instance. Must not be <code>null</code>.
 	 */
 	public DateTime(Date date) {
-		this.date = (Date) assertNotNull("date", date).clone();
+		this.date = (Date) AssertUtil.assertNotNull("date", date).clone();
 	}
 
 	/**

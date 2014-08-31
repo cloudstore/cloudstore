@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 class ParentFileLastModifiedManager {
 	private static class ParentFileEntry {
@@ -14,7 +15,7 @@ class ParentFileLastModifiedManager {
 		public int refCount = 0;
 
 		public ParentFileEntry(final File parentFile) {
-			this.parentFile = assertNotNull("parentFile", parentFile);
+			this.parentFile = AssertUtil.assertNotNull("parentFile", parentFile);
 			this.lastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		}
 	}
@@ -32,7 +33,7 @@ class ParentFileLastModifiedManager {
 	}
 
 	public synchronized void backupParentFileLastModified(final File parentFile) {
-		assertNotNull("parentFile", parentFile);
+		AssertUtil.assertNotNull("parentFile", parentFile);
 		ParentFileEntry parentFileEntry = parentFile2ParentFileEntry.get(parentFile);
 		if (parentFileEntry == null) {
 			parentFileEntry = new ParentFileEntry(parentFile);
@@ -42,7 +43,7 @@ class ParentFileLastModifiedManager {
 	}
 
 	public synchronized void restoreParentFileLastModified(final File parentFile) {
-		assertNotNull("parentFile", parentFile);
+		AssertUtil.assertNotNull("parentFile", parentFile);
 		final ParentFileEntry parentFileEntry = parentFile2ParentFileEntry.get(parentFile);
 		if (parentFileEntry == null)
 			throw new IllegalStateException("parentFileEntry == null :: less invocations of restore... than of backup...!!! :: parentFile=" + parentFile);

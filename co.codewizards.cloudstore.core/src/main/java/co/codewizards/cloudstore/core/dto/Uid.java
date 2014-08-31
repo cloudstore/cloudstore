@@ -9,6 +9,7 @@ import java.util.UUID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import co.codewizards.cloudstore.core.dto.jaxb.UidXmlAdapter;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.Base64Url;
 
 /**
@@ -77,7 +78,7 @@ public class Uid implements Comparable<Uid> {
 	}
 
 	public Uid(final byte[] bytes) {
-		if (assertNotNull("bytes", bytes).length != 16)
+		if (AssertUtil.assertNotNull("bytes", bytes).length != 16)
 			throw new IllegalArgumentException("bytes.length != 16");
 
 		long hi = 0;
@@ -94,7 +95,7 @@ public class Uid implements Comparable<Uid> {
 	}
 
 	private static final String assertValidUidString(final String uidString) {
-		if (assertNotNull("uidString", uidString).length() != 22)
+		if (AssertUtil.assertNotNull("uidString", uidString).length() != 22)
 			throw new IllegalArgumentException("uidString.length != 22");
 
 		return uidString;
@@ -182,7 +183,7 @@ public class Uid implements Comparable<Uid> {
 
 	@Override
 	public int compareTo(final Uid other) {
-		assertNotNull("other", other);
+		AssertUtil.assertNotNull("other", other);
 		// Same semantics as for normal numbers.
 		return (this.hi < other.hi ? -1 :
 				(this.hi > other.hi ? 1 :

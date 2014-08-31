@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -22,6 +21,7 @@ import javax.net.ssl.X509TrustManager;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
 class DynamicX509TrustManager implements X509TrustManager {
@@ -33,8 +33,8 @@ class DynamicX509TrustManager implements X509TrustManager {
 	private final List<Certificate> tempCertList = new ArrayList<Certificate>();
 
 	public DynamicX509TrustManager(final File trustStoreFile, final DynamicX509TrustManagerCallback callback) {
-		this.trustStoreFile = assertNotNull("trustStoreFile", trustStoreFile);
-		this.callback = assertNotNull("callback", callback);
+		this.trustStoreFile = AssertUtil.assertNotNull("trustStoreFile", trustStoreFile);
+		this.callback = AssertUtil.assertNotNull("callback", callback);
 		reloadTrustManager();
 	}
 
@@ -45,7 +45,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	@Override
 	public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws CertificateException {
-		assertNotNull("chain", chain);
+		AssertUtil.assertNotNull("chain", chain);
 		if (chain.length < 1)
 			throw new IllegalArgumentException("chain is empty!");
 
@@ -103,7 +103,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	private String sha1(final Certificate cert) {
 		try {
-			final byte[] certEncoded = assertNotNull("cert", cert).getEncoded();
+			final byte[] certEncoded = AssertUtil.assertNotNull("cert", cert).getEncoded();
 			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(certEncoded));
 			return HashUtil.encodeHexStr(hash);
 		} catch (final RuntimeException x) {

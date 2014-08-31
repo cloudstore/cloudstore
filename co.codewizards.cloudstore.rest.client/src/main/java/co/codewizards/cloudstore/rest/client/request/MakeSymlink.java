@@ -8,6 +8,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class MakeSymlink extends VoidRequest {
 
@@ -17,9 +18,9 @@ public class MakeSymlink extends VoidRequest {
 	private final Date lastModified;
 
 	public MakeSymlink(final String repositoryName, final String path, final String target, final Date lastModified) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.path = assertNotNull("path", path);
-		this.target = assertNotNull("target", target);
+		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
+		this.path = AssertUtil.assertNotNull("path", path);
+		this.target = AssertUtil.assertNotNull("target", target);
 		this.lastModified = lastModified;
 	}
 

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 class LocalRepoManagerInvocationHandler implements InvocationHandler {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoManagerInvocationHandler.class);
@@ -35,7 +36,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			"toString"));
 
 	public LocalRepoManagerInvocationHandler(LocalRepoManagerImpl localRepoManagerImpl) {
-		this.localRepoManagerImpl = assertNotNull("localRepoManagerImpl", localRepoManagerImpl);
+		this.localRepoManagerImpl = AssertUtil.assertNotNull("localRepoManagerImpl", localRepoManagerImpl);
 	}
 
 	@Override

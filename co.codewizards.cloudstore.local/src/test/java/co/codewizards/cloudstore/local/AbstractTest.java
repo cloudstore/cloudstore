@@ -20,6 +20,8 @@ import org.junit.Before;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.oio.IoFile;
+import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -129,21 +131,24 @@ public abstract class AbstractTest {
 	}
 
 	/** TODO Remove duplicate code: AbstractIT.java and AbstractTest.java */
-	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
+	protected File createRelativeSymlink(File symlink, final File target) throws IOException {
 		assertThat(symlink.exists()).isFalse();
 		final File symlinkParent = symlink.getParentFile();
 
-//		final Path symlinkParentPath = symlink.getParentFile().toPath();
-//		final Path symlinkPath = symlink.toPath();
-//		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
-//		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
-
 		final String relativeTargetString = symlinkParent.relativize(target);
-		final String symbolicLinkString = symlink.createSymbolicLink(relativeTargetString);
-		final File symLinkFile = createFile(symbolicLinkString);
-		assertThat(symLinkFile.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
-//		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
-		assertThat(symLinkFile.existsNoFollow()).isTrue();
+
+		if (symlink instanceof IoFile) {
+			/* Only do this in a test! If symlink is instance of IoFile,
+			 * createSymbolicLink would throw an Exception (by intention)!
+			 * But in productive code you would never call this, besides you
+			 * know the environment and the implementation supports this.
+			 */
+			symlink = new NioFileFactory().createFile(symlink.getIoFile());
+		}
+		symlink.createSymbolicLink(relativeTargetString);
+		assertThat(symlink.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+		assertThat(symlink.existsNoFollow()).isTrue();
+		assertThat(symlink.isSymbolicLink()).isTrue();
 		addToFilesInRepo(symlink);
 		return symlink;
 	}

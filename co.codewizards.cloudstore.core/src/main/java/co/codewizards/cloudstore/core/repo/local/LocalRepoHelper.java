@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.local;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 
 public final class LocalRepoHelper {
@@ -23,7 +24,7 @@ public final class LocalRepoHelper {
 	 * @return the repository's local root. Is <code>null</code>, if {@code file} is not located inside a repository.
 	 */
 	public static File getLocalRootContainingFile(final File file) {
-		File parentFile = assertNotNull("file", file);
+		File parentFile = AssertUtil.assertNotNull("file", file);
 		while (parentFile != null) {
 			final File parentMetaDir = createFile(parentFile, LocalRepoManager.META_DIR_NAME);
 			if (parentMetaDir.exists())

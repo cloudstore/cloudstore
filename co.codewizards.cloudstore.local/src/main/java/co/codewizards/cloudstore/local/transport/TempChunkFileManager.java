@@ -21,6 +21,7 @@ import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 
 public class TempChunkFileManager {
@@ -41,8 +42,8 @@ public class TempChunkFileManager {
 	}
 
 	public void writeFileDataToTempChunkFile(final File destFile, final long offset, final byte[] fileData) {
-		assertNotNull("destFile", destFile);
-		assertNotNull("fileData", fileData);
+		AssertUtil.assertNotNull("destFile", destFile);
+		AssertUtil.assertNotNull("fileData", fileData);
 		try {
 			final File tempChunkFile = createTempChunkFile(destFile, offset);
 			final File tempChunkFileDtoFile = getTempChunkFileDtoFile(tempChunkFile);
@@ -127,7 +128,7 @@ public class TempChunkFileManager {
 	}
 
 	private String sha1(final byte[] data) {
-		assertNotNull("data", data);
+		AssertUtil.assertNotNull("data", data);
 		try {
 			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
 			return HashUtil.encodeHexStr(hash);
@@ -188,7 +189,7 @@ public class TempChunkFileManager {
 	}
 
 	public File getTempDir(final File destFile) {
-		assertNotNull("destFile", destFile);
+		AssertUtil.assertNotNull("destFile", destFile);
 		final File parentDir = destFile.getParentFile();
 		return createFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
 	}
@@ -200,8 +201,8 @@ public class TempChunkFileManager {
 	 * @return the Dto. Never <code>null</code>.
 	 */
 	public TempChunkFileDto createTempChunkFileDto(final long offset, final File tempChunkFile, final String sha1) {
-		assertNotNull("tempChunkFile", tempChunkFile);
-		assertNotNull("sha1", sha1);
+		AssertUtil.assertNotNull("tempChunkFile", tempChunkFile);
+		AssertUtil.assertNotNull("sha1", sha1);
 
 		if (!tempChunkFile.exists())
 			throw new IllegalArgumentException("The tempChunkFile does not exist: " + tempChunkFile.getAbsolutePath());

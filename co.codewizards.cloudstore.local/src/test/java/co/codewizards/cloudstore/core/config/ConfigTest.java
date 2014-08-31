@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.AbstractTest;
 
 public class ConfigTest extends AbstractTest {
@@ -73,7 +73,7 @@ public class ConfigTest extends AbstractTest {
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		final File child_1 = createFile(localRoot, "1");
+		final File child_1 = createFile(localRoot, "1_" + random.nextInt(10000));
 		assertThat(child_1.exists()).isFalse();
 		final Config config_1 = Config.getInstanceForDirectory(child_1);
 		assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
@@ -184,8 +184,8 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {
-		assertNotNull("propertiesFile", propertiesFile);
-		assertNotNull("key", key);
+		AssertUtil.assertNotNull("propertiesFile", propertiesFile);
+		AssertUtil.assertNotNull("key", key);
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {

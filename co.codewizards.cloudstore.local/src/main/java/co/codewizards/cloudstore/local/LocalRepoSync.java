@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
@@ -56,7 +57,7 @@ public class LocalRepoSync {
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
 
 	public LocalRepoSync(final LocalRepoTransaction transaction) {
-		this.transaction = assertNotNull("transaction", transaction);
+		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
 		repoFileDao = this.transaction.getDao(RepoFileDao.class);
 		normalFileDao = this.transaction.getDao(NormalFileDao.class);
@@ -70,7 +71,7 @@ public class LocalRepoSync {
 	}
 
 	public RepoFile sync(final File file, final ProgressMonitor monitor) {
-		if (!(assertNotNull("file", file).isAbsolute()))
+		if (!(AssertUtil.assertNotNull("file", file).isAbsolute()))
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
 		if (localRoot.equals(file)) {
@@ -122,8 +123,8 @@ public class LocalRepoSync {
 	 * {@code file} does not exist; otherwise it is never <code>null</code>.
 	 */
 	private RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
-		assertNotNull("file", file);
-		assertNotNull("monitor", monitor);
+		AssertUtil.assertNotNull("file", file);
+		AssertUtil.assertNotNull("monitor", monitor);
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
@@ -187,8 +188,8 @@ public class LocalRepoSync {
 	 * the file does not exist (anymore) in the file system, <code>false</code> is returned, too.
 	 */
 	private boolean isRepoFileTypeCorrect(final RepoFile repoFile, final File file) {
-		assertNotNull("repoFile", repoFile);
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("repoFile", repoFile);
+		AssertUtil.assertNotNull("file", file);
 
 		if (file.isSymbolicLink())
 			return repoFile instanceof Symlink;
@@ -321,7 +322,7 @@ public class LocalRepoSync {
 	}
 
 	private void deleteRepoFile(final RepoFile repoFile, final boolean createDeleteModifications) {
-		final RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
+		final RepoFile parentRepoFile = AssertUtil.assertNotNull("repoFile", repoFile).getParent();
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");
 
@@ -416,9 +417,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final DeleteModification deleteModification, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("deleteModification", deleteModification);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		AssertUtil.assertNotNull("deleteModification", deleteModification);
+		AssertUtil.assertNotNull("toNormalFile", toNormalFile);
+		AssertUtil.assertNotNull("fromPaths", fromPaths);
 
 		if (deleteModification.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -430,9 +431,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final String fromPath, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("fromPath", fromPath);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		AssertUtil.assertNotNull("fromPath", fromPath);
+		AssertUtil.assertNotNull("toNormalFile", toNormalFile);
+		AssertUtil.assertNotNull("fromPaths", fromPaths);
 
 		if (!fromPaths.add(fromPath)) // already done before => prevent duplicates.
 			return;
@@ -449,9 +450,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final NormalFile fromNormalFile, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("fromNormalFile", fromNormalFile);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		AssertUtil.assertNotNull("fromNormalFile", fromNormalFile);
+		AssertUtil.assertNotNull("toNormalFile", toNormalFile);
+		AssertUtil.assertNotNull("fromPaths", fromPaths);
 
 		if (fromNormalFile.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -463,7 +464,7 @@ public class LocalRepoSync {
 	}
 
 	private void createDeleteModifications(final RepoFile repoFile) {
-		assertNotNull("repoFile", repoFile);
+		AssertUtil.assertNotNull("repoFile", repoFile);
 		NormalFile normalFile = null;
 		if (repoFile instanceof NormalFile)
 			normalFile = (NormalFile) repoFile;
@@ -486,7 +487,7 @@ public class LocalRepoSync {
 	}
 
 	private void deleteRepoFileWithAllChildrenRecursively(final RepoFile repoFile) {
-		assertNotNull("repoFile", repoFile);
+		AssertUtil.assertNotNull("repoFile", repoFile);
 		for (final RepoFile childRepoFile : repoFileDao.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}

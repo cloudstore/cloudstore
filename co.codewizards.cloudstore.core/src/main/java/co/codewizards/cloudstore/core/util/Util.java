@@ -1,9 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
 import java.util.Arrays;
-import java.util.Collection;
-
-import co.codewizards.cloudstore.util.AssertUtil;
 
 /**
  * @author Marco
@@ -21,18 +18,6 @@ public final class Util {
 	public static final String getUserName()
 	{
 		return System.getProperty("user.name"); //$NON-NLS-1$
-	}
-
-	public static final <T> T assertNotNull(final String name, final T object) {
-		return AssertUtil.assertNotNull(name, object);
-	}
-
-	public static final <T> T[] assertNotNullAndNoNullElement(final String name, final T[] array) {
-		return AssertUtil.assertNotNullAndNoNullElement(name, array);
-	}
-
-	public static final <E, T extends Collection<E>> T assertNotNullAndNoNullElement(final String name, final T collection) {
-		return AssertUtil.assertNotNullAndNoNullElement(name, collection);
 	}
 
 	public static final boolean equal(final Object one, final Object two) {
