@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.net.URL;
 
 import javax.ws.rs.Consumes;

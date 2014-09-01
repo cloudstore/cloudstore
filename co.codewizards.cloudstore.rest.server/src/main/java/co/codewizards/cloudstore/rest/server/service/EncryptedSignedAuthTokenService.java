@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
@@ -14,10 +12,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-
-
-
-
 
 import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.auth.AuthTokenIO;
@@ -49,14 +43,14 @@ public class EncryptedSignedAuthTokenService
 
 	@GET
 	@Path("{clientRepositoryId}")
-	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") UUID clientRepositoryId)
+	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") final UUID clientRepositoryId)
 	{
 		AssertUtil.assertNotNull("repositoryName", repositoryName);
 		AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
-		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
+			final EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
 					localRepoManager.getRepositoryId(), clientRepositoryId,
 					localRepoManager.getPrivateKey(), localRepoManager.getRemoteRepositoryPublicKeyOrFail(clientRepositoryId));
 			return result;
@@ -66,16 +60,16 @@ public class EncryptedSignedAuthTokenService
 	}
 
 	protected EncryptedSignedAuthToken getEncryptedSignedAuthToken(
-			UUID serverRepositoryId, UUID clientRepositoryId, byte[] localRepoPrivateKey, byte[] remoteRepoPublicKey)
+			final UUID serverRepositoryId, final UUID clientRepositoryId, final byte[] localRepoPrivateKey, final byte[] remoteRepoPublicKey)
 	{
-		TransientRepoPassword transientRepoPassword = TransientRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
+		final TransientRepoPassword transientRepoPassword = TransientRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 
-		AuthToken authToken = transientRepoPassword.getAuthToken();
-		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-		SignedAuthToken signedAuthToken = new AuthTokenSigner(localRepoPrivateKey).sign(authTokenData);
+		final AuthToken authToken = transientRepoPassword.getAuthToken();
+		final byte[] authTokenData = new AuthTokenIO().serialise(authToken);
+		final SignedAuthToken signedAuthToken = new AuthTokenSigner(localRepoPrivateKey).sign(authTokenData);
 
-		byte[] signedAuthTokenData = new SignedAuthTokenIO().serialise(signedAuthToken);
-		EncryptedSignedAuthToken encryptedSignedAuthToken =
+		final byte[] signedAuthTokenData = new SignedAuthTokenIO().serialise(signedAuthToken);
+		final EncryptedSignedAuthToken encryptedSignedAuthToken =
 				new SignedAuthTokenEncrypter(remoteRepoPublicKey).encrypt(signedAuthTokenData);
 
 		return encryptedSignedAuthToken;
