@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -46,11 +44,11 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public byte[] getFileData(
 			@PathParam("path") String path,
-			@QueryParam("offset") long offset,
-			@QueryParam("length") @DefaultValue("-1") int length)
+			@QueryParam("offset") final long offset,
+			@QueryParam("length") @DefaultValue("-1") final int length)
 	{
 		AssertUtil.assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			return repoTransport.getFileData(path, offset, length);
@@ -61,7 +59,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 
 	@MKCOL
 	@Path("{path:.*}")
-	public void mkcol(@PathParam("path") String path, @QueryParam("lastModified") DateTime lastModified) {
+	public void mkcol(@PathParam("path") final String path, @QueryParam("lastModified") final DateTime lastModified) {
 		throw new UnsupportedOperationException("NYI");
 	}
 
@@ -69,7 +67,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Path("{path:.*}")
 	public void delete(@PathParam("path") String path) {
 		AssertUtil.assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.delete(path);
@@ -81,9 +79,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@PUT
 	@Path("{path:.*}")
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
-	public void putFileData(@PathParam("path") String path, @QueryParam("offset") long offset, byte[] fileData) {
+	public void putFileData(@PathParam("path") String path, @QueryParam("offset") final long offset, final byte[] fileData) {
 		AssertUtil.assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.putFileData(path, offset, fileData);
@@ -101,7 +99,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@GET
 	@Path("{path:.*}")
 	@Produces(MediaType.TEXT_HTML)
-	public String browse(@PathParam("path") String path) {
+	public String browse(@PathParam("path") final String path) {
 		AssertUtil.assertNotNull("path", path);
 		authenticateAndReturnUserName();
 		return "<html><body>" + path + "</body></html>";
@@ -109,13 +107,13 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 
 	@COPY
 	@Path("{path:.*}")
-	public void copy(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
+	public void copy(@PathParam("path") final String path, @HeaderParam("DESTINATION") final String destination) {
 		throw new UnsupportedOperationException("NYI");
 	}
 
 	@MOVE
 	@Path("{path:.*}")
-	public void move(@PathParam("path") String path, @HeaderParam("DESTINATION") final String destination) {
+	public void move(@PathParam("path") final String path, @HeaderParam("DESTINATION") final String destination) {
 		throw new UnsupportedOperationException("NYI");
 	}
 

@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -41,7 +39,7 @@ public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 	public void makeDirectory(@PathParam("path") String path)
 	{
 		AssertUtil.assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());

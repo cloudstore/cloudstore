@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.transport;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -428,7 +428,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				if (fromRepoFile != null)
 					localRepoSync.deleteRepoFile(fromRepoFile);
 
-				AssertUtil.assertNotNull("toRepoFile", toRepoFile);
+				assertNotNull("toRepoFile", toRepoFile);
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(fromParentFile);
@@ -978,7 +978,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				final NormalFile normalFile = (NormalFile) repoFile;
 				if (!normalFile.isInProgress())
-					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginPutFile(...) not called?! repoFile=%s file=%s",
 							repoFile, file));
 
 				final FileWriteStrategy fileWriteStrategy = getFileWriteStrategy(file);
@@ -1101,7 +1101,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				final NormalFile normalFile = (NormalFile) repoFile;
 				if (!normalFile.isInProgress())
-					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginFile(...) not called?! repoFile=%s file=%s",
+					throw new IllegalStateException(String.format("NormalFile.inProgress == false! beginPutFile(...) not called?! repoFile=%s file=%s",
 							repoFile, file));
 
 				final FileWriteStrategy fileWriteStrategy = getFileWriteStrategy(file);

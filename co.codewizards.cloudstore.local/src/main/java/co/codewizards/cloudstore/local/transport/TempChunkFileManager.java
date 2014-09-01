@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local.transport;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

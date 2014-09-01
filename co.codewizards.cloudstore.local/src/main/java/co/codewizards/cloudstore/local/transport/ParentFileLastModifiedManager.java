@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.HashMap;
 import java.util.Map;
 

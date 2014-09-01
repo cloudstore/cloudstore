@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.concurrent.Callable;
 
 import javax.ws.rs.Consumes;
@@ -45,7 +43,7 @@ public class RepoFileDtoService extends AbstractServiceWithRepoToRepoAuth
 		AssertUtil.assertNotNull("path", path);
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			String callIdentifier = RepoFileDtoService.class.getName() + ".getRepoFileDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;
+			final String callIdentifier = RepoFileDtoService.class.getName() + ".getRepoFileDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
 					new CallableProvider<RepoFileDto>() {
@@ -58,7 +56,7 @@ public class RepoFileDtoService extends AbstractServiceWithRepoToRepoAuth
 								@Override
 								public RepoFileDto call() throws Exception { // called *A*synchronously
 									try {
-										RepoFileDto repoFileDto = rt.getRepoFileDto(unprefixedPath);
+										final RepoFileDto repoFileDto = rt.getRepoFileDto(unprefixedPath);
 										return repoFileDto;
 									} finally {
 										rt.close();
