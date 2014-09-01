@@ -231,17 +231,17 @@ public class IoFile implements File {
 	}
 
 	@Override
-	public OutputStream createFileOutputStream() throws FileNotFoundException {
+	public OutputStream createOutputStream() throws FileNotFoundException {
 		return new FileOutputStream(ioFile);
 	}
 
 	@Override
-	public InputStream createFileInputStream() throws FileNotFoundException {
+	public InputStream createInputStream() throws FileNotFoundException {
 		return new FileInputStream(ioFile);
 	}
 
 	@Override
-	public OutputStream createFileOutputStream(final boolean append) throws FileNotFoundException {
+	public OutputStream createOutputStream(final boolean append) throws FileNotFoundException {
 		return new FileOutputStream(ioFile, append);
 	}
 

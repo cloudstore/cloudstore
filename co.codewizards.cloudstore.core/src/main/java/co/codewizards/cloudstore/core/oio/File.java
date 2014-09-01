@@ -66,9 +66,9 @@ public interface File {
 	/** This is platform dependent (e.g. might fail at renaming between different partitions). Plz see {@link java.io.File#renameTo(java.io.File)}. */
 	boolean renameTo(File newFileName);
 	boolean setLastModified(long lastModified);
-	OutputStream createFileOutputStream() throws FileNotFoundException;
-	OutputStream createFileOutputStream(boolean append) throws FileNotFoundException;
-	InputStream createFileInputStream() throws FileNotFoundException;
+	OutputStream createOutputStream() throws FileNotFoundException;
+	OutputStream createOutputStream(boolean append) throws FileNotFoundException;
+	InputStream createInputStream() throws FileNotFoundException;
 	String getName();
 	void createSymbolicLink(String targetPath) throws IOException;
 

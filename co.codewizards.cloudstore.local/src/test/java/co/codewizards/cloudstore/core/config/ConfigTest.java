@@ -189,7 +189,7 @@ public class ConfigTest extends AbstractTest {
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {
-			final InputStream in = propertiesFile.createFileInputStream();
+			final InputStream in = propertiesFile.createInputStream();
 			properties.load(in);
 			in.close();
 		}
@@ -199,7 +199,7 @@ public class ConfigTest extends AbstractTest {
 		else
 			properties.setProperty(key, value);
 
-		final OutputStream out = propertiesFile.createFileOutputStream();
+		final OutputStream out = propertiesFile.createOutputStream();
 		properties.store(out, null);
 		out.close();
 	}

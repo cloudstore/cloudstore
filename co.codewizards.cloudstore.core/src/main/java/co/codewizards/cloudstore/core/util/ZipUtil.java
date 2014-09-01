@@ -89,7 +89,7 @@ public final class ZipUtil {
 	public static void zipFilesRecursively(final File zipOutputFile, final File[] files, final File entryRoot, final ProgressMonitor monitor)
 	throws IOException
 	{
-		final OutputStream fout = zipOutputFile.createFileOutputStream();
+		final OutputStream fout = zipOutputFile.createOutputStream();
 		final ZipOutputStream out = new ZipOutputStream(fout);
 		try {
 			zipFilesRecursively(out, zipOutputFile, files, entryRoot, monitor);
@@ -207,7 +207,7 @@ public final class ZipUtil {
 				}
 				else {
 					// Create a new zipEntry
-					final BufferedInputStream in = new BufferedInputStream( file.createFileInputStream() );
+					final BufferedInputStream in = new BufferedInputStream( file.createInputStream() );
 					final ZipEntry entry = new ZipEntry(relativePath);
 					entry.setTime(file.lastModified());
 					out.putNextEntry(entry);
@@ -274,7 +274,7 @@ public final class ZipUtil {
 
 		final Properties properties = new Properties();
 		if (metaFile.exists()) {
-			final InputStream in = metaFile.createFileInputStream();
+			final InputStream in = metaFile.createInputStream();
 			try {
 				properties.load(in);
 			} finally {
@@ -316,7 +316,7 @@ public final class ZipUtil {
 			unzipArchive(zipArchive, unzipRootFolder);
 			properties.setProperty(PROPERTY_KEY_ZIP_FILESIZE, Long.toString(zipLength, 36));
 			properties.setProperty(PROPERTY_KEY_ZIP_TIMESTAMP, Long.toString(zipLastModified, 36));
-			final OutputStream out = metaFile.createFileOutputStream();
+			final OutputStream out = metaFile.createOutputStream();
 			try {
 				properties.store(out, null);
 			} finally {
@@ -356,7 +356,7 @@ public final class ZipUtil {
 						dir.mkdirs( );
 					}
 
-					final BufferedOutputStream out = new BufferedOutputStream( file.createFileOutputStream() );
+					final BufferedOutputStream out = new BufferedOutputStream( file.createOutputStream() );
 
 					int len;
 					final byte[] buf = new byte[1024 * 5];

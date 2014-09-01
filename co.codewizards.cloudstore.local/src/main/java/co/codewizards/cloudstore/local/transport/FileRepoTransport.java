@@ -1008,7 +1008,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final long offset = AssertUtil.assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()).getOffset();
 		final byte[] fileData = new byte[(int) tempChunkFile.length()];
 		try {
-			final InputStream in = tempChunkFile.createFileInputStream();
+			final InputStream in = tempChunkFile.createInputStream();
 			try {
 				int off = 0;
 				while (off < fileData.length) {
@@ -1113,7 +1113,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				final InputStream fileIn;
 				if (destFile != file) {
 					try {
-						fileIn = file.createFileInputStream();
+						fileIn = file.createInputStream();
 						destFile.createNewFile();
 					} catch (final IOException e) {
 						throw new RuntimeException(e);

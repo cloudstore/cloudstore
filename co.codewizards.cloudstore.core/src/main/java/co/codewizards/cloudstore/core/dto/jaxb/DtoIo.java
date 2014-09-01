@@ -54,7 +54,7 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			try (final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());) {
+			try (final OutputStream out = new BufferedOutputStream(file.createOutputStream());) {
 				getMarshaller().marshal(dto, out);
 			}
 		} catch (JAXBException | IOException e) {
@@ -68,7 +68,7 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			try (final OutputStream out = new BufferedOutputStream(file.createFileOutputStream());) {
+			try (final OutputStream out = new BufferedOutputStream(file.createOutputStream());) {
 				try (GZIPOutputStream gzOut = new GZIPOutputStream(out);) {
 					getMarshaller().marshal(dto, gzOut);
 				}
@@ -91,7 +91,7 @@ public abstract class DtoIo <D> {
 		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {
+			try (final InputStream in = new BufferedInputStream(file.createInputStream());) {
 				return dtoClass.cast(getUnmarshaller().unmarshal(in));
 			}
 		} catch (JAXBException | IOException e) {
@@ -103,7 +103,7 @@ public abstract class DtoIo <D> {
 		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			try (final InputStream in = new BufferedInputStream(file.createFileInputStream());) {
+			try (final InputStream in = new BufferedInputStream(file.createInputStream());) {
 				try (GZIPInputStream gzIn = new GZIPInputStream(in);) {
 					return dtoClass.cast(getUnmarshaller().unmarshal(gzIn));
 				}

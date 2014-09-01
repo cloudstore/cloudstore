@@ -525,7 +525,7 @@ public class LocalRepoSync {
 			final int chunkLength = 32 * bufLength; // 1 MiB chunk size
 
 			long offset = 0;
-			final InputStream in = file.createFileInputStream();
+			final InputStream in = file.createInputStream();
 			try {
 				FileChunk fileChunk = null;
 

@@ -106,7 +106,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
-	      configurator.doConfigure(logbackXmlFile.createFileInputStream());
+	      configurator.doConfigure(logbackXmlFile.createInputStream());
 	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();
@@ -314,7 +314,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			boolean successful = false;
 			final InputStream in = url.openStream();
 			try {
-				final OutputStream out = downloadFile.createFileOutputStream();
+				final OutputStream out = downloadFile.createOutputStream();
 				try {
 					IOUtil.transferStreamData(in, out);
 				} finally {

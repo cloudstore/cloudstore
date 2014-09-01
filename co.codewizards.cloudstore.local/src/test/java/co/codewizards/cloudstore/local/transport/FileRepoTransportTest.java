@@ -175,7 +175,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final File child_2 = createFile(remoteRoot, "2");
 		final File child_2_1 = createFile(child_2, "1");
 		final File child_2_1_b = createFile(child_2_1, "b");
-		final OutputStream out = child_2_1_b.createFileOutputStream(true);
+		final OutputStream out = child_2_1_b.createOutputStream(true);
 		out.write(4);
 		out.close();
 

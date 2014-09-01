@@ -40,7 +40,7 @@ public class PGPVerifier {
 				final PGPSignature signature = sl.get(index);
 				signature.initVerify(publicKeyRing.getPublicKey(signature.getKeyID()), provider);
 
-				final InputStream contentIn = file.createFileInputStream();
+				final InputStream contentIn = file.createInputStream();
 				try {
 					final byte[] buf = new byte[16 * 1024];
 					int len;
@@ -89,7 +89,7 @@ public class PGPVerifier {
 			throw new PGPVerifyException("The signature-file does not exist or is not readable: " + signatureFile.getAbsolutePath());
 
 		try {
-			final InputStream in = new BufferedInputStream(signatureFile.createFileInputStream());
+			final InputStream in = new BufferedInputStream(signatureFile.createInputStream());
 			try {
 				final PGPObjectFactory objectFactory = new PGPObjectFactory(PGPUtil.getDecoderStream(in));
 				final PGPSignatureList sl = (PGPSignatureList) objectFactory.nextObject();

@@ -53,7 +53,7 @@ public class TempChunkFileManager {
 			// the temp-chunk-file or the chunk was already written into the final destination.
 			deleteOrFail(tempChunkFileDtoFile);
 
-			final OutputStream out = tempChunkFile.createFileOutputStream();
+			final OutputStream out = tempChunkFile.createOutputStream();
 			try {
 				out.write(fileData);
 			} finally {

@@ -230,7 +230,7 @@ public class CloudStoreServer implements Runnable {
 			final PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
 			ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
 
-			final OutputStream fos = getKeyStoreFile().createFileOutputStream();
+			final OutputStream fos = getKeyStoreFile().createOutputStream();
 			try {
 				ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
@@ -243,7 +243,7 @@ public class CloudStoreServer implements Runnable {
 		}
 
 		final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		final InputStream fis = getKeyStoreFile().createFileInputStream();
+		final InputStream fis = getKeyStoreFile().createInputStream();
 		try {
 			ks.load(fis, KEY_STORE_PASSWORD_CHAR_ARRAY);
 		} finally {
@@ -366,7 +366,7 @@ public class CloudStoreServer implements Runnable {
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
-	      configurator.doConfigure(logbackXmlFile.createFileInputStream());
+	      configurator.doConfigure(logbackXmlFile.createInputStream());
 	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();

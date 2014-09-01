@@ -123,7 +123,7 @@ public final class PropertiesUtil
 
 	public static java.util.Properties load(final File file) throws IOException
 	{
-		final InputStream in = file.createFileInputStream();
+		final InputStream in = file.createInputStream();
 		try {
 			final java.util.Properties properties = new java.util.Properties();
 			properties.load(in);
@@ -140,7 +140,7 @@ public final class PropertiesUtil
 
 	public static void store(final File file, final java.util.Properties properties, final String comment) throws IOException
 	{
-		final OutputStream out = file.createFileOutputStream();
+		final OutputStream out = file.createOutputStream();
 		try {
 			properties.store(out, comment);
 		} finally {

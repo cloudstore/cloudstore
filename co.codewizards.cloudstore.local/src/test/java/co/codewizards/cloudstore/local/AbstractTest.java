@@ -111,7 +111,7 @@ public abstract class AbstractTest {
 
 	protected File createFileWithRandomContent(final File file, final long minLength) throws IOException {
 		assertThat(file.exists()).isFalse(); // prevent accidentally overwriting important data ;-)
-		final OutputStream out = file.createFileOutputStream();
+		final OutputStream out = file.createOutputStream();
 		final byte[] buf = new byte[1 + random.nextInt(10241)];
 		final int loops = 1 + random.nextInt(100);
 		for (int i = 0; i < loops; ++i) {

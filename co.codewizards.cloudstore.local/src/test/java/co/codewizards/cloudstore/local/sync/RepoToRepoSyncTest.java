@@ -193,7 +193,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
-		final OutputStream out = child_2_1_b.createFileOutputStream();
+		final OutputStream out = child_2_1_b.createOutputStream();
 		out.write(random.nextInt());
 		out.close();
 
