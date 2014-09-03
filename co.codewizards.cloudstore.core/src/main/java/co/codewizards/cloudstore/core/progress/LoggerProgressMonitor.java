@@ -13,14 +13,14 @@ import org.slf4j.Logger;
  */
 public class LoggerProgressMonitor implements ProgressMonitor
 {
-	private Logger logger;
+	private final Logger logger;
 
 	/**
 	 * Create a monitor logging to the specified logger.
 	 *
 	 * @param logger the logger to write to. Must not be <code>null</code>.
 	 */
-	public LoggerProgressMonitor(Logger logger) {
+	public LoggerProgressMonitor(final Logger logger) {
 		if (logger == null)
 			throw new IllegalArgumentException("logger == null");
 
@@ -65,7 +65,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @param message the message to be logged.
 	 * @see #getMessage()
 	 */
-	public synchronized void setMessage(String message) {
+	public synchronized void setMessage(final String message) {
 		if (message == null)
 			throw new IllegalArgumentException("message must not be null!");
 
@@ -87,7 +87,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 
 	private double internalWorked = 0;
 
-	private float percentageWorked = 0;
+	protected float percentageWorked = 0;
 	private float lastLogMessage_percentageWorked = Float.MIN_VALUE;
 
 	private long lastLogMessage_timestamp = 0;
@@ -128,7 +128,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @see #getLogMinPeriodMSec()
 	 * @see #setLogMinPercentageDifference(float)
 	 */
-	public synchronized void setLogMinPeriodMSec(long logMinPeriodMSec) {
+	public synchronized void setLogMinPeriodMSec(final long logMinPeriodMSec) {
 		this.logMinPeriodMSec = logMinPeriodMSec;
 	}
 
@@ -170,7 +170,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * @see #getLogMinPercentageDifference()
 	 * @see #setLogMinPeriodMSec(long)
 	 */
-	public synchronized void setLogMinPercentageDifference(float logMinPercentageDifference) {
+	public synchronized void setLogMinPercentageDifference(final float logMinPercentageDifference) {
 		this.logMinPercentageDifference = logMinPercentageDifference;
 	}
 
@@ -199,13 +199,13 @@ public class LoggerProgressMonitor implements ProgressMonitor
 		if (nestedBeginTasks == 0 || --nestedBeginTasks > 0)
 			return;
 
-		double stillToWork = internalTotalWork - internalWorked;
+		final double stillToWork = internalTotalWork - internalWorked;
 		if (stillToWork > 0)
 			internalWorked(stillToWork); // To do whatever still needs to be done
 	}
 
 	@Override
-	public synchronized void internalWorked(double worked) {
+	public synchronized void internalWorked(final double worked) {
 		if (worked < 0 || worked == Double.NaN)
 			return;
 
@@ -228,7 +228,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 			doLog = true;
 
 		// log when the last log happened very long ago (longer than our minimum period).
-		long now = System.currentTimeMillis();
+		final long now = System.currentTimeMillis();
 		if (!doLog && (now - lastLogMessage_timestamp >= logMinPeriodMSec))
 			doLog = true;
 
@@ -236,7 +236,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 			lastLogMessage_percentageWorked = this.percentageWorked;
 			lastLogMessage_timestamp = now;
 
-			String percentageString = PERCENTAGE_FORMAT.format(this.percentageWorked) + '%';
+			final String percentageString = PERCENTAGE_FORMAT.format(this.percentageWorked) + '%';
 			String msg = message.replaceAll(Pattern.quote(MESSAGE_VARIABLE_NAME), name);
 			msg = msg.replaceAll(Pattern.quote(MESSAGE_VARIABLE_PERCENTAGE), percentageString);
 			switch (logLevel) {
@@ -289,7 +289,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	 * Set the log-level to use when writing to the logger.
 	 * @param logLevel the {@link LogLevel} to be used.
 	 */
-	public synchronized void setLogLevel(LogLevel logLevel) {
+	public synchronized void setLogLevel(final LogLevel logLevel) {
 		if (logLevel == null)
 			throw new IllegalArgumentException("logLevel must not be null!");
 
@@ -306,22 +306,22 @@ public class LoggerProgressMonitor implements ProgressMonitor
 	}
 
 	@Override
-	public void setCanceled(boolean canceled) {
+	public void setCanceled(final boolean canceled) {
 		this.canceled = canceled;
 	}
 
 	@Override
-	public synchronized void setTaskName(String name) {
+	public synchronized void setTaskName(final String name) {
 		this.name = name; // TODO not sure, if this is a correct implementation
 	}
 
 	@Override
-	public synchronized void subTask(String name) {
+	public synchronized void subTask(final String name) {
 		this.name = name; // TODO not sure, if this is a correct implementation
 	}
 
 	@Override
-	public void worked(int work) {
+	public void worked(final int work) {
 		internalWorked(work);
 	}
 

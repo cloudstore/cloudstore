@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.core.updater;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +26,8 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
@@ -111,7 +112,7 @@ public class CloudStoreUpdaterCore {
 			else {
 				final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 				// cannot use resolve(...), because it invokes this method ;-)
-				assertNotNull("artifactId", artifactId);
+				AssertUtil.assertNotNull("artifactId", artifactId);
 				final Map<String, Object> variables = new HashMap<>(1);
 				variables.put("artifactId", artifactId);
 				final String resolvedRemoteVersionURL = IOUtil.replaceTemplateVariables(remoteVersionURL, variables);
@@ -119,7 +120,7 @@ public class CloudStoreUpdaterCore {
 					final URL url = new URL(resolvedRemoteVersionURL);
 					final InputStream in = url.openStream();
 					try {
-						BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+						final BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 						final String line = r.readLine();
 						if (line == null || line.isEmpty())
 							throw new IllegalStateException("Failed to read version from: " + resolvedRemoteVersionURL);
@@ -134,7 +135,7 @@ public class CloudStoreUpdaterCore {
 						in.close();
 					}
 					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(new Date())));
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
@@ -159,7 +160,7 @@ public class CloudStoreUpdaterCore {
 
 	protected Properties getInstallationProperties() {
 		if (installationProperties == null) {
-			final File installationPropertiesFile = new File(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
+			final File installationPropertiesFile = createFile(getInstallationDir(), INSTALLATION_PROPERTIES_FILE_NAME);
 			if (!installationPropertiesFile.exists())
 				throw new IllegalArgumentException(String.format("installationPropertiesFile '%s' does not exist!", installationPropertiesFile.getAbsolutePath()));
 
@@ -169,7 +170,7 @@ public class CloudStoreUpdaterCore {
 			try {
 				final Properties properties = PropertiesUtil.load(installationPropertiesFile);
 				installationProperties = properties;
-			} catch (IOException x) {
+			} catch (final IOException x) {
 				throw new RuntimeException(x);
 			}
 		}
@@ -186,10 +187,10 @@ public class CloudStoreUpdaterCore {
 	 * @param template the template to be resolved. Must not be <code>null</code>.
 	 * @return
 	 */
-	protected String resolve(String template) {
-		assertNotNull("template", template);
+	protected String resolve(final String template) {
+		AssertUtil.assertNotNull("template", template);
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
-		assertNotNull("artifactId", artifactId);
+		AssertUtil.assertNotNull("artifactId", artifactId);
 
 		final Version remoteVersion = getRemoteVersion();
 
@@ -230,7 +231,7 @@ public class CloudStoreUpdaterCore {
 				dir = dir.getParentFile();
 
 			while (dir != null) {
-				final File installationPropertiesFile = new File(dir, INSTALLATION_PROPERTIES_FILE_NAME);
+				final File installationPropertiesFile = createFile(dir, INSTALLATION_PROPERTIES_FILE_NAME);
 				if (installationPropertiesFile.exists()) {
 					logger.debug("determineInstallationDirFromClass: Found installationPropertiesFile in this directory: {}", dir);
 					return dir;
@@ -245,33 +246,33 @@ public class CloudStoreUpdaterCore {
 			throw new IllegalStateException("Class 'CloudStoreUpdaterCore' was not loaded from a local JAR or class file!");
 	}
 
-	private File createFileFromFileURL(URL url) {
-		assertNotNull("url", url);
+	private File createFileFromFileURL(final URL url) {
+		AssertUtil.assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
 		try {
-			final File file = Paths.get(url.toURI()).toFile();
+			final File file = createFile(url.toURI());
 			return file;
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private URL removePrefixAndSuffixFromJarURL(URL url) {
-		assertNotNull("url", url);
+	private URL removePrefixAndSuffixFromJarURL(final URL url) {
+		AssertUtil.assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
 			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
 
 		String urlStrWithoutJarPrefix = url.getFile();
-		int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
+		final int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
 		if (exclamationMarkIndex >= 0) {
 			urlStrWithoutJarPrefix = urlStrWithoutJarPrefix.substring(0, exclamationMarkIndex);
 		}
 		try {
 			final URL urlWithoutJarPrefixAndSuffix = new URL(urlStrWithoutJarPrefix);
 			return urlWithoutJarPrefixAndSuffix;
-		} catch (MalformedURLException e) {
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -297,7 +298,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File getUpdaterPropertiesFile() {
-		return new File(ConfigDir.getInstance().getFile(), "updater.properties");
+		return createFile(ConfigDir.getInstance().getFile(), "updater.properties");
 	}
 
 	private static final String PROPERTY_KEY_REMOTE_VERSION_TIMESTAMP = "remoteVersionTimestamp";
@@ -308,14 +309,13 @@ public class CloudStoreUpdaterCore {
 		public final DateTime remoteVersionTimestamp;
 
 		public RemoteVersionCache(final Version remoteVersion, final DateTime remoteVersionTimestamp) {
-			this.remoteVersion = assertNotNull("remoteVersion", remoteVersion);
-			this.remoteVersionTimestamp = assertNotNull("remoteVersionTimestamp", remoteVersionTimestamp);
+			this.remoteVersion = AssertUtil.assertNotNull("remoteVersion", remoteVersion);
+			this.remoteVersionTimestamp = AssertUtil.assertNotNull("remoteVersionTimestamp", remoteVersionTimestamp);
 		}
 	}
 
 	private RemoteVersionCache readRemoteVersionCacheFromProperties() {
-		final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000);
-		try {
+		try ( final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000); ) {
 			final Properties properties = new Properties();
 			try {
 				final InputStream in = lockFile.createInputStream();
@@ -336,7 +336,7 @@ public class CloudStoreUpdaterCore {
 				final Version remoteVersion;
 				try {
 					remoteVersion = new Version(versionStr.trim());
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("readRemoteVersionFromProperties: Version-String '{}' could not be parsed into a Version! Returning null!", versionStr.trim());
 					return null;
 				}
@@ -344,23 +344,20 @@ public class CloudStoreUpdaterCore {
 				final DateTime remoteVersionTimestamp;
 				try {
 					remoteVersionTimestamp = new DateTime(timestampStr.trim());
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("readRemoteVersionFromProperties: Timestamp-String '{}' could not be parsed into a DateTime! Returning null!", timestampStr.trim());
 					return null;
 				}
 
 				return new RemoteVersionCache(remoteVersion, remoteVersionTimestamp);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
-		} finally {
-			lockFile.release();
 		}
 	}
 
 	private void writeRemoteVersionCacheToProperties(final RemoteVersionCache remoteVersionCache) {
-		final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000);
-		try {
+		try ( final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000); ) {
 			final Lock lock = lockFile.getLock();
 			lock.lock();
 			try {
@@ -388,14 +385,12 @@ public class CloudStoreUpdaterCore {
 					} finally {
 						out.close();
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			} finally {
 				lock.unlock();
 			}
-		} finally {
-			lockFile.release();
 		}
 	}
 
@@ -413,9 +408,6 @@ public class CloudStoreUpdaterCore {
 	public void createUpdaterDirIfUpdateNeeded() {
 		File updaterDir = null;
 		try {
-			updaterDir = getUpdaterDir();
-			IOUtil.deleteDirectoryRecursively(updaterDir);
-
 			if (!isEnabled()) {
 				if (isForce())
 					logger.warn("createUpdaterDirIfUpdateNeeded: The configuration key '{}' (or its corresponding system property) is set to force an update, but the updater is *not* enabled! You must set the configuration key '{}' (or its corresponding system property) additionally! Skipping!", CONFIG_KEY_FORCE, CONFIG_KEY_ENABLED);
@@ -424,6 +416,9 @@ public class CloudStoreUpdaterCore {
 
 				return;
 			}
+
+			updaterDir = getUpdaterDir();
+			IOUtil.deleteDirectoryRecursively(updaterDir);
 
 			if (isUpdateNeeded()) {
 				if (!canWriteAll(getInstallationDir())) {
@@ -435,25 +430,25 @@ public class CloudStoreUpdaterCore {
 				copyInstallationDirectoryForUpdater();
 				logger.debug("createUpdaterDirIfUpdateNeeded: updaterDir='{}'", updaterDir);
 			}
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			logger.error("createUpdaterDirIfUpdateNeeded: " + x, x);
 			if (updaterDir != null) {
 				try {
 					IOUtil.deleteDirectoryRecursively(updaterDir);
-				} catch (Exception y) {
+				} catch (final Exception y) {
 					logger.error("createUpdaterDirIfUpdateNeeded: " + y, y);
 				}
 			}
 		}
 	}
 
-	private boolean canWriteAll(File fileOrDir) {
+	private boolean canWriteAll(final File fileOrDir) {
 		if (!fileOrDir.canWrite())
 			return false;
 
-		File[] children = fileOrDir.listFiles(fileFilterIgnoringBackupDir);
+		final File[] children = fileOrDir.listFiles(fileFilterIgnoringBackupDir);
 		if (children != null) {
-			for (File child : children) {
+			for (final File child : children) {
 				if (!canWriteAll(child))
 					return false;
 			}
@@ -463,28 +458,28 @@ public class CloudStoreUpdaterCore {
 
 	protected File getUpdaterDir() {
 		if (updaterDir == null)
-			updaterDir = new File(getInstallationDir(), "updater");
+			updaterDir = createFile(getInstallationDir(), "updater");
 
 		return updaterDir;
 	}
 
 	protected File getBackupDir() {
 		if (backupDir == null)
-			backupDir = new File(getInstallationDir(), "backup");
+			backupDir = createFile(getInstallationDir(), "backup");
 
 		return backupDir;
 	}
 
 	protected final FileFilter fileFilterIgnoringBackupDir = new FileFilter() {
 		@Override
-		public boolean accept(final File file) {
+		public boolean accept(final java.io.File file) {
 			return !getBackupDir().equals(file);
 		}
 	};
 
 	protected final FileFilter fileFilterIgnoringBackupAndUpdaterDir = new FileFilter() {
 		@Override
-		public boolean accept(final File file) {
+		public boolean accept(final java.io.File file) {
 			return !(getBackupDir().equals(file) || getUpdaterDir().equals(file));
 		}
 	};
@@ -495,7 +490,7 @@ public class CloudStoreUpdaterCore {
 			IOUtil.deleteDirectoryRecursively(updaterDir);
 			IOUtil.copyDirectory(getInstallationDir(), updaterDir, fileFilterIgnoringBackupAndUpdaterDir);
 			return updaterDir;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

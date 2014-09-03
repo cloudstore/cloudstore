@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.Set;
+
+import co.codewizards.cloudstore.core.oio.File;
 
 public interface LocalRepoManagerFactory {
 	class Helper {

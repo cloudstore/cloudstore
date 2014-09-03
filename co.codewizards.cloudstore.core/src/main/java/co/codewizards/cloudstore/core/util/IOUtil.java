@@ -1,13 +1,9 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,18 +16,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -39,19 +24,14 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.childprocess.DumpStreamThread;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public final class IOUtil {
 	/**
-	 * UTF-8 caracter set name.
+	 * UTF-8 character set name.
 	 */
 	public static final String CHARSET_NAME_UTF_8 = "UTF-8";
-
-	/**
-	 * UTF-8 caracter set.
-	 */
-	public static final Charset CHARSET_UTF_8 = Charset.forName(CHARSET_NAME_UTF_8);
 
 	/**
 	 * 1 GB in bytes.
@@ -105,38 +85,40 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
-	public static String getRelativePath(File baseDir, String file)
+	@Deprecated
+	public static String getRelativePath(File baseDir, final String file)
 	throws IOException
 	{
-		// When passing the current working dir by "new File(".").getAbsoluteFile()" to this method, it
+		// When passing the current working dir by "newFile(".").getAbsoluteFile()" to this method, it
 		// generates 2 "../" where there should be only one "../", because it counts the single "." at the end as subdirectory.
 		// Therefore, we now call once simplifyPath before we start.
 		// Maybe we don't need to call simplifyPath in _getRelativePath anymore. Need to check later. Marco.
 		// Additionally, this method did not work without baseDir being an absolute path. Therefore, I now check and make it absolute, if it is not yet.
 		if (baseDir.isAbsolute())
-			baseDir = new File(simplifyPath(baseDir));
+			baseDir = createFile(simplifyPath(baseDir));
 		else
-			baseDir = new File(simplifyPath(baseDir.getAbsoluteFile()));
+			baseDir = createFile(simplifyPath(baseDir.getAbsoluteFile()));
 
 
 		File absFile;
-		File tmpF = new File(file);
+		final File tmpF = createFile(file);
 		if (tmpF.isAbsolute())
 			absFile = tmpF;
 		else
-			absFile = new File(baseDir, file);
+			absFile = createFile(baseDir, file);
 
-		File dest = absFile;
+		final File dest = absFile;
 		File b = baseDir;
 		String up = "";
 		while (b.getParentFile() != null) {
-			String res = _getRelativePath(b, dest.getAbsolutePath());
+			final String res = _getRelativePath(b, dest.getAbsolutePath());
 			if (res != null)
 				return up + res;
 
 //			up = "../" + up;
-			up = ".." + File.separatorChar + up;
+			up = ".." + FILE_SEPARATOR + up;
 			b = b.getParentFile();
 		}
 
@@ -158,8 +140,10 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
-	public static String getRelativePath(File baseDir, File file)
+	@Deprecated
+	public static String getRelativePath(final File baseDir, final File file)
 	throws IOException
 	{
 		return getRelativePath(baseDir, file.getPath());
@@ -180,11 +164,13 @@ public final class IOUtil {
 	 * @return the path to <code>file</code> relative to <code>baseDir</code> or the absolute path,
 	 *		if a relative path cannot be formulated (i.e. they have no directory in common).
 	 * @throws IOException In case of an error
+	 * @deprecated User {@link File#relativize(File)}
 	 */
-	public static String getRelativePath(String baseDir, String file)
+	@Deprecated
+	public static String getRelativePath(final String baseDir, final String file)
 	throws IOException
 	{
-		return getRelativePath(new File(baseDir), file);
+		return getRelativePath(createFile(baseDir), file);
 	}
 
 	/**
@@ -195,7 +181,7 @@ public final class IOUtil {
 	 * @param baseDir The directory to which the resulting path will be relative.
 	 * @param file The file to which the resulting path will point.
 	 */
-	private static String _getRelativePath(File baseDir, String file)
+	private static String _getRelativePath(final File baseDir, final String file)
 	throws IOException
 	{
 		// we make baseDir now absolute in getRelativePath(...)
@@ -203,11 +189,11 @@ public final class IOUtil {
 //			throw new IllegalArgumentException("baseDir \""+baseDir.getPath()+"\" is not absolute!");
 
 		File absFile;
-		File tmpF = new File(file);
+		final File tmpF = createFile(file);
 		if (tmpF.isAbsolute())
 			absFile = tmpF;
 		else
-			absFile = new File(baseDir, file);
+			absFile = createFile(baseDir, file);
 
 		String absFileStr = null;
 		String baseDirStr = null;
@@ -268,17 +254,17 @@ public final class IOUtil {
 	 * @param path A path to simplify, e.g. "/../opt/java/jboss/../jboss/./bin/././../server/default/lib/."
 	 * @return the simplified string (absolute path), e.g. "/opt/java/jboss/server/default/lib"
 	 */
-	public static String simplifyPath(File path)
+	public static String simplifyPath(final File path)
 	{
 		logger.debug("simplifyPath: path='{}'", path);
-		LinkedList<String> dirs = new LinkedList<String>();
+		final LinkedList<String> dirs = new LinkedList<String>();
 
-		String pathStr = path.getAbsolutePath();
-		boolean startWithSeparator = pathStr.startsWith(File.separator);
+		final String pathStr = path.getAbsolutePath();
+		final boolean startWithSeparator = pathStr.startsWith(FILE_SEPARATOR);
 
-		StringTokenizer tk = new StringTokenizer(pathStr, File.separator, false);
+		final StringTokenizer tk = new StringTokenizer(pathStr, FILE_SEPARATOR, false);
 		while (tk.hasMoreTokens()) {
-			String dir = tk.nextToken();
+			final String dir = tk.nextToken();
 			if (".".equals(dir))
 				;// nothing
 			else if ("..".equals(dir)) {
@@ -290,10 +276,10 @@ public final class IOUtil {
 		}
 		logger.debug("simplifyPath: dirs='{}'", dirs);
 
-		StringBuffer sb = new StringBuffer();
-		for (String dir : dirs) {
+		final StringBuffer sb = new StringBuffer();
+		for (final String dir : dirs) {
 			if (startWithSeparator || sb.length() > 0)
-				sb.append(File.separator);
+				sb.append(FILE_SEPARATOR);
 			sb.append(dir);
 		}
 
@@ -309,7 +295,7 @@ public final class IOUtil {
 	 * @return The number of bytes transferred
 	 * @throws IOException if an error occurs.
 	 */
-	public static long transferStreamData(InputStream in, OutputStream out, long inputOffset, long inputLen)
+	public static long transferStreamData(final InputStream in, final OutputStream out, final long inputOffset, final long inputLen)
 	throws java.io.IOException
 	{
 		return transferStreamData(in, out, inputOffset, inputLen, null);
@@ -341,15 +327,17 @@ public final class IOUtil {
 				else
 					bytesRead = in.read(buf);
 
-				if (bytesRead <= 0)
+				if (bytesRead < 0)
 					break;
 
-				out.write(buf, 0, bytesRead);
+				if (bytesRead > 0) {
+					out.write(buf, 0, bytesRead);
 
-				if (monitor != null && inputLen >= 0)
-					monitor.worked(1);
+					if (monitor != null && inputLen >= 0)
+						monitor.worked(1);
 
-				transferred += bytesRead;
+					transferred += bytesRead;
+				}
 
 				if(inputLen >= 0 && transferred >= inputLen)
 					break;
@@ -376,110 +364,11 @@ public final class IOUtil {
 	 * @return The number of bytes transferred
 	 * @throws IOException In case of an error
 	 */
-	public static long transferStreamData(InputStream in, OutputStream out)
+	public static long transferStreamData(final InputStream in, final OutputStream out)
 	throws java.io.IOException
 	{
 		return transferStreamData(in, out, 0, -1);
 	}
-
-//	public static enum CreateSymlinkResult {
-//		/**
-//		 * The symlink was successfully created.
-//		 */
-//		symlinked,
-//
-//		/**
-//		 * The data was copied instead of being symlinked.
-//		 */
-//		copied,
-//
-//		/**
-//		 * If the destination already exists.
-//		 */
-//		alreadyExists,
-//
-//		/**
-//		 * While waiting for the symlink to be created, we catched an {@link InterruptedException}.
-//		 */
-//		interrupted,
-//
-//		/**
-//		 * The symlink was not created and <code>copyIfSymlinksNotSupported</code> was set to <code>false</code>.
-//		 */
-//		unsupported,
-//
-//		/**
-//		 * Specifies that the existing File object neither denotes a Directory nor a File. This can only be returned
-//		 * when creation of the symlink was not possible.
-//		 */
-//		unknownFileType
-//	}
-//
-//	/**
-//	 * This method creates a symlink if supported by the operating system. Even though windows
-//	 * does support them, this method supports them only on GNU/Linux, so far. It seems, anyway,
-//	 * that symlinks on windows can cause very strange behaviour and data loss! see this for more
-//	 * details: http://shell-shocked.org/article.php?id=284
-//	 *
-//	 * @param existing The existing file or directory. If this is relative, the symlink will be relative, too.
-//	 *		If the data needs to be copied, it will be copied to <code>new File(link, existing.getPath())</code>.
-//	 * @param link The link that shall be created.
-//	 * @param copyIfSymlinksNotSupported If this is <code>true</code> and the OS does not support symlinks, the method
-//	 *		will delegate to {@link #copyDirectory(File, File)} or {@link #copyFile(File, File)}. If it is <code>false</code>,
-//	 *		either the symlink can be created or nothing will be done.
-//	 * @return an instance of {@link CreateSymlinkResult} - never <code>null</code>.
-//	 * @throws IOException if IO fails in an underlying call.
-//	 */
-//	public static CreateSymlinkResult createSymlink(File existing, File link, boolean copyIfSymlinksNotSupported)
-//	throws IOException
-//	{
-//		Logger logger = LoggerFactory.getLogger(IOUtil.class);
-//
-//		if (logger.isDebugEnabled())
-//			logger.debug("createSymlink: begin: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//
-//		if (link.exists())
-//			return CreateSymlinkResult.alreadyExists;
-//
-//		File linkParent = link.getParentFile();
-//		if (linkParent != null && !linkParent.exists() && !linkParent.mkdirs())
-//			logger.warn("createSymlink: creating the link's parent directories failed!");
-//
-//		int processResult;
-//		Process process = Runtime.getRuntime().exec(new String[] { "/bin/ln", "-s", existing.getPath(), link.getAbsolutePath() });
-//		try {
-//			processResult = process.waitFor();
-//		} catch (InterruptedException e) {
-//			logger.warn("createSymlink: interrupted! will return immediately!", e);
-//			return CreateSymlinkResult.interrupted;
-//		}
-//
-//		if (processResult != 0)
-//			logger.warn("createSymlink: processResult != 0, but: " + processResult);
-//
-//		if (link.exists())
-//			return CreateSymlinkResult.symlinked;
-//
-//		if (!copyIfSymlinksNotSupported)
-//			return CreateSymlinkResult.unsupported;
-//
-//		logger.debug("createSymlink: symlink could not be created - will copy instead: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//
-//		// A symlink references from the ${link} to the ${existing}. Therefore, we must modify ${existing}, if it is not absolute.
-//		if (!existing.isAbsolute())
-//			existing = new File(link, existing.getPath());
-//
-//		if (existing.isDirectory())
-//			copyDirectory(existing, link);
-//		else if (existing.isFile())
-//			copyFile(existing, link);
-//		else {
-//			logger.debug("createSymlink: ${existing} is neither a directory, nor a file! cannot create link: existing=\"" + existing.getPath() + "\" link=\"" + link.getPath() + "\"");
-//			return CreateSymlinkResult.unknownFileType;
-//		}
-//
-//		return CreateSymlinkResult.copied;
-//	}
 
 	/**
 	 * This method deletes the given directory recursively. If the given parameter
@@ -508,8 +397,10 @@ public final class IOUtil {
 	 * 		This means it either was not existing already before or it has been
 	 * 		successfully deleted. <code>false</code> if the directory could not be
 	 * 		deleted.
+	 * @deprecated user File.deleteRecursively instead
 	 */
-	public static boolean deleteDirectoryRecursively(File dir)
+	@Deprecated
+	public static boolean deleteDirectoryRecursively(final File dir)
 	{
 		if (!dir.exists())
 			return true;
@@ -517,25 +408,25 @@ public final class IOUtil {
 		// If we're running this on linux (that's what I just tested ;) and dir denotes a symlink,
 		// we must not dive into it and delete its contents! We can instead directly delete dir.
 		// There is no way in Java (except for calling system tools) to find out whether it is a symlink,
-		// but we can simply delete it. If the deletion succeeds, it was a symlink, otherwise it's a real directory.
+		// but we can simply delete it. If the deletion succeeds, it was a symlink or emtpy directory, otherwise it's a non-empty directory.
 		// This way, we don't delete the contents in symlinks and thus prevent data loss!
 		try {
 			if (dir.delete())
 				return true;
-		} catch(SecurityException e) {
+		} catch(final SecurityException e) {
 			// ignore according to docs.
 			return false; // or should we really ignore this security exception and delete the contents?!?!?! To return false instead is definitely safer.
 		}
 
 		if (dir.isDirectory()) {
-			File[] content = dir.listFiles();
-			for (File f : content) {
+			final File[] content = dir.listFiles();
+			for (final File f : content) {
 				if (f.isDirectory())
 					deleteDirectoryRecursively(f);
 				else
 					try {
 						f.delete();
-					} catch(SecurityException e) {
+					} catch(final SecurityException e) {
 						// ignore according to docs.
 					}
 			}
@@ -543,7 +434,7 @@ public final class IOUtil {
 
 		try {
 			return dir.delete();
-		} catch(SecurityException e) {
+		} catch(final SecurityException e) {
 			return false;
 		}
 	}
@@ -558,10 +449,12 @@ public final class IOUtil {
 	 * @return True, if the file or directory does not exist anymore. This means it either
 	 * was not existing already before or it has been successfully deleted. False, if the
 	 * directory could not be deleted.
+	 * @deprecated Plz use File.deleteRecursively instead!
 	 */
-	public static boolean deleteDirectoryRecursively(String dir)
+	@Deprecated
+	public static boolean deleteDirectoryRecursively(final String dir)
 	{
-		File dirF = new File(dir);
+		final File dirF = createFile(dir);
 		return deleteDirectoryRecursively(dirF);
 	}
 
@@ -581,10 +474,10 @@ public final class IOUtil {
 	 * @return A File pointing to an unique (not existing) Folder under the given rootFolder and with the given prefix
 	 * @throws IOException in case of an error
 	 */
-	public static synchronized File createUniqueIncrementalFolder(File rootFolder, final String prefix) throws IOException
+	public static synchronized File createUniqueIncrementalFolder(final File rootFolder, final String prefix) throws IOException
 	{
 		for(int n=0; n<Integer.MAX_VALUE; n++) {
-			File f = new File(rootFolder, String.format("%s%x", prefix, n));
+			final File f = createFile(rootFolder, String.format("%s%x", prefix, n));
 			if(!f.exists()) {
 				if(!f.mkdirs())
 					throw new IOException("The directory "+f.getAbsolutePath()+" could not be created");
@@ -614,11 +507,11 @@ public final class IOUtil {
 	 * @return A File pointing to an unique folder under the given rootFolder and with the given prefix
 	 * @throws IOException in case of an error
 	 */
-	public static synchronized File createUniqueRandomFolder(File rootFolder, final String prefix, long maxIterations, long uniqueOutOf) throws IOException
+	public static synchronized File createUniqueRandomFolder(final File rootFolder, final String prefix, final long maxIterations, final long uniqueOutOf) throws IOException
 	{
 		long count = 0;
 		while(++count <= maxIterations) {
-			File f = new File(rootFolder, String.format("%s%x", prefix, (long)(Math.random() * uniqueOutOf)));
+			final File f = createFile(rootFolder, String.format("%s%x", prefix, (long)(Math.random() * uniqueOutOf)));
 			if(!f.exists()) {
 				if(!f.mkdirs())
 					throw new IOException("The directory "+f.getAbsolutePath()+" could not be created");
@@ -646,7 +539,7 @@ public final class IOUtil {
 	 * @return A File pointing to an unique (non-existing) Folder under the given rootFolder and with the given prefix
 	 * @throws IOException in case of an error
 	 */
-	public static File createUniqueRandomFolder(File rootFolder, final String prefix) throws IOException
+	public static File createUniqueRandomFolder(final File rootFolder, final String prefix) throws IOException
 	{
 		return createUniqueRandomFolder(rootFolder, prefix, 10000, 10000);
 	}
@@ -657,11 +550,11 @@ public final class IOUtil {
 	 * @param subDirs The subdirectories or files
 	 * @return The new file instance
 	 */
-	public static File getFile(File file, String ... subDirs)
+	public static File getFile(final File file, final String ... subDirs)
 	{
 		File f = file;
-		for (String subDir : subDirs)
-			f = new File(f, subDir);
+		for (final String subDir : subDirs)
+			f = createFile(f, subDir);
 		return f;
 	}
 
@@ -676,13 +569,13 @@ public final class IOUtil {
 	 *                   be created, or cannot be opened for any other reason
 	 * @throws UnsupportedEncodingException If the named encoding is not supported
 	 */
-	public static void writeTextFile(File file, String text, String encoding)
+	public static void writeTextFile(final File file, final String text, final String encoding)
 	throws IOException, FileNotFoundException, UnsupportedEncodingException
 	{
-		FileOutputStream out = null;
+		OutputStream out = null;
 		OutputStreamWriter w = null;
 		try {
-			out = new FileOutputStream(file);
+			out = file.createOutputStream();
 			w = new OutputStreamWriter(out, encoding);
 			w.write(text);
 		} finally {
@@ -700,18 +593,18 @@ public final class IOUtil {
 	 * @throws UnsupportedEncodingException If the named encoding is not supported
 	 * @return The contents of the text file
 	 */
-	public static String readTextFile(File f, String encoding)
+	public static String readTextFile(final File f, final String encoding)
 	throws FileNotFoundException, IOException, UnsupportedEncodingException
 	{
 		if (f.length() > GIGABYTE)
 			throw new IllegalArgumentException("File exceeds " + GIGABYTE + " bytes: " + f.getAbsolutePath());
 
-		StringBuffer sb = new StringBuffer();
-		FileInputStream fin = new FileInputStream(f);
+		final StringBuffer sb = new StringBuffer();
+		final InputStream fin = f.createInputStream();
 		try {
-			InputStreamReader reader = new InputStreamReader(fin, encoding);
+			final InputStreamReader reader = new InputStreamReader(fin, encoding);
 			try {
-				char[] cbuf = new char[1024];
+				final char[] cbuf = new char[1024];
 				int bytesRead;
 				while (true) {
 					bytesRead = reader.read(cbuf);
@@ -737,7 +630,7 @@ public final class IOUtil {
 	 * @throws IOException in case of an io error
 	 * @return The contents of the text file
 	 */
-	public static String readTextFile(File f)
+	public static String readTextFile(final File f)
 	throws FileNotFoundException, IOException
 	{
 		return readTextFile(f, CHARSET_NAME_UTF_8);
@@ -752,7 +645,7 @@ public final class IOUtil {
 	 *                   rather than a regular file, does not exist but cannot
 	 *                   be created, or cannot be opened for any other reason
 	 */
-	public static void writeTextFile(File file, String text)
+	public static void writeTextFile(final File file, final String text)
 	throws IOException, FileNotFoundException, UnsupportedEncodingException
 	{
 		writeTextFile(file, text, CHARSET_NAME_UTF_8);
@@ -767,12 +660,12 @@ public final class IOUtil {
 	 * @param encoding The charset used for decoding, e.g. "UTF-8"
 	 * @return The contents of the input stream file
 	 */
-	public static String readTextFile(InputStream in, String encoding)
+	public static String readTextFile(final InputStream in, final String encoding)
 	throws FileNotFoundException, IOException
 	{
-		StringBuffer sb = new StringBuffer();
-		InputStreamReader reader = new InputStreamReader(in, encoding);
-		char[] cbuf = new char[1024];
+		final StringBuffer sb = new StringBuffer();
+		final InputStreamReader reader = new InputStreamReader(in, encoding);
+		final char[] cbuf = new char[1024];
 		int bytesRead;
 		while (true) {
 			bytesRead = reader.read(cbuf);
@@ -795,7 +688,7 @@ public final class IOUtil {
 	 * @param in The stream to read from. It will not be closed by this operation.
 	 * @return The contents of the input stream file
 	 */
-	public static String readTextFile(InputStream in)
+	public static String readTextFile(final InputStream in)
 	throws FileNotFoundException, IOException
 	{
 		return readTextFile(in, CHARSET_NAME_UTF_8);
@@ -808,12 +701,12 @@ public final class IOUtil {
 	 *		a dot (".") or if the given <code>fileName</code> is <code>null</code>. Otherwise,
 	 *		returns all AFTER the last dot.
 	 */
-	public static String getFileExtension(String fileName)
+	public static String getFileExtension(final String fileName)
 	{
 		if (fileName == null)
 			return null;
 
-		int lastIndex = fileName.lastIndexOf(".");
+		final int lastIndex = fileName.lastIndexOf(".");
 		if (lastIndex < 0)
 			return null;
 
@@ -826,12 +719,12 @@ public final class IOUtil {
 	 * @return all before the last dot (".") or the full <code>fileName</code> if no dot exists.
 	 * 		Returns <code>null</code>, if the given <code>fileName</code> is <code>null</code>.
 	 */
-	public static String getFileNameWithoutExtension(String fileName)
+	public static String getFileNameWithoutExtension(final String fileName)
 	{
 		if (fileName == null)
 			return null;
 
-		int lastIndex = fileName.lastIndexOf(".");
+		final int lastIndex = fileName.lastIndexOf(".");
 		if (lastIndex < 0)
 			return fileName;
 
@@ -852,7 +745,7 @@ public final class IOUtil {
 	public static File getTempDir()
 	{
 		if(tempDir == null)
-	    tempDir = new File(System.getProperty("java.io.tmpdir"));
+	    tempDir = createFile(System.getProperty("java.io.tmpdir"));
 		return tempDir;
 	}
 
@@ -864,10 +757,10 @@ public final class IOUtil {
 	 * @return a user-dependent temp directory, which is created if it does not yet exist.
 	 * @throws IOException if the directory does not exist and cannot be created.
 	 */
-	public static File createUserTempDir(String prefix, String suffix)
+	public static File createUserTempDir(final String prefix, final String suffix)
 	throws IOException
 	{
-		File userTempDir = getUserTempDir(prefix, suffix);
+		final File userTempDir = getUserTempDir(prefix, suffix);
 		if (userTempDir.isDirectory())
 			return userTempDir;
 
@@ -906,7 +799,7 @@ public final class IOUtil {
 	 * @see #getTempDir()
 	 * @see #createUserTempDir(String, String)
 	 */
-	public static File getUserTempDir(String prefix, String suffix)
+	public static File getUserTempDir(final String prefix, final String suffix)
 	{
 		// In GNU/Linux, there is exactly one temp-directory for all users; hence we need to put the current OS user's name into the path.
 		String userNameDir = (prefix == null ? "" : prefix) + String.valueOf(getUserName()) + (suffix == null ? "" : suffix);
@@ -914,11 +807,11 @@ public final class IOUtil {
 		// the user name might contain illegal characters (in windows) => we encode basically all characters.
 		try {
 			userNameDir = URLEncoder.encode(userNameDir.replace('*', '_'), CHARSET_NAME_UTF_8);
-		} catch (UnsupportedEncodingException e) {
+		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
 
-		return new File(IOUtil.getTempDir(), userNameDir);
+		return createFile(IOUtil.getTempDir(), userNameDir);
 	}
 
 	private static String getUserName()
@@ -928,11 +821,11 @@ public final class IOUtil {
 
 	public static File getUserHome()
 	{
-		String userHome = System.getProperty("user.home"); //$NON-NLS-1$
+		final String userHome = System.getProperty("user.home"); //$NON-NLS-1$
 		if (userHome == null)
 			throw new IllegalStateException("System property user.home is not set! This should never happen!"); //$NON-NLS-1$
 
-		return new File(userHome);
+		return createFile(userHome);
 	}
 
 	/**
@@ -947,7 +840,7 @@ public final class IOUtil {
 	 * @throws IOException if an I/O error occurs while reading <code>length</code> bytes
 	 * 		from one of the input streams.
 	 */
-	public static boolean compareInputStreams(InputStream in1, InputStream in2, long length)
+	public static boolean compareInputStreams(final InputStream in1, final InputStream in2, final long length)
 	throws IOException
 	{
 		return compareInputStreams(in1, in2, length, length);
@@ -966,14 +859,14 @@ public final class IOUtil {
 	 * @throws IOException if an I/O error occurs while reading <code>length</code> bytes
 	 * 		from one of the input streams.
 	 */
-	public static boolean compareInputStreams(InputStream in1, InputStream in2, long compareLength, long minimumReadLength)
+	public static boolean compareInputStreams(final InputStream in1, final InputStream in2, final long compareLength, final long minimumReadLength)
 	throws IOException
 	{
 		boolean identical = true;
 		int read = 0;
 		while(read<compareLength) {
-			int int1 = in1.read();
-			int int2 = in2.read();
+			final int int1 = in1.read();
+			final int int2 = in2.read();
 			read++;
 			if (int1 != int2) {
 				identical = false;
@@ -996,7 +889,7 @@ public final class IOUtil {
 	 * @throws FileNotFoundException If one of the files could not be found.
 	 * @throws IOException If reading one of the files failed.
 	 */
-	public static boolean compareFiles(File f1, File f2) throws FileNotFoundException, IOException
+	public static boolean compareFiles(final File f1, final File f2) throws FileNotFoundException, IOException
 	{
 		if(!f1.exists())
 			throw new FileNotFoundException(f1.getAbsolutePath());
@@ -1006,8 +899,8 @@ public final class IOUtil {
 			return true;
 		if(f1.length() != f2.length())
 			return false;
-		FileInputStream in1 = new FileInputStream(f1);
-		FileInputStream in2 = new FileInputStream(f2);
+		final InputStream in1 = f1.createInputStream();
+		final InputStream in2 = f2.createInputStream();
 		try {
 			return compareInputStreams(in1, in2, f1.length(), 0);
 		} finally {
@@ -1022,11 +915,11 @@ public final class IOUtil {
 	 * @param destinationDirectory The destination directory
 	 * @throws IOException in case of an error
 	 */
-	public static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException
+	public static void copyDirectory(final File sourceDirectory, final File destinationDirectory) throws IOException
 	{
 		copyDirectory(sourceDirectory, destinationDirectory, null);
 	}
-	public static void copyDirectory(File sourceDirectory, File destinationDirectory, FileFilter fileFilter) throws IOException
+	public static void copyDirectory(final File sourceDirectory, final File destinationDirectory, final FileFilter fileFilter) throws IOException
 	{
 		if(!sourceDirectory.exists() || !sourceDirectory.isDirectory())
 			throw new IOException("No such source directory: "+sourceDirectory.getAbsolutePath());
@@ -1036,9 +929,9 @@ public final class IOUtil {
 		} else
 			destinationDirectory.mkdirs();
 
-		File[] files = sourceDirectory.listFiles(fileFilter);
-		for (File file : files) {
-			File destinationFile = new File(destinationDirectory, file.getName());
+		final File[] files = sourceDirectory.listFiles(fileFilter);
+		for (final File file : files) {
+			final File destinationFile = createFile(destinationDirectory, file.getName());
 			if(file.isDirectory()) {
 				if (destinationDirectory.getAbsoluteFile().equals(file.getAbsoluteFile()))
 					logger.warn("copyDirectory: Skipping directory, because it equals the destination: {}", file.getAbsoluteFile());
@@ -1055,7 +948,7 @@ public final class IOUtil {
 	/**
 	 * Copy a resource loaded by the class loader of a given class to a file.
 	 * <p>
-	 * This is a convenience method for <code>copyResource(sourceResClass, sourceResName, new File(destinationFilename))</code>.
+	 * This is a convenience method for <code>copyResource(sourceResClass, sourceResName, newFile(destinationFilename))</code>.
 	 * @param sourceResClass The class whose class loader to use. If the class
 	 * 		was loaded using the bootstrap class loaderClassloader.getSystemResourceAsStream
 	 * 		will be used. See {@link Class#getResourceAsStream(String)} for details.
@@ -1063,10 +956,10 @@ public final class IOUtil {
 	 * @param destinationFilename Where to copy the contents of the resource
 	 * @throws IOException in case of an error
 	 */
-	public static void copyResource(Class<?> sourceResClass, String sourceResName, String destinationFilename)
+	public static void copyResource(final Class<?> sourceResClass, final String sourceResName, final String destinationFilename)
 	throws IOException
 	{
-		copyResource(sourceResClass, sourceResName, new File(destinationFilename));
+		copyResource(sourceResClass, sourceResName, createFile(destinationFilename));
 	}
 
 
@@ -1079,11 +972,11 @@ public final class IOUtil {
 	 * @param destinationFile Where to copy the contents of the resource
 	 * @throws IOException in case of an error
 	 */
-	public static void copyResource(Class<?> sourceResClass, String sourceResName, File destinationFile)
+	public static void copyResource(final Class<?> sourceResClass, final String sourceResName, final File destinationFile)
 	throws IOException
 	{
 		InputStream source = null;
-		FileOutputStream destination = null;
+		OutputStream destination = null;
 		try{
 			source = sourceResClass.getResourceAsStream(sourceResName);
 			if (source == null)
@@ -1096,20 +989,20 @@ public final class IOUtil {
 				} else
 					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
 			} else {
-				File parentdir = destinationFile.getAbsoluteFile().getParentFile();
+				final File parentdir = destinationFile.getAbsoluteFile().getParentFile();
 				if (parentdir == null || !parentdir.exists())
 					throw new IOException("FileCopy: destination's parent directory doesn't exist: " + destinationFile.getCanonicalPath());
 				if (!parentdir.canWrite())
 					throw new IOException("FileCopy: destination's parent directory is unwriteable: " + destinationFile.getCanonicalPath());
 			}
-			destination = new FileOutputStream(destinationFile);
+			destination = destinationFile.createOutputStream();
 			transferStreamData(source,destination);
 		} finally {
 			if (source != null)
-				try { source.close(); } catch (IOException e) { ; }
+				try { source.close(); } catch (final IOException e) { ; }
 
 			if (destination != null)
-				try { destination.close(); } catch (IOException e) { ; }
+				try { destination.close(); } catch (final IOException e) { ; }
 		}
 	}
 
@@ -1119,16 +1012,16 @@ public final class IOUtil {
 	 * @param destinationFile To which file to copy the source
 	 * @throws IOException in case of an error
 	 */
-	public static void copyFile(File sourceFile, File destinationFile)
+	public static void copyFile(final File sourceFile, final File destinationFile)
 	throws IOException
 	{
 		copyFile(sourceFile, destinationFile, null);
 	}
-	public static void copyFile(File sourceFile, File destinationFile, ProgressMonitor monitor)
+	public static void copyFile(final File sourceFile, final File destinationFile, final ProgressMonitor monitor)
 	throws IOException
 	{
-		FileInputStream source = null;
-		FileOutputStream destination = null;
+		InputStream source = null;
+		OutputStream destination = null;
 
 		try {
 			// First make sure the specified source file
@@ -1147,7 +1040,7 @@ public final class IOUtil {
 				} else
 					throw new IOException("FileCopy: destination is not a file: " +	destinationFile.getCanonicalPath());
 			} else {
-				File parentdir = destinationFile.getParentFile();
+				final File parentdir = destinationFile.getParentFile();
 				if (parentdir == null || !parentdir.exists())
 					throw new IOException("FileCopy: destination directory doesn't exist: " +
 									destinationFile.getCanonicalPath());
@@ -1157,15 +1050,15 @@ public final class IOUtil {
 			}
 			// If we've gotten this far, then everything is okay; we can
 			// copy the file.
-			source = new FileInputStream(sourceFile);
-			destination = new FileOutputStream(destinationFile);
+			source = sourceFile.createInputStream();
+			destination = destinationFile.createOutputStream();
 			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
 			// No matter what happens, always close any streams we've opened.
 		} finally {
 			if (source != null)
-				try { source.close(); } catch (IOException e) { ; }
+				try { source.close(); } catch (final IOException e) { ; }
 			if (destination != null)
-				try { destination.close(); } catch (IOException e) { ; }
+				try { destination.close(); } catch (final IOException e) { ; }
 		}
 
 		// copy the timestamp
@@ -1180,12 +1073,12 @@ public final class IOUtil {
 	 * @param directory A directory name
 	 * @return the directory name anding with a file seperator
 	 */
-	public static String addFinalSlash(String directory)
+	public static String addFinalSlash(final String directory)
 	{
-		if (directory.endsWith(File.separator))
+		if (directory.endsWith(FILE_SEPARATOR))
 			return directory;
 		else
-			return directory + File.separator;
+			return directory + FILE_SEPARATOR;
 	}
 
 	private static enum ParserExpects {
@@ -1232,14 +1125,14 @@ public final class IOUtil {
 	 * value are ignored. Values that are not of type <code>String</code> are converted using the
 	 * {@link Object#toString() toString()} method.
 	 */
-	public static void replaceTemplateVariables(File destinationFile, File templateFile, String characterSet, Map<?, ?> variables)
+	public static void replaceTemplateVariables(final File destinationFile, final File templateFile, final String characterSet, final Map<?, ?> variables)
 		throws IOException
 	{
 		if (!destinationFile.isAbsolute())
 			throw new IllegalArgumentException("destinationFile is not absolute: " + destinationFile.getPath());
 
 		logger.info("Creating destination file \""+destinationFile.getAbsolutePath()+"\" from template \""+templateFile.getAbsolutePath()+"\".");
-		File destinationDirectory = destinationFile.getParentFile();
+		final File destinationDirectory = destinationFile.getParentFile();
 		if (!destinationDirectory.exists()) {
 			logger.info("Directory for destination file does not exist. Creating it: " + destinationDirectory.getAbsolutePath());
 			if (!destinationDirectory.mkdirs())
@@ -1247,14 +1140,14 @@ public final class IOUtil {
 		}
 
 		// Create and configure StreamTokenizer to read template file.
-		FileInputStream fin = new FileInputStream(templateFile);
+		final InputStream fin = templateFile.createInputStream();
 		try {
-			Reader fr = characterSet != null ? new InputStreamReader(fin, characterSet) : new InputStreamReader(fin);
+			final Reader fr = characterSet != null ? new InputStreamReader(fin, characterSet) : new InputStreamReader(fin);
 			try {
 				// Create FileWriter
-				FileOutputStream fos = new FileOutputStream(destinationFile);
+				final OutputStream fos = destinationFile.createOutputStream();
 				try {
-					Writer fw = characterSet != null ? new OutputStreamWriter(fos, characterSet) : new OutputStreamWriter(fos);
+					final Writer fw = characterSet != null ? new OutputStreamWriter(fos, characterSet) : new OutputStreamWriter(fos);
 					try {
 						replaceTemplateVariables(fw, fr, variables);
 					} finally {
@@ -1306,11 +1199,11 @@ public final class IOUtil {
 	 * {@link Object#toString() toString()} method.
 	 * @return the processed text (i.e. the same as the template, but all known variables replaced by their values).
 	 */
-	public static String replaceTemplateVariables(String template, Map<?, ?> variables)
+	public static String replaceTemplateVariables(final String template, final Map<?, ?> variables)
 	{
 		try {
-			StringReader r = new StringReader(template);
-			StringWriter w = new StringWriter();
+			final StringReader r = new StringReader(template);
+			final StringWriter w = new StringWriter();
 			try {
 				replaceTemplateVariables(w, r, variables);
 				w.flush();
@@ -1319,7 +1212,7 @@ public final class IOUtil {
 				r.close();
 				w.close();
 			}
-		} catch (IOException x) {
+		} catch (final IOException x) {
 			throw new RuntimeException(x); // StringReader/Writer should *NEVER* throw any IOException since it's working in-memory only.
 		}
 	}
@@ -1360,10 +1253,10 @@ public final class IOUtil {
 	 * value are ignored. Values that are not of type <code>String</code> are converted using the
 	 * {@link Object#toString() toString()} method.
 	 */
-	public static void replaceTemplateVariables(Writer writer, Reader reader, Map<?, ?> variables)
+	public static void replaceTemplateVariables(final Writer writer, final Reader reader, final Map<?, ?> variables)
 		throws IOException
 	{
-		StreamTokenizer stk = new StreamTokenizer(reader);
+		final StreamTokenizer stk = new StreamTokenizer(reader);
 		stk.resetSyntax();
 		stk.wordChars(0, Integer.MAX_VALUE);
 		stk.ordinaryChar('$');
@@ -1373,7 +1266,7 @@ public final class IOUtil {
 
 		// Read, parse and replace variables from template and write to FileWriter fw.
 		String variableName = null;
-		StringBuilder tmpBuf = new StringBuilder();
+		final StringBuilder tmpBuf = new StringBuilder();
 		ParserExpects parserExpects = ParserExpects.NORMAL;
 		while (stk.nextToken() != StreamTokenizer.TT_EOF) {
 			String stringToWrite = null;
@@ -1442,7 +1335,7 @@ public final class IOUtil {
 					if (variableName == null)
 						throw new IllegalStateException("variableName is null!!!");
 
-					Object variableValue = variables.get(variableName);
+					final Object variableValue = variables.get(variableName);
 					stringToWrite = variableValue == null ? null : variableValue.toString();
 					if (stringToWrite == null) {
 						logger.warn("Variable " + tmpBuf.toString() + " occuring in template is unknown!");
@@ -1463,12 +1356,12 @@ public final class IOUtil {
 		} // while (stk.nextToken() != StreamTokenizer.TT_EOF) {
 	}
 
-	public static byte[] getBytesFromFile(File file) throws IOException {
+	public static byte[] getBytesFromFile(final File file) throws IOException {
 		// Get the size of the file
-		long length = file.length();
-		byte[] bytes = new byte[(int)length];
+		final long length = file.length();
+		final byte[] bytes = new byte[(int)length];
 
-		InputStream is = new FileInputStream(file);
+		final InputStream is = file.createInputStream();
 		try {
 			// Read in the bytes
 			int offset = 0;
@@ -1488,7 +1381,7 @@ public final class IOUtil {
 		return bytes;
     }
 
-	public static File createCollisionFile(File file) {
+	public static File createCollisionFile(final File file) {
 		final File parentFile = file.getParentFile();
 		final String fileName = file.getName();
 
@@ -1496,7 +1389,7 @@ public final class IOUtil {
 		if (!fileExtension.isEmpty())
 			fileExtension = '.' + fileExtension;
 
-		final File result = new File(parentFile,
+		final File result = createFile(parentFile,
 				String.format("%s.%s%s%s",
 						fileName,
 						Long.toString(System.currentTimeMillis(), 36),
@@ -1505,83 +1398,47 @@ public final class IOUtil {
 		return result;
 	}
 
-	private static String nullToEmptyString(String s) {
+	private static String nullToEmptyString(final String s) {
 		return s == null ? "" : s;
 	}
 
-	public static String toPathString(final Path path) {
-		assertNotNull("path", path);
-		return path.toString().replace(File.separatorChar, '/');
+	public static void deleteOrFail(final File file) {
+		file.delete();
+		if (file.isSymbolicLink() || file.exists())
+			throw new IllegalStateException("Could not delete file (it still exists after deletion): " + file);
 	}
 
-	public static long getLastModifiedNoFollow(final File file) {
-		return getLastModifiedNoFollow(file.toPath());
+	public static int readOrFail(final InputStream in) throws IOException {
+		final int read = in.read();
+		if (read < 0)
+			throw new IOException("Premature end of stream!");
+
+		return read;
 	}
 
-	public static long getLastModifiedNoFollow(final Path path) {
-		try {
-			BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-			return attributes.lastModifiedTime().toMillis();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+	public static void readOrFail(final InputStream in, final byte[] buf, int off, int len) throws IOException {
+		AssertUtil.assertNotNull("buf", buf);
+		if (off < 0)
+			throw new IllegalArgumentException("off < 0");
 
-	public static void setLastModifiedNoFollow(final File file, final long lastModified) {
-		setLastModifiedNoFollow(file.toPath(), lastModified);
-	}
-
-	public static void setLastModifiedNoFollow(Path path, final long lastModified) {
-		path = path.toAbsolutePath();
-		final List<Throwable> errors = new ArrayList<>();
-
-		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
-		try {
-			Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS)
-			.setTimes(lastModifiedTime, null, null);
-
+		if (len == 0)
 			return;
-		} catch (IOException e) {
-			errors.add(e);
-		}
 
-		// It's currently impossible to modify the 'lastModified' timestamp of a symlink :-(
-		// http://stackoverflow.com/questions/17308363/symlink-lastmodifiedtime-in-java-1-7
-		// Therefore, we fall back to the touch command, if the above code failed.
+		if (len < 0)
+			throw new IllegalArgumentException("len < 0");
 
-		final String timestamp = new SimpleDateFormat("YYYYMMddHHmm.ss").format(new Date(lastModified));
-		final ProcessBuilder processBuilder = new ProcessBuilder("touch", "-c", "-h", "-m", "-t", timestamp, path.toString());
-		processBuilder.redirectErrorStream(true);
-		try {
-			final Process process = processBuilder.start();
-			final ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-			final int processExitCode;
-			final DumpStreamThread dumpInputStreamThread = new DumpStreamThread(process.getInputStream(), stdOut, null);
-			try {
-				dumpInputStreamThread.start();
-				processExitCode = process.waitFor();
-			} finally {
-				dumpInputStreamThread.flushBuffer();
-				dumpInputStreamThread.interrupt();
+		int bytesRead;
+		while ((bytesRead = in.read(buf, off, len)) >= 0) {
+			if (bytesRead > 0) {
+				off += bytesRead;
+				len -= bytesRead;
 			}
+			if (len < 0)
+				throw new IllegalStateException("len < 0");
 
-			if (processExitCode != 0) {
-				final String stdOutString = new String(stdOut.toByteArray());
-				throw new IOException(String.format(
-						"Command 'touch' failed with exitCode=%s and the following message: %s",
-						processExitCode, stdOutString));
-			}
-
-			return;
-		} catch (IOException | InterruptedException e) {
-			errors.add(e);
+			if (len == 0)
+				return;
 		}
-
-		if (!errors.isEmpty()) {
-			logger.error("Setting the lastModified timestamp of '{}' failed with the following errors:", path);
-			for (Throwable error : errors) {
-				logger.error("" + error, error);
-			}
-		}
+		throw new IOException("Premature end of stream!");
 	}
 }

@@ -4,10 +4,7 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +19,9 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class TarGzFile {
 	private static final Logger logger = LoggerFactory.getLogger(TarGzFile.class);
 
@@ -30,7 +30,7 @@ public class TarGzFile {
 	private FileFilter fileFilter;
 
 	public TarGzFile(final File tarGzFile) {
-		this.tarGzFile = assertNotNull("tarGzFile", tarGzFile);
+		this.tarGzFile = AssertUtil.assertNotNull("tarGzFile", tarGzFile);
 	}
 
 	/**
@@ -41,10 +41,10 @@ public class TarGzFile {
 	public FileFilter getFileFilter() {
 		return fileFilter;
 	}
-	public void setFileFilter(FileFilter fileFilter) {
+	public void setFileFilter(final FileFilter fileFilter) {
 		this.fileFilter = fileFilter;
 	}
-	public TarGzFile fileFilter(FileFilter fileFilter) {
+	public TarGzFile fileFilter(final FileFilter fileFilter) {
 		setFileFilter(fileFilter);
 		return this;
 	}
@@ -52,17 +52,17 @@ public class TarGzFile {
 	public TarGzEntryNameConverter getTarGzEntryNameConverter() {
 		return tarGzEntryNameConverter;
 	}
-	public void setTarGzEntryNameConverter(TarGzEntryNameConverter tarGzEntryNameConverter) {
+	public void setTarGzEntryNameConverter(final TarGzEntryNameConverter tarGzEntryNameConverter) {
 		this.tarGzEntryNameConverter = tarGzEntryNameConverter;
 	}
-	public TarGzFile tarGzEntryNameConverter(TarGzEntryNameConverter tarGzEntryNameConverter) {
+	public TarGzFile tarGzEntryNameConverter(final TarGzEntryNameConverter tarGzEntryNameConverter) {
 		setTarGzEntryNameConverter(tarGzEntryNameConverter);
 		return this;
 	}
 
 	public void compress(final File rootDir) throws IOException {
 		boolean deleteIncompleteTarGzFile = false;
-		final FileOutputStream fout = new FileOutputStream(tarGzFile);
+		final OutputStream fout = tarGzFile.createOutputStream();
 		try {
 			deleteIncompleteTarGzFile = true;
 
@@ -91,7 +91,7 @@ public class TarGzFile {
 			if (children != null) {
 				for (final File child : children) {
 					final String entryName = tarGzEntryNameConverter.getEntryName(rootDir, child);
-					TarArchiveEntry archiveEntry = (TarArchiveEntry) out.createArchiveEntry(child, entryName);
+					final TarArchiveEntry archiveEntry = (TarArchiveEntry) out.createArchiveEntry(child.getIoFile(), entryName);
 
 					if (child.canExecute())
 						archiveEntry.setMode(archiveEntry.getMode() | 0111);
@@ -99,7 +99,7 @@ public class TarGzFile {
 					out.putArchiveEntry(archiveEntry);
 					try {
 						if (child.isFile()) {
-							final InputStream in = new FileInputStream(child);
+							final InputStream in = child.createInputStream();
 							try {
 								transferStreamData(in, out);
 							} finally {
@@ -124,7 +124,7 @@ public class TarGzFile {
 		rootDir.mkdirs();
 		final TarGzEntryNameConverter tarGzEntryNameConverter = this.tarGzEntryNameConverter == null ? defaultEntryNameConverter : this.tarGzEntryNameConverter;
 		final FileFilter fileFilter = this.fileFilter;
-		final FileInputStream fin = new FileInputStream(tarGzFile);
+		final InputStream fin = tarGzFile.createInputStream();
 		try {
 			final TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(fin)));
 			try {
@@ -133,14 +133,14 @@ public class TarGzFile {
 					if(entry.isDirectory()) {
 						// create the directory
 						final File dir = tarGzEntryNameConverter.getFile(rootDir, entry.getName());
-						if (fileFilter == null || fileFilter.accept(dir)) {
+						if (fileFilter == null || fileFilter.accept(dir.getIoFile())) {
 							if (!dir.exists() && !dir.mkdirs())
 								throw new IllegalStateException("Could not create directory entry, possibly permission issues: " + dir.getAbsolutePath());
 						}
 					}
 					else {
 						final File file = tarGzEntryNameConverter.getFile(rootDir, entry.getName());
-						if (fileFilter == null || fileFilter.accept(file)) {
+						if (fileFilter == null || fileFilter.accept(file.getIoFile())) {
 							final File dir = file.getParentFile();
 							if (!dir.isDirectory())
 								dir.mkdirs();
@@ -150,7 +150,7 @@ public class TarGzFile {
 							if (file.isFile())
 								file.delete();
 
-							final OutputStream out = new FileOutputStream(file);
+							final OutputStream out = file.createOutputStream();
 							try {
 								transferStreamData(in, out);
 							} finally {
@@ -172,7 +172,7 @@ public class TarGzFile {
 
 	private void transferStreamData(final InputStream in, final OutputStream out) throws IOException {
 		int len;
-		byte[] buf = new byte[1024 * 16];
+		final byte[] buf = new byte[1024 * 16];
 		while( (len = in.read(buf)) > 0 ) {
 			if (len > 0)
 				out.write(buf, 0, len);

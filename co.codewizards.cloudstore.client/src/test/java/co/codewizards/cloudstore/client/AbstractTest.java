@@ -1,14 +1,15 @@
 package co.codewizards.cloudstore.client;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
@@ -23,29 +24,29 @@ public abstract class AbstractTest {
 	protected static final Random random = new Random();
 //	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.getInstance();
 
-	protected File newTestRepositoryLocalRoot(String suffix) throws IOException {
+	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		long timestamp = System.currentTimeMillis();
-		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
-		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+		final long timestamp = System.currentTimeMillis();
+		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
+		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		File dir = new File(new File("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
 
-	protected void assertDirectoriesAreEqualRecursively(File dir1, File dir2) throws IOException {
-		assertThat(dir1).isDirectory();
-		assertThat(dir2).isDirectory();
+	protected void assertDirectoriesAreEqualRecursively(final File dir1, final File dir2) throws IOException {
+		assertThat(dir1.isDirectory()).isTrue();
+		assertThat(dir2.isDirectory()).isTrue();
 
-		String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
+		final String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
 		assertThat(children1).isNotNull();
 
-		String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
+		final String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
 		assertThat(children2).isNotNull();
 
 		Arrays.sort(children1);
@@ -53,9 +54,9 @@ public abstract class AbstractTest {
 
 		assertThat(children1).containsOnly(children2);
 
-		for (String childName : children1) {
-			File child1 = new File(dir1, childName);
-			File child2 = new File(dir2, childName);
+		for (final String childName : children1) {
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
 			if (child1.isFile()) {
 				assertThat(child2.isFile());

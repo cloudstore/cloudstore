@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyPair;
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
@@ -52,6 +53,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
@@ -61,16 +63,17 @@ import co.codewizards.cloudstore.local.persistence.Entity;
 import co.codewizards.cloudstore.local.persistence.FileChunk;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
-import co.codewizards.cloudstore.local.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.Modification;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.Repository;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 
 /**
  * Manager of a repository.
@@ -103,7 +106,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private Properties repositoryProperties;
 	private PersistenceManagerFactory persistenceManagerFactory;
 	private final AtomicInteger openReferenceCounter = new AtomicInteger();
-	private List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
+	private final List<LocalRepoManagerCloseListener> localRepoManagerCloseListeners = new CopyOnWriteArrayList<LocalRepoManagerCloseListener>();
 	private String connectionURL;
 
 	private boolean deleteMetaDir;
@@ -133,7 +136,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private boolean closing;
 	private boolean closeAbortable = true;
 
-	protected LocalRepoManagerImpl(File localRoot, boolean createRepository) throws LocalRepoManagerException {
+	protected LocalRepoManagerImpl(final File localRoot, final boolean createRepository) throws LocalRepoManagerException {
 		logger.info("[{}]<init>: localRoot='{}'", id, localRoot);
 		this.localRoot = assertValidLocalRoot(localRoot);
 		boolean releaseLockFile = true;
@@ -163,10 +166,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void putRepositoryAlias(final String repositoryAlias) {
-		assertNotNull("repositoryAlias", repositoryAlias);
+		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			if (!localRepository.getAliases().contains(repositoryAlias))
 				localRepository.getAliases().add(repositoryAlias);
 
@@ -178,11 +181,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void removeRepositoryAlias(String repositoryAlias) {
-		assertNotNull("repositoryAlias", repositoryAlias);
+	public void removeRepositoryAlias(final String repositoryAlias) {
+		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			localRepository.getAliases().remove(repositoryAlias);
 			LocalRepoRegistry.getInstance().removeRepositoryAlias(repositoryAlias);
 			transaction.commit();
@@ -191,8 +194,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	}
 
-	private File assertValidLocalRoot(File localRoot) {
-		assertNotNull("localRoot", localRoot);
+	private File assertValidLocalRoot(final File localRoot) {
+		AssertUtil.assertNotNull("localRoot", localRoot);
 
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
@@ -207,14 +210,14 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		return localRoot;
 	}
 
-	private void assertNotInsideOtherRepository(File localRoot) {
-		File localRootFound = LocalRepoHelper.getLocalRootContainingFile(localRoot);
+	private void assertNotInsideOtherRepository(final File localRoot) {
+		final File localRootFound = LocalRepoHelper.getLocalRootContainingFile(localRoot);
 		if (localRootFound != null && !localRootFound.equals(localRoot))
 			throw new FileAlreadyRepositoryException(localRoot);
 	}
 
-	private void initMetaDir(boolean createRepository) throws LocalRepoManagerException {
-		File metaDir = getMetaDir();
+	private void initMetaDir(final boolean createRepository) throws LocalRepoManagerException {
+		final File metaDir = getMetaDir();
 		if (createRepository) {
 			if (metaDir.exists()) {
 				throw new FileAlreadyRepositoryException(localRoot);
@@ -226,8 +229,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			initLockFile();
 			createRepositoryPropertiesFile();
 			try {
-				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, new File(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
-			} catch (IOException e) {
+				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, createFile(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -241,10 +244,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initLockFile() {
-		File lock = new File(getMetaDir(), "cloudstore-repository.lock");
+		final File lock = createFile(getMetaDir(), "cloudstore-repository.lock");
 		try {
 			lockFile = LockFileFactory.getInstance().acquire(lock, 100);
-		} catch (TimeoutException x) {
+		} catch (final TimeoutException x) {
 			logger.warn("[{}]initLockFile: Repository '{}' is currently locked by another process. Will wait {} ms for it...",
 					id, localRoot, lockTimeoutMillis);
 		}
@@ -257,25 +260,25 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void createRepositoryPropertiesFile() {
 		final int version = 2;
-		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			repositoryProperties = new Properties();
 			repositoryProperties.put(PROP_VERSION, Integer.valueOf(version).toString());
 			PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private void checkRepositoryPropertiesFile() throws LocalRepoManagerException {
-		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		if (!repositoryPropertiesFile.exists())
 			throw new RepositoryCorruptException(localRoot,
 					String.format("Meta-directory does not contain '%s'!", REPOSITORY_PROPERTIES_FILE_NAME));
 
 		try {
 			repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 		String version = repositoryProperties.getProperty(PROP_VERSION);
@@ -287,7 +290,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		int ver;
 		try {
 			ver = Integer.parseInt(version);
-		} catch (NumberFormatException x) {
+		} catch (final NumberFormatException x) {
 			throw new RepositoryCorruptException(localRoot,
 					String.format("Meta-file '%s' contains an illegal value (not a number) for property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
 		}
@@ -300,12 +303,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void syncWithLocalRepoRegistry() {
-		assertNotNull("repositoryId", repositoryId);
+		AssertUtil.assertNotNull("repositoryId", repositoryId);
 		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
-			final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			for (final String repositoryAlias : new ArrayList<>(localRepository.getAliases())) {
 				final UUID repositoryIdInRegistry = localRepoRegistry.getRepositoryId(repositoryAlias);
 				if (repositoryIdInRegistry == null) {
@@ -338,11 +341,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void updateRepositoryPropertiesFile() {
-		assertNotNull("repositoryProperties", repositoryProperties);
-		File repositoryPropertiesFile = new File(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		AssertUtil.assertNotNull("repositoryProperties", repositoryProperties);
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			boolean store = false;
-			String repositoryId = assertNotNull("repositoryId", getRepositoryId()).toString();
+			final String repositoryId = AssertUtil.assertNotNull("repositoryId", getRepositoryId()).toString();
 			if (!repositoryId.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ID))) {
 				repositoryProperties.setProperty(PROP_REPOSITORY_ID, repositoryId);
 				store = true;
@@ -350,7 +353,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			final LocalRepoTransactionImpl transaction = beginReadTransaction();
 			try {
-				final LocalRepository localRepository = transaction.getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+				final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 				final SortedSet<String> repositoryAliases = new TreeSet<>(localRepository.getAliases());
 				final String aliasesString = repositoryAliasesToString(repositoryAliases);
 				if (!aliasesString.equals(repositoryProperties.getProperty(PROP_REPOSITORY_ALIASES))) {
@@ -367,29 +370,29 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 
 			repositoryProperties = null; // not needed anymore => gc
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private String repositoryAliasesToString(final Set<String> repositoryAliases) {
-		assertNotNull("repositoryAliases", repositoryAliases);
+		AssertUtil.assertNotNull("repositoryAliases", repositoryAliases);
 		final StringBuilder sb = new StringBuilder();
 		sb.append('/');
-		for (String repositoryAlias : repositoryAliases) {
+		for (final String repositoryAlias : repositoryAliases) {
 			sb.append(repositoryAlias);
 			sb.append('/');
 		}
 		return sb.toString();
 	}
 
-	private void initPersistenceManagerFactory(boolean createRepository) throws LocalRepoManagerException {
+	private void initPersistenceManagerFactory(final boolean createRepository) throws LocalRepoManagerException {
 		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
-		long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = System.currentTimeMillis();
 //		initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(createRepository);
 		initPersistenceManagerFactoryAndPersistenceCapableClasses(createRepository);
 
-		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		final PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
 			pm.currentTransaction().begin();
 
@@ -413,12 +416,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private void deleteExpiredRemoteRepositoryRequests() {
 		lock.lock();
 		try {
-			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+			final PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 			try {
 				pm.currentTransaction().begin();
 
-				RemoteRepositoryRequestDAO dao = new RemoteRepositoryRequestDAO().persistenceManager(pm);
-				Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
+				final RemoteRepositoryRequestDao dao = new RemoteRepositoryRequestDao().persistenceManager(pm);
+				final Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
 				pm.deletePersistentAll(expiredRequests);
 
 				pm.currentTransaction().commit();
@@ -434,13 +437,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceManagerFactoryAndPersistenceCapableClasses(final boolean createRepository) {
-		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
+		final Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
 		persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
-		PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+		final PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
 			try {
 				initPersistenceCapableClasses(pm);
-			} catch (Exception x) {
+			} catch (final Exception x) {
 				if (x instanceof RuntimeException)
 					throw (RuntimeException)x;
 				else
@@ -452,76 +455,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	}
 
-//	private void initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(final boolean createRepository) {
-//		final int maxRetryCount = 10;
-//		int tryCount = 0;
-//		Map<String, String> persistenceProperties = getPersistenceProperties(createRepository);
-//		do {
-//			++tryCount;
-//			persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(persistenceProperties);
-//			PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
-//			try {
-//				try {
-//					initPersistenceCapableClasses(pm);
-//				} catch (Exception x) {
-//					if (tryCount > maxRetryCount) {
-//						if (x instanceof RuntimeException)
-//							throw (RuntimeException)x;
-//						else
-//							throw new RuntimeException(x);
-//					}
-//
-//					logger.warn("[" + id + "]initPersistenceCapableClasses(...) failed. Will try again.", x);
-//					pm.close(); pm = null; persistenceManagerFactory.close(); persistenceManagerFactory = null;
-//					shutdownDerbyDatabase(connectionURL);
-//
-//// https://github.com/cloudstore/main/issues/10 :: java.sql.SQLNonTransientConnectionException: No current connection.
-//// http://stackoverflow.com/questions/6172930/sqlnontransientconnectionexception-no-current-connection-in-my-application-whi
-//// Forcing garbage collection.
-//					System.gc();
-//					for (int i = 0; i < 3; ++i) {
-//						try { Thread.sleep(500 + tryCount * 1000); } catch (InterruptedException ie) { doNothing(); }
-//						System.gc();
-//					}
-//
-//					if (createRepository)
-//						deleteDerbyDatabaseDirectory();
-//					else {
-//						logger.info("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: Trying to repair the database.");
-//						try {
-//							new RepairDatabase(getLocalRoot()).run();
-//						} catch (Exception repairDatabaseException) {
-//							logger.warn("[" + id + "]initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry: " + repairDatabaseException.toString(), repairDatabaseException);
-//						}
-//					}
-//				}
-//			} finally {
-//				if (pm != null)
-//					pm.close();
-//			}
-//		} while (persistenceManagerFactory == null);
-//	}
-//
-//	/**
-//	 * @deprecated temporary workaround for https://github.com/cloudstore/main/issues/10
-//	 */
-//	@Deprecated
-//	private void deleteDerbyDatabaseDirectory() {
-//		final String connectionURL = this.connectionURL;
-//		if (connectionURL == null)
-//			throw new IllegalStateException("connectionURL == null");
-//
-//		if (!connectionURL.startsWith("jdbc:derby:"))
-//			throw new IllegalStateException("connectionURL does not start with 'jdbc:': " + connectionURL);
-//
-//		final File dir = new File(connectionURL.substring(5));
-//		logger.info("[%s]deleteDerbyDatabaseDirectory: {}", id, dir);
-//		IOUtil.deleteDirectoryRecursively(dir);
-//	}
-
-	private static final void doNothing() { }
-
-	private void initPersistenceCapableClasses(PersistenceManager pm) {
+	private void initPersistenceCapableClasses(final PersistenceManager pm) {
 		pm.getExtent(CopyModification.class);
 		pm.getExtent(DeleteModification.class);
 		pm.getExtent(Directory.class);
@@ -535,21 +469,22 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		pm.getExtent(RemoteRepositoryRequest.class);
 		pm.getExtent(Repository.class);
 		pm.getExtent(RepoFile.class);
+		pm.getExtent(TransferDoneMarker.class);
 		pm.getExtent(Symlink.class);
 	}
 
-	private void assertSinglePersistentLocalRepository(PersistenceManager pm) {
+	private void assertSinglePersistentLocalRepository(final PersistenceManager pm) {
 		try {
-			LocalRepository localRepository = new LocalRepositoryDAO().persistenceManager(pm).getLocalRepositoryOrFail();
+			final LocalRepository localRepository = new LocalRepositoryDao().persistenceManager(pm).getLocalRepositoryOrFail();
 			readRepositoryMainProperties(localRepository);
-		} catch (IllegalStateException x) {
+		} catch (final IllegalStateException x) {
 			throw new RepositoryCorruptException(localRoot, x.getMessage());
 		}
 	}
 
-	private void createAndPersistLocalRepository(PersistenceManager pm) {
+	private void createAndPersistLocalRepository(final PersistenceManager pm) {
 		LocalRepository localRepository = new LocalRepository();
-		Directory root = new Directory();
+		final Directory root = new Directory();
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));
 		localRepository.setRoot(root);
@@ -559,41 +494,41 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		readRepositoryMainProperties(localRepository);
 	}
 
-	private void readRepositoryMainProperties(LocalRepository localRepository) {
-		assertNotNull("localRepository", localRepository);
-		repositoryId = assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
-		publicKey = assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
-		privateKey = assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
+	private void readRepositoryMainProperties(final LocalRepository localRepository) {
+		AssertUtil.assertNotNull("localRepository", localRepository);
+		repositoryId = AssertUtil.assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
+		publicKey = AssertUtil.assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
+		privateKey = AssertUtil.assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
 	}
 
 	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
 	private static final char[] KEY_STORE_PASSWORD_CHAR_ARRAY = KEY_STORE_PASSWORD_STRING.toCharArray();
-	private SecureRandom random = new SecureRandom();
+	private final SecureRandom random = new SecureRandom();
 
-	private void generatePublicPrivateKey(LocalRepository localRepository) {
+	private void generatePublicPrivateKey(final LocalRepository localRepository) {
 		try {
-			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 			keyGen.initialize(getKeySize(), random);
-			KeyPair pair = keyGen.generateKeyPair();
+			final KeyPair pair = keyGen.generateKeyPair();
 
 			localRepository.setPrivateKey(pair.getPrivate().getEncoded());
 			localRepository.setPublicKey(pair.getPublic().getEncoded());
-		} catch (RuntimeException e) {
+		} catch (final RuntimeException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private File getMetaDir() {
-		return new File(localRoot, META_DIR_NAME);
+		return createFile(localRoot, META_DIR_NAME);
 	}
 
-	private Map<String, String> getPersistenceProperties(boolean createRepository) {
-		Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(createRepository);
+	private Map<String, String> getPersistenceProperties(final boolean createRepository) {
+		final Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(createRepository);
 		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL_ORIGINAL.key);
 		return persistenceProperties;
 	}
@@ -608,12 +543,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void addLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+	public void addLocalRepoManagerCloseListener(final LocalRepoManagerCloseListener listener) {
 		localRepoManagerCloseListeners.add(listener);
 	}
 
 	@Override
-	public void removeLocalRepoManagerCloseListener(LocalRepoManagerCloseListener listener) {
+	public void removeLocalRepoManagerCloseListener(final LocalRepoManagerCloseListener listener) {
 		localRepoManagerCloseListeners.remove(listener);
 	}
 
@@ -631,14 +566,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		@Override
 		public boolean cancel() {
 			cancelled = true;
-			boolean result = super.cancel();
+			final boolean result = super.cancel();
 			return result;
 		}
 	};
 
 	protected boolean open() {
 		boolean result;
-		synchronized(this) {
+		lock.lock();
+		try {
 			logger.debug("[{}]open: closing={} closeAbortable={}", id, closing, closeAbortable);
 			result = !closing || closeAbortable;
 			if (result) {
@@ -654,6 +590,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					closeDeferredTimer = null;
 				}
 			}
+		} finally {
+			lock.unlock();
 		}
 		if (result)
 			openReferenceCounter.incrementAndGet();
@@ -678,8 +616,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void close() {
-		synchronized(this) {
+		lock.lock();
+		try {
 			closing = true;
+		} finally {
+			lock.unlock();
 		}
 
 		final int openReferenceCounterValue = openReferenceCounter.decrementAndGet();
@@ -694,7 +635,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final long closeDeferredMillis = getCloseDeferredMillis();
 		if (closeDeferredMillis > 0) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
-			synchronized(this) {
+			lock.lock();
+			try {
 // Because of this error:
 //		Caused by: java.lang.IllegalStateException: Timer already cancelled.
 //	       at java.util.Timer.sched(Timer.java:397) ~[na:1.7.0_45]
@@ -709,6 +651,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 					closeDeferredTimerTask = new CloseTimerTask();
 					closeDeferredTimer.schedule(closeDeferredTimerTask, closeDeferredMillis);
 				}
+			} finally {
+				lock.unlock();
 			}
 		}
 		else
@@ -716,7 +660,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void _close() {
-		synchronized(this) {
+		lock.lock();
+		try {
 			if (!closing) { // closing was aborted
 				logger.info("[{}]_close: Closing was aborted. Returning immediately.", id);
 				return;
@@ -727,43 +672,48 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				closeDeferredTimerTask.cancel();
 				closeDeferredTimerTask = null;
 			}
+		} finally {
+			lock.unlock();
 		}
 
 		logger.info("[{}]_close: Shutting down real LocalRepoManager.", id);
 		// TODO defer this (don't immediately close)
 		// TODO the timeout should be configurable
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+		final LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(this, this, true);
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.preClose(event);
 		}
 
 		deleteExpiredRemoteRepositoryRequestsTimer.cancel();
 
-		synchronized (this) {
+		lock.lock();
+		try {
 			if (persistenceManagerFactory != null) {
 				try {
 					persistenceManagerFactory.close();
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("Closing PersistenceManagerFactory failed: " + x, x);
 				}
 				persistenceManagerFactory = null;
 				try {
 					shutdownDerbyDatabase(connectionURL);
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("Shutting down Derby database failed: " + x, x);
 				}
 			}
 			if (lockFile != null) {
 				try {
 					lockFile.release();
-				} catch (Exception x) {
+				} catch (final Exception x) {
 					logger.warn("Releasing LockFile failed: " + x, x);
 				}
 				lockFile = null;
 			}
+		} finally {
+			lock.unlock();
 		}
 
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.postClose(event);
 		}
 	}
@@ -788,7 +738,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final byte[] result;
 		final LocalRepoTransactionImpl transaction = beginReadTransaction();
 		try {
-			final RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(repositoryId);
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(repositoryId);
 			result = remoteRepository.getPublicKey();
 			transaction.commit();
 		} finally {
@@ -798,8 +748,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized boolean isOpen() {
-		return persistenceManagerFactory != null;
+	public boolean isOpen() {
+		lock.lock();
+		try {
+			return persistenceManagerFactory != null;
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	protected void assertOpen() {
@@ -808,22 +763,32 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public synchronized LocalRepoTransactionImpl beginReadTransaction() {
-		assertOpen();
-		return new LocalRepoTransactionImpl(this, false);
+	public LocalRepoTransactionImpl beginReadTransaction() {
+		lock.lock();
+		try {
+			assertOpen();
+			return new LocalRepoTransactionImpl(this, false);
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized LocalRepoTransactionImpl beginWriteTransaction() {
-		assertOpen();
-		return new LocalRepoTransactionImpl(this, true);
+	public LocalRepoTransactionImpl beginWriteTransaction() {
+		lock.lock();
+		try {
+			assertOpen();
+			return new LocalRepoTransactionImpl(this, true);
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public void localSync(ProgressMonitor monitor) {
+	public void localSync(final ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", 100);
 		try {
-			LocalRepoTransactionImpl transaction = beginWriteTransaction();
+			final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 			try {
 				monitor.worked(1);
 				new LocalRepoSync(transaction).sync(new SubProgressMonitor(monitor, 98));
@@ -838,20 +803,20 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public void putRemoteRepository(UUID repositoryId, URL remoteRoot, byte[] publicKey, String localPathPrefix) {
-		assertNotNull("entityID", repositoryId);
-		assertNotNull("publicKey", publicKey);
-		LocalRepoTransactionImpl transaction = beginWriteTransaction();
+	public void putRemoteRepository(final UUID repositoryId, final URL remoteRoot, final byte[] publicKey, final String localPathPrefix) {
+		AssertUtil.assertNotNull("entityID", repositoryId);
+		AssertUtil.assertNotNull("publicKey", publicKey);
+		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
+			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 
 			if (remoteRoot != null) {
-				RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDAO.getRemoteRepository(remoteRoot);
+				final RemoteRepository otherRepoWithSameRemoteRoot = remoteRepositoryDao.getRemoteRepository(remoteRoot);
 				if (otherRepoWithSameRemoteRoot != null && !repositoryId.equals(otherRepoWithSameRemoteRoot.getRepositoryId()))
 					throw new IllegalStateException(String.format("Duplicate remoteRoot! The RemoteRepository '%s' already has the same remoteRoot '%s'! The remoteRoot must be unique!", otherRepoWithSameRemoteRoot.getRepositoryId(), remoteRoot));
 			}
 
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
+			RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(repositoryId);
 			if (remoteRepository == null) {
 				remoteRepository = new RemoteRepository(repositoryId);
 				remoteRepository.setRevision(-1);
@@ -861,12 +826,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			remoteRepository.setLocalPathPrefix(localPathPrefix);
 
-			remoteRepositoryDAO.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
+			remoteRepositoryDao.makePersistent(remoteRepository); // just in case, it is new (otherwise this has no effect, anyway).
 
-			RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
-			RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDAO.getRemoteRepositoryRequest(repositoryId);
+			final RemoteRepositoryRequestDao remoteRepositoryRequestDao = transaction.getDao(RemoteRepositoryRequestDao.class);
+			final RemoteRepositoryRequest remoteRepositoryRequest = remoteRepositoryRequestDao.getRemoteRepositoryRequest(repositoryId);
 			if (remoteRepositoryRequest != null)
-				remoteRepositoryRequestDAO.deletePersistent(remoteRepositoryRequest);
+				remoteRepositoryRequestDao.deletePersistent(remoteRepositoryRequest);
 
 			transaction.commit();
 		} finally {
@@ -876,13 +841,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void deleteRemoteRepository(final UUID repositoryId) {
-		assertNotNull("entityID", repositoryId);
-		LocalRepoTransactionImpl transaction = beginWriteTransaction();
+		AssertUtil.assertNotNull("entityID", repositoryId);
+		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			RemoteRepositoryDAO remoteRepositoryDAO = transaction.getDAO(RemoteRepositoryDAO.class);
-			RemoteRepository remoteRepository = remoteRepositoryDAO.getRemoteRepository(repositoryId);
+			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+			final RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(repositoryId);
 			if (remoteRepository != null)
-				remoteRepositoryDAO.deletePersistent(remoteRepository);
+				remoteRepositoryDao.deletePersistent(remoteRepository);
 
 			transaction.commit();
 		} finally {
@@ -891,7 +856,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	protected int getKeySize() {
-		int keySize = PropertiesUtil.getSystemPropertyValueAsInt(SYSTEM_PROPERTY_KEY_SIZE, DEFAULT_KEY_SIZE);
+		final int keySize = PropertiesUtil.getSystemPropertyValueAsInt(SYSTEM_PROPERTY_KEY_SIZE, DEFAULT_KEY_SIZE);
 		if (keySize < 1024) {
 			logger.warn("System property '{}': keySize {} is out of range! Using default {} instead!", SYSTEM_PROPERTY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
 			return DEFAULT_KEY_SIZE;
@@ -909,7 +874,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final String localPathPrefix;
 		final LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(remoteRoot);
 			localPathPrefix = remoteRepository.getLocalPathPrefix();
 			transaction.commit();
 		} finally {
@@ -919,11 +884,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	@Override
-	public String getLocalPathPrefixOrFail(UUID repositoryId) {
+	public String getLocalPathPrefixOrFail(final UUID repositoryId) {
 		final String localPathPrefix;
 		final LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository clientRemoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(repositoryId);
+			final RemoteRepository clientRemoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(repositoryId);
 			localPathPrefix = clientRemoteRepository.getLocalPathPrefix();
 			transaction.commit();
 		} finally {
@@ -935,9 +900,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	@Override
 	public UUID getRemoteRepositoryIdOrFail(final URL remoteRoot) {
 		UUID remoteRepositoryId;
-		LocalRepoTransaction transaction = beginReadTransaction();
+		final LocalRepoTransaction transaction = beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getRemoteRepositoryOrFail(remoteRoot);
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(remoteRoot);
 			remoteRepositoryId = remoteRepository.getRepositoryId();
 			transaction.commit();
 		} finally {

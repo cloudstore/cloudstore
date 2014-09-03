@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -34,13 +34,13 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			"hashCode",
 			"toString"));
 
-	public LocalRepoManagerInvocationHandler(LocalRepoManagerImpl localRepoManagerImpl) {
+	public LocalRepoManagerInvocationHandler(final LocalRepoManagerImpl localRepoManagerImpl) {
 		this.localRepoManagerImpl = assertNotNull("localRepoManagerImpl", localRepoManagerImpl);
 	}
 
 	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		LocalRepoManager localRepoManagerProxy = (LocalRepoManager) proxy;
+	public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+		final LocalRepoManager localRepoManagerProxy = (LocalRepoManager) proxy;
 		boolean proxyClosedInThisInvocation = false;
 
 		if (!methodsAllowedOnClosedProxy.contains(method.getName()))
@@ -62,7 +62,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			return null; // NEVER delegating finalize
 		}
 
-		Object result = method.invoke(localRepoManagerImpl, args);
+		final Object result = method.invoke(localRepoManagerImpl, args);
 
 		if (proxyClosedInThisInvocation)
 			firePostClose(localRepoManagerProxy);
@@ -76,7 +76,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 		}
 	}
 
-	private boolean close(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+	private boolean close(final LocalRepoManager localRepoManagerProxy, final Method method, final Object[] args) {
 		proxyCreatedStackTraceException = null;
 		if (open.compareAndSet(true, false)) {
 			firePreClose(localRepoManagerProxy);
@@ -85,32 +85,32 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 		return false;
 	}
 
-	private void finalize(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+	private void finalize(final LocalRepoManager localRepoManagerProxy, final Method method, final Object[] args) {
 		if (proxyCreatedStackTraceException != null) {
 			logger.warn("finalize: Detected forgotten close() invocation!", proxyCreatedStackTraceException);
 		}
 		close(localRepoManagerProxy, method, args);
 	}
 
-	private void firePreClose(LocalRepoManager localRepoManagerProxy) {
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(localRepoManagerProxy, localRepoManagerProxy, false);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+	private void firePreClose(final LocalRepoManager localRepoManagerProxy) {
+		final LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(localRepoManagerProxy, localRepoManagerProxy, false);
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.preClose(event);
 		}
 	}
 
-	private void firePostClose(LocalRepoManager localRepoManagerProxy) {
-		LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(localRepoManagerProxy, localRepoManagerProxy, false);
-		for (LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
+	private void firePostClose(final LocalRepoManager localRepoManagerProxy) {
+		final LocalRepoManagerCloseEvent event = new LocalRepoManagerCloseEvent(localRepoManagerProxy, localRepoManagerProxy, false);
+		for (final LocalRepoManagerCloseListener listener : localRepoManagerCloseListeners) {
 			listener.postClose(event);
 		}
 	}
 
-	private boolean isOpen(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+	private boolean isOpen(final LocalRepoManager localRepoManagerProxy, final Method method, final Object[] args) {
 		return open.get();
 	}
 
-	private void addLocalRepoManagerCloseListener(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+	private void addLocalRepoManagerCloseListener(final LocalRepoManager localRepoManagerProxy, final Method method, final Object[] args) {
 		if (args == null || args.length != 1)
 			throw new IllegalArgumentException("args == null || args.length != 1");
 
@@ -120,7 +120,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 		localRepoManagerCloseListeners.add((LocalRepoManagerCloseListener) args[0]);
 	}
 
-	private void removeLocalRepoManagerCloseListener(LocalRepoManager localRepoManagerProxy, Method method, Object[] args) {
+	private void removeLocalRepoManagerCloseListener(final LocalRepoManager localRepoManagerProxy, final Method method, final Object[] args) {
 		if (args == null || args.length != 1)
 			throw new IllegalArgumentException("args == null || args.length != 1");
 

@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.assertNotNull;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -14,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_copy/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -27,17 +26,17 @@ public class CopyService extends AbstractServiceWithRepoToRepoAuth
 	}
 
 	@POST
-	public void copy(@QueryParam("to") String toPath)
+	public void copy(@QueryParam("to") final String toPath)
 	{
 		copy("", toPath);
 	}
 
 	@POST
 	@Path("{path:.*}")
-	public void copy(@PathParam("path") String path, @QueryParam("to") String toPath)
+	public void copy(@PathParam("path") String path, @QueryParam("to") final String toPath)
 	{
-		assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		AssertUtil.assertNotNull("path", path);
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.copy(path, toPath);

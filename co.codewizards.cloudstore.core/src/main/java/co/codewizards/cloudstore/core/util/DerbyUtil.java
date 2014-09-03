@@ -1,10 +1,9 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.io.File;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import co.codewizards.cloudstore.core.oio.File;
 
 public class DerbyUtil {
 
@@ -20,7 +19,7 @@ public class DerbyUtil {
 	private DerbyUtil() { }
 
 	public static void shutdownDerbyDatabase(String connectionURL) {
-		String shutdownConnectionURL = assertNotNull("connectionURL", connectionURL) + ";shutdown=true";
+		String shutdownConnectionURL = AssertUtil.assertNotNull("connectionURL", connectionURL) + ";shutdown=true";
 		try {
 			DriverManager.getConnection(shutdownConnectionURL);
 		} catch (SQLException e) {
@@ -33,6 +32,6 @@ public class DerbyUtil {
 	}
 
 	public static void setLogFile(File file) {
-		System.setProperty("derby.stream.error.file", assertNotNull("file", file).getAbsolutePath());
+		System.setProperty("derby.stream.error.file", AssertUtil.assertNotNull("file", file).getAbsolutePath());
 	}
 }

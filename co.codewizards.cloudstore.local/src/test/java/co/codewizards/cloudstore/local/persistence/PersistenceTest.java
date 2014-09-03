@@ -2,13 +2,13 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
 import java.util.Collection;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.local.AbstractTest;
@@ -29,7 +29,7 @@ public class PersistenceTest extends AbstractTest {
 
 	@Test
 	public void getModifications() throws Exception {
-		File remoteRoot = newTestRepositoryLocalRoot("remote");
+		final File remoteRoot = newTestRepositoryLocalRoot("remote");
 		remoteRoot.mkdirs();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManager).isNotNull();
@@ -38,17 +38,17 @@ public class PersistenceTest extends AbstractTest {
 			RemoteRepository remoteRepository = new RemoteRepository();
 			remoteRepository.setLocalPathPrefix("");
 			remoteRepository.setPublicKey(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 });
-			remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).makePersistent(remoteRepository);
+			remoteRepository = transaction.getDao(RemoteRepositoryDao.class).makePersistent(remoteRepository);
 
-			CopyModificationDAO copyModificationDAO = transaction.getDAO(CopyModificationDAO.class);
+			final CopyModificationDao copyModificationDao = transaction.getDao(CopyModificationDao.class);
 			for (int i = 0; i < modificationCount; ++i) {
-				CopyModification copyModification = new CopyModification();
+				final CopyModification copyModification = new CopyModification();
 				copyModification.setRemoteRepository(remoteRepository);
 				copyModification.setFromPath("/from/" + i);
 				copyModification.setToPath("/to/" + i);
 				copyModification.setLength(100000);
 				copyModification.setSha1("TEST" + i);
-				copyModificationDAO.makePersistent(copyModification);
+				copyModificationDao.makePersistent(copyModification);
 			}
 			transaction.commit();
 		} finally {
@@ -60,14 +60,14 @@ public class PersistenceTest extends AbstractTest {
 
 		transaction = localRepoManager.beginReadTransaction();
 		try {
-			RemoteRepository remoteRepository = transaction.getDAO(RemoteRepositoryDAO.class).getObjects().iterator().next();
-			ModificationDAO modificationDAO = transaction.getDAO(ModificationDAO.class);
-			Collection<Modification> modifications = modificationDAO.getModifications(remoteRepository);
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getObjects().iterator().next();
+			final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
+			final Collection<Modification> modifications = modificationDao.getModifications(remoteRepository);
 			assertThat(modifications).hasSize(modificationCount);
 			System.out.println("*** Accessing fromPath and toPath ***");
-			for (Modification modification : modifications) {
+			for (final Modification modification : modifications) {
 				if (modification instanceof CopyModification) {
-					CopyModification copyModification = (CopyModification)modification;
+					final CopyModification copyModification = (CopyModification)modification;
 					System.out.println(String.format("%s => %s",
 							copyModification.getFromPath(),
 							copyModification.getToPath()));

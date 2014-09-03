@@ -10,10 +10,12 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class AuthTokenIO {
 
 	public byte[] serialise(AuthToken authToken) {
-		assertNotNull("authToken", authToken);
+		AssertUtil.assertNotNull("authToken", authToken);
 		try {
 			JAXBContext context = createContext();
 			Marshaller marshaller = context.createMarshaller();
@@ -26,7 +28,7 @@ public class AuthTokenIO {
 	}
 
 	public AuthToken deserialise(byte[] authTokenData) {
-		assertNotNull("authTokenData", authTokenData);
+		AssertUtil.assertNotNull("authTokenData", authTokenData);
 		try {
 			JAXBContext context = createContext();
 			Unmarshaller unmarshaller = context.createUnmarshaller();

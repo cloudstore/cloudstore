@@ -1,11 +1,10 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 
 public class RepairDatabaseSubCommandTest extends AbstractTest {

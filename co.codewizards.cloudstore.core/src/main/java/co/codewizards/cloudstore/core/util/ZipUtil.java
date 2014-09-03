@@ -1,12 +1,10 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,6 +17,7 @@ import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 
@@ -35,7 +34,7 @@ public final class ZipUtil {
 	 * @param zipInputFolder The inputFolder to zip.
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFolder(File zipOutputFile, File zipInputFolder)
+	public static void zipFolder(final File zipOutputFile, final File zipInputFolder)
 	throws IOException
 	{
 		zipFolder(zipOutputFile, zipInputFolder, (ProgressMonitor) null);
@@ -50,7 +49,7 @@ public final class ZipUtil {
 	 * @param monitor an optional monitor for progress feedback (can be <code>null</code>).
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFolder(File zipOutputFile, File zipInputFolder, ProgressMonitor monitor)
+	public static void zipFolder(final File zipOutputFile, final File zipInputFolder, final ProgressMonitor monitor)
 	throws IOException
 	{
 		zipFilesRecursively(zipOutputFile, zipInputFolder.listFiles(), zipInputFolder.getAbsoluteFile(), monitor);
@@ -68,7 +67,7 @@ public final class ZipUtil {
 	 *		both be <code>null</code> at the same time.
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFilesRecursively(File zipOutputFile, File[] files, File entryRoot)
+	public static void zipFilesRecursively(final File zipOutputFile, final File[] files, final File entryRoot)
 	throws IOException
 	{
 		zipFilesRecursively(zipOutputFile, files, entryRoot, (ProgressMonitor) null);
@@ -87,11 +86,11 @@ public final class ZipUtil {
 	 * @param monitor an optional monitor for progress feedback (can be <code>null</code>).
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFilesRecursively(File zipOutputFile, File[] files, File entryRoot, ProgressMonitor monitor)
+	public static void zipFilesRecursively(final File zipOutputFile, final File[] files, final File entryRoot, final ProgressMonitor monitor)
 	throws IOException
 	{
-		FileOutputStream fout = new FileOutputStream(zipOutputFile);
-		ZipOutputStream out = new ZipOutputStream(fout);
+		final OutputStream fout = zipOutputFile.createOutputStream();
+		final ZipOutputStream out = new ZipOutputStream(fout);
 		try {
 			zipFilesRecursively(out, zipOutputFile, files, entryRoot, monitor);
 		} finally {
@@ -114,7 +113,7 @@ public final class ZipUtil {
 	 *		both be <code>null</code> at the same time.
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFilesRecursively(ZipOutputStream out, File zipOutputFile, File[] files, File entryRoot)
+	public static void zipFilesRecursively(final ZipOutputStream out, final File zipOutputFile, final File[] files, final File entryRoot)
 	throws IOException
 	{
 		zipFilesRecursively(out, zipOutputFile, files, entryRoot, (ProgressMonitor) null);
@@ -136,7 +135,7 @@ public final class ZipUtil {
 	 * @param monitor an optional monitor for progress feedback (can be <code>null</code>).
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void zipFilesRecursively(ZipOutputStream out, File zipOutputFile, File[] files, File entryRoot, ProgressMonitor monitor)
+	public static void zipFilesRecursively(final ZipOutputStream out, final File zipOutputFile, File[] files, final File entryRoot, final ProgressMonitor monitor)
 	throws IOException
 	{
 		if (entryRoot == null && files == null)
@@ -152,7 +151,7 @@ public final class ZipUtil {
 		if (monitor != null) {
 			int dirCount = 0;
 			int fileCount = 0;
-			for (File file : files) {
+			for (final File file : files) {
 				if (file.isDirectory())
 					++dirCount;
 				else
@@ -162,8 +161,8 @@ public final class ZipUtil {
 			monitor.beginTask("Zipping files", dirCount * 10 + fileCount);
 		}
 		try {
-			byte[] buf = new byte[1024 * 5];
-			for (File file : files) {
+			final byte[] buf = new byte[1024 * 5];
+			for (final File file : files) {
 				if (zipOutputFile != null && file.equals(zipOutputFile)) {
 					if (monitor != null)
 						monitor.worked(1);
@@ -180,7 +179,7 @@ public final class ZipUtil {
 				if ( file.isDirectory() ) {
 					// store directory (necessary, in case the directory is empty - otherwise it's lost)
 					relativePath += '/';
-					ZipEntry entry = new ZipEntry(relativePath);
+					final ZipEntry entry = new ZipEntry(relativePath);
 					entry.setTime(file.lastModified());
 					entry.setSize(0);
 					entry.setCompressedSize(0);
@@ -190,7 +189,7 @@ public final class ZipUtil {
 					out.closeEntry();
 
 					// recurse
-					File[] dirFiles = file.listFiles();
+					final File[] dirFiles = file.listFiles();
 					if (dirFiles == null) {
 						logger.error("zipFilesRecursively: file.listFiles() returned null, even though file is a directory! file=\"{}\"", file.getAbsolutePath());
 						if (monitor != null)
@@ -208,8 +207,8 @@ public final class ZipUtil {
 				}
 				else {
 					// Create a new zipEntry
-					BufferedInputStream in = new BufferedInputStream( new FileInputStream(file) );
-					ZipEntry entry = new ZipEntry(relativePath);
+					final BufferedInputStream in = new BufferedInputStream( file.createInputStream() );
+					final ZipEntry entry = new ZipEntry(relativePath);
 					entry.setTime(file.lastModified());
 					out.putNextEntry(entry);
 
@@ -239,7 +238,7 @@ public final class ZipUtil {
 	 *
 	 * @see #unzipArchiveIfModified(URL, File).
 	 */
-	public static synchronized void unzipArchiveIfModified(File zipArchive, File unzipRootFolder)
+	public static synchronized void unzipArchiveIfModified(final File zipArchive, final File unzipRootFolder)
 	throws IOException
 	{
 		unzipArchive(zipArchive.toURI().toURL(), unzipRootFolder);
@@ -266,36 +265,36 @@ public final class ZipUtil {
 	 * @param unzipRootFolder The folder to unzip to.
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static synchronized void unzipArchiveIfModified(URL zipArchive, File unzipRootFolder)
+	public static synchronized void unzipArchiveIfModified(final URL zipArchive, final File unzipRootFolder)
 	throws IOException
 	{
-		File metaFile = new File(unzipRootFolder, ".archive.properties");
+		final File metaFile = createFile(unzipRootFolder, ".archive.properties");
 		long timestamp = Long.MIN_VALUE;
 		long fileSize = Long.MIN_VALUE;
 
-		Properties properties = new Properties();
+		final Properties properties = new Properties();
 		if (metaFile.exists()) {
-			InputStream in = new FileInputStream(metaFile);
+			final InputStream in = metaFile.createInputStream();
 			try {
 				properties.load(in);
 			} finally {
 				in.close();
 			}
 
-			String timestampS = properties.getProperty(PROPERTY_KEY_ZIP_TIMESTAMP);
+			final String timestampS = properties.getProperty(PROPERTY_KEY_ZIP_TIMESTAMP);
 			if (timestampS != null) {
 				try {
 					timestamp = Long.parseLong(timestampS, 36);
-				} catch (NumberFormatException x) {
+				} catch (final NumberFormatException x) {
 					// ignore
 				}
 			}
 
-			String fileSizeS = properties.getProperty(PROPERTY_KEY_ZIP_FILESIZE);
+			final String fileSizeS = properties.getProperty(PROPERTY_KEY_ZIP_FILESIZE);
 			if (fileSizeS != null) {
 				try {
 					fileSize = Long.parseLong(fileSizeS, 36);
-				} catch (NumberFormatException x) {
+				} catch (final NumberFormatException x) {
 					// ignore
 				}
 			}
@@ -306,7 +305,7 @@ public final class ZipUtil {
 		long zipLastModified = System.currentTimeMillis();
 
 		if ("file".equals(zipArchive.getProtocol())) {
-			File fileToCheck = new File(Util.urlToUri(zipArchive));
+			final File fileToCheck = createFile(UrlUtil.urlToUri(zipArchive));
 			zipLastModified = fileToCheck.lastModified();
 			zipLength = fileToCheck.length();
 			doUnzip = !unzipRootFolder.exists() || zipLastModified != timestamp || zipLength != fileSize;
@@ -317,7 +316,7 @@ public final class ZipUtil {
 			unzipArchive(zipArchive, unzipRootFolder);
 			properties.setProperty(PROPERTY_KEY_ZIP_FILESIZE, Long.toString(zipLength, 36));
 			properties.setProperty(PROPERTY_KEY_ZIP_TIMESTAMP, Long.toString(zipLastModified, 36));
-			OutputStream out = new FileOutputStream(metaFile);
+			final OutputStream out = metaFile.createOutputStream();
 			try {
 				properties.store(out, null);
 			} finally {
@@ -333,23 +332,23 @@ public final class ZipUtil {
 	 * @param unzipRootFolder The folder to unzip to.
 	 * @throws IOException in case of an I/O error.
 	 */
-	public static void unzipArchive(URL zipArchive, File unzipRootFolder)
+	public static void unzipArchive(final URL zipArchive, final File unzipRootFolder)
 	throws IOException
 	{
-		ZipInputStream in = new ZipInputStream(zipArchive.openStream());
+		final ZipInputStream in = new ZipInputStream(zipArchive.openStream());
 		try {
 			ZipEntry entry = null;
 			while ((entry = in.getNextEntry()) != null) {
 				if(entry.isDirectory()) {
 					// create the directory
-					File dir = new File(unzipRootFolder, entry.getName());
+					final File dir = createFile(unzipRootFolder, entry.getName());
 					if (!dir.exists() && !dir.mkdirs())
 						throw new IllegalStateException("Could not create directory entry, possibly permission issues.");
 				}
 				else {
-					File file = new File(unzipRootFolder, entry.getName());
+					final File file = createFile(unzipRootFolder, entry.getName());
 
-					File dir = file.getParentFile();
+					final File dir = file.getParentFile();
 					if (dir.exists( )) {
 						assert (dir.isDirectory( ));
 					}
@@ -357,10 +356,10 @@ public final class ZipUtil {
 						dir.mkdirs( );
 					}
 
-					BufferedOutputStream out = new BufferedOutputStream( new FileOutputStream(file) );
+					final BufferedOutputStream out = new BufferedOutputStream( file.createOutputStream() );
 
 					int len;
-					byte[] buf = new byte[1024 * 5];
+					final byte[] buf = new byte[1024 * 5];
 					while( (len = in.read(buf)) > 0 )
 					{
 						out.write(buf, 0, len);
@@ -379,7 +378,7 @@ public final class ZipUtil {
 	 *
 	 * @see #unzipArchive(URL, File).
 	 */
-	public static void unzipArchive(File zipArchive, File unzipRootFolder)
+	public static void unzipArchive(final File zipArchive, final File unzipRootFolder)
 	throws IOException
 	{
 		unzipArchive(zipArchive.toURI().toURL(), unzipRootFolder);

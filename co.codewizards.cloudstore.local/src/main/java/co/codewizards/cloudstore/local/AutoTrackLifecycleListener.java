@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +14,8 @@ import javax.jdo.listener.StoreLifecycleListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.repo.local.AbstractLocalRepoTransactionListener;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.local.persistence.AutoTrackChanged;
 import co.codewizards.cloudstore.local.persistence.AutoTrackLocalRevision;
 
@@ -28,20 +28,28 @@ import co.codewizards.cloudstore.local.persistence.AutoTrackLocalRevision;
  * interfaces are implemented by the persistence-capable object.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class AutoTrackLifecycleListener implements StoreLifecycleListener, DeleteLifecycleListener {
+public class AutoTrackLifecycleListener extends AbstractLocalRepoTransactionListener implements StoreLifecycleListener, DeleteLifecycleListener {
 	private static final Logger logger = LoggerFactory.getLogger(AutoTrackLifecycleListener.class);
-
-	private final LocalRepoTransactionImpl transaction;
 
 	private final Map<Object, Date> oid2LastChanged = new HashMap<>();
 	private boolean defer;
 
-	public AutoTrackLifecycleListener(LocalRepoTransactionImpl transaction) {
-		this.transaction = assertNotNull("transaction", transaction);
+	@Override
+	public LocalRepoTransactionImpl getTransaction() {
+		return (LocalRepoTransactionImpl) super.getTransaction();
 	}
 
-	public LocalRepoTransactionImpl getTransaction() {
-		return transaction;
+	@Override
+	protected LocalRepoTransactionImpl getTransactionOrFail() {
+		return (LocalRepoTransactionImpl) super.getTransactionOrFail();
+	}
+
+	@Override
+	public void setTransaction(final LocalRepoTransaction transaction) {
+		if (! (transaction instanceof LocalRepoTransactionImpl))
+			throw new IllegalArgumentException("transaction is not an instance of LocalRepoTransactionImpl!");
+
+		super.setTransaction(transaction);
 	}
 
 	@Override
@@ -61,7 +69,7 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 	public void preDelete(final InstanceLifecycleEvent event) {
 		// We want to ensure that the revision is incremented, even if we do not have any remote repository connected
 		// (and thus no DeleteModification being created).
-		transaction.getLocalRevision();
+		getTransactionOrFail().getLocalRevision();
 
 		final Object oid = JDOHelper.getObjectId(event.getPersistentInstance());
 		oid2LastChanged.remove(oid);
@@ -74,7 +82,7 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 		// We always obtain the localRevision - no matter, if the current write operation is on
 		// an object implementing AutoTrackLocalRevision, because this causes incrementing of the
 		// localRevision in the database (once per transaction).
-		final long localRevision = transaction.getLocalRevision();
+		final long localRevision = getTransactionOrFail().getLocalRevision();
 
 		final Date changed = new Date();
 		final Object oid = JDOHelper.getObjectId(pc);
@@ -105,8 +113,10 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 	 * @see #onCommit()
 	 * @see #onRollback()
 	 */
+	@Override
 	public void onBegin() {
 		defer = true;
+		getTransactionOrFail().getPersistenceManager().addInstanceLifecycleListener(this, (Class[]) null);
 	}
 
 	/**
@@ -114,10 +124,11 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 	 * @see #onBegin()
 	 * @see #onRollback()
 	 */
+	@Override
 	public void onCommit() {
 		defer = false;
 		final long start = System.currentTimeMillis();
-		final PersistenceManager pm = transaction.getPersistenceManager();
+		final PersistenceManager pm = getTransactionOrFail().getPersistenceManager();
 		for (final Map.Entry<Object, Date> me : oid2LastChanged.entrySet()) {
 			try {
 				final Object pc = pm.getObjectById(me.getKey());
@@ -127,7 +138,7 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 					final AutoTrackChanged entity = (AutoTrackChanged) pc;
 					entity.setChanged(changed);
 				}
-			} catch (JDOObjectNotFoundException x) {
+			} catch (final JDOObjectNotFoundException x) {
 				logger.warn("onCommit: " + x, x);
 			}
 		}
@@ -146,6 +157,7 @@ public class AutoTrackLifecycleListener implements StoreLifecycleListener, Delet
 	 * @see #onBegin()
 	 * @see #onCommit()
 	 */
+	@Override
 	public void onRollback() {
 		defer = false;
 		oid2LastChanged.clear();

@@ -1,29 +1,28 @@
 package co.codewizards.cloudstore.local.sync;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
+import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.AbstractTest;
 
@@ -47,22 +46,22 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		if (localPathPrefix.isEmpty())
 			return localRoot;
 
-		return new File(localRoot, localPathPrefix);
+		return createFile(localRoot, localPathPrefix);
 	}
 
 	private File getRemoteRootWithPathPrefix() {
 		if (remotePathPrefix.isEmpty())
 			return remoteRoot;
 
-		File file = new File(remoteRoot, remotePathPrefix);
+		final File file = createFile(remoteRoot, remotePathPrefix);
 		return file;
 	}
 
 	private URL getRemoteRootUrlWithPathPrefix() {
 		try {
-			URL url = getRemoteRootWithPathPrefix().toURI().toURL();
+			final URL url = getRemoteRootWithPathPrefix().toURI().toURL();
 			return url;
-		} catch (MalformedURLException e) {
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -70,39 +69,39 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	@Test
 	public void syncFromRemoteToLocal() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 
 		remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
-		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
 		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
-		File child_1 = createDirectory(remoteRoot, "1");
+		final File child_1 = createDirectory(remoteRoot, "1");
 
 		createFileWithRandomContent(child_1, "a");
 		createFileWithRandomContent(child_1, "b");
 		createFileWithRandomContent(child_1, "c");
 
-		File child_2 = createDirectory(remoteRoot, "2");
+		final File child_2 = createDirectory(remoteRoot, "2");
 
 		createFileWithRandomContent(child_2, "a");
 
-		File child_2_1 = createDirectory(child_2, "1");
+		final File child_2_1 = createDirectory(child_2, "1");
 		createFileWithRandomContent(child_2_1, "a");
 		createFileWithRandomContent(child_2_1, "b", 150000);
 
-		File child_3 = createDirectory(remoteRoot, "3");
+		final File child_3 = createDirectory(remoteRoot, "3");
 
 		createFileWithRandomContent(child_3, "a");
 		createFileWithRandomContent(child_3, "b");
@@ -116,7 +115,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		logger.info("local repo: {}", localRepoManagerLocal.getRepositoryId());
 		logger.info("remote repo: {}", localRepoManagerRemote.getRepositoryId());
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -135,21 +134,21 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncFromRemoteToLocalWithAddedFilesAndDirectories() throws Exception {
 		syncFromRemoteToLocal();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		File child_2 = new File(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		final File child_2 = createFile(remoteRoot, "2");
+		assertThat(child_2.isDirectory()).isTrue();
 
-		File child_2_1 = new File(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		final File child_2_1 = createFile(child_2, "1");
+		assertThat(child_2_1.isDirectory()).isTrue();
 
-		File child_2_1_5 = createDirectory(child_2_1, "5");
+		final File child_2_1_5 = createDirectory(child_2_1, "5");
 		createFileWithRandomContent(child_2_1_5, "aaa");
 		createFileWithRandomContent(child_2_1_5, "bbb");
 
-		File child_3 = new File(remoteRoot, "3");
-		assertThat(child_3).isDirectory();
+		final File child_3 = createFile(remoteRoot, "3");
+		assertThat(child_3.isDirectory()).isTrue();
 
 		createFileWithRandomContent(child_3, "e");
 
@@ -157,7 +156,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -175,39 +174,39 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncFromRemoteToLocalWithModifiedFiles() throws Exception {
 		syncFromRemoteToLocal();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		File child_2 = new File(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		final File child_2 = createFile(remoteRoot, "2");
+		assertThat(child_2.isDirectory()).isTrue();
 
-		File child_2_1 = new File(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		final File child_2_1 = createFile(child_2, "1");
+		assertThat(child_2_1.isDirectory()).isTrue();
 
-		File child_2_1_a = new File(child_2_1, "a");
-		assertThat(child_2_1_a).isFile();
+		final File child_2_1_a = createFile(child_2_1, "a");
+		assertThat(child_2_1_a.isFile()).isTrue();
 
-		File child_2_1_b = new File(child_2_1, "b");
-		assertThat(child_2_1_b).isFile();
+		final File child_2_1_b = createFile(child_2_1, "b");
+		assertThat(child_2_1_b.isFile()).isTrue();
 
 		modifyFileRandomly(child_2_1_a);
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
-		FileOutputStream out = new FileOutputStream(child_2_1_b);
+		final OutputStream out = child_2_1_b.createOutputStream();
 		out.write(random.nextInt());
 		out.close();
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
-		byte[] child_2_1_a_expected = IOUtil.getBytesFromFile(child_2_1_a);
-		byte[] child_2_1_b_expected = IOUtil.getBytesFromFile(child_2_1_b);
+		final byte[] child_2_1_a_expected = IOUtil.getBytesFromFile(child_2_1_a);
+		final byte[] child_2_1_b_expected = IOUtil.getBytesFromFile(child_2_1_b);
 
 		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -221,19 +220,104 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 
 		// ensure that nothing was synced backwards into the wrong direction ;-)
-		byte[] child_2_1_a_actual = IOUtil.getBytesFromFile(child_2_1_a);
-		byte[] child_2_1_b_actual = IOUtil.getBytesFromFile(child_2_1_b);
+		final byte[] child_2_1_a_actual = IOUtil.getBytesFromFile(child_2_1_a);
+		final byte[] child_2_1_b_actual = IOUtil.getBytesFromFile(child_2_1_b);
 		assertThat(child_2_1_a_actual).isEqualTo(child_2_1_a_expected);
 		assertThat(child_2_1_b_actual).isEqualTo(child_2_1_b_expected);
 	}
 
-	private void modifyFileRandomly(File file) throws IOException {
-		RandomAccessFile raf = new RandomAccessFile(file, "rw");
+	private static class RepoToRepoSync extends co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync {
+		public RepoToRepoSync(final File localRoot, final URL remoteRoot) {
+			super(localRoot, remoteRoot);
+		}
+		@Override
+		protected void syncUp(final ProgressMonitor monitor) {
+			super.syncUp(monitor);
+		}
+		@Override
+		protected void syncDown(final boolean fromRepoLocalSync, final ProgressMonitor monitor) {
+			super.syncDown(fromRepoLocalSync, monitor);
+		}
+	}
+
+	@Test
+	public void syncUpAndModifyFile() throws Exception {
+		localRoot = newTestRepositoryLocalRoot("local");
+		localRoot.mkdirs();
+
+		remoteRoot = newTestRepositoryLocalRoot("remote");
+		remoteRoot.mkdirs();
+
+		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+
+		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
+		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
+
+		final File child_1 = createDirectory(remoteRoot, "1");
+		final File file_1a = createFileWithRandomContent(child_1, "a");
+
+		localRepoManagerLocal.localSync(new LoggerProgressMonitor(logger));
+		localRepoManagerRemote.localSync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+
+		// This sync does down+up+down to make sure, everything is synced bidirectionally.
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatFilesInRepoAreCorrect(remoteRoot);
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+
+		// The issue https://github.com/cloudstore/cloudstore/issues/25 was that when a file was modified
+		// between the down- and the up-sync (that happens inside the normal sync(...) method), a wrong
+		// collision was detected. So we do the steps normally happening in sync(...) individually here
+		// and change the file inbetween.
+
+		// First change the *remote* file and perform a down-sync.
+		modifyFileRandomly(file_1a);
+		repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
+
+		// Then change the same file again at the same (remote) location.
+		modifyFileRandomly(file_1a);
+
+		// Now perform the up-sync that would normally happen. This should cause the wrong collision of issue #25.
+		localRepoManagerLocal.localSync(new NullProgressMonitor()); // We make 100% sure, the local DB is up-to-date, before up-sync.
+		repoToRepoSync.syncUp(new LoggerProgressMonitor(logger));
+
+		// Now we sync down again. This is not really important for this test, but it usually happens in the
+		// ordinary sync(...) method. This btw. syncs the collision file down (if there is one).
+		// Additionally, without this down-sync, we cannot use assertDirectoriesAreEqualRecursively(...).
+		repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
+
+		repoToRepoSync.close();
+
+		localRepoManagerLocal.close();
+		localRepoManagerRemote.close();
+
+		assertThatNoCollisionInRepo(remoteRoot);
+		assertThatNoCollisionInRepo(localRoot);
+
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+	}
+
+	private void modifyFileRandomly(final File file) throws IOException {
+		try {
+			//TODO get rid of that sleep; needed, because *nix system are rounding to the next second.
+			// Setting via file.setLastModified(time) did not solve the problem.
+			Thread.sleep(1100);
+		} catch (final InterruptedException e) {
+			logger.error("Interrupted!", e);
+		}
+		final RandomAccessFile raf = file.createRandomAccessFile("rw");
 		try {
 			if (file.length() > 0)
 				raf.seek(random.nextInt((int)file.length()));
 
-			byte[] buf = new byte[1 + random.nextInt(10)];
+			final byte[] buf = new byte[1 + random.nextInt(10)];
 			random.nextBytes(buf);
 
 			raf.write(buf);
@@ -246,17 +330,17 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncFromRemoteToLocalWithDeletedFile() throws Exception {
 		syncFromRemoteToLocal();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		File child_2 = new File(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		final File child_2 = createFile(remoteRoot, "2");
+		assertThat(child_2.isDirectory()).isTrue();
 
-		File child_2_1 = new File(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		final File child_2_1 = createFile(child_2, "1");
+		assertThat(child_2_1.isDirectory()).isTrue();
 
-		File child_2_1_a = new File(child_2_1, "a");
-		assertThat(child_2_1_a).isFile();
+		final File child_2_1_a = createFile(child_2_1, "a");
+		assertThat(child_2_1_a.isFile()).isTrue();
 
 		deleteFile(child_2_1_a);
 
@@ -264,7 +348,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -282,20 +366,20 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncFromRemoteToLocalWithDeletedDir() throws Exception {
 		syncFromRemoteToLocal();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
-		File child_2 = new File(remoteRoot, "2");
-		assertThat(child_2).isDirectory();
+		final File child_2 = createFile(remoteRoot, "2");
+		assertThat(child_2.isDirectory()).isTrue();
 
-		File child_2_1 = new File(child_2, "1");
-		assertThat(child_2_1).isDirectory();
+		final File child_2_1 = createFile(child_2, "1");
+		assertThat(child_2_1.isDirectory()).isTrue();
 
-		for (File child : child_2_1.listFiles()) {
+		for (final File child : child_2_1.listFiles()) {
 			deleteFile(child);
 		}
 
-		for (File child : child_2.listFiles()) {
+		for (final File child : child_2.listFiles()) {
 			deleteFile(child);
 		}
 
@@ -305,7 +389,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -320,7 +404,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		try {
 			if (!getRemoteRootWithPathPrefix().exists()) {
 				getRemoteRootWithPathPrefix().mkdirs();
-				assertThat(getRemoteRootWithPathPrefix()).isDirectory();
+				assertThat(getRemoteRootWithPathPrefix().isDirectory()).isTrue();
 				deleteThisFile = getRemoteRootWithPathPrefix();
 			}
 
@@ -336,44 +420,44 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncWithDirectFileModificationCollision() throws Exception {
 		syncFromRemoteToLocal();
 
-		File r_child_2 = new File(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		final File r_child_2 = createFile(remoteRoot, "2");
+		assertThat(r_child_2.isDirectory()).isTrue();
 
-		File r_child_2_1 = new File(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		final File r_child_2_1 = createFile(r_child_2, "1");
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		File r_child_2_1_a = new File(r_child_2_1, "a");
-		assertThat(r_child_2_1_a).isFile();
+		final File r_child_2_1_a = createFile(r_child_2_1, "a");
+		assertThat(r_child_2_1_a.isFile()).isTrue();
 
-		File l_child_2 = new File(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		final File l_child_2 = createFile(localRoot, "2");
+		assertThat(l_child_2.isDirectory()).isTrue();
 
-		File l_child_2_1 = new File(l_child_2, "1");
-		assertThat(l_child_2_1).isDirectory();
+		final File l_child_2_1 = createFile(l_child_2, "1");
+		assertThat(l_child_2_1.isDirectory()).isTrue();
 
-		File l_child_2_1_a = new File(l_child_2_1, "a");
-		assertThat(l_child_2_1_a).isFile();
+		final File l_child_2_1_a = createFile(l_child_2_1, "a");
+		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
 		modifyFileRandomly(l_child_2_1_a);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision file is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
 
 		// Expect exactly one collision in remote repo (in directory r_child_2_1).
-		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		final List<File> remoteCollisions = searchCollisions(remoteRoot);
 		assertThat(remoteCollisions).isNotNull().hasSize(1);
-		File r_collision = remoteCollisions.get(0);
+		final File r_collision = remoteCollisions.get(0);
 		assertThat(r_collision).isNotNull();
 		assertThat(r_collision.getParentFile()).isEqualTo(r_child_2_1);
 
 		// Expect exactly one collision in local repo (in directory l_child_2_1).
-		List<File> localCollisions = searchCollisions(localRoot);
+		final List<File> localCollisions = searchCollisions(localRoot);
 		assertThat(localCollisions).isNotNull().hasSize(1);
-		File l_collision = localCollisions.get(0);
+		final File l_collision = localCollisions.get(0);
 		assertThat(l_collision).isNotNull();
 		assertThat(l_collision.getParentFile()).isEqualTo(l_child_2_1);
 
@@ -384,22 +468,22 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
 
-	private void assertThatNoCollisionInRepo(File localRoot) {
-		List<File> collisions = searchCollisions(localRoot);
+	private void assertThatNoCollisionInRepo(final File localRoot) {
+		final List<File> collisions = searchCollisions(localRoot);
 		if (!collisions.isEmpty())
 			Assert.fail("Collision: " + collisions.get(0));
 	}
 
-	private List<File> searchCollisions(File localRoot) {
-		List<File> collisions = new ArrayList<File>();
+	private List<File> searchCollisions(final File localRoot) {
+		final List<File> collisions = new ArrayList<File>();
 		searchCollisions_populate(localRoot, localRoot, collisions);
 		return collisions;
 	}
 
-	private void searchCollisions_populate(File localRoot, File file, Collection<File> collisions) {
-		File[] children = file.listFiles();
+	private void searchCollisions_populate(final File localRoot, final File file, final Collection<File> collisions) {
+		final File[] children = file.listFiles();
 		if (children != null) {
-			for (File f : children) {
+			for (final File f : children) {
 				if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX))
 					collisions.add(f);
 
@@ -412,37 +496,37 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncWithFileModificationInsideDeletedDirectoryCollision() throws Exception {
 		syncFromRemoteToLocal();
 
-		File r_child_2 = new File(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		final File r_child_2 = createFile(remoteRoot, "2");
+		assertThat(r_child_2.isDirectory()).isTrue();
 
-		File l_child_2 = new File(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		final File l_child_2 = createFile(localRoot, "2");
+		assertThat(l_child_2.isDirectory()).isTrue();
 
-		File l_child_2_1 = new File(l_child_2, "1");
-		assertThat(l_child_2_1).isDirectory();
+		final File l_child_2_1 = createFile(l_child_2, "1");
+		assertThat(l_child_2_1.isDirectory()).isTrue();
 
-		File l_child_2_1_a = new File(l_child_2_1, "a");
-		assertThat(l_child_2_1_a).isFile();
+		final File l_child_2_1_a = createFile(l_child_2_1, "a");
+		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(l_child_2_1_a);
 		IOUtil.deleteDirectoryRecursively(r_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
 
-		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		final List<File> remoteCollisions = searchCollisions(remoteRoot);
 		assertThat(remoteCollisions).isNotNull().hasSize(1);
-		File r_collision = remoteCollisions.get(0);
+		final File r_collision = remoteCollisions.get(0);
 		assertThat(r_collision).isNotNull();
 		assertThat(r_collision.getParentFile()).isEqualTo(remoteRoot);
 		assertThat(r_collision.getName()).startsWith("2.");
 
-		List<File> localCollisions = searchCollisions(localRoot);
+		final List<File> localCollisions = searchCollisions(localRoot);
 		assertThat(localCollisions).isNotNull().hasSize(1);
-		File l_collision = localCollisions.get(0);
+		final File l_collision = localCollisions.get(0);
 		assertThat(l_collision).isNotNull();
 		assertThat(l_collision.getParentFile()).isEqualTo(localRoot);
 		assertThat(l_collision.getName()).startsWith("2.");
@@ -452,37 +536,37 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncWithFileModificationInsideDeletedDirectoryCollisionInverse() throws Exception {
 		syncFromRemoteToLocal();
 
-		File r_child_2 = new File(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		final File r_child_2 = createFile(remoteRoot, "2");
+		assertThat(r_child_2.isDirectory()).isTrue();
 
-		File r_child_2_1 = new File(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		final File r_child_2_1 = createFile(r_child_2, "1");
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		File r_child_2_1_a = new File(r_child_2_1, "a");
-		assertThat(r_child_2_1_a).isFile();
+		final File r_child_2_1_a = createFile(r_child_2_1, "a");
+		assertThat(r_child_2_1_a.isFile()).isTrue();
 
-		File l_child_2 = new File(localRoot, "2");
-		assertThat(l_child_2).isDirectory();
+		final File l_child_2 = createFile(localRoot, "2");
+		assertThat(l_child_2.isDirectory()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
 		IOUtil.deleteDirectoryRecursively(l_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
 
-		List<File> remoteCollisions = searchCollisions(remoteRoot);
+		final List<File> remoteCollisions = searchCollisions(remoteRoot);
 		assertThat(remoteCollisions).isNotNull().hasSize(1);
-		File r_collision = remoteCollisions.get(0);
+		final File r_collision = remoteCollisions.get(0);
 		assertThat(r_collision).isNotNull();
 		assertThat(r_collision.getParentFile()).isEqualTo(remoteRoot);
 		assertThat(r_collision.getName()).startsWith("2.");
 
-		List<File> localCollisions = searchCollisions(localRoot);
+		final List<File> localCollisions = searchCollisions(localRoot);
 		assertThat(localCollisions).isNotNull().hasSize(1);
-		File l_collision = localCollisions.get(0);
+		final File l_collision = localCollisions.get(0);
 		assertThat(l_collision).isNotNull();
 		assertThat(l_collision.getParentFile()).isEqualTo(localRoot);
 		assertThat(l_collision.getName()).startsWith("2.");
@@ -498,28 +582,28 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncMovedFile() throws Exception {
 		syncFromRemoteToLocal();
 
-		File r_child_2 = new File(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		final File r_child_2 = createFile(remoteRoot, "2");
+		assertThat(r_child_2.isDirectory()).isTrue();
 
-		File r_child_2_1 = new File(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		final File r_child_2_1 = createFile(r_child_2, "1");
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		File r_child_2_1_b = new File(r_child_2_1, "b");
-		assertThat(r_child_2_1_b).isFile();
+		final File r_child_2_1_b = createFile(r_child_2_1, "b");
+		assertThat(r_child_2_1_b.isFile()).isTrue();
 
-		File r_child_2_b = new File(r_child_2, "b");
-		assertThat(r_child_2_b).doesNotExist();
+		final File r_child_2_b = createFile(r_child_2, "b");
+		assertThat(r_child_2_b.exists()).isFalse();
 
-		Files.move(r_child_2_1_b.toPath(), r_child_2_b.toPath());
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_b).isFile();
+		r_child_2_1_b.move(r_child_2_b);
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_b.isFile()).isTrue();
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_b).isFile();
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_b.isFile()).isTrue();
 
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
@@ -528,32 +612,32 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	public void syncMovedFileToNewDir() throws Exception {
 		syncFromRemoteToLocal();
 
-		File r_child_2 = new File(remoteRoot, "2");
-		assertThat(r_child_2).isDirectory();
+		final File r_child_2 = createFile(remoteRoot, "2");
+		assertThat(r_child_2.isDirectory()).isTrue();
 
-		File r_child_2_1 = new File(r_child_2, "1");
-		assertThat(r_child_2_1).isDirectory();
+		final File r_child_2_1 = createFile(r_child_2, "1");
+		assertThat(r_child_2_1.isDirectory()).isTrue();
 
-		File r_child_2_1_b = new File(r_child_2_1, "b");
-		assertThat(r_child_2_1_b).isFile();
+		final File r_child_2_1_b = createFile(r_child_2_1, "b");
+		assertThat(r_child_2_1_b.isFile()).isTrue();
 
-		File r_child_2_new = new File(r_child_2, "new");
-		assertThat(r_child_2_new).doesNotExist();
+		final File r_child_2_new = createFile(r_child_2, "new");
+		assertThat(r_child_2_new.exists()).isFalse();
 		r_child_2_new.mkdir();
-		assertThat(r_child_2_new).isDirectory();
+		assertThat(r_child_2_new.isDirectory()).isTrue();
 
-		File r_child_2_new_xxx = new File(r_child_2_new, "xxx");
+		final File r_child_2_new_xxx = createFile(r_child_2_new, "xxx");
 
-		Files.move(r_child_2_1_b.toPath(), r_child_2_new_xxx.toPath());
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_new_xxx).isFile();
+		r_child_2_1_b.move(r_child_2_new_xxx);
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
-		assertThat(r_child_2_1_b).doesNotExist();
-		assertThat(r_child_2_new_xxx).isFile();
+		assertThat(r_child_2_1_b.exists()).isFalse();
+		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 	}
@@ -561,51 +645,53 @@ public class RepoToRepoSyncTest extends AbstractTest {
 	@Test
 	public void syncSymlinkFile() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
-		assertThat(localRoot).doesNotExist();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
+		assertThat(localRoot.isDirectory()).isTrue();
 
 		remoteRoot = newTestRepositoryLocalRoot("remote");
-		assertThat(remoteRoot).doesNotExist();
+		assertThat(remoteRoot.exists()).isFalse();
 		remoteRoot.mkdirs();
-		assertThat(remoteRoot).isDirectory();
+		assertThat(remoteRoot.isDirectory()).isTrue();
 
-		LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
 
-		LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		localRepoManagerLocal.putRemoteRepository(localRepoManagerRemote.getRepositoryId(), getRemoteRootUrlWithPathPrefix(), localRepoManagerRemote.getPublicKey(), localPathPrefix);
 		localRepoManagerRemote.putRemoteRepository(localRepoManagerLocal.getRepositoryId(), null, localRepoManagerLocal.getPublicKey(), remotePathPrefix);
 
-		File child_1 = createDirectory(remoteRoot, "1");
+		localRepoManagerLocal.close();
 
-		File child_1_a = createFileWithRandomContent(child_1, "a");
-		File b = createRelativeSymlink(new File(child_1, "b"), child_1_a);
+		final File child_1 = createDirectory(remoteRoot, "1");
 
-		File broken = createRelativeSymlink(new File(child_1, "broken"), new File(child_1, "doesNotExist"));
+		final File child_1_a = createFileWithRandomContent(child_1, "a");
+		final File b = createRelativeSymlink(createFile(child_1, "b"), child_1_a);
 
-		long child_1_a_lastModified = System.currentTimeMillis() - (24L * 3600);
-		long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
-		long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
+		final File broken = createRelativeSymlink(createFile(child_1, "broken"), createFile(child_1, "doesNotExist"));
 
-		IOUtil.setLastModifiedNoFollow(child_1_a, child_1_a_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+		final long child_1_a_lastModified = System.currentTimeMillis() - (24L * 3600);
+		final long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
+		final long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
 
-		IOUtil.setLastModifiedNoFollow(b, symlink_b_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(b)).isBetween(symlink_b_lastModified - 2000, symlink_b_lastModified + 2000);
+		child_1_a.setLastModifiedNoFollow(child_1_a_lastModified);
+		assertThat(child_1_a.getLastModifiedNoFollow()).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+
+		b.setLastModifiedNoFollow(symlink_b_lastModified);
+		assertThat(b.getLastModifiedNoFollow()).isBetween(symlink_b_lastModified - 2000, symlink_b_lastModified + 2000);
 
 		// Assert that changing the symlink's timestamp did not affect the real file.
-		assertThat(IOUtil.getLastModifiedNoFollow(child_1_a)).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
+		assertThat(child_1_a.getLastModifiedNoFollow()).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);
 
-		IOUtil.setLastModifiedNoFollow(broken, symlink_broken_lastModified);
-		assertThat(IOUtil.getLastModifiedNoFollow(broken)).isBetween(symlink_broken_lastModified - 2000, symlink_broken_lastModified + 2000);
+		broken.setLastModifiedNoFollow(symlink_broken_lastModified);
+		assertThat(broken.getLastModifiedNoFollow()).isBetween(symlink_broken_lastModified - 2000, symlink_broken_lastModified + 2000);
 
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 

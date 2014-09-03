@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +14,8 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
+
+import co.codewizards.cloudstore.core.oio.File;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.SUPERCLASS_TABLE)

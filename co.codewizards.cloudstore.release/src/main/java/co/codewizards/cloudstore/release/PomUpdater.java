@@ -20,23 +20,24 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+
 class PomUpdater {
 
-	private File pomFile;
+	private final File pomFile;
 	private String newMavenVersion;
 	private String artifactIdPrefix;
 
 	private Document document;
 	private Writer writer;
-	private StringBuilder buf = new StringBuilder();
+	private final StringBuilder buf = new StringBuilder();
 
-	public PomUpdater(File pomFile) {
+	public PomUpdater(final File pomFile) {
 		this.pomFile = pomFile;
 	}
 
 	public void update() throws Exception {
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 		document = dBuilder.parse(pomFile);
 
 		if (artifactIdPrefix != null &&  !getArtifactId().startsWith(artifactIdPrefix))
@@ -44,16 +45,16 @@ class PomUpdater {
 
 		boolean replaceFile = false;
 
-		LinkedList<String> tagStack = new LinkedList<String>();
+		final LinkedList<String> tagStack = new LinkedList<String>();
 
-		File tmpFile = new File(pomFile.getParentFile(), pomFile.getName() + ".tmp");
+		final File tmpFile = new File(pomFile.getParentFile(), pomFile.getName() + ".tmp");
 		OutputStream out = null;
-		InputStream in = new FileInputStream(pomFile);
+		final InputStream in = new FileInputStream(pomFile);
 		try {
 			out = new FileOutputStream(tmpFile);
 			writer = new OutputStreamWriter(out, "UTF-8");
-			InputStreamReader reader = new InputStreamReader(in, "UTF-8");
-			StreamTokenizer st = new StreamTokenizer(reader);
+			final InputStreamReader reader = new InputStreamReader(in, "UTF-8");
+			final StreamTokenizer st = new StreamTokenizer(reader);
 			st.resetSyntax();
 			st.wordChars('A', 'Z');
 			st.wordChars('a', 'z');
@@ -63,8 +64,8 @@ class PomUpdater {
 			st.ordinaryChar('>');
 			st.ordinaryChar('/');
 
-			StringBuilder tagSB = new StringBuilder();
-			int[] lastTtype = new int[4];
+			final StringBuilder tagSB = new StringBuilder();
+			final int[] lastTtype = new int[4];
 			boolean isInComment = false;
 			boolean isInTag = false;
 			boolean isInEndTag = false;
@@ -114,7 +115,7 @@ class PomUpdater {
 						else if (isInTag && st.ttype == '>') {
 							flushBuf();
 							if (lastTtype[0] != '/') { // ignore empty tags (having no end-tag)
-								String tag = tagSB.toString();
+								final String tag = tagSB.toString();
 								tagSB.setLength(0);
 								String tagName = tag.trim();
 
@@ -191,7 +192,7 @@ class PomUpdater {
 		buf.setLength(0);
 	}
 
-	public PomUpdater setNewMavenVersion(String newMavenVersion) {
+	public PomUpdater setNewMavenVersion(final String newMavenVersion) {
 		this.newMavenVersion = newMavenVersion;
 		return this;
 	}
@@ -201,7 +202,7 @@ class PomUpdater {
 	public String getArtifactIdPrefix() {
 		return artifactIdPrefix;
 	}
-	public PomUpdater setArtifactIdPrefix(String artifactIdPrefix) {
+	public PomUpdater setArtifactIdPrefix(final String artifactIdPrefix) {
 		this.artifactIdPrefix = artifactIdPrefix;
 		return this;
 	}
@@ -211,15 +212,15 @@ class PomUpdater {
 
 	protected String getArtifactId() {
 		if (artifactId == null) {
-			NodeList nodeList = document.getElementsByTagName("artifactId");
+			final NodeList nodeList = document.getElementsByTagName("artifactId");
 			for (int a = 0; a < nodeList.getLength(); ++a) {
-				Node node = nodeList.item(a);
+				final Node node = nodeList.item(a);
 				if (node.getParentNode() != null && "project".equals(node.getParentNode().getNodeName()) && node.getParentNode().getParentNode() == document) {
-					NodeList childNodes = node.getChildNodes();
+					final NodeList childNodes = node.getChildNodes();
 					for (int b = 0; b < childNodes.getLength(); ++b) {
-						Node child = childNodes.item(b);
+						final Node child = childNodes.item(b);
 						if (child instanceof Text) {
-							String wholeText = ((Text)child).getWholeText();
+							final String wholeText = ((Text)child).getWholeText();
 							artifactId = wholeText;
 							return artifactId;
 						}
@@ -233,15 +234,15 @@ class PomUpdater {
 
 	protected String getParentArtifactId() {
 		if (parentArtifactId == null) {
-			NodeList nodeList = document.getElementsByTagName("artifactId");
+			final NodeList nodeList = document.getElementsByTagName("artifactId");
 			for (int a = 0; a < nodeList.getLength(); ++a) {
-				Node node = nodeList.item(a);
+				final Node node = nodeList.item(a);
 				if (node.getParentNode() != null && "parent".equals(node.getParentNode().getNodeName()) && node.getParentNode().getParentNode() != null && "project".equals(node.getParentNode().getParentNode().getNodeName()) && node.getParentNode().getParentNode().getParentNode()  == document) {
-					NodeList childNodes = node.getChildNodes();
+					final NodeList childNodes = node.getChildNodes();
 					for (int b = 0; b < childNodes.getLength(); ++b) {
-						Node child = childNodes.item(b);
+						final Node child = childNodes.item(b);
 						if (child instanceof Text) {
-							String wholeText = ((Text)child).getWholeText();
+							final String wholeText = ((Text)child).getWholeText();
 							parentArtifactId = wholeText;
 							return parentArtifactId;
 						}

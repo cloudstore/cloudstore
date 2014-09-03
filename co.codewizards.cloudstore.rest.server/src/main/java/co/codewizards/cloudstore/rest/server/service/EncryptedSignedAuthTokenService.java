@@ -1,8 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.io.File;
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
@@ -23,9 +20,11 @@ import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenEncrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPassword;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
@@ -44,14 +43,14 @@ public class EncryptedSignedAuthTokenService
 
 	@GET
 	@Path("{clientRepositoryId}")
-	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") UUID clientRepositoryId)
+	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") final UUID clientRepositoryId)
 	{
-		assertNotNull("repositoryName", repositoryName);
-		assertNotNull("clientRepositoryId", clientRepositoryId);
-		File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		AssertUtil.assertNotNull("repositoryName", repositoryName);
+		AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
+		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
-			EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
+			final EncryptedSignedAuthToken result = getEncryptedSignedAuthToken(
 					localRepoManager.getRepositoryId(), clientRepositoryId,
 					localRepoManager.getPrivateKey(), localRepoManager.getRemoteRepositoryPublicKeyOrFail(clientRepositoryId));
 			return result;
@@ -61,16 +60,16 @@ public class EncryptedSignedAuthTokenService
 	}
 
 	protected EncryptedSignedAuthToken getEncryptedSignedAuthToken(
-			UUID serverRepositoryId, UUID clientRepositoryId, byte[] localRepoPrivateKey, byte[] remoteRepoPublicKey)
+			final UUID serverRepositoryId, final UUID clientRepositoryId, final byte[] localRepoPrivateKey, final byte[] remoteRepoPublicKey)
 	{
-		TransientRepoPassword transientRepoPassword = TransientRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
+		final TransientRepoPassword transientRepoPassword = TransientRepoPasswordManager.getInstance().getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 
-		AuthToken authToken = transientRepoPassword.getAuthToken();
-		byte[] authTokenData = new AuthTokenIO().serialise(authToken);
-		SignedAuthToken signedAuthToken = new AuthTokenSigner(localRepoPrivateKey).sign(authTokenData);
+		final AuthToken authToken = transientRepoPassword.getAuthToken();
+		final byte[] authTokenData = new AuthTokenIO().serialise(authToken);
+		final SignedAuthToken signedAuthToken = new AuthTokenSigner(localRepoPrivateKey).sign(authTokenData);
 
-		byte[] signedAuthTokenData = new SignedAuthTokenIO().serialise(signedAuthToken);
-		EncryptedSignedAuthToken encryptedSignedAuthToken =
+		final byte[] signedAuthTokenData = new SignedAuthTokenIO().serialise(signedAuthToken);
+		final EncryptedSignedAuthToken encryptedSignedAuthToken =
 				new SignedAuthTokenEncrypter(remoteRepoPublicKey).encrypt(signedAuthTokenData);
 
 		return encryptedSignedAuthToken;

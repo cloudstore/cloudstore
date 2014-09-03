@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
@@ -23,7 +24,7 @@ public final class HashUtil {
 
 	private HashUtil() { }
 
-	public static String encodeHexStr(byte[] buf)
+	public static String encodeHexStr(final byte[] buf)
 	{
 		return encodeHexStr(buf, 0, buf.length);
 	}
@@ -39,11 +40,11 @@ public final class HashUtil {
 	 * @see #encodeHexStr(byte[])
 	 * @see #decodeHexStr(String)
 	 */
-	public static String encodeHexStr(byte[] buf, int pos, int len)
+	public static String encodeHexStr(final byte[] buf, int pos, int len)
 	{
-		 StringBuilder hex = new StringBuilder();
+		 final StringBuilder hex = new StringBuilder();
 		 while (len-- > 0) {
-				byte ch = buf[pos++];
+				final byte ch = buf[pos++];
 				int d = (ch >> 4) & 0xf;
 				hex.append((char)(d >= 10 ? 'a' - 10 + d : '0' + d));
 				d = ch & 0xf;
@@ -59,12 +60,12 @@ public final class HashUtil {
 	 * @see #encodeHexStr(byte[])
 	 * @see #encodeHexStr(byte[], int, int)
 	 */
-	public static byte[] decodeHexStr(String hex)
+	public static byte[] decodeHexStr(final String hex)
 	{
 		if (hex.length() % 2 != 0)
 			throw new IllegalArgumentException("The hex string must have an even number of characters!");
 
-		byte[] res = new byte[hex.length() / 2];
+		final byte[] res = new byte[hex.length() / 2];
 
 		int m = 0;
 		for (int i = 0; i < hex.length(); i += 2) {
@@ -74,17 +75,17 @@ public final class HashUtil {
 		return res;
 	}
 
-	public static byte[] hash(String algorithm, InputStream in) throws NoSuchAlgorithmException, IOException {
+	public static byte[] hash(final String algorithm, final InputStream in) throws NoSuchAlgorithmException, IOException {
 		return hash(algorithm, in, new NullProgressMonitor());
 	}
 
-	public static byte[] hash(String algorithm, InputStream in, ProgressMonitor monitor) throws NoSuchAlgorithmException, IOException {
+	public static byte[] hash(final String algorithm, final InputStream in, final ProgressMonitor monitor) throws NoSuchAlgorithmException, IOException {
 		monitor.beginTask(algorithm, Math.max(1, in.available()));
 		try {
-			MessageDigest md = MessageDigest.getInstance(algorithm);
-			byte[] data = new byte[10240];
+			final MessageDigest md = MessageDigest.getInstance(algorithm);
+			final byte[] data = new byte[10240];
 			while (true) {
-				int bytesRead = in.read(data, 0, data.length);
+				final int bytesRead = in.read(data, 0, data.length);
 				if (bytesRead < 0) {
 					break;
 				}
@@ -105,7 +106,7 @@ public final class HashUtil {
 
 		hex = hex.toUpperCase(Locale.UK);
 
-		StringBuilder sb = new StringBuilder(hex.length() * 3 / 2);
+		final StringBuilder sb = new StringBuilder(hex.length() * 3 / 2);
 		for (int i = 0; i < hex.length(); i += 2) {
 			if (sb.length() > 0)
 				sb.append(':');
@@ -115,35 +116,39 @@ public final class HashUtil {
 		return sb.toString();
 	}
 
-	public static String sha1ForHuman(byte[] in) {
+	public static String sha1ForHuman(final byte[] in) {
 		try {
 			return sha1ForHuman(new ByteArrayInputStream(in));
-		} catch (IOException x) {
+		} catch (final IOException x) {
 			throw new RuntimeException(x);
 		}
 	}
 
-	public static String sha1ForHuman(InputStream in) throws IOException {
+	public static String sha1ForHuman(final InputStream in) throws IOException {
 		return formatEncodedHexStrForHuman(sha1(in));
 	}
 
-	public static String sha1(String in) {
-		return sha1(in.getBytes(IOUtil.CHARSET_UTF_8));
+	public static String sha1(final String in) {
+		try {
+			return sha1(in.getBytes(IOUtil.CHARSET_NAME_UTF_8));
+		} catch (final UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	public static String sha1(byte[] in) {
+	public static String sha1(final byte[] in) {
 		try {
 			return sha1(new ByteArrayInputStream(in));
-		} catch (IOException x) {
+		} catch (final IOException x) {
 			throw new RuntimeException(x);
 		}
 	}
 
-	public static String sha1(InputStream in) throws IOException {
+	public static String sha1(final InputStream in) throws IOException {
 		byte[] hash;
 		try {
 			hash = hash(HASH_ALGORITHM_SHA, in);
-		} catch (NoSuchAlgorithmException e) {
+		} catch (final NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
 		return encodeHexStr(hash);

@@ -1,13 +1,14 @@
 package co.codewizards.cloudstore.client;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.io.File;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
@@ -19,6 +20,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			+ "<repositoryId>/path (this must be a '/' even on Windows).")
 	protected String local;
 
+	/** Must be an empty String ("") or start with the '/' character. */
 	protected String localPathPrefix;
 
 	/**
@@ -37,10 +39,10 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	@Override
 	public void prepare() throws Exception {
 		super.prepare();
-		assertNotNull("local", local);
+		AssertUtil.assertNotNull("local", local);
 
 		String repositoryName;
-		int slashIndex = local.indexOf('/');
+		final int slashIndex = local.indexOf('/');
 		if (slashIndex < 0) {
 			repositoryName = local;
 			localPathPrefix = "";
@@ -58,9 +60,9 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 
 		localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryName(repositoryName);
 		if (localRoot != null)
-			localFile = localPathPrefix.isEmpty() ? localRoot : new File(localRoot, localPathPrefix);
+			localFile = localPathPrefix.isEmpty() ? localRoot : createFile(localRoot, localPathPrefix);
 		else {
-			localFile = new File(local).getAbsoluteFile();
+			localFile = createFile(local).getAbsoluteFile();
 			localRoot = LocalRepoHelper.getLocalRootContainingFile(localFile);
 			if (localRoot == null)
 				localRoot = localFile;
@@ -68,13 +70,13 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 			if (localRoot.equals(localFile))
 				localPathPrefix = "";
 			else
-				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile);
+				localPathPrefix = IOUtil.getRelativePath(localRoot, localFile).replace(FILE_SEPARATOR_CHAR, '/');
 		}
 		assertLocalRootNotNull();
 	}
 
 	protected void assertLocalRootNotNull() {
-		assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull("localRoot", localRoot);
 	}
 
 }

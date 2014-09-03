@@ -6,6 +6,7 @@ import java.net.URL;
 
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class FileRepoTransportFactory extends AbstractRepoTransportFactory {
 
@@ -23,11 +24,11 @@ public class FileRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(URL remoteRoot) {
-		return PROTOCOL_FILE.equals(assertNotNull("remoteRoot", remoteRoot).getProtocol());
+		return PROTOCOL_FILE.equals(AssertUtil.assertNotNull("remoteRoot", remoteRoot).getProtocol());
 	}
 
 	@Override
-	protected RepoTransport _createRepoTransport(URL remoteRoot) {
+	protected RepoTransport _createRepoTransport() {
 		return new FileRepoTransport();
 	}
 

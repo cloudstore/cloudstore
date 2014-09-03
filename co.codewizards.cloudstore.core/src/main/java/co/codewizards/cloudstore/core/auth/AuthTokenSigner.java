@@ -8,12 +8,14 @@ import java.security.Signature;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class AuthTokenSigner {
 	public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 	private PrivateKey privateKey;
 
 	public AuthTokenSigner(byte[] privateKeyData) {
-		assertNotNull("privateKeyData", privateKeyData);
+		AssertUtil.assertNotNull("privateKeyData", privateKeyData);
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -27,7 +29,7 @@ public class AuthTokenSigner {
 	}
 
 	public SignedAuthToken sign(byte[] authTokenData) {
-		assertNotNull("authTokenData", authTokenData);
+		AssertUtil.assertNotNull("authTokenData", authTokenData);
 		Signature signingEngine;
 		try {
 			signingEngine = Signature.getInstance(SIGNATURE_ALGORITHM);

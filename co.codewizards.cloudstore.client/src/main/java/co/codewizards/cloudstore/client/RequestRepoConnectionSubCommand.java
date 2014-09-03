@@ -41,22 +41,21 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 		UUID remoteRepositoryId;
 		byte[] localPublicKey;
 		byte[] remotePublicKey;
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
-		try {
+//		String remotePathPrefix;
+		try (
+			final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		) {
 			localRepositoryId = localRepoManager.getRepositoryId();
 			localPublicKey = localRepoManager.getPublicKey();
-			RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL, localRepositoryId);
-			try {
+			try (
+				final RepoTransport repoTransport = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteURL).createRepoTransport(remoteURL, localRepositoryId);
+			) {
 				remoteRepositoryId = repoTransport.getRepositoryId();
 				remotePublicKey = repoTransport.getPublicKey();
-//				String remotePathPrefix = repoTransport.getPathPrefix();
+//				remotePathPrefix = repoTransport.getPathPrefix();
 				localRepoManager.putRemoteRepository(remoteRepositoryId, remoteURL, remotePublicKey, localPathPrefix);
 				repoTransport.requestRepoConnection(localRepoManager.getPublicKey());
-			} finally {
-				repoTransport.close();
 			}
-		} finally {
-			localRepoManager.close();
 		}
 
 		System.out.println("Successfully requested to connect the following local and remote repositories:");
@@ -69,6 +68,9 @@ public class RequestRepoConnectionSubCommand extends SubCommandWithExistingLocal
 		System.out.println("  remoteRepository.remoteRoot = " + remoteURL);
 		System.out.println("  remoteRepository.publicKeySha1 = " + HashUtil.sha1ForHuman(remotePublicKey));
 		System.out.println();
+//		System.out.println("  localPathPrefix = " + localPathPrefix);
+//		System.out.println("  remotePathPrefix = " + remotePathPrefix);
+//		System.out.println();
 		System.out.println("Please verify the 'publicKeySha1' fingerprints! If they do not match the fingerprints shown on the server, someone is attacking you and you must cancel this request immediately! To cancel the request, use this command:");
 		System.out.println();
 		System.out.println(String.format("  cloudstore dropRepoConnection %s %s", localRepositoryId, remoteRepositoryId));

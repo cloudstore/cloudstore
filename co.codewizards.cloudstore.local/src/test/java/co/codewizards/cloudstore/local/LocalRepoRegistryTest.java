@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 
@@ -40,29 +40,29 @@ public class LocalRepoRegistryTest extends AbstractTest
 
 	@Test
 	public void createLocalRepositories() throws Exception {
-		Map<UUID, File> newRepositoryId2FileMap = new HashMap<UUID, File>();
+		final Map<UUID, File> newRepositoryId2FileMap = new HashMap<UUID, File>();
 
-		File localRoot1 = newTestRepositoryLocalRoot();
-		assertThat(localRoot1).doesNotExist();
+		final File localRoot1 = newTestRepositoryLocalRoot();
+		assertThat(localRoot1.exists()).isFalse();
 		localRoot1.mkdirs();
-		assertThat(localRoot1).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot1);
+		assertThat(localRoot1.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot1);
 		assertThat(localRepoManager).isNotNull();
 		newRepositoryId2FileMap.put(localRepoManager.getRepositoryId(), localRoot1.getAbsoluteFile());
 		localRepoManager.close();
 
-		File localRoot2 = newTestRepositoryLocalRoot();
-		assertThat(localRoot2).doesNotExist();
+		final File localRoot2 = newTestRepositoryLocalRoot();
+		assertThat(localRoot2.exists()).isFalse();
 		localRoot2.mkdirs();
-		assertThat(localRoot2).isDirectory();
-		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
+		assertThat(localRoot2.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
 		assertThat(localRepoManager2).isNotNull();
 		newRepositoryId2FileMap.put(localRepoManager2.getRepositoryId(), localRoot2.getAbsoluteFile());
 		localRepoManager2.close();
 
-		Set<Entry<UUID, File>> newEntrySet = newRepositoryId2FileMap.entrySet();
-		for (Entry<UUID, File> newEntry : newEntrySet) {
-			File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(newEntry.getKey());
+		final Set<Entry<UUID, File>> newEntrySet = newRepositoryId2FileMap.entrySet();
+		for (final Entry<UUID, File> newEntry : newEntrySet) {
+			final File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(newEntry.getKey());
 			assertThat(localRoot).isEqualTo(newEntry.getValue());
 		}
 	}
@@ -71,9 +71,9 @@ public class LocalRepoRegistryTest extends AbstractTest
 	public void moveLocalRepositoryWithAliases() throws Exception {
 		final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
 		final File localRootOld = newTestRepositoryLocalRoot().getCanonicalFile();
-		assertThat(localRootOld).doesNotExist();
+		assertThat(localRootOld.exists()).isFalse();
 		localRootOld.mkdirs();
-		assertThat(localRootOld).isDirectory();
+		assertThat(localRootOld.isDirectory()).isTrue();
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRootOld);
 		final UUID repositoryId = localRepoManager.getRepositoryId();
 		assertThat(localRepoManager).isNotNull();
@@ -90,10 +90,10 @@ public class LocalRepoRegistryTest extends AbstractTest
 		assertThat(localRepoRegistry.getLocalRootForRepositoryName(alias2)).isEqualTo(localRootOld);
 
 		final File localRootNew = newTestRepositoryLocalRoot().getCanonicalFile();
-		assertThat(localRootNew).doesNotExist();
+		assertThat(localRootNew.exists()).isFalse();
 		localRootOld.renameTo(localRootNew);
-		assertThat(localRootOld).doesNotExist();
-		assertThat(localRootNew).isDirectory();
+		assertThat(localRootOld.exists()).isFalse();
+		assertThat(localRootNew.isDirectory()).isTrue();
 
 		final File localRoot2 = newTestRepositoryLocalRoot().getCanonicalFile();
 		localRoot2.mkdir();

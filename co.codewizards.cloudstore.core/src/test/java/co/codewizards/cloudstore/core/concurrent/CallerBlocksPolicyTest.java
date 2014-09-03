@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.concurrent;
 
+import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.security.SecureRandom;
@@ -24,25 +25,27 @@ public class CallerBlocksPolicyTest {
 
 	private static Random random = new SecureRandom();
 
-	private ThreadPoolExecutor executor = new ThreadPoolExecutor(0, 3,
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(0, 3,
 			60, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(2));
 	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
 		executor.setRejectedExecutionHandler(new CallerBlocksPolicy());
 	}
 
 	@Test
-	public void testEnqueuingManyCallables() throws InterruptedException, ExecutionException {
+	public void enqueueManyCallables() throws InterruptedException, ExecutionException {
+		logger.debug("[{}]enqueueManyCallables: entered.", Integer.toHexString(identityHashCode(this)));
 		final Set<Integer> indexesToDo = new HashSet<Integer>();
 		final Set<Integer> indexesDone = new HashSet<Integer>();
 
-		List<Future<Void>> futures = new LinkedList<Future<Void>>();
+		final List<Future<Void>> futures = new LinkedList<Future<Void>>();
 		for (int i = 0; i < 10; ++i) {
 			final int index = i;
 			indexesToDo.add(index);
 
 			logger.info("Submitting Callable[{}]...", index);
-			Future<Void> future = executor.submit(new Callable<Void>() {
+			final Future<Void> future = executor.submit(new Callable<Void>() {
 				@Override
 				public Void call() throws Exception {
 					logger.info("[{}].begin", index);
@@ -58,7 +61,7 @@ public class CallerBlocksPolicyTest {
 			futures.add(future);
 		}
 		logger.info("Waiting for all callables to finish...");
-		for (Future<Void> future : futures) {
+		for (final Future<Void> future : futures) {
 			future.get();
 		}
 		logger.info("ALL DONE!");

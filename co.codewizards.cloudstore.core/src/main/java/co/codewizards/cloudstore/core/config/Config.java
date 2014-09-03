@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
@@ -19,7 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -40,21 +42,21 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  * not be detected.
  * <p>
  * There is a global properties file in the user's home directory (or wherever {@link ConfigDir}
- * points to): <code>${user.home}/.cloudstore/cloudstore.properties</code>
+ * points to): <code>&#36;{user.home}/.cloudstore/cloudstore.properties</code>
  * <p>
  * Additionally, every directory can optionally contain the following files:
  * <ol>
  * <li><code>.cloudstore.properties</code>
  * <li><code>cloudstore.properties</code>
- * <li><code>.${anyFileName}.cloudstore.properties</code>
- * <li><code>${anyFileName}.cloudstore.properties</code>
+ * <li><code>.&#36;{anyFileName}.cloudstore.properties</code>
+ * <li><code>&#36;{anyFileName}.cloudstore.properties</code>
  * </ol>
  * <p>
  * The files 1. and 2. are applicable to the entire directory and all sub-directories and files in it.
  * Usually, on GNU/Linux people will prefer 1., but when using Windows, files starting with a "." are
  * sometimes a bit hard to deal with. Therefore, we support both. The file 2. overrides the settings of file 1..
  * <p>
- * The files 3. and 4. are applicable only to the file <code>${anyFileName}</code>. Thus, if you want
+ * The files 3. and 4. are applicable only to the file <code>&#36;{anyFileName}</code>. Thus, if you want
  * to set special behaviour for the file <code>example.db</code> only, you can create the file
  * <code>.example.db.cloudstore.properties</code> in the same directory.
  *
@@ -105,7 +107,7 @@ public class Config {
 	private static final class ConfigHolder {
 		public static final Config instance = new Config(
 				null, null,
-				new File[] { new File(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
+				new File[] { createFile(ConfigDir.getInstance().getFile(), PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE) });
 	}
 
 	private final Config parentConfig;
@@ -117,15 +119,15 @@ public class Config {
 	private static final Object classMutex = Config.class;
 	private final Object instanceMutex;
 
-	private Config(Config parentConfig, File file, File [] propertiesFiles) {
+	private Config(final Config parentConfig, final File file, final File [] propertiesFiles) {
 		this.parentConfig = parentConfig;
 
 		if (parentConfig == null)
 			fileRef = null;
 		else
-			fileRef = new WeakReference<File>(assertNotNull("file", file));
+			fileRef = new WeakReference<File>(AssertUtil.assertNotNull("file", file));
 
-		this.propertiesFiles = assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
+		this.propertiesFiles = AssertUtil.assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
 		properties = new Properties(parentConfig == null ? null : parentConfig.properties);
 		propertiesFilesLastModified = new long[propertiesFiles.length];
 		instanceMutex = properties;
@@ -134,7 +136,7 @@ public class Config {
 		if (parentConfig == null && !propertiesFiles[0].exists()) {
 			try {
 				IOUtil.copyResource(Config.class, "/" + PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE, propertiesFiles[0]);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -155,8 +157,8 @@ public class Config {
 			if (System.currentTimeMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
 				return;
 
-			for (Iterator<SoftReference<File>> it = fileSoftRefs.iterator(); it.hasNext(); ) {
-				SoftReference<File> fileRef = it.next();
+			for (final Iterator<SoftReference<File>> it = fileSoftRefs.iterator(); it.hasNext(); ) {
+				final SoftReference<File> fileRef = it.next();
 				if (fileRef.get() == null)
 					it.remove();
 			}
@@ -193,7 +195,7 @@ public class Config {
 	}
 
 	private static Config getInstance(final File file, final boolean isDirectory) {
-		assertNotNull("file", file);
+		AssertUtil.assertNotNull("file", file);
 		cleanFileRefs();
 
 		File config_file = null;
@@ -217,7 +219,7 @@ public class Config {
 				fileSoftRefs.add(new SoftReference<File>(file));
 				config_file = config.getFile();
 			}
-			assertNotNull("config_file", config_file);
+			AssertUtil.assertNotNull("config_file", config_file);
 		}
 		refreshFileHardRefAndCleanOldHardRefs(config_file);
 		return config;
@@ -226,14 +228,14 @@ public class Config {
 	private static File[] createPropertiesFiles(final File file, final boolean isDirectory) {
 		if (isDirectory) {
 			return new File[] {
-				new File(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				new File(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
 			};
 		}
 		else {
 			return new File[] {
-				new File(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
-				new File(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN, file.getName())),
+				createFile(file.getParentFile(), String.format(PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE, file.getName()))
 			};
 		}
 	}
@@ -266,21 +268,18 @@ public class Config {
 					logger.debug("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
 					final long lastModified = propertiesFile.lastModified(); // is 0 for non-existing file
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
-						LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); // TODO maybe system property for timeout?
-						try {
+						try ( LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); ) { // TODO maybe system property for timeout?
 							final InputStream in = lockFile.createInputStream();
 							try {
 								properties.load(in);
 							} finally {
 								in.close();
 							}
-						} finally {
-							lockFile.release();
 						}
 					}
 					propertiesFilesLastModified[i] = lastModified;
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				properties.clear();
 				throw new RuntimeException(e);
 			}
@@ -310,7 +309,7 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public String getProperty(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		AssertUtil.assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -350,7 +349,7 @@ public class Config {
 	 * @return the property's value. Never <code>null</code> unless {@code defaultValue} is <code>null</code>.
 	 */
 	public String getPropertyAsNonEmptyTrimmedString(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		AssertUtil.assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -376,14 +375,14 @@ public class Config {
 	}
 
 	public long getPropertyAsLong(final String key, final long defaultValue) {
-		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
 
 		try {
 			final long lval = Long.parseLong(sval);
 			return lval;
-		} catch (NumberFormatException x) {
+		} catch (final NumberFormatException x) {
 			logger.warn("getPropertyAsLong: One of the properties files %s contains the key '%s' (or the system properties override it) with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
@@ -399,14 +398,14 @@ public class Config {
 	}
 
 	public int getPropertyAsInt(final String key, final int defaultValue) {
-		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
 
 		try {
 			final int ival = Integer.parseInt(sval);
 			return ival;
-		} catch (NumberFormatException x) {
+		} catch (final NumberFormatException x) {
 			logger.warn("getPropertyAsInt: One of the properties files %s contains the key '%s' (or the system properties override it) with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
@@ -434,8 +433,9 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final E defaultValue) {
-		assertNotNull("defaultValue", defaultValue);
+		AssertUtil.assertNotNull("defaultValue", defaultValue);
 		@SuppressWarnings("unchecked")
+		final
 		Class<E> enumClass = (Class<E>) defaultValue.getClass();
 		return getPropertyAsEnum(key, enumClass, defaultValue);
 	}
@@ -452,21 +452,21 @@ public class Config {
 	 * @see #getPropertyAsNonEmptyTrimmedString(String, String)
 	 */
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final Class<E> enumClass, final E defaultValue) {
-		assertNotNull("enumClass", enumClass);
-		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		AssertUtil.assertNotNull("enumClass", enumClass);
+		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
 
 		try {
 			return Enum.valueOf(enumClass, sval);
-		} catch (IllegalArgumentException x) {
+		} catch (final IllegalArgumentException x) {
 			logger.warn("getPropertyAsEnum: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
 	}
 
 	public boolean getPropertyAsBoolean(final String key, final boolean defaultValue) {
-		String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
 
@@ -481,7 +481,7 @@ public class Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final Config config) {
-		final File config_file = assertNotNull("config", config).getFile();
+		final File config_file = AssertUtil.assertNotNull("config", config).getFile();
 		if (config_file != null)
 			refreshFileHardRefAndCleanOldHardRefs(config_file);
 	}
@@ -494,7 +494,7 @@ public class Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File config_file) {
-		assertNotNull("config_file", config_file);
+		AssertUtil.assertNotNull("config_file", config_file);
 		synchronized (fileHardRefs) {
 			// make sure the config_file is at the end of fileHardRefs
 			fileHardRefs.remove(config_file);

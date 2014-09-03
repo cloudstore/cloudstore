@@ -1,10 +1,10 @@
 package co.codewizards.cloudstore.client;
 
-import java.io.File;
 import java.util.UUID;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;

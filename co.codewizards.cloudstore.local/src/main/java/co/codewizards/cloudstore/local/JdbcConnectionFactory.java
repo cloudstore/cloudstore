@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.local;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -13,6 +12,9 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Factory creating JDBC connections to the repository's derby database.
@@ -35,7 +37,7 @@ public class JdbcConnectionFactory {
 	private String connectionPassword;
 
 	public JdbcConnectionFactory(final File localRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 

@@ -1,16 +1,11 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,8 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -27,17 +20,22 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
-import co.codewizards.cloudstore.local.persistence.RepoFileDAO;
+import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
-import co.codewizards.cloudstore.server.CloudStoreServer;
+import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
+import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
+import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
+import co.codewizards.cloudstore.rest.client.transport.RestRepoTransportFactory;
 
 public abstract class AbstractIT {
 	static {
@@ -46,94 +44,60 @@ public abstract class AbstractIT {
 	}
 
 	protected static final SecureRandom random = new SecureRandom();
-	private static CloudStoreServer cloudStoreServer;
-	private static Thread cloudStoreServerThread;
-	private static final Object cloudStoreServerMutex = new Object();
-	private static final Timer cloudStoreServerStopTimer = new Timer("cloudStoreServerStopTimer", true);
-	private static TimerTask cloudStoreServerStopTimerTask;
-
-	private static int securePort;
+	private static final CloudStoreServerTestSupport cloudStoreServerTestSupport = new CloudStoreServerTestSupport();
 
 	public static int getSecurePort() {
-		return securePort;
+		return cloudStoreServerTestSupport.getSecurePort();
+	}
+
+	public static String getSecureUrl() {
+		return cloudStoreServerTestSupport.getSecureUrl();
+	}
+
+	private static RestRepoTransportFactory restRepoTransportFactory;
+
+	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
+		@Override
+		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
+			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+			result.setTrusted(true);
+			return result;
+		}
 	}
 
 	@BeforeClass
 	public static void abstractIT_beforeClass() {
-		synchronized (cloudStoreServerMutex) {
-			if (cloudStoreServerStopTimerTask != null) {
-				cloudStoreServerStopTimerTask.cancel();
-				cloudStoreServerStopTimerTask = null;
-			}
-
-			if (cloudStoreServer == null) {
-				IOUtil.deleteDirectoryRecursively(ConfigDir.getInstance().getFile());
-
-				securePort = 1024 + 1 + random.nextInt(10240);
-				cloudStoreServer = new CloudStoreServer();
-				cloudStoreServer.setSecurePort(securePort);
-				cloudStoreServerThread = new Thread(cloudStoreServer);
-				cloudStoreServerThread.setName("cloudStoreServerThread");
-				cloudStoreServerThread.setDaemon(true);
-				cloudStoreServerThread.start();
-				waitForServerToOpenSecurePort();
-			}
-		}
-	}
-
-	private static void waitForServerToOpenSecurePort() {
-		final long timeoutMillis = 60000L;
-		long begin = System.currentTimeMillis();
-		while (true) {
-			try {
-				Socket socket = new Socket("localhost", getSecurePort());
-				socket.close();
-				return; // success!
-			} catch (Exception x) {
-				try { Thread.sleep(1000); } catch (InterruptedException ie) { }
-			}
-
-			if (System.currentTimeMillis() - begin > timeoutMillis)
-				throw new IllegalStateException("Server did not start within timeout (ms): " + timeoutMillis);
+		if (cloudStoreServerTestSupport.beforeClass()) {
+			// *IMPORTANT* We run *all* tests in parallel in the same JVM. Therefore, we must - in this entire project - *not*
+			// set any other dynamicX509TrustManagerCallbackClass!!! This setting is JVM-wide!
+			restRepoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(RestRepoTransportFactory.class);
+			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(TestDynamicX509TrustManagerCallback.class);
 		}
 	}
 
 	@AfterClass
 	public static void abstractIT_afterClass() {
-		synchronized (cloudStoreServerMutex) {
-			if (cloudStoreServerStopTimerTask == null) {
-				cloudStoreServerStopTimerTask = new TimerTask() {
-					@Override
-					public void run() {
-						synchronized (cloudStoreServerMutex) {
-							if (cloudStoreServer != null) {
-								cloudStoreServer.stop();
-								cloudStoreServer = null;
-								cloudStoreServerStopTimerTask = null;
-							}
-						}
-					}
-				};
-				cloudStoreServerStopTimer.schedule(cloudStoreServerStopTimerTask, 60000L);
-			}
+		if (cloudStoreServerTestSupport.afterClass()) {
+			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
+			restRepoTransportFactory = null;
 		}
 	}
 
 	protected static LocalRepoManagerFactory localRepoManagerFactory = LocalRepoManagerFactory.Helper.getInstance();
-	private Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
+	private final Map<File, Set<File>> localRoot2FilesInRepo = new HashMap<File, Set<File>>();
 
-	protected File newTestRepositoryLocalRoot(String suffix) throws IOException {
+	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		long timestamp = System.currentTimeMillis();
-		int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
-		String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
-		File localRoot = new File(getTestRepositoryBaseDir(), repoName);
+		final long timestamp = System.currentTimeMillis();
+		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
+		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
+		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);
 		addToFilesInRepo(localRoot, localRoot);
 		return localRoot;
 	}
 
 	protected File getTestRepositoryBaseDir() {
-		File dir = new File(new File("target"), "repo");
+		final File dir = createFile(createFile("target"), "repo");
 		dir.mkdirs();
 		return dir;
 	}
@@ -143,21 +107,21 @@ public abstract class AbstractIT {
 		localRoot2FilesInRepo.clear();
 	}
 
-	protected File createDirectory(File parent, String name) throws IOException {
-		File dir = new File(parent, name);
+	protected File createDirectory(final File parent, final String name) throws IOException {
+		final File dir = createFile(parent, name);
 		return createDirectory(dir);
 	}
-	protected File createDirectory(File dir) throws IOException {
-		assertThat(dir).doesNotExist();
+	protected File createDirectory(final File dir) throws IOException {
+		assertThat(dir.exists()).isFalse();
 		dir.mkdir();
-		assertThat(dir).isDirectory();
+		assertThat(dir.isDirectory()).isTrue();
 		addToFilesInRepo(dir);
 		return dir;
 	}
 
 	protected void addToFilesInRepo(File file) throws IOException {
 		file = file.getAbsoluteFile();
-		File localRoot = getLocalRootOrFail(file);
+		final File localRoot = getLocalRootOrFail(file);
 		addToFilesInRepo(localRoot, file);
 	}
 	protected void addToFilesInRepo(File localRoot, File file) throws IOException {
@@ -171,46 +135,49 @@ public abstract class AbstractIT {
 		filesInRepo.add(file);
 	}
 
-	protected File createFileWithRandomContent(File parent, String name) throws IOException {
-		File file = new File(parent, name);
+	protected File createFileWithRandomContent(final File parent, final String name) throws IOException {
+		final File file = createFile(parent, name);
 		return createFileWithRandomContent(file);
 	}
 
-	protected File createFileWithRandomContent(File file) throws IOException {
-		assertThat(file).doesNotExist(); // prevent accidentally overwriting important data ;-)
-		OutputStream out = new FileOutputStream(file);
-		byte[] buf = new byte[1 + random.nextInt(10241)];
-		int loops = 1 + random.nextInt(100);
+	protected File createFileWithRandomContent(final File file) throws IOException {
+		assertThat(file.exists()).isFalse(); // prevent accidentally overwriting important data ;-)
+		final OutputStream out = file.createOutputStream();
+		final byte[] buf = new byte[1 + random.nextInt(10241)];
+		final int loops = 1 + random.nextInt(100);
 		for (int i = 0; i < loops; ++i) {
 			random.nextBytes(buf);
 			out.write(buf);
 		}
 		out.close();
-		assertThat(file).isFile();
+		assertThat(file.isFile()).isTrue();
 		addToFilesInRepo(file);
 		return file;
 	}
 
+	/** TODO Remove duplicate code: AbstractIT.java and AbstractTest.java */
 	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
-		assertThat(symlink).doesNotExist();
-		final Path symlinkParentPath = symlink.getParentFile().toPath();
-		final Path symlinkPath = symlink.toPath();
-		final Path relativeTargetPath = symlinkParentPath.relativize(target.toPath());
-		final Path symbolicLink = Files.createSymbolicLink(symlinkPath, relativeTargetPath);
-		assertThat(symbolicLink.toFile().getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
-		assertThat(Files.exists(symlinkPath, LinkOption.NOFOLLOW_LINKS)).isTrue();
+		assertThat(symlink.exists()).isFalse();
+		final File symlinkParent = symlink.getParentFile();
+
+		final String relativeTargetString = symlinkParent.relativize(target);
+		symlink.createSymbolicLink(relativeTargetString);
+
+		assertThat(symlink.getAbsoluteFile()).isEqualTo(symlink.getAbsoluteFile());
+		assertThat(symlink.existsNoFollow()).isTrue();
+		assertThat(symlink.isSymbolicLink()).isTrue();
 		addToFilesInRepo(symlink);
 		return symlink;
 	}
 
 	protected void deleteFile(File file) throws IOException {
 		file = file.getAbsoluteFile();
-		assertThat(file).exists();
+		assertThat(file.exists()).isTrue();
 		file.delete();
-		assertThat(file).doesNotExist();
+		assertThat(file.exists()).isFalse();;
 
-		File localRoot = getLocalRootOrFail(file);
-		Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
+		final File localRoot = getLocalRootOrFail(file);
+		final Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 		if (filesInRepo == null)
 			throw new IllegalStateException("No filesInRepo for localRoot: " + localRoot);
 
@@ -218,11 +185,11 @@ public abstract class AbstractIT {
 			throw new IllegalStateException("File did not exist in filesInRepo: " + file);
 	}
 
-	private File getLocalRootOrFail(File file) throws IOException {
-		String filePath = file.getCanonicalPath();
-		Set<File> localRoots = localRepoManagerFactory.getLocalRoots();
-		for (File localRoot : localRoots) {
-			String localRootPath = localRoot.getPath();
+	private File getLocalRootOrFail(final File file) throws IOException {
+		final String filePath = file.getCanonicalPath();
+		final Set<File> localRoots = localRepoManagerFactory.getLocalRoots();
+		for (final File localRoot : localRoots) {
+			final String localRootPath = localRoot.getPath();
 			if (filePath.startsWith(localRootPath)) {
 				return localRoot;
 			}
@@ -231,20 +198,20 @@ public abstract class AbstractIT {
 	}
 
 	protected void assertThatFilesInRepoAreCorrect(File localRoot) {
-		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		localRoot = localRepoManager.getLocalRoot(); // get canonical File
-		LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
+		final LocalRepoTransaction transaction = localRepoManager.beginReadTransaction();
 		try {
-			RepoFileDAO repoFileDAO = transaction.getDAO(RepoFileDAO.class);
+			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
 			assertThat(filesInRepo).isNotNull();
 
-			for (File file : filesInRepo) {
-				RepoFile repoFile = repoFileDAO.getRepoFile(localRoot, file);
+			for (final File file : filesInRepo) {
+				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile == null) {
 					Assert.fail("Corresponding RepoFile missing in repository for file: " + file);
 				}
-				if (Files.isSymbolicLink(file.toPath()))
+				if (file.isSymbolicLink())
 					assertThat(repoFile).isInstanceOf(Symlink.class);
 				else if (file.isFile())
 					assertThat(repoFile).isInstanceOf(NormalFile.class);
@@ -253,11 +220,11 @@ public abstract class AbstractIT {
 			}
 
 			filesInRepo = new HashSet<File>(filesInRepo);
-			Collection<RepoFile> repoFiles = repoFileDAO.getObjects();
-			Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
-			for (RepoFile repoFile : repoFiles) {
-				File file = repoFile.getFile(localRoot);
-				RepoFile duplicateRepoFile = file2RepoFile.put(file, repoFile);
+			final Collection<RepoFile> repoFiles = repoFileDao.getObjects();
+			final Map<File, RepoFile> file2RepoFile = new HashMap<File, RepoFile>();
+			for (final RepoFile repoFile : repoFiles) {
+				final File file = repoFile.getFile(localRoot);
+				final RepoFile duplicateRepoFile = file2RepoFile.put(file, repoFile);
 				if (duplicateRepoFile != null)
 					Assert.fail("There are 2 RepoFile instances for the same file! " + repoFile + " " + duplicateRepoFile + " " + file);
 
@@ -270,26 +237,26 @@ public abstract class AbstractIT {
 		}
 	}
 
-	protected void assertDirectoriesAreEqualRecursively(File dir1, File dir2) throws IOException {
-		assertThat(dir1).isDirectory();
-		assertThat(dir2).isDirectory();
+	protected void assertDirectoriesAreEqualRecursively(final File dir1, final File dir2) throws IOException {
+		assertThat(dir1.isDirectory()).isTrue();
+		assertThat(dir2.isDirectory()).isTrue();
 
-		boolean dir1IsSymbolicLink = Files.isSymbolicLink(dir1.toPath());
-		boolean dir2IsSymbolicLink = Files.isSymbolicLink(dir2.toPath());
+		final boolean dir1IsSymbolicLink = dir1.isSymbolicLink();
+		final boolean dir2IsSymbolicLink = dir2.isSymbolicLink();
 
 		assertThat(dir1IsSymbolicLink).isEqualTo(dir2IsSymbolicLink);
 
 		if (dir1IsSymbolicLink) {
-			Path target1 = Files.readSymbolicLink(dir1.toPath());
-			Path target2 = Files.readSymbolicLink(dir2.toPath());
+			final String target1 = dir1.readSymbolicLinkToPathString();
+			final String target2 = dir2.readSymbolicLinkToPathString();
 			assertThat(target1).isEqualTo(target2);
 			return;
 		}
 
-		String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
+		final String[] children1 = dir1.list(new FilenameFilterSkipMetaDir());
 		assertThat(children1).isNotNull();
 
-		String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
+		final String[] children2 = dir2.list(new FilenameFilterSkipMetaDir());
 		assertThat(children2).isNotNull();
 
 		Arrays.sort(children1);
@@ -297,18 +264,18 @@ public abstract class AbstractIT {
 
 		assertThat(children1).containsOnly(children2);
 
-		for (String childName : children1) {
-			File child1 = new File(dir1, childName);
-			File child2 = new File(dir2, childName);
+		for (final String childName : children1) {
+			final File child1 = createFile(dir1, childName);
+			final File child2 = createFile(dir2, childName);
 
-			boolean child1IsSymbolicLink = Files.isSymbolicLink(child1.toPath());
-			boolean child2IsSymbolicLink = Files.isSymbolicLink(child2.toPath());
+			final boolean child1IsSymbolicLink = child1.isSymbolicLink();
+			final boolean child2IsSymbolicLink = child2.isSymbolicLink();
 
 			assertThat(child1IsSymbolicLink).isEqualTo(child2IsSymbolicLink);
 
 			if (child1IsSymbolicLink) {
-				Path target1 = Files.readSymbolicLink(child1.toPath());
-				Path target2 = Files.readSymbolicLink(child2.toPath());
+				final String target1 = child1.readSymbolicLinkToPathString();
+				final String target2 = child2.readSymbolicLinkToPathString();
 				assertThat(target1).isEqualTo(target2);
 			}
 			else if (child1.isFile()) {

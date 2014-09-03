@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 public class RepoTransportFactoryRegistry {
 
 	private static class RepoTransportFactoryRegistryHolder {
@@ -101,7 +103,7 @@ public class RepoTransportFactoryRegistry {
 	}
 
 	public <F extends RepoTransportFactory> F getRepoTransportFactory(Class<F> factoryClass) {
-		assertNotNull("factoryClass", factoryClass);
+		AssertUtil.assertNotNull("factoryClass", factoryClass);
 		List<RepoTransportFactory> repoTransportFactories = getRepoTransportFactories();
 		for (RepoTransportFactory repoTransportFactory : repoTransportFactories) {
 			if (factoryClass.isInstance(repoTransportFactory)) {

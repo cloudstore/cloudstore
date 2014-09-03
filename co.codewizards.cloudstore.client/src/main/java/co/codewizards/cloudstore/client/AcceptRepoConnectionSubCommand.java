@@ -26,7 +26,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDAO;
+import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 
 /**
  * {@link SubCommand} implementation for requesting a connection at a remote repository.
@@ -63,11 +63,11 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 			localPublicKey = localRepoManager.getPublicKey();
 			LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 			try {
-				RemoteRepositoryRequestDAO remoteRepositoryRequestDAO = transaction.getDAO(RemoteRepositoryRequestDAO.class);
+				RemoteRepositoryRequestDao remoteRepositoryRequestDao = transaction.getDao(RemoteRepositoryRequestDao.class);
 				RemoteRepositoryRequest request;
 				if (remoteRepositoryId == null) {
 					RemoteRepositoryRequest oldestRequest = null;
-					for (RemoteRepositoryRequest remoteRepositoryRequest : remoteRepositoryRequestDAO.getObjects()) {
+					for (RemoteRepositoryRequest remoteRepositoryRequest : remoteRepositoryRequestDao.getObjects()) {
 						if (oldestRequest == null || oldestRequest.getChanged().after(remoteRepositoryRequest.getChanged()))
 							oldestRequest = remoteRepositoryRequest;
 					}
@@ -77,7 +77,7 @@ public class AcceptRepoConnectionSubCommand extends SubCommandWithExistingLocalR
 					request = oldestRequest;
 				}
 				else {
-					request = remoteRepositoryRequestDAO.getRemoteRepositoryRequestOrFail(remoteRepositoryId);
+					request = remoteRepositoryRequestDao.getRemoteRepositoryRequestOrFail(remoteRepositoryId);
 				}
 				remoteRepositoryId = request.getRepositoryId();
 				remotePublicKey = request.getPublicKey();

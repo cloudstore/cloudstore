@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -15,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_makeDirectory/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -39,8 +38,8 @@ public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void makeDirectory(@PathParam("path") String path)
 	{
-		assertNotNull("path", path);
-		RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
+		AssertUtil.assertNotNull("path", path);
+		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Calendar;
@@ -14,17 +15,22 @@ import org.slf4j.LoggerFactory;
 
 public class DateTimeTest {
 	private final Logger logger = LoggerFactory.getLogger(DateTimeTest.class);
-	private Random random = new Random();
+	private final Random random = new Random();
+
+	{
+		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
+	}
 
 	@Test
 	public void convertToStringAndBack() {
-		DateTime dateTime = new DateTime(nextValidRandomDate());
-		long dateTimeLong = dateTime.getMillis();
+		logger.debug("[{}]convertToStringAndBack: entered.", Integer.toHexString(identityHashCode(this)));
+		final DateTime dateTime = new DateTime(nextValidRandomDate());
+		final long dateTimeLong = dateTime.getMillis();
 		logger.info("dateTimeLong: {}", dateTimeLong);
-		String dateTimeString = dateTime.toString();
+		final String dateTimeString = dateTime.toString();
 		logger.info("dateTimeString: {}", dateTimeString);
-		DateTime dateTime2 = new DateTime(dateTimeString);
-		long dateTimeLong2 = dateTime2.getMillis();
+		final DateTime dateTime2 = new DateTime(dateTimeString);
+		final long dateTimeLong2 = dateTime2.getMillis();
 		logger.info("dateTimeLong2: {}", dateTimeLong2);
 		assertThat(dateTime2).isEqualTo(dateTime);
 	}
@@ -35,7 +41,7 @@ public class DateTimeTest {
 	 * @return a random date that can be encoded according to ISO8601.
 	 */
 	private Date nextValidRandomDate() {
-		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.UK);
+		final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.UK);
 		calendar.setTimeInMillis(random.nextLong());
 		int year = calendar.get(Calendar.YEAR);
 		year = year % 9999;

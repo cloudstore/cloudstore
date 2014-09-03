@@ -1,8 +1,5 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -14,11 +11,13 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.RepositoryDTO;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @Path("_requestRepoConnection/{repositoryName}")
 public class RequestRepoConnectionService
@@ -33,41 +32,26 @@ public class RequestRepoConnectionService
 
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(RepositoryDTO clientRepositoryDTO)
+	public void requestConnection(final RepositoryDto clientRepositoryDto)
 	{
-		requestConnection("", clientRepositoryDTO);
+		requestConnection("", clientRepositoryDto);
 	}
 
 	@POST
 	@Path("{pathPrefix:.*}")
 	@Consumes(MediaType.APPLICATION_XML)
-	public void requestConnection(@PathParam("pathPrefix") String pathPrefix, RepositoryDTO clientRepositoryDTO)
+	public void requestConnection(@PathParam("pathPrefix") final String pathPrefix, final RepositoryDto clientRepositoryDto)
 	{
-		assertNotNull("pathPrefix", pathPrefix);
-		assertNotNull("repositoryDTO", clientRepositoryDTO);
+		AssertUtil.assertNotNull("pathPrefix", pathPrefix);
+		AssertUtil.assertNotNull("repositoryDto", clientRepositoryDto);
 
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
+		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);
 
-		if (!"".equals(pathPrefix)) {
-			String localRootURLString = localRootURL.toExternalForm();
-			if (localRootURLString.endsWith("/"))
-				localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
-
-			if (!pathPrefix.startsWith("/"))
-				pathPrefix = '/' + pathPrefix;
-
-			localRootURLString = localRootURLString + pathPrefix;
-			try {
-				localRootURL = new URL(localRootURLString);
-			} catch (MalformedURLException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDTO.getRepositoryId());
+		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
+		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
 		try {
-			repoTransport.requestRepoConnection(clientRepositoryDTO.getPublicKey());
+			repoTransport.requestRepoConnection(clientRepositoryDto.getPublicKey());
 		} finally {
 			repoTransport.close();
 		}

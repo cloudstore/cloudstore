@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 
@@ -10,6 +10,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoDirectoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoRepositoryException;
@@ -30,22 +31,22 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 	@Test
 	public void createLocalRepoManagerForExistingNonRepoDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
-		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(new File(new File(localRoot, "bla"), ".."));
+		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(createFile(createFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
 		assertThat(Proxy.isProxyClass(localRepoManager.getClass())).isTrue();
 		assertThat(Proxy.isProxyClass(localRepoManager2.getClass())).isTrue();
 
-		LocalRepoManagerInvocationHandler invocationHandler = (LocalRepoManagerInvocationHandler) Proxy.getInvocationHandler(localRepoManager);
-		LocalRepoManagerInvocationHandler invocationHandler2 = (LocalRepoManagerInvocationHandler) Proxy.getInvocationHandler(localRepoManager2);
+		final LocalRepoManagerInvocationHandler invocationHandler = (LocalRepoManagerInvocationHandler) Proxy.getInvocationHandler(localRepoManager);
+		final LocalRepoManagerInvocationHandler invocationHandler2 = (LocalRepoManagerInvocationHandler) Proxy.getInvocationHandler(localRepoManager2);
 		assertThat(invocationHandler).isNotSameAs(invocationHandler2);
 		assertThat(invocationHandler.localRepoManagerImpl).isSameAs(invocationHandler2.localRepoManagerImpl);
 
@@ -55,16 +56,16 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 	@Test
 	public void getLocalRepoManagerForExistingRepository() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 
 		localRepoManager.close();
 
-		LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(new File(new File(localRoot, "bla"), ".."));
+		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(createFile(createFile(localRoot, "bla"), ".."));
 		assertThat(localRepoManager2).isNotNull();
 		assertThat(localRepoManager2).isNotSameAs(localRepoManager);
 
@@ -73,48 +74,48 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 	@Test(expected=FileNotFoundException.class)
 	public void getLocalRepoManagerForNonExistingDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 	}
 
 	@Test(expected=FileNoDirectoryException.class)
 	public void getLocalRepoManagerForExistingNonDirectoryFile() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		File localRootParent = localRoot.getParentFile();
+		final File localRoot = newTestRepositoryLocalRoot();
+		final File localRootParent = localRoot.getParentFile();
 
 		localRootParent.mkdirs();
-		assertThat(localRootParent).isDirectory();
+		assertThat(localRootParent.isDirectory()).isTrue();
 
 		localRoot.createNewFile();
-		assertThat(localRoot).isFile();
+		assertThat(localRoot.isFile()).isTrue();
 
 		localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 	}
 
 	@Test(expected=FileNoRepositoryException.class)
 	public void getLocalRepoManagerForExistingNonRepoDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
+		final File localRoot = newTestRepositoryLocalRoot();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		localRepoManager.close();
 	}
 
 	@Test(expected=FileNotFoundException.class)
 	public void createLocalRepoManagerForNonExistingDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 	}
 
 	@Test(expected=FileAlreadyRepositoryException.class)
 	public void createLocalRepoManagerForRepoDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 		localRepoManager.close();
 
@@ -126,11 +127,11 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 	 */
 	@Test(expected=FileAlreadyRepositoryException.class)
 	public void createLocalRepoManagerForRepoDirectoryWithClose() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
-		assertThat(localRoot).doesNotExist();
+		final File localRoot = newTestRepositoryLocalRoot();
+		assertThat(localRoot.exists()).isFalse();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();
 		localRepoManager.close();
 		localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
@@ -138,18 +139,18 @@ public class LocalRepoManagerFactoryTest extends AbstractTest {
 
 	@Test(expected=FileAlreadyRepositoryException.class)
 	public void createLocalRepoManagerForNonRepoDirInsideRepoDirectory() throws Exception {
-		File localRoot = newTestRepositoryLocalRoot();
+		final File localRoot = newTestRepositoryLocalRoot();
 		localRoot.mkdirs();
-		assertThat(localRoot).isDirectory();
-		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRoot.isDirectory()).isTrue();
+		final LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 
 		assertThat(localRepoManager.getLocalRoot()).isEqualTo(localRoot.getCanonicalFile());
 
-		File sub1Dir = new File(localRepoManager.getLocalRoot(), "sub1");
-		File sub1SubAaaDir = new File(sub1Dir, "aaa");
+		final File sub1Dir = createFile(localRepoManager.getLocalRoot(), "sub1");
+		final File sub1SubAaaDir = createFile(sub1Dir, "aaa");
 
 		sub1SubAaaDir.mkdirs();
-		assertThat(sub1SubAaaDir).isDirectory();
+		assertThat(sub1SubAaaDir.isDirectory()).isTrue();
 
 		localRepoManager.close();
 

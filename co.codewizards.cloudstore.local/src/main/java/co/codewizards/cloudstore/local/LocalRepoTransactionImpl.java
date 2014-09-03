@@ -2,94 +2,141 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
+import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.local.persistence.DAO;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListenerRegistry;
+import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
-import co.codewizards.cloudstore.local.persistence.LocalRepositoryDAO;
+import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 
-public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction {
+public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWithLocalRepoManager, ContextWithPersistenceManager {
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
 	private final boolean write;
 	private PersistenceManager persistenceManager;
 	private Transaction jdoTransaction;
-	private Lock lock;
+	private final Lock lock;
 	private long localRevision = -1;
+	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
 
-	private final AutoTrackLifecycleListener autoTrackLifecycleListener = new AutoTrackLifecycleListener(this);
+	private final LocalRepoTransactionListenerRegistry listenerRegistry = new LocalRepoTransactionListenerRegistry(this);
 
-	public LocalRepoTransactionImpl(LocalRepoManagerImpl localRepoManager, boolean write) {
-		this.localRepoManager = assertNotNull("localRepoManager", localRepoManager);
-		this.persistenceManagerFactory = assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
+	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
+		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
+		this.persistenceManagerFactory = AssertUtil.assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
+		this.lock = localRepoManager.getLock();
 		this.write = write;
 		begin();
 	}
 
-	private synchronized void begin() {
-		if (isActive())
-			throw new IllegalStateException("Transaction is already active!");
+	private void begin() {
+		lock.lock();
+		try {
+			if (isActive())
+				throw new IllegalStateException("Transaction is already active!");
 
+			lockIfWrite();
+
+			persistenceManager = persistenceManagerFactory.getPersistenceManager();
+			jdoTransaction = persistenceManager.currentTransaction();
+			jdoTransaction.begin();
+			listenerRegistry.onBegin();
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	private final void lockIfWrite() {
 		if (write)
-			lock();
-
-		persistenceManager = persistenceManagerFactory.getPersistenceManager();
-		hookLifecycleListeners();
-		jdoTransaction = persistenceManager.currentTransaction();
-		jdoTransaction.begin();
-		autoTrackLifecycleListener.onBegin();
+			lock.lock(); // UNbalance lock to keep it after method returns!
 	}
 
-	private void hookLifecycleListeners() {
-		persistenceManager.addInstanceLifecycleListener(autoTrackLifecycleListener, (Class[]) null);
+	private final void unlockIfWrite() {
+		if (write)
+			lock.unlock(); // UNbalance unlock to counter the unbalanced lock in lockIfWrite().
 	}
 
 	@Override
-	public synchronized void commit() {
-		if (!isActive())
-			throw new IllegalStateException("Transaction is not active!");
+	public void commit() {
+		lock.lock();
+		try {
+			if (!isActive())
+				throw new IllegalStateException("Transaction is not active!");
 
-		autoTrackLifecycleListener.onCommit();
-		persistenceManager.flush();
-		jdoTransaction.commit();
-		persistenceManager.close();
-		jdoTransaction = null;
-		persistenceManager = null;
-		localRevision = -1;
-		unlock();
+			listenerRegistry.onCommit();
+			daoClass2Dao.clear();
+			persistenceManager.flush();
+			jdoTransaction.commit();
+			persistenceManager.close();
+			jdoTransaction = null;
+			persistenceManager = null;
+			localRevision = -1;
+
+			unlockIfWrite();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized boolean isActive() {
-		return jdoTransaction != null && jdoTransaction.isActive();
+	public boolean isActive() {
+		lock.lock();
+		try {
+			return jdoTransaction != null && jdoTransaction.isActive();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized void rollback() {
-		if (!isActive())
-			throw new IllegalStateException("Transaction is not active!");
+	public void rollback() {
+		lock.lock();
+		try {
+			if (!isActive())
+				throw new IllegalStateException("Transaction is not active!");
 
-		autoTrackLifecycleListener.onRollback();
-		jdoTransaction.rollback();
-		persistenceManager.close();
-		jdoTransaction = null;
-		persistenceManager = null;
-		localRevision = -1;
-		unlock();
+			listenerRegistry.onRollback();
+			daoClass2Dao.clear();
+			jdoTransaction.rollback();
+			persistenceManager.close();
+			jdoTransaction = null;
+			persistenceManager = null;
+			localRevision = -1;
+
+			unlockIfWrite();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
-	public synchronized void rollbackIfActive() {
-		if (isActive())
-			rollback();
+	public void rollbackIfActive() {
+		lock.lock();
+		try {
+			if (isActive())
+				rollback();
+		} finally {
+			lock.unlock();
+		}
 	}
 
+	@Override
+	public void close() {
+		rollbackIfActive();
+	}
+
+	@Override
 	public PersistenceManager getPersistenceManager() {
 		if (!isActive()) {
 			throw new IllegalStateException("Transaction is not active!");
@@ -104,7 +151,7 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 				throw new IllegalStateException("This is a read-only transaction!");
 
 			jdoTransaction.setSerializeRead(true);
-			LocalRepository lr = getDAO(LocalRepositoryDAO.class).getLocalRepositoryOrFail();
+			final LocalRepository lr = getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			jdoTransaction.setSerializeRead(null);
 			localRevision = lr.getRevision() + 1;
 			lr.setRevision(localRevision);
@@ -113,41 +160,34 @@ public class LocalRepoTransactionImpl implements co.codewizards.cloudstore.core.
 		return localRevision;
 	}
 
-	private synchronized void lock() {
-		if (lock == null) {
-			lock = localRepoManager.getLock();
-			lock.lock();
-		}
-	}
-
-	private synchronized void unlock() {
-		if (lock != null) {
-			lock.unlock();
-			lock = null;
-		}
-	}
-
 	@Override
 	public LocalRepoManager getLocalRepoManager() {
 		return localRepoManager;
 	}
 
 	@Override
-	public <D> D getDAO(Class<D> daoClass) {
-		final PersistenceManager pm = getPersistenceManager();
-		D dao;
-		try {
-			dao = daoClass.newInstance();
-		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+	public <D> D getDao(final Class<D> daoClass) {
+
+		@SuppressWarnings("unchecked")
+		D dao = (D) daoClass2Dao.get(daoClass);
+
+		if (dao == null) {
+			final PersistenceManager pm = getPersistenceManager();
+			try {
+				dao = daoClass.newInstance();
+			} catch (final InstantiationException e) {
+				throw new RuntimeException(e);
+			} catch (final IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+
+			if (!(dao instanceof Dao))
+				throw new IllegalStateException(String.format("dao class %s does not extend Dao!", daoClass.getName()));
+
+			((Dao<?, ?>)dao).setPersistenceManager(pm);
+
+			daoClass2Dao.put(daoClass, dao);
 		}
-
-		if (!(dao instanceof DAO))
-			throw new IllegalStateException(String.format("dao class %s does not extend DAO!", daoClass.getName()));
-
-		((DAO<?, ?>)dao).setPersistenceManager(pm);
 		return dao;
 	}
 

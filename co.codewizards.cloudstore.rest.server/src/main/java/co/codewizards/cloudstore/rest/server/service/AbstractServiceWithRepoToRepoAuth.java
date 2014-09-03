@@ -1,15 +1,16 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
@@ -34,6 +36,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
@@ -61,10 +64,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	throws WebApplicationException
 	{
 		if (auth == null) {
-			String authorizationHeader = request.getHeader("Authorization");
+			final String authorizationHeader = request.getHeader("Authorization");
 			if (authorizationHeader == null || authorizationHeader.isEmpty()) {
 				logger.debug("getAuth: There is no 'Authorization' header. Replying with a Status.UNAUTHORIZED response asking for 'Basic' authentication.");
-
 				throw newUnauthorizedException();
 			}
 
@@ -75,56 +77,96 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 						.type(MediaType.APPLICATION_XML)
 						.entity(new Error("Only 'Basic' authentication is supported!")).build());
 
-			String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
-			byte[] basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_UTF_8));
-			StringBuilder userNameSB = new StringBuilder();
+			final String basicAuthEncoded = authorizationHeader.substring("Basic".length()).trim();
+			final byte[] basicAuthDecodedBA = getBasicAuthEncodedBA(basicAuthEncoded);
+			final StringBuilder userNameSB = new StringBuilder();
 			char[] password = null;
 
-			ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
-			CharBuffer cb = CharBuffer.allocate(basicAuthDecodedBA.length + 1);
+			final ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
+			CharArrayWriter caw = new CharArrayWriter(basicAuthDecodedBA.length + 1);
+			CharArrayReader car = null;
 			try {
-				Reader r = new InputStreamReader(in, IOUtil.CHARSET_UTF_8);
+				final Reader r = new InputStreamReader(in, IOUtil.CHARSET_NAME_UTF_8);
 				int charsReadTotal = 0;
 				int charsRead;
 				do {
-					charsRead = r.read(cb);
+					final char[] c = new char[10];
+					charsRead = r.read(c);
+					caw.write(c);
 
 					if (charsRead > 0)
 						charsReadTotal += charsRead;
 				} while (charsRead >= 0);
-				cb.position(0);
 
-				while (cb.position() < charsReadTotal) {
-					char c = cb.get();
-					if (c == ':')
+				charsRead = 0;
+
+				car = new CharArrayReader(caw.toCharArray());
+				int charsReadTotalCheck = 0;
+
+				while (charsRead >= 0 && charsRead < charsReadTotal) {
+					final char[] cbuf = new char[1];
+					charsRead = car.read(cbuf);
+					if (charsRead > 0)
+						charsReadTotalCheck += charsRead;
+
+					if (cbuf[0] == ':')
 						break;
 
-					userNameSB.append(c);
+					userNameSB.append(cbuf[0]);
 				}
 
-				if (cb.position() < charsReadTotal) {
-					password = new char[charsReadTotal - cb.position()];
-					int idx = 0;
-					while (cb.position() < charsReadTotal)
-						password[idx++] = cb.get();
+				if (charsRead >= 0 && charsRead < charsReadTotal) {
+					password = new char[charsReadTotal - charsReadTotalCheck];
+					final int passwordSize = car.read(password);
+					if (passwordSize + charsReadTotalCheck != charsReadTotal)
+						throw new IllegalStateException("passwordSize and charsRead must match charsReadTotal!"
+								+ " passwordSize=" + passwordSize
+								+ ", charsRead=" + charsRead
+								+ ", charsReadTotal=" + charsReadTotal);//TODO for testing
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_XML).entity(new Error(e)).build());
 			} finally {
 				// For extra safety: Overwrite all sensitive memory with 0.
 				Arrays.fill(basicAuthDecodedBA, (byte)0);
 
-				cb.position(0);
-				for (int i = 0; i < cb.capacity(); ++i)
-					cb.put((char)0);
+				final char[] zeroArray = new char[] {0};
+				// overwrite caw & car:
+				if (caw != null) {
+					final int oldCawSize = caw.size();
+					caw.reset();
+					try {
+						if (car != null) {
+							car.reset();
+						}
+						for (int i = 0; i < oldCawSize; ++i)
+							caw.write(zeroArray);
+						car = new CharArrayReader(caw.toCharArray());
+						car.close();
+						caw.reset();
+						caw = null;
+					} catch (final IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
 			}
 
-			Auth auth = new Auth();
+			final Auth auth = new Auth();
 			auth.setUserName(userNameSB.toString());
 			auth.setPassword(password);
 			this.auth = auth;
 		}
 		return auth;
+	}
+
+	private byte[] getBasicAuthEncodedBA(final String basicAuthEncoded) {
+		byte[] basicAuthDecodedBA;
+		try {
+			basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_NAME_UTF_8));
+		} catch (final UnsupportedEncodingException e1) {
+			throw new RuntimeException(e1);
+		}
+		return basicAuthDecodedBA;
 	}
 
 	/**
@@ -138,16 +180,16 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	protected String authenticateAndReturnUserName()
 	throws WebApplicationException
 	{
-		UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
+		final UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
 		if (serverRepositoryId == null) {
 			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
 					.type(MediaType.APPLICATION_XML)
 					.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither an alias nor an ID of a known repository!", repositoryName))).build());
 		}
 
-		Auth auth = getAuth();
+		final Auth auth = getAuth();
 		try {
-			UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
+			final UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
 			if (clientRepositoryId != null) {
 				if (TransientRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
 					return auth.getUserName();
@@ -163,17 +205,17 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		throw newUnauthorizedException();
 	}
 
-	protected UUID getClientRepositoryIdFromUserName(String userName) {
+	protected UUID getClientRepositoryIdFromUserName(final String userName) {
 		if (assertNotNull("userName", userName).startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
-			String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
-			UUID clientRepositoryId = UUID.fromString(repositoryIdString);
+			final String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
+			final UUID clientRepositoryId = UUID.fromString(repositoryIdString);
 			return clientRepositoryId;
 		}
 		return null;
 	}
 
-	protected UUID getClientRepositoryIdFromUserNameOrFail(String userName) {
-		UUID clientRepositoryId = getClientRepositoryIdFromUserName(userName);
+	protected UUID getClientRepositoryIdFromUserNameOrFail(final String userName) {
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserName(userName);
 		if (clientRepositoryId == null)
 			throw new IllegalArgumentException(String.format("userName='%s' is not a repository!", userName));
 
@@ -185,21 +227,21 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected RepoTransport authenticateAndCreateLocalRepoTransport() {
-		String userName = authenticateAndReturnUserName();
-		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
-		URL localRootURL = getLocalRootURL(clientRepositoryId);
-		RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryId);
+		final String userName = authenticateAndReturnUserName();
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		final URL localRootURL = getLocalRootURL(clientRepositoryId);
+		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
+		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryId);
 		return repoTransport;
 	}
 
 	protected URL authenticateAndGetLocalRootURL() {
-		String userName = authenticateAndReturnUserName();
-		UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
+		final String userName = authenticateAndReturnUserName();
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
 		return getLocalRootURL(clientRepositoryId);
 	}
 
-	protected URL getLocalRootURL(UUID clientRepositoryId) {
+	protected URL getLocalRootURL(final UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
 		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
@@ -208,22 +250,12 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			URL localRootURL;
 			try {
 				localRootURL = localRoot.toURI().toURL();
-			} catch (MalformedURLException e) {
+			} catch (final MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
-			if (!localPathPrefix.isEmpty()) {
-				String localRootURLString = localRootURL.toExternalForm();
-				if (localRootURLString.endsWith("/"))
-					localRootURLString = localRootURLString.substring(0, localRootURLString.length() - 1);
 
-				// localPathPrefix is guaranteed to start with a '/'.
-				localRootURLString += localPathPrefix;
-				try {
-					localRootURL = new URL(localRootURLString);
-				} catch (MalformedURLException e) {
-					throw new RuntimeException(e);
-				}
-			}
+			localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, localPathPrefix);
+
 			return localRootURL;
 		} finally {
 			localRepoManager.close();

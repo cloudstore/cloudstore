@@ -1,21 +1,25 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
+
 class LockFileProxy implements LockFile {
+	private static final Logger logger = LoggerFactory.getLogger(LockFileProxy.class);
 
 	private final LockFileImpl lockFileImpl;
-	private AtomicBoolean released = new AtomicBoolean(false);
+	private final AtomicBoolean released = new AtomicBoolean(false);
 
-	public LockFileProxy(LockFileImpl lockFileImpl) {
-		this.lockFileImpl = assertNotNull("lockFileImpl", lockFileImpl);
+	public LockFileProxy(final LockFileImpl lockFileImpl) {
+		this.lockFileImpl = AssertUtil.assertNotNull("lockFileImpl", lockFileImpl);
 	}
 
 	@Override
@@ -25,10 +29,17 @@ class LockFileProxy implements LockFile {
 
 	@Override
 	public void release() {
-		if (!released.compareAndSet(false, true))
-			throw new IllegalStateException("Multiple invocations of release() are not allowed!");
-
+		if (!released.compareAndSet(false, true)) {
+			final IllegalStateException x = new IllegalStateException("Multiple invocations of release() should be avoided!");
+			logger.warn(x.toString(), x);
+			return;
+		}
 		lockFileImpl.release();
+	}
+
+	@Override
+	public final void close() {
+		release();
 	}
 
 	public LockFileImpl getLockFileImpl() {

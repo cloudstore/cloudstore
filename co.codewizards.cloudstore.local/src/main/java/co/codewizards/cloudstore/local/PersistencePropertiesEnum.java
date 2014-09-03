@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public enum PersistencePropertiesEnum {
 	CONNECTION_DRIVER_NAME("javax.jdo.option.ConnectionDriverName"),
@@ -22,7 +23,7 @@ public enum PersistencePropertiesEnum {
 	public final String key;
 
 	private PersistencePropertiesEnum(String key) {
-		this.key = assertNotNull("key", key);
+		this.key = AssertUtil.assertNotNull("key", key);
 	}
 
 	@Override

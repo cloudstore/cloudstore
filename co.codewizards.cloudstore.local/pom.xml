@@ -14,7 +14,14 @@
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.core</artifactId>
 		</dependency>
-
+		
+		<!-- Needed to test symlinks in AbstractTest; -->
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.core.oio.nio</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo-api</artifactId>

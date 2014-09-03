@@ -3,8 +3,6 @@ package co.codewizards.cloudstore.updater;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -13,6 +11,9 @@ import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureList;
 import org.bouncycastle.openpgp.PGPUtil;
+
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class PGPVerifier {
 	private PGPPublicKeyRingCollection publicKeyRingWithTrustedKeys;
@@ -28,8 +29,8 @@ public class PGPVerifier {
 	 * any of the {@linkplain #getPublicKeyRingWithTrustedKeys() trusted keys}.
 	 */
 	public void verify(final File file, final File signatureFile) throws PGPVerifyException {
-		assertNotNull("file", file);
-		assertNotNull("signatureFile", signatureFile);
+		AssertUtil.assertNotNull("file", file);
+		AssertUtil.assertNotNull("signatureFile", signatureFile);
 
 		final PGPSignatureList sl = readSignatureFile(signatureFile);
 		final PGPPublicKeyRingCollection publicKeyRing = getPublicKeyRingWithTrustedKeys();
@@ -39,7 +40,7 @@ public class PGPVerifier {
 				final PGPSignature signature = sl.get(index);
 				signature.initVerify(publicKeyRing.getPublicKey(signature.getKeyID()), provider);
 
-				final InputStream contentIn = new FileInputStream(file);
+				final InputStream contentIn = file.createInputStream();
 				try {
 					final byte[] buf = new byte[16 * 1024];
 					int len;
@@ -54,7 +55,7 @@ public class PGPVerifier {
 				if (signature.verify())
 					return;
 
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new PGPVerifyException(file.getAbsolutePath() + ": " + e, e);
 			}
 		}
@@ -75,20 +76,20 @@ public class PGPVerifier {
 				publicKeyRingWithTrustedKeys = ring;
 			}
 			return ring;
-		} catch (RuntimeException x) {
+		} catch (final RuntimeException x) {
 			throw x;
-		} catch (Exception x) {
+		} catch (final Exception x) {
 			throw new RuntimeException(x);
 		}
 	}
 
 	private PGPSignatureList readSignatureFile(final File signatureFile) throws PGPVerifyException {
-		assertNotNull("signatureFile", signatureFile);
+		AssertUtil.assertNotNull("signatureFile", signatureFile);
 		if (!signatureFile.isFile() || !signatureFile.canRead())
 			throw new PGPVerifyException("The signature-file does not exist or is not readable: " + signatureFile.getAbsolutePath());
 
 		try {
-			InputStream in = new BufferedInputStream(new FileInputStream(signatureFile));
+			final InputStream in = new BufferedInputStream(signatureFile.createInputStream());
 			try {
 				final PGPObjectFactory objectFactory = new PGPObjectFactory(PGPUtil.getDecoderStream(in));
 				final PGPSignatureList sl = (PGPSignatureList) objectFactory.nextObject();
@@ -96,7 +97,7 @@ public class PGPVerifier {
 			} finally {
 				in.close();
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new PGPVerifyException(signatureFile.getAbsolutePath() + ": " + e, e);
 		}
 	}

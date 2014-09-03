@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.core.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,6 +15,8 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.oio.File;
 
 /**
  * {@link java.util.Properties} utilities.
@@ -73,12 +76,12 @@ public final class PropertiesUtil
 	 * @param pattern The pattern to match against
 	 * @return The {@link Matcher}s that matched.
 	 */
-	public static Collection<Matcher> getPropertyKeyMatches(java.util.Properties properties, Pattern pattern)
+	public static Collection<Matcher> getPropertyKeyMatches(final java.util.Properties properties, final Pattern pattern)
 	{
-		Collection<Matcher> matches = new ArrayList<Matcher>();
-		for (Object element : properties.keySet()) {
-			String key = (String) element;
-			Matcher m = pattern.matcher(key);
+		final Collection<Matcher> matches = new ArrayList<Matcher>();
+		for (final Object element : properties.keySet()) {
+			final String key = (String) element;
+			final Matcher m = pattern.matcher(key);
 			if(m.matches())
 				matches.add(m);
 		}
@@ -96,33 +99,33 @@ public final class PropertiesUtil
 	 * @param keyPrefix The kex prefix to use
 	 * @return the properties that start with the given prefix
 	 */
-	public static java.util.Properties getProperties(java.util.Properties properties, String keyPrefix)
+	public static java.util.Properties getProperties(final java.util.Properties properties, final String keyPrefix)
 	{
-		java.util.Properties newProperties = new java.util.Properties();
-		Collection<Matcher> matches = getPropertyKeyMatches(properties, Pattern.compile("^"+Pattern.quote(keyPrefix)+"(.*)$"));
-		for (Matcher m : matches)
+		final java.util.Properties newProperties = new java.util.Properties();
+		final Collection<Matcher> matches = getPropertyKeyMatches(properties, Pattern.compile("^"+Pattern.quote(keyPrefix)+"(.*)$"));
+		for (final Matcher m : matches)
 			newProperties.put(m.group(1), properties.get(m.group(0)));
 		return newProperties;
 	}
 
-	public static void putAll(java.util.Properties source, java.util.Properties target)
+	public static void putAll(final java.util.Properties source, final java.util.Properties target)
 	{
-		for (Object element : source.keySet()) {
-			String key = (String) element;
+		for (final Object element : source.keySet()) {
+			final String key = (String) element;
 			target.setProperty(key, source.getProperty(key));
 		}
 	}
 
-	public static java.util.Properties load(String filename) throws IOException
+	public static java.util.Properties load(final String filename) throws IOException
 	{
-		return load(filename != null ? new File(filename) : null);
+		return load(filename != null ? createFile(filename) : null);
 	}
 
-	public static java.util.Properties load(File file) throws IOException
+	public static java.util.Properties load(final File file) throws IOException
 	{
-		FileInputStream in = new FileInputStream(file);
+		final InputStream in = file.createInputStream();
 		try {
-			java.util.Properties properties = new java.util.Properties();
+			final java.util.Properties properties = new java.util.Properties();
 			properties.load(in);
 			return properties;
 		} finally {
@@ -130,14 +133,14 @@ public final class PropertiesUtil
 		}
 	}
 
-	public static void store(String filename, java.util.Properties properties, String comment) throws IOException
+	public static void store(final String filename, final java.util.Properties properties, final String comment) throws IOException
 	{
-		store(filename != null ? new File(filename) : null, properties, comment);
+		store(filename != null ? createFile(filename) : null, properties, comment);
 	}
 
-	public static void store(File file, java.util.Properties properties, String comment) throws IOException
+	public static void store(final File file, final java.util.Properties properties, final String comment) throws IOException
 	{
-		FileOutputStream out = new FileOutputStream(file);
+		final OutputStream out = file.createOutputStream();
 		try {
 			properties.store(out, comment);
 		} finally {
@@ -154,7 +157,7 @@ public final class PropertiesUtil
 	 * @return the filtered properties.
 	 * @see #filterProperties(Map, Map)
 	 */
-	public static Map<String, String> filterProperties(Map<?, ?> rawProperties)
+	public static Map<String, String> filterProperties(final Map<?, ?> rawProperties)
 	{
 		return filterProperties(rawProperties, null);
 	}
@@ -219,19 +222,19 @@ public final class PropertiesUtil
 	 * {@link IOUtil#replaceTemplateVariables(String, Map)}.
 	 * @return the filtered properties.
 	 */
-	public static Map<String, String> filterProperties(Map<?, ?> rawProperties, Map<?, ?> variables)
+	public static Map<String, String> filterProperties(final Map<?, ?> rawProperties, final Map<?, ?> variables)
 	{
 		if (rawProperties == null)
 			throw new IllegalArgumentException("rawProperties == null");
 
-		Map<String, String> filteredProperties = new HashMap<String, String>();
-		for (Map.Entry<?, ?> me : rawProperties.entrySet()) {
-			String key = me.getKey() == null ? null : me.getKey().toString();
+		final Map<String, String> filteredProperties = new HashMap<String, String>();
+		for (final Map.Entry<?, ?> me : rawProperties.entrySet()) {
+			final String key = me.getKey() == null ? null : me.getKey().toString();
 			String value = me.getValue() == null ? null : me.getValue().toString();
 
 			if (isMetaPropertyKey(key)) {
 				if (isMetaPropertyKeyNullValue(key) && Boolean.parseBoolean(value)) {
-					String refKey = getReferencedPropertyKeyForMetaPropertyKey(key);
+					final String refKey = getReferencedPropertyKeyForMetaPropertyKey(key);
 					filteredProperties.put(refKey, null);
 				}
 				continue;
@@ -288,7 +291,7 @@ public final class PropertiesUtil
 	 * meta-property for another property.
 	 * @see #isMetaPropertyKey(String)
 	 */
-	public static boolean isMetaPropertyKeyNullValue(String key)
+	public static boolean isMetaPropertyKeyNullValue(final String key)
 	{
 		if (key == null)
 			return false;
@@ -305,7 +308,7 @@ public final class PropertiesUtil
 	 * @return <code>true</code>, if the given key references a property that is a meta-property
 	 * for another property.
 	 */
-	public static boolean isMetaPropertyKey(String key)
+	public static boolean isMetaPropertyKey(final String key)
 	{
 		return isMetaPropertyKeyNullValue(key);
 	}
@@ -318,7 +321,7 @@ public final class PropertiesUtil
 	 * @see #SUFFIX_NULL_VALUE
 	 * @see #getMetaPropertyKeyNullValue(String)
 	 */
-	public static String getReferencedPropertyKeyForMetaPropertyKey(String key)
+	public static String getReferencedPropertyKeyForMetaPropertyKey(final String key)
 	{
 		if (!isMetaPropertyKeyNullValue(key))
 			throw new IllegalArgumentException("key='" + key + "' is not a meta-property!");
@@ -384,7 +387,7 @@ public final class PropertiesUtil
 	 * @return <code>true</code>, if the property referenced by the given <code>key</code> is <code>null</code>;
 	 * <code>false</code> otherwise.
 	 */
-	public static boolean isNullValue(Map<?, ?> properties, String key)
+	public static boolean isNullValue(final Map<?, ?> properties, final String key)
 	{
 		if (properties == null)
 			throw new IllegalArgumentException("properties == null");
@@ -395,12 +398,12 @@ public final class PropertiesUtil
 		if (isMetaPropertyKeyNullValue(key))
 			return false;
 
-		String metaNullValue = String.valueOf(properties.get(getMetaPropertyKeyNullValue(key)));
+		final String metaNullValue = String.valueOf(properties.get(getMetaPropertyKeyNullValue(key)));
 		return Boolean.parseBoolean(metaNullValue);
 	}
 
-	public static int getSystemPropertyValueAsInt(String key, int defaultValue) {
-		long value = getSystemPropertyValueAsLong(key, defaultValue);
+	public static int getSystemPropertyValueAsInt(final String key, final int defaultValue) {
+		final long value = getSystemPropertyValueAsLong(key, defaultValue);
 		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
 			logger.warn("System property '{}' is set to the value '{}' which is out of range for a 32-bit integer. Falling back to default value {}.",
 					key, value, defaultValue);
@@ -409,15 +412,15 @@ public final class PropertiesUtil
 		return (int) value;
 	}
 
-	public static long getSystemPropertyValueAsLong(String key, long defaultValue) {
-		String value = System.getProperty(key);
+	public static long getSystemPropertyValueAsLong(final String key, final long defaultValue) {
+		final String value = System.getProperty(key);
 		if (value == null) {
 			logger.debug("System property '{}' is not set. Falling back to default value {}.", key, defaultValue);
 			return defaultValue;
 		}
 		try {
 			return Integer.valueOf(value);
-		} catch (NumberFormatException x) {
+		} catch (final NumberFormatException x) {
 			logger.warn("System property '{}' is set to the value '{}' which is not an integer (long). Falling back to default value {}.",
 					key, value, defaultValue);
 			return defaultValue;
