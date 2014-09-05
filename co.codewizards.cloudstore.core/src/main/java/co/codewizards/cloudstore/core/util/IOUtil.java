@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -1440,5 +1441,43 @@ public final class IOUtil {
 				return;
 		}
 		throw new IOException("Premature end of stream!");
+	}
+
+	public static byte[] longToBytes(final long value) {
+		final byte[] bytes = new byte[8];
+		for (int i = 0; i < bytes.length; ++i)
+			bytes[i] = (byte) (value >>> (8 * (bytes.length - 1 - i)));
+
+		return bytes;
+	}
+	public static long bytesToLong(final byte[] bytes) {
+		assertNotNull("bytes", bytes);
+		if (bytes.length != 8)
+			throw new IllegalArgumentException("bytes.length != 8");
+
+		long value = 0;
+		for (int i = 0; i < bytes.length; ++i)
+			value |= ((long) (bytes[i] & 0xff)) << (8 * (bytes.length - 1 - i));
+
+		return value;
+	}
+
+	public static byte[] intToBytes(final int value) {
+		final byte[] bytes = new byte[4];
+		for (int i = 0; i < bytes.length; ++i)
+			bytes[i] = (byte) (value >>> (8 * (bytes.length - 1 - i)));
+
+		return bytes;
+	}
+	public static int bytesToInt(final byte[] bytes) {
+		assertNotNull("bytes", bytes);
+		if (bytes.length != 4)
+			throw new IllegalArgumentException("bytes.length != 4");
+
+		int value = 0;
+		for (int i = 0; i < bytes.length; ++i)
+			value |= ((long) (bytes[i] & 0xff)) << (8 * (bytes.length - 1 - i));
+
+		return value;
 	}
 }

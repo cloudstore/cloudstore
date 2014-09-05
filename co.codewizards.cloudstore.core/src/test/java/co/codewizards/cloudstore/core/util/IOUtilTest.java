@@ -1,20 +1,18 @@
-/**
- *
- */
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static java.lang.System.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * @author Sebastian Schefczyk
@@ -22,6 +20,8 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 public class IOUtilTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(IOUtilTest.class);
+
+	private static Random random = new Random();
 
 	{
 		logger.debug("[{}]<init>", Integer.toHexString(identityHashCode(this)));
@@ -38,13 +38,13 @@ public class IOUtilTest {
 		final File fileName = createFile(subFolder, "fileName");
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 
-		final String relPath = IOUtil.getRelativePath(testDir, fileName);
+		final String relPath = getRelativePath(testDir, fileName);
 
 		System.out.println("relPath= " + relPath);
-		assertNotNull(relPath);
-		assertTrue(fileName.getAbsolutePath().endsWith(relPath));
+		assertThat(relPath).isNotNull();
+		assertThat(fileName.getAbsolutePath().endsWith(relPath)).isTrue();
 
-		assertEquals("subFolder/fileName", relPath);
+		assertThat(relPath).isEqualTo("subFolder/fileName");
 	}
 
 	@Test
@@ -62,13 +62,41 @@ public class IOUtilTest {
 		fileName.createNewFile();
 		System.out.println("fileName= " + fileName.getAbsolutePath());
 
-		final String relPath = IOUtil.getRelativePath(testDir, fileName);
+		final String relPath = getRelativePath(testDir, fileName);
 
 		System.out.println("relPath= " + relPath);
-		assertNotNull(relPath);
-		assertTrue(fileName.getAbsolutePath().endsWith(relPath));
+		assertThat(relPath).isNotNull();
+		assertThat(fileName.getAbsolutePath().endsWith(relPath)).isTrue();
 
-		assertEquals("subFolder/fileName", relPath);
+		assertThat(relPath).isEqualTo("subFolder/fileName");
+	}
+
+	@Test
+	public void bytesToLongToBytes() {
+		final byte[] bytes = longToBytes(Long.MAX_VALUE);
+		long l = bytesToLong(bytes);
+		assertThat(l).isEqualTo(Long.MAX_VALUE);
+
+		for (int i = 0; i < 100; ++i) {
+			random.nextBytes(bytes);
+			l = bytesToLong(bytes);
+			final byte[] bytes2 = longToBytes(l);
+			assertThat(bytes2).isEqualTo(bytes);
+		}
+	}
+
+	@Test
+	public void bytesToIntToBytes() {
+		final byte[] bytes = intToBytes(Integer.MAX_VALUE);
+		int l = bytesToInt(bytes);
+		assertThat(l).isEqualTo(Integer.MAX_VALUE);
+
+		for (int i = 0; i < 100; ++i) {
+			random.nextBytes(bytes);
+			l = bytesToInt(bytes);
+			final byte[] bytes2 = intToBytes(l);
+			assertThat(bytes2).isEqualTo(bytes);
+		}
 	}
 
 }
