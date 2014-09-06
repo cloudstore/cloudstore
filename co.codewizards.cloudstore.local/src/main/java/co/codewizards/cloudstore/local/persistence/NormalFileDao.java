@@ -29,6 +29,18 @@ public class NormalFileDao extends Dao<NormalFile, NormalFileDao> {
 		}
 	}
 
+	public Collection<NormalFile> getNormalFilesInProgress() {
+		final Query query = pm().newNamedQuery(getEntityClass(), "getNormalFiles_inProgress");
+		try {
+			@SuppressWarnings("unchecked")
+			final
+			Collection<NormalFile> repoFiles = (Collection<NormalFile>) query.execute();
+			return new ArrayList<NormalFile>(repoFiles);
+		} finally {
+			query.closeAll();
+		}
+	}
+
 	@Override
 	public void deletePersistent(final NormalFile entity) {
 		throw new UnsupportedOperationException("Use RepoFileDao for this operation!");

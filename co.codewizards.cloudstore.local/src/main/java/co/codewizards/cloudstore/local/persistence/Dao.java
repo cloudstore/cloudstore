@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;

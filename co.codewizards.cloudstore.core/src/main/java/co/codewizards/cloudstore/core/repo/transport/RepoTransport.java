@@ -9,6 +9,7 @@ import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.ResumeFileDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -224,6 +225,11 @@ public interface RepoTransport extends AutoCloseable {
 	ChangeSetDto getChangeSetDto(boolean localSync);
 
 	/**
+	 * If a previous sync was aborted, there could be a file to resume.
+	 */
+	ResumeFileDto getResumeFileDto();
+
+	/**
 	 * Creates the specified directory (including all parent-directories as needed).
 	 * <p>
 	 * If the directory already exists, this is a noop.
@@ -354,4 +360,5 @@ public interface RepoTransport extends AutoCloseable {
 
 	@Override
 	public void close();
+
 }

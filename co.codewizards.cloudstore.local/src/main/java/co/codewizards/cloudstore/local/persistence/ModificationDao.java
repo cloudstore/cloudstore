@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.Collection;
 
 import javax.jdo.Query;
@@ -22,9 +20,9 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 * to be queried where created.
 	 * @return those {@link Modification}s matching the given criteria. Never <code>null</code>, but maybe empty.
 	 */
-	public Collection<Modification> getModificationsAfter(RemoteRepository remoteRepository, long localRevision) {
+	public Collection<Modification> getModificationsAfter(final RemoteRepository remoteRepository, final long localRevision) {
 		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
-		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
+		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
@@ -41,9 +39,9 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 		}
 	}
 
-	public Collection<Modification> getModificationsBeforeOrEqual(RemoteRepository remoteRepository, long localRevision) {
+	public Collection<Modification> getModificationsBeforeOrEqual(final RemoteRepository remoteRepository, final long localRevision) {
 		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
-		Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
+		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
@@ -65,7 +63,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 * @param remoteRepository the {@link Modification#getRemoteRepository() remoteRepository} the queried modifications are assigned to.
 	 * @return those {@link Modification}s matching the given criteria. Never <code>null</code>, but maybe empty.
 	 */
-	public Collection<Modification> getModifications(RemoteRepository remoteRepository) {
+	public Collection<Modification> getModifications(final RemoteRepository remoteRepository) {
 		return getModificationsAfter(remoteRepository, -1);
 	}
 }

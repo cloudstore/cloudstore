@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,7 +34,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 		}
 
 		public void put(final File file, final Directory directory) {
-			file2DirectoryCache.put(AssertUtil.assertNotNull("file", file), AssertUtil.assertNotNull("directory", directory));
+			file2DirectoryCache.put(assertNotNull("file", file), assertNotNull("directory", directory));
 			directory2FileCache.put(directory, file);
 			directoryCacheList.remove(directory);
 			directoryCacheList.addLast(directory);
@@ -148,7 +148,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 * <code>null</code>, but maybe empty.
 	 */
 	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(final long localRevision, final UUID exclLastSyncFromRepositoryId) {
-		AssertUtil.assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
+		assertNotNull("exclLastSyncFromRepositoryId", exclLastSyncFromRepositoryId);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();
