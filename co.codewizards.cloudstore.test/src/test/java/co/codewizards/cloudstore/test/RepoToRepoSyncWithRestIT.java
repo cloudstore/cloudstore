@@ -5,9 +5,14 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,17 +24,45 @@ import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
+import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.UrlUtil;
 
-public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
+public class RepoToRepoSyncWithRestIT extends AbstractIT
 {
 	private static final Logger logger = LoggerFactory.getLogger(RepoToRepoSyncWithRestIT.class);
 
+	private File localRoot;
+	private File remoteRoot;
+
+	private String localPathPrefix;
+	private String remotePathPrefix;
+	private URL remoteRootURLWithPathPrefix;
 
 	@Override
 	@Before
 	public void before() {
 		localPathPrefix = "";
 		remotePathPrefix = "";
+	}
+
+	private File getLocalRootWithPathPrefix() {
+		if (localPathPrefix.isEmpty())
+			return localRoot;
+
+		return createFile(localRoot, localPathPrefix);
+	}
+
+	private File getRemoteRootWithPathPrefix() {
+		if (remotePathPrefix.isEmpty())
+			return remoteRoot;
+
+		final File file = createFile(remoteRoot, remotePathPrefix);
+		return file;
+	}
+
+	private URL getRemoteRootURLWithPathPrefix(final UUID remoteRepositoryId) throws MalformedURLException {
+		final URL remoteRootURL = UrlUtil.appendNonEncodedPath(new URL(getSecureUrl() + "/" + remoteRepositoryId), remotePathPrefix);
+		return remoteRootURL;
 	}
 
 	@Test
@@ -182,7 +215,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		assertThat(l_child_2_1_a.isFile()).isTrue();
 
 		modifyFileRandomly(l_child_2_1_a);
-		r_child_2.deleteRecursively();
+		IOUtil.deleteDirectoryRecursively(r_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
 			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
@@ -222,7 +255,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		assertThat(l_child_2.isDirectory()).isTrue();
 
 		modifyFileRandomly(r_child_2_1_a);
-		l_child_2.deleteRecursively();
+		IOUtil.deleteDirectoryRecursively(l_child_2);
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
 			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
@@ -243,6 +276,30 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		assertThat(l_collision).isNotNull();
 		assertThat(l_collision.getParentFile()).isEqualTo(localRoot);
 		assertThat(l_collision.getName()).startsWith("2.");
+	}
+
+	private void assertThatNoCollisionInRepo(final File localRoot) {
+		final List<File> collisions = searchCollisions(localRoot);
+		if (!collisions.isEmpty())
+			Assert.fail("Collision: " + collisions.get(0));
+	}
+
+	private List<File> searchCollisions(final File localRoot) {
+		final List<File> collisions = new ArrayList<File>();
+		searchCollisions_populate(localRoot, localRoot, collisions);
+		return collisions;
+	}
+
+	private void searchCollisions_populate(final File localRoot, final File file, final Collection<File> collisions) {
+		final File[] children = file.listFiles();
+		if (children != null) {
+			for (final File f : children) {
+				if (f.getName().contains(IOUtil.COLLISION_FILE_NAME_INFIX))
+					collisions.add(f);
+
+				searchCollisions_populate(localRoot, f, collisions);
+			}
+		}
 	}
 
 	private void modifyFileRandomly(final File file) throws IOException {

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -24,7 +26,6 @@ import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
-import co.codewizards.cloudstore.core.dto.ResumeFileDto;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -115,12 +116,6 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	public void close() {
 		client = null;
 		super.close();
-	}
-
-	@Override
-	public ResumeFileDto getResumeFileDto() {
-		// resuming is always only possible on local file system.
-		return null;
 	}
 
 	@Override

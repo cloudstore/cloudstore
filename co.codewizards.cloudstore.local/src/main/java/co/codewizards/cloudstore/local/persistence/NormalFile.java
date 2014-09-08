@@ -24,8 +24,7 @@ import co.codewizards.cloudstore.core.oio.File;
 	@Index(name="NormalFile_sha1_length", members={"sha1", "length"})
 })
 @Queries({
-	@Query(name="getNormalFiles_sha1_length", value="SELECT WHERE this.sha1 == :sha1 && this.length == :length"),
-	@Query(name="getNormalFiles_inProgress", value="SELECT WHERE this.inProgress == true")
+	@Query(name="getNormalFiles_sha1_length", value="SELECT WHERE this.sha1 == :sha1 && this.length == :length")
 })
 public class NormalFile extends RepoFile {
 
@@ -50,7 +49,7 @@ public class NormalFile extends RepoFile {
 	public long getLength() {
 		return length;
 	}
-	public void setLength(final long size) {
+	public void setLength(long size) {
 		this.length = size;
 	}
 	/**
@@ -60,7 +59,7 @@ public class NormalFile extends RepoFile {
 	public String getSha1() {
 		return sha1;
 	}
-	public void setSha1(final String sha) {
+	public void setSha1(String sha) {
 		this.sha1 = sha;
 	}
 
@@ -76,7 +75,7 @@ public class NormalFile extends RepoFile {
 	public boolean isInProgress() {
 		return inProgress;
 	}
-	public void setInProgress(final boolean inProgress) {
+	public void setInProgress(boolean inProgress) {
 		this.inProgress = inProgress;
 	}
 
