@@ -12,7 +12,7 @@ public abstract class AbstractClassExtension<T, E extends T> implements ClassExt
 	public AbstractClassExtension() {
 		final ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
 		final Type[] actualTypeArguments = superclass.getActualTypeArguments();
-		if (actualTypeArguments == null || actualTypeArguments.length < 1)
+		if (actualTypeArguments == null || actualTypeArguments.length < 2)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 
 		@SuppressWarnings("unchecked")
