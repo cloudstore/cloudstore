@@ -31,8 +31,7 @@ public abstract class DtoIo <D> {
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 
 		@SuppressWarnings("unchecked")
-		final
-		Class<D> c = (Class<D>) actualTypeArguments[0];
+		final Class<D> c = (Class<D>) actualTypeArguments[0];
 		this.dtoClass = c;
 		if (this.dtoClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
