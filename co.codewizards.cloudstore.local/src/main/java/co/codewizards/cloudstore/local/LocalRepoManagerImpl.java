@@ -791,7 +791,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 			try {
 				monitor.worked(1);
-				new LocalRepoSync(transaction).sync(new SubProgressMonitor(monitor, 98));
+				LocalRepoSync.create(transaction).sync(new SubProgressMonitor(monitor, 98));
 				transaction.commit();
 				monitor.worked(1);
 			} finally {

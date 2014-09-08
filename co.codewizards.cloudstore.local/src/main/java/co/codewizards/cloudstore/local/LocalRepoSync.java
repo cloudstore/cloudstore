@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.IOException;
@@ -22,6 +21,7 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
@@ -56,7 +56,7 @@ public class LocalRepoSync {
 
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
 
-	public LocalRepoSync(final LocalRepoTransaction transaction) {
+	protected LocalRepoSync(final LocalRepoTransaction transaction) {
 		this.transaction = assertNotNull("transaction", transaction);
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
 		repoFileDao = this.transaction.getDao(RepoFileDao.class);
@@ -64,6 +64,10 @@ public class LocalRepoSync {
 		remoteRepositoryDao = this.transaction.getDao(RemoteRepositoryDao.class);
 		modificationDao = this.transaction.getDao(ModificationDao.class);
 		deleteModificationDao = this.transaction.getDao(DeleteModificationDao.class);
+	}
+
+	public static LocalRepoSync create(final LocalRepoTransaction transaction) {
+		return ObjectFactoryUtil.create(LocalRepoSync.class, transaction);
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -255,16 +259,16 @@ public class LocalRepoSync {
 		try {
 			RepoFile repoFile;
 			if (file.isSymbolicLink()) {
-				final Symlink symlink = (Symlink) (repoFile = create(Symlink.class));
+				final Symlink symlink = (Symlink) (repoFile = ObjectFactoryUtil.create(Symlink.class));
 				try {
 					symlink.setTarget(file.readSymbolicLinkToPathString());
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			} else if (file.isDirectory()) {
-				repoFile = create(Directory.class);
+				repoFile = ObjectFactoryUtil.create(Directory.class);
 			} else if (file.isFile()) {
-				final NormalFile normalFile = (NormalFile) (repoFile = create(NormalFile.class));
+				final NormalFile normalFile = (NormalFile) (repoFile = ObjectFactoryUtil.create(NormalFile.class));
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				if (file.exists())

@@ -358,7 +358,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new RuntimeException(e);
 				}
 
-				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
+				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
 
 				final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles = tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values();
 				for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
@@ -429,7 +429,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new RuntimeException(e);
 				}
 
-				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
 				AssertUtil.assertNotNull("toRepoFile", toRepoFile);
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
@@ -469,7 +469,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new RuntimeException(e);
 				}
 
-				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
 				final RepoFile fromRepoFile = transaction.getDao(RepoFileDao.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
 				if (fromRepoFile != null)
@@ -495,7 +495,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 				localRepoSync.sync(file, new NullProgressMonitor());
 
 				if (fileIsLocalRoot) {
@@ -547,7 +547,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			// WRITE tx, because it performs a local sync!
 
-			final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+			final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 			localRepoSync.sync(file, new NullProgressMonitor());
 
 			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
@@ -874,7 +874,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					logger.info("beginPutFile: Collision: Destination file already exists and is a symlink or a directory! file='{}'", file.getAbsolutePath());
 					final File collisionFile = IOUtil.createCollisionFile(file);
 					file.renameTo(collisionFile);
-					new LocalRepoSync(transaction).sync(collisionFile, new NullProgressMonitor());
+					LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor());
 				}
 
 				if (file.isSymbolicLink() || (file.exists() && !file.isFile()))
@@ -900,7 +900,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				// *immediately* before beginning the sync of this file and before detecting a collision.
 				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.
 				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
-				new LocalRepoSync(transaction).sync(file, new NullProgressMonitor());
+				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
 
 				tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
 
@@ -963,7 +963,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				throw new RuntimeException(e);
 			}
 
-			new LocalRepoSync(transaction).sync(collisionFile, new NullProgressMonitor()); // TODO sub-progress-monitor!
+			LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor()); // TODO sub-progress-monitor!
 		}
 	}
 
@@ -1268,7 +1268,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				tempChunkFileManager.deleteTempChunkFiles(tempChunkFileWithDtoFiles);
 				tempChunkFileManager.deleteTempDirIfEmpty(file);
 
-				final LocalRepoSync localRepoSync = new LocalRepoSync(transaction);
+				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 				file.setLastModified(lastModified.getTime());
 				localRepoSync.updateRepoFile(normalFile, file, new NullProgressMonitor());
 				normalFile.setLastSyncFromRepositoryId(clientRepositoryId);
