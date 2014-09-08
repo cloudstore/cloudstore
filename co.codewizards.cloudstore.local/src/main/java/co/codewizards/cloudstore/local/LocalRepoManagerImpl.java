@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -484,7 +484,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void createAndPersistLocalRepository(final PersistenceManager pm) {
 		LocalRepository localRepository = new LocalRepository();
-		final Directory root = new Directory();
+		final Directory root = create(Directory.class);
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));
 		localRepository.setRoot(root);

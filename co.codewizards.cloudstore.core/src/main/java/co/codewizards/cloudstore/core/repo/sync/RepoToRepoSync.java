@@ -1,13 +1,12 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
@@ -529,7 +528,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			if (toRepoFileDto instanceof NormalFileDto)
 				toNormalFileDto = (NormalFileDto) toRepoFileDto;
 			else
-				toNormalFileDto = new NormalFileDto(); // dummy (null-object pattern)
+				toNormalFileDto = create(NormalFileDto.class); // dummy (null-object pattern)
 
 			try {
 				toRepoTransport.beginPutFile(path);

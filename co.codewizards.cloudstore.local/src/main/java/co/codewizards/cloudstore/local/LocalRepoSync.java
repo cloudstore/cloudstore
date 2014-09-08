@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.IOException;
@@ -121,7 +122,7 @@ public class LocalRepoSync {
 	 * @return the {@link RepoFile} corresponding to the given {@code file}. Is <code>null</code>, if the given
 	 * {@code file} does not exist; otherwise it is never <code>null</code>.
 	 */
-	private RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
+	protected RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
 		assertNotNull("file", file);
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Local sync...", 100);
@@ -254,16 +255,16 @@ public class LocalRepoSync {
 		try {
 			RepoFile repoFile;
 			if (file.isSymbolicLink()) {
-				final Symlink symlink = (Symlink) (repoFile = new Symlink());
+				final Symlink symlink = (Symlink) (repoFile = create(Symlink.class));
 				try {
 					symlink.setTarget(file.readSymbolicLinkToPathString());
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			} else if (file.isDirectory()) {
-				repoFile = new Directory();
+				repoFile = create(Directory.class);
 			} else if (file.isFile()) {
-				final NormalFile normalFile = (NormalFile) (repoFile = new NormalFile());
+				final NormalFile normalFile = (NormalFile) (repoFile = create(NormalFile.class));
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				if (file.exists())

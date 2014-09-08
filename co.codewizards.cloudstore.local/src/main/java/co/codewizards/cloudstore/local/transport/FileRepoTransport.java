@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
@@ -187,7 +188,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			} else if (filesInProgress.size() > 1)
 				throw new IllegalStateException("Multiple unresumed file are not yet supported!");
 
-			final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
+			final RepoFileDtoConverter converter = create(RepoFileDtoConverter.class, transaction);
 			final NormalFile normalFile = filesInProgress.iterator().next();
 
 			final List<RepoFileDto> pathListDto = new ArrayList<RepoFileDto>();
@@ -552,7 +553,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			final RepoFile repoFile = repoFileDao.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
 			if (repoFile != null) {
-				final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
+				final RepoFileDtoConverter converter = create(RepoFileDtoConverter.class, transaction);
 				repoFileDto = converter.toRepoFileDto(repoFile, Integer.MAX_VALUE); // TODO pass depth as argument - or maybe leave it this way?
 			}
 
@@ -717,7 +718,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			while (rf != null) {
 				if (!entityID2RepoFileDto.containsKey(rf.getId())) {
 					if (repoFileDtoConverter == null)
-						repoFileDtoConverter = new RepoFileDtoConverter(transaction);
+						repoFileDtoConverter = create(RepoFileDtoConverter.class, transaction);
 
 					final RepoFileDto repoFileDto = repoFileDtoConverter.toRepoFileDto(rf, 0);
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
@@ -797,7 +798,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			if (repoFile == null) {
 				Directory directory;
-				repoFile = directory = new Directory();
+				repoFile = directory = create(Directory.class);
 				directory.setName(file.getName());
 				directory.setParent(parentRepoFile);
 				directory.setLastModified(new Date(file.lastModified()));

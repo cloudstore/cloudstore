@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.dto;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +52,7 @@ public class RepoFileDtoConverter {
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
 			final NormalFileDto normalFileDto;
-			repoFileDto = normalFileDto = new NormalFileDto();
+			repoFileDto = normalFileDto = create(NormalFileDto.class);
 			normalFileDto.setLength(normalFile.getLength());
 			normalFileDto.setSha1(normalFile.getSha1());
 			if (depth > 0) {
@@ -84,12 +84,12 @@ public class RepoFileDtoConverter {
 			}
 		}
 		else if (repoFile instanceof Directory) {
-			repoFileDto = new DirectoryDto();
+			repoFileDto = create(DirectoryDto.class);
 		}
 		else if (repoFile instanceof Symlink) {
 			final Symlink symlink = (Symlink) repoFile;
 			final SymlinkDto symlinkDto;
-			repoFileDto = symlinkDto = new SymlinkDto();
+			repoFileDto = symlinkDto = create(SymlinkDto.class);
 			symlinkDto.setTarget(symlink.getTarget());
 		}
 		else

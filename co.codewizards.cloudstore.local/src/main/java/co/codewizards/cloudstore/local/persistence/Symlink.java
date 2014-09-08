@@ -16,10 +16,12 @@ public class Symlink extends RepoFile {
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String target;
 
+	public Symlink() { }
+
 	public String getTarget() {
 		return target;
 	}
-	public void setTarget(String target) {
+	public void setTarget(final String target) {
 		this.target = target;
 	}
 

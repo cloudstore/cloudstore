@@ -18,6 +18,8 @@ public class NormalFileDto extends RepoFileDto {
 
 	private List<FileChunkDto> tempFileChunkDtos;
 
+	public NormalFileDto() { }
+
 	/**
 	 * Gets the file size in bytes.
 	 * <p>
@@ -27,7 +29,7 @@ public class NormalFileDto extends RepoFileDto {
 	public long getLength() {
 		return length;
 	}
-	public void setLength(long size) {
+	public void setLength(final long size) {
 		this.length = size;
 	}
 	/**
@@ -37,7 +39,7 @@ public class NormalFileDto extends RepoFileDto {
 	public String getSha1() {
 		return sha1;
 	}
-	public void setSha1(String sha) {
+	public void setSha1(final String sha) {
 		this.sha1 = sha;
 	}
 
@@ -47,7 +49,7 @@ public class NormalFileDto extends RepoFileDto {
 
 		return fileChunkDtos;
 	}
-	public void setFileChunkDtos(List<FileChunkDto> fileChunkDtos) {
+	public void setFileChunkDtos(final List<FileChunkDto> fileChunkDtos) {
 		this.fileChunkDtos = fileChunkDtos;
 	}
 
@@ -57,7 +59,7 @@ public class NormalFileDto extends RepoFileDto {
 
 		return tempFileChunkDtos;
 	}
-	public void setTempFileChunkDtos(List<FileChunkDto> tempFileChunkDtos) {
+	public void setTempFileChunkDtos(final List<FileChunkDto> tempFileChunkDtos) {
 		this.tempFileChunkDtos = tempFileChunkDtos;
 	}
 }

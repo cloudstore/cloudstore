@@ -21,16 +21,6 @@ public class ConfigTest extends AbstractTest {
 
 	private static final Object mutex = ConfigTest.class;
 
-	@Override
-	public void after() {
-		synchronized (mutex) {
-			for (final File file : Config.getInstance().propertiesFiles) {
-				file.delete();
-				assertThat(file.exists()).isFalse();
-			}
-		}
-	}
-
 	/**
 	 * Tests whether the global configuration file is named as documented on the
 	 * web-site. If this test breaks, it must be verified, if the name really needs to be changed
@@ -43,6 +33,8 @@ public class ConfigTest extends AbstractTest {
 			assertThat(globalConfig.propertiesFiles.length).isEqualTo(1);
 			assertThat(globalConfig.propertiesFiles[0]).isNotNull();
 			assertThat(globalConfig.propertiesFiles[0].getName()).isEqualTo("cloudstore.properties");
+
+			deleteMainConfigFiles();
 		}
 	}
 
@@ -65,6 +57,8 @@ public class ConfigTest extends AbstractTest {
 			setGlobalProperty(testKey, "testValueBBB");
 			value = globalConfig.getProperty(testKey, null);
 			assertThat(value).isEqualTo("testValueBBB");
+
+			deleteMainConfigFiles();
 		}
 	}
 
@@ -173,6 +167,15 @@ public class ConfigTest extends AbstractTest {
 
 			setProperty(createFile(child_1, "cloudstore.properties"), testKey2, "    55588  ");
 			assertThat(config_1_2_aaa.getPropertyAsLong(testKey2, -1)).isEqualTo(55588);
+
+			deleteMainConfigFiles();
+		}
+	}
+
+	private void deleteMainConfigFiles() {
+		for (final File file : Config.getInstance().propertiesFiles) {
+			file.delete();
+			assertThat(file.exists()).isFalse();
 		}
 	}
 

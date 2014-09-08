@@ -21,6 +21,8 @@ public class RepoFileDto {
 
 	private Date lastModified;
 
+	public RepoFileDto() { }
+
 	public long getId() {
 		return id;
 	}

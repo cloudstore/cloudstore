@@ -11,4 +11,6 @@ import javax.jdo.annotations.PersistenceCapable;
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="Directory")
 public class Directory extends RepoFile {
 
+	public Directory() { }
+
 }

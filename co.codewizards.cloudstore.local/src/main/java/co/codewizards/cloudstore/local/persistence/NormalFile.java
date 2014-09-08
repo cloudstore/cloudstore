@@ -39,6 +39,8 @@ public class NormalFile extends RepoFile {
 	@Persistent(mappedBy="normalFile", dependentElement="true")
 	private Set<FileChunk> fileChunks;
 
+	public NormalFile() { }
+
 	/**
 	 * Gets the file size in bytes.
 	 * <p>

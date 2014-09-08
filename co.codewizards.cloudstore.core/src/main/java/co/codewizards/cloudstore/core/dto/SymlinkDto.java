@@ -7,10 +7,12 @@ public class SymlinkDto extends RepoFileDto {
 
 	private String target;
 
+	public SymlinkDto() { }
+
 	public String getTarget() {
 		return target;
 	}
-	public void setTarget(String target) {
+	public void setTarget(final String target) {
 		this.target = target;
 	}
 
