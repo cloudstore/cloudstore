@@ -34,6 +34,8 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDtoList;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
@@ -63,6 +65,8 @@ import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
 import co.codewizards.cloudstore.local.persistence.Directory;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMark;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarkDao;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepoDao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
@@ -171,6 +175,46 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	@Override
+	public FileInProgressMarkDtoList getFileInProgressMarkDtoList(final UUID fromRepository, final UUID toRepository) {
+		getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
+
+		final FileInProgressMarkDtoList fileInProgressMarkListDto = new FileInProgressMarkDtoList();
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
+
+			final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
+			final Collection<FileInProgressMark> fileInProgressMarks = fileInProgressMarkDao.getFileInProgressMarks(fromRepository, toRepository);
+			if (fileInProgressMarks.size() == 0)
+				return null;
+
+			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+			final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
+			final List<FileInProgressMarkDto> fileInProgressMarkDtos = new ArrayList<>();
+
+			for (final FileInProgressMark fileInProgressMark : fileInProgressMarks) {
+				final FileInProgressMarkDto fileInProgressMarkDto = new FileInProgressMarkDto();
+				final File localRoot = getLocalRepoManager().getLocalRoot();
+				final File file = getFile(fileInProgressMark.getPath());
+				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
+				if (!(repoFile instanceof NormalFile))
+					throw new IllegalStateException("!(repoFile instanceof NormalFile), repoFile.path=" + repoFile.getPath());
+
+				final List<RepoFileDto> pathListDto = new ArrayList<RepoFileDto>();
+				final List<RepoFile> pathList = repoFile.getPathList();
+				for (final RepoFile pathFile : pathList) {
+					final RepoFileDto pathFileDto = converter.toRepoFileDto(pathFile, 0);
+					pathListDto.add(pathFileDto);
+				}
+				fileInProgressMarkDto.setPathList(pathListDto);
+			}
+			logger.info("getFileInProgressMarkDtoList: prepared {} file(s) for resuming.", fileInProgressMarkDtos.size());
+			fileInProgressMarkListDto.setElements(fileInProgressMarkDtos);
+
+			transaction.commit();
+			return fileInProgressMarkListDto;
+		}
+	}
+
+	@Override
 	public ChangeSetDto getChangeSetDto(final boolean localSync) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
@@ -232,7 +276,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			return changeSetDto;
 		}
 	}
-	
+
 	protected File getPathPrefixFile() {
 		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
@@ -551,6 +595,46 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			throw new RuntimeException(e);
 		}
 	}
+
+//	private List<FileChunkDto> toFileChunkDtos(final Set<FileChunk> fileChunks) {
+//		final long startTimestamp = System.currentTimeMillis();
+//		final List<FileChunkDto> result = new ArrayList<FileChunkDto>(AssertUtil.assertNotNull("fileChunks", fileChunks).size());
+//		for (final FileChunk fileChunk : fileChunks) {
+//			final FileChunkDto fileChunkDto = toFileChunkDto(fileChunk);
+//			if (fileChunkDto != null)
+//				result.add(fileChunkDto);
+//		}
+//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
+//		return result;
+//	}
+//
+//	private FileChunkDto toFileChunkDto(final FileChunk fileChunk) {
+//		final FileChunkDto dto = new FileChunkDto();
+//		dto.setLength(fileChunk.getLength());
+//		dto.setOffset(fileChunk.getOffset());
+//		dto.setSha1(fileChunk.getSha1());
+//		return dto;
+//	}
+//	private List<RepoFileDto> toRepoFileDtos(final Collection<RepoFile> fileChunks) {
+//		final long startTimestamp = System.currentTimeMillis();
+//		final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
+//		final List<RepoFileDto> result = new ArrayList<RepoFileDto>(AssertUtil.assertNotNull("fileChunks", fileChunks).size());
+//		for (final RepoFile fileChunk : fileChunks) {
+//			final RepoFileDto fileChunkDto = toRepoFileDto(fileChunk);
+//			if (fileChunkDto != null)
+//				result.add(fileChunkDto);
+//		}
+//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
+//		return result;
+//	}
+//
+//	private RepoFileDto toRepoFileDto(final RepoFile repoFile) {
+//		final FileChunkDto dto = new FileChunkDto();
+//		dto.setLength(repoFile.getLength());
+//		dto.setOffset(repoFile.getOffset());
+//		dto.setSha1(repoFile.getSha1());
+//		return dto;
+//	}
 
 	private List<ModificationDto> toModificationDtos(final Collection<Modification> modifications) {
 		final long startTimestamp = System.currentTimeMillis();
@@ -1127,6 +1211,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				long destFileWriteOffset = 0;
 				// tempChunkFileWithDtoFiles are sorted by offset (ascending)
 				final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles = tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values();
+				logger.debug("endPutFile: #tempChunkFileWithDtoFiles={}", tempChunkFileWithDtoFiles.size());
 				for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
 					final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile(); // tempChunkFile may be null!!!
 					final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
@@ -1140,6 +1225,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 						// The following might fail, if *file* was truncated during the transfer. In this case,
 						// throwing an exception now is probably the best choice as the next sync run will
 						// continue cleanly.
+						logger.info("endPutFile: writing from fileIn into destFile {}", destFile.getName());
 						writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, offset - destFileWriteOffset);
 						final long tempChunkFileLength = tempChunkFileDto.getFileChunkDto().getLength();
 						skipOrFail(fileIn, tempChunkFileLength); // skipping beyond the EOF is supported by the FileInputStream according to Javadoc.
@@ -1147,6 +1233,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					}
 
 					if (tempChunkFile != null && tempChunkFile.exists()) {
+						logger.info("endPutFile: writing tempChunkFile {} into destFile {}", tempChunkFile.getName(), destFile.getName());
 						writeTempChunkFileToDestFile(destFile, tempChunkFile, tempChunkFileDto);
 						deleteOrFail(tempChunkFile);
 					}
@@ -1320,6 +1407,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			transferDoneMarkerDao.deleteRepoFileTransferDones(clientRepositoryId, getRepositoryId());
 
+			final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
+			fileInProgressMarkDao.deleteFileInProgressMarks(getLocalRepoManager().getRepositoryId(), clientRepositoryId);
+
 			transaction.commit();
 		}
 	}
@@ -1358,4 +1448,36 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transaction.commit();
 		}
 	}
+
+	@Override
+	public void setFileInProgressMark(final UUID fromRepository, final UUID toRepository, final String path) {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+			final FileInProgressMarkDao dao = transaction.getDao(FileInProgressMarkDao.class);
+			FileInProgressMark fileInProgressMark = dao.getFileInProgressMark(fromRepository, toRepository, path);
+			if (fileInProgressMark == null) {
+				fileInProgressMark = new FileInProgressMark();
+				fileInProgressMark.setFromRepositoryId(fromRepository);
+				fileInProgressMark.setToRepositoryId(toRepository);
+				fileInProgressMark.setPath(path);
+			}
+			dao.makePersistent(fileInProgressMark);
+			logger.info("markFileInProgress: {}", fileInProgressMark.toString());
+			transaction.commit();
+		}
+	}
+
+	@Override
+	public void removeFileInProgressMark(final UUID fromRepository, final UUID toRepository, final String path) {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+			final FileInProgressMarkDao dao = transaction.getDao(FileInProgressMarkDao.class);
+			final FileInProgressMark fileInProgressMark = dao.getFileInProgressMark(fromRepository, toRepository, path);
+			if (fileInProgressMark != null) {
+				logger.info("removeFileInProgressMark: {}", fileInProgressMark.toString());
+				dao.deletePersistent(fileInProgressMark);
+			}
+
+			transaction.commit();
+		}
+	}
+
 }

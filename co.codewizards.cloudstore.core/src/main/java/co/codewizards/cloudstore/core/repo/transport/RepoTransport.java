@@ -354,4 +354,5 @@ public interface RepoTransport extends AutoCloseable {
 
 	@Override
 	public void close();
+
 }

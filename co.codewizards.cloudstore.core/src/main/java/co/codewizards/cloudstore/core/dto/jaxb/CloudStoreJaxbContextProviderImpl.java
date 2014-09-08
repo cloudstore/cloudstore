@@ -13,6 +13,8 @@ import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDtoList;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDtoList;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 
@@ -35,6 +37,8 @@ public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbCon
 				RepoFileDtoList.class,
 				RepositoryDto.class,
 				SymlinkDto.class,
+				FileInProgressMarkDto.class,
+				FileInProgressMarkDtoList.class,
 				TempChunkFileDto.class
 		};
 	}

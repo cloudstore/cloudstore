@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;

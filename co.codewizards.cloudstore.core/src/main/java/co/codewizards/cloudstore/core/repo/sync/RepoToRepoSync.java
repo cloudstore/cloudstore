@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +32,8 @@ import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDto;
+import co.codewizards.cloudstore.core.dto.FileInProgressMarkDtoList;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -48,7 +51,6 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
@@ -86,8 +88,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	 * must be referenced here.
 	 */
 	public RepoToRepoSync(File localRoot, final URL remoteRoot) {
-		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(AssertUtil.assertNotNull("localRoot", localRoot));
-		this.remoteRoot = UrlUtil.canonicalizeURL(AssertUtil.assertNotNull("remoteRoot", remoteRoot));
+		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
+		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
 		this.localRoot = localRoot = createFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
@@ -102,7 +104,7 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	public void sync(final ProgressMonitor monitor) {
-		AssertUtil.assertNotNull("monitor", monitor);
+		assertNotNull("monitor", monitor);
 		monitor.beginTask("Synchronising...", 201);
 		try {
 			readRemoteRepositoryIdFromRepoTransport();
@@ -172,13 +174,13 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void waitForAndCheckLocalSyncFuture() {
 		try {
-			AssertUtil.assertNotNull("localSyncFuture", localSyncFuture).get();
+			assertNotNull("localSyncFuture", localSyncFuture).get();
 		} catch (final RuntimeException e) {
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
-		AssertUtil.assertNotNull("localSyncExecutor", localSyncExecutor).shutdown();
+		assertNotNull("localSyncExecutor", localSyncExecutor).shutdown();
 		localSyncFuture = null;
 		localSyncExecutor = null;
 	}
@@ -215,7 +217,6 @@ public class RepoToRepoSync implements AutoCloseable {
 			monitor.worked(8);
 
 			waitForAndCheckLocalSyncFutureIfExists();
-
 			sync(fromRepoTransport, toRepoTransport, changeSetDto, new SubProgressMonitor(monitor, 90));
 
 			fromRepoTransport.endSyncFromRepository();
@@ -226,8 +227,9 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
-	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final ChangeSetDto changeSetDto, final ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 2 * changeSetDto.getRepoFileDtos().size());
+	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final ChangeSetDto changeSetDto, final ProgressMonitor monitor) {
+		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 2 * changeSetDto.getRepoFileDtos().size() + 1);
 		try {
 			final RepoFileDtoTreeNode repoFileDtoTree = RepoFileDtoTreeNode.createTree(changeSetDto.getRepoFileDtos());
 			if (repoFileDtoTree != null) {
@@ -239,6 +241,10 @@ public class RepoToRepoSync implements AutoCloseable {
 			syncModifications(fromRepoTransport, toRepoTransport, changeSetDto.getModificationDtos(),
 					new SubProgressMonitor(monitor, changeSetDto.getModificationDtos().size()));
 
+			final FileInProgressMarkDtoList fileInProgressMarkDtoList = localRepoTransport.getFileInProgressMarkDtoList(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId());
+			if (fileInProgressMarkDtoList != null)
+				syncFilesLeftInProgress(fromRepoTransport, toRepoTransport, fileInProgressMarkDtoList, new SubProgressMonitor(monitor, 1));
+
 			if (repoFileDtoTree != null) {
 				sync(fromRepoTransport, toRepoTransport, repoFileDtoTree,
 						new Class<?>[] { RepoFileDto.class }, new Class<?>[] { DirectoryDto.class },
@@ -249,16 +255,40 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
+	private void syncFilesLeftInProgress(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final FileInProgressMarkDtoList fileInProgressMarkDtoList, final ProgressMonitor monitor) {
+		assertNotNull("fileInProgressMarkDtoList", fileInProgressMarkDtoList);
+		monitor.beginTask("Resuming...", fileInProgressMarkDtoList.getElements().size());
+		try {
+			final List<FileInProgressMarkDto> fileInProgressMarkDtos = fileInProgressMarkDtoList.getElements();
+			logger.info("syncFilesLeftInProgress: starting to resume {} file(s).", fileInProgressMarkDtos.size());
+			for (final FileInProgressMarkDto fileInProgressMarkDto : fileInProgressMarkDtos) {
+				logger.info("syncFilesLeftInProgress: start resume...");
+				final List<RepoFileDto> pathList = fileInProgressMarkDto.getPathList();
+				final RepoFileDtoTreeNode resumeRepoFileDtoTree = RepoFileDtoTreeNode.createTree(pathList);
+				if (resumeRepoFileDtoTree != null) {
+					sync(fromRepoTransport, toRepoTransport, resumeRepoFileDtoTree,
+							new Class<?>[] { RepoFileDto.class }, new Class<?>[0],
+							new SubProgressMonitor(monitor, 1));
+				}
+				logger.info("syncFilesLeftInProgress: finished resume.");
+				monitor.worked(1);
+			}
+		} finally {
+			monitor.done();
+		}
+	}
+
 	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final RepoFileDtoTreeNode repoFileDtoTree,
 			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl,
 			final ProgressMonitor monitor) {
-		AssertUtil.assertNotNull("fromRepoTransport", fromRepoTransport);
-		AssertUtil.assertNotNull("toRepoTransport", toRepoTransport);
-		AssertUtil.assertNotNull("repoFileDtoTree", repoFileDtoTree);
-		AssertUtil.assertNotNull("repoFileDtoClassesIncl", repoFileDtoClassesIncl);
-		AssertUtil.assertNotNull("repoFileDtoClassesExcl", repoFileDtoClassesExcl);
-		AssertUtil.assertNotNull("monitor", monitor);
+		assertNotNull("fromRepoTransport", fromRepoTransport);
+		assertNotNull("toRepoTransport", toRepoTransport);
+		assertNotNull("repoFileDtoTree", repoFileDtoTree);
+		assertNotNull("repoFileDtoClassesIncl", repoFileDtoClassesIncl);
+		assertNotNull("repoFileDtoClassesExcl", repoFileDtoClassesExcl);
+		assertNotNull("monitor", monitor);
 
 		final Map<Class<?>, Boolean> repoFileDtoClass2Included = new HashMap<Class<?>, Boolean>();
 		final Map<Class<?>, Boolean> repoFileDtoClass2Excluded = new HashMap<Class<?>, Boolean>();
@@ -462,7 +492,9 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
-	private void syncFile(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode, final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
+	private void syncFile(final RepoTransport fromRepoTransport,
+			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
+			final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
 			final String path = repoFileDtoTreeNode.getPath();
@@ -500,6 +532,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 			try {
 				toRepoTransport.beginPutFile(path);
+				localRepoTransport.setFileInProgressMark(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path);
 			} catch (final DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
 				if (logger.isDebugEnabled())
@@ -595,7 +628,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			toRepoTransport.endPutFile(
 					path, fromNormalFileDto.getLastModified(),
 					fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
-
+			localRepoTransport.removeFileInProgressMark(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path);
 			monitor.worked(6);
 		} finally {
 			monitor.done();
@@ -603,7 +636,7 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	private String sha1(final byte[] data) {
-		AssertUtil.assertNotNull("data", data);
+		assertNotNull("data", data);
 		try {
 			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
 			return HashUtil.encodeHexStr(hash);

@@ -226,6 +226,12 @@
 				<version>4.11</version>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>org.jmockit</groupId>
+				<artifactId>jmockit</artifactId>
+				<version>1.11</version>
+				<scope>test</scope>
+			</dependency>
 
 			<dependency>
 				<groupId>org.assertj</groupId>
@@ -385,11 +391,11 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>2.17</version>
 					<configuration>
-						<!--
+						<!-- TODO still buggy (e.g. ConfigTest and SyncAbortIT)
 						<parallel>methods</parallel>
-						-->
 						<parallel>all</parallel>
 						<threadCount>4</threadCount>
+						-->
 					</configuration>
 					<executions>
 						<execution>

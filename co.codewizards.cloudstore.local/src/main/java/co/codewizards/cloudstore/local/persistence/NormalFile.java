@@ -49,7 +49,7 @@ public class NormalFile extends RepoFile {
 	public long getLength() {
 		return length;
 	}
-	public void setLength(long size) {
+	public void setLength(final long size) {
 		this.length = size;
 	}
 	/**
@@ -59,7 +59,7 @@ public class NormalFile extends RepoFile {
 	public String getSha1() {
 		return sha1;
 	}
-	public void setSha1(String sha) {
+	public void setSha1(final String sha) {
 		this.sha1 = sha;
 	}
 
@@ -75,7 +75,7 @@ public class NormalFile extends RepoFile {
 	public boolean isInProgress() {
 		return inProgress;
 	}
-	public void setInProgress(boolean inProgress) {
+	public void setInProgress(final boolean inProgress) {
 		this.inProgress = inProgress;
 	}
 
