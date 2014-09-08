@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="logback.xsd">
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
@@ -17,6 +19,7 @@
 
 	<!-- BEGIN DataNucleus http://www.datanucleus.org/products/datanucleus/logging.html -->
 	<logger name="DataNucleus" level="INFO" />
+	<logger name="DataNucleus.General" level="INFO" />
 	<!--
 	<logger name="DataNucleus.Datastore" level="INFO" />
 	<logger name="DataNucleus.Datastore.Schema" level="INFO" />
@@ -24,6 +27,7 @@
 	<logger name="DataNucleus.Query" level="INFO" />
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	-->
+	<logger name="DataNucleus.Enhancer" level="DEBUG" />
 	<!-- END DataNucleus -->
 
 	<logger name="co.codewizards.cloudstore.core.repo.sync" level="ALL" />

@@ -135,6 +135,26 @@ public abstract class AbstractIT {
 		filesInRepo.add(file);
 	}
 
+	protected void moveFile(File localRoot, File from, File to) throws IOException {
+		localRoot = localRoot.getCanonicalFile();
+		from = from.getAbsoluteFile();
+		to = to.getAbsoluteFile();
+		assertThat(from.exists()).isTrue();
+		from.move(to);
+		assertThat(from.exists()).isFalse();
+		assertThat(to.exists()).isTrue();
+
+		final Set<File> filesInRepo = localRoot2FilesInRepo.get(localRoot);
+		if (filesInRepo == null)
+			throw new IllegalStateException("No filesInRepo for localRoot: " + localRoot);
+
+		if (!filesInRepo.remove(from))
+			throw new IllegalStateException("File did not exist in filesInRepo: " + from);
+
+		if (!filesInRepo.add(to))
+			throw new IllegalStateException("Could not add file into filesInRepo: " + to);
+	}
+
 	protected File createFileWithRandomContent(final File parent, final String name) throws IOException {
 		final File file = createFile(parent, name);
 		return createFileWithRandomContent(file);

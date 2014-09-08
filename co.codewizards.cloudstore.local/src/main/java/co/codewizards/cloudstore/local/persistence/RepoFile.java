@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Collections;
 import java.util.Date;

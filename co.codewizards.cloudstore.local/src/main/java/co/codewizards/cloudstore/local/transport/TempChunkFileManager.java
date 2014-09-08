@@ -157,6 +157,9 @@ public class TempChunkFileManager {
 	 * (empty), if it did not yet exist.
 	 */
 	public synchronized File createTempChunkFile(final File destFile, final long offset) {
+		return createTempChunkFile(destFile, offset, true);
+	}
+	private synchronized File createTempChunkFile(final File destFile, final long offset, final boolean createNewFile) {
 		final File tempDir = getTempDir(destFile);
 		tempDir.mkdir();
 		if (!tempDir.isDirectory())
@@ -164,12 +167,36 @@ public class TempChunkFileManager {
 
 		final File tempFile = createFile(tempDir, String.format("%s%s_%s",
 				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
-		try {
-			tempFile.createNewFile();
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
+		if (createNewFile) {
+			try {
+				tempFile.createNewFile();
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		return tempFile;
+	}
+
+	/** If source file was moved, the chunks need to be moved, too. */
+	public void moveChunks(final File oldDestFile, final File newDestFile) {
+		final File tempDir = getTempDir(newDestFile);
+		tempDir.mkdir();
+		if (!tempDir.isDirectory())
+			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
+
+		final Map<Long, TempChunkFileWithDtoFile> offset2TempChunkFileWithDtoFile = getOffset2TempChunkFileWithDtoFile(oldDestFile);
+		for (final Map.Entry<Long, TempChunkFileWithDtoFile> entry : offset2TempChunkFileWithDtoFile.entrySet()) {
+			final Long offset = entry.getKey();
+			final TempChunkFileWithDtoFile tempChunkFileWithDtoFile = entry.getValue();
+			final File oldTempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile();
+			final File newTempChunkFile = createTempChunkFile(newDestFile, offset, false);
+			try {
+				oldTempChunkFile.move(newTempChunkFile);
+				logger.info("Moved chunk from {} to {}", oldTempChunkFile, newTempChunkFile);
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 	/**
@@ -233,4 +260,5 @@ public class TempChunkFileManager {
 				deleteOrFail(tempChunkFileDtoFile);
 		}
 	}
+
 }

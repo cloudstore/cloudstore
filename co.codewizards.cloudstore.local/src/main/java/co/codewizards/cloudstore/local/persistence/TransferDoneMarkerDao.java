@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
