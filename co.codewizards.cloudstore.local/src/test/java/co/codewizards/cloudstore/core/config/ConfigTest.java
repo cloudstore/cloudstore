@@ -134,6 +134,8 @@ public class ConfigTest extends AbstractTest {
 		setProperty(createFile(child_1_2_aaa.getParentFile(), "cloudstore.properties"), testKey1, "val_1_2_visible");
 		assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_visible");
 
+		waitForDifferentLastModifiedTimestamp();
+
 		assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer); // global
 		setProperty(createFile(localRoot, "cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
 		assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directDuringTransfer); // root directory
@@ -169,7 +171,7 @@ public class ConfigTest extends AbstractTest {
 	private static void waitForDifferentLastModifiedTimestamp() {
 		// Make sure the file has a different lastModified-timestamp! Most file systems have a timestamp-granularity of 1 second.
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(1100);
 		} catch (final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
