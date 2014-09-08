@@ -22,7 +22,7 @@ public abstract class AbstractClassExtension<T, E extends T> implements ClassExt
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 
 		@SuppressWarnings("unchecked")
-		final Class<E> c2 = (Class<E>) actualTypeArguments[0];
+		final Class<E> c2 = (Class<E>) actualTypeArguments[1];
 		this.extendingClass = c2;
 		if (this.extendingClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
