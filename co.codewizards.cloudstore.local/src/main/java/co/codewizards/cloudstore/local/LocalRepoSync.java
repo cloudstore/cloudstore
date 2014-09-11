@@ -45,13 +45,13 @@ public class LocalRepoSync {
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoSync.class);
 
-	private final LocalRepoTransaction transaction;
-	private final File localRoot;
-	private final RepoFileDao repoFileDao;
-	private final NormalFileDao normalFileDao;
-	private final RemoteRepositoryDao remoteRepositoryDao;
-	private final ModificationDao modificationDao;
-	private final DeleteModificationDao deleteModificationDao;
+	protected final LocalRepoTransaction transaction;
+	protected final File localRoot;
+	protected final RepoFileDao repoFileDao;
+	protected final NormalFileDao normalFileDao;
+	protected final RemoteRepositoryDao remoteRepositoryDao;
+	protected final ModificationDao modificationDao;
+	protected final DeleteModificationDao deleteModificationDao;
 	private Collection<RemoteRepository> remoteRepositories;
 
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
@@ -71,7 +71,7 @@ public class LocalRepoSync {
 	}
 
 	public void sync(final ProgressMonitor monitor) {
-		sync(null, localRoot, monitor);
+		sync(null, localRoot, monitor, true);
 	}
 
 	public RepoFile sync(final File file, final ProgressMonitor monitor) {
@@ -79,7 +79,7 @@ public class LocalRepoSync {
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
 		if (localRoot.equals(file)) {
-			return sync(null, file, monitor);
+			return sync(null, file, monitor, true);
 		}
 
 		monitor.beginTask("Local sync...", 100);
@@ -97,7 +97,7 @@ public class LocalRepoSync {
 
 				// In the unlikely event, that this is not a valid state, we simply sync all
 				// and return.
-				sync(null, localRoot, new SubProgressMonitor(monitor, 99));
+				sync(null, localRoot, new SubProgressMonitor(monitor, 99), true);
 				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile != null) // if it still does not exist, we run into the re-sync below and this might quickly return null, if that is correct or otherwise sync what's needed.
 					return repoFile;
@@ -109,7 +109,7 @@ public class LocalRepoSync {
 
 			monitor.worked(1);
 
-			return sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99));
+			return sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99), true);
 		} finally {
 			monitor.done();
 		}
@@ -123,10 +123,11 @@ public class LocalRepoSync {
 	 * For non-root files, this must not be <code>null</code>!
 	 * @param file the file to be synced. Must not be <code>null</code>.
 	 * @param monitor the progress-monitor. Must not be <code>null</code>.
+	 * @param recursiveChildren TODO
 	 * @return the {@link RepoFile} corresponding to the given {@code file}. Is <code>null</code>, if the given
 	 * {@code file} does not exist; otherwise it is never <code>null</code>.
 	 */
-	protected RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
+	protected RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor, final boolean recursiveChildren) {
 		assertNotNull("file", file);
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Local sync...", 100);
@@ -162,7 +163,9 @@ public class LocalRepoSync {
 					childSubProgressMonitor.beginTask("Local sync...", children.length);
 					for (final File child : children) {
 						childNames.add(child.getName());
-						sync(repoFile, child, new SubProgressMonitor(childSubProgressMonitor, 1));
+
+						if (recursiveChildren)
+							sync(repoFile, child, new SubProgressMonitor(childSubProgressMonitor, 1), recursiveChildren);
 					}
 				}
 				childSubProgressMonitor.done();

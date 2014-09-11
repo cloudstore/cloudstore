@@ -61,6 +61,7 @@ import co.codewizards.cloudstore.local.persistence.DeleteModification;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.Entity;
 import co.codewizards.cloudstore.local.persistence.FileChunk;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
@@ -72,7 +73,6 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.Repository;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 
@@ -485,7 +485,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void createAndPersistLocalRepository(final PersistenceManager pm) {
-		LocalRepository localRepository = new LocalRepository();
+		LocalRepository localRepository = create(LocalRepository.class);
 		final Directory root = create(Directory.class);
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));

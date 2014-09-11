@@ -544,7 +544,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			final RepoFile repoFile = repoFileDao.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
 			if (repoFile != null) {
-				final RepoFileDtoConverter converter = create(RepoFileDtoConverter.class, transaction);
+				final RepoFileDtoConverter converter = RepoFileDtoConverter.create(transaction);
 				repoFileDto = converter.toRepoFileDto(repoFile, Integer.MAX_VALUE); // TODO pass depth as argument - or maybe leave it this way?
 			}
 
@@ -709,7 +709,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			while (rf != null) {
 				if (!entityID2RepoFileDto.containsKey(rf.getId())) {
 					if (repoFileDtoConverter == null)
-						repoFileDtoConverter = create(RepoFileDtoConverter.class, transaction);
+						repoFileDtoConverter = RepoFileDtoConverter.create(transaction);
 
 					final RepoFileDto repoFileDto = repoFileDtoConverter.toRepoFileDto(rf, 0);
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
