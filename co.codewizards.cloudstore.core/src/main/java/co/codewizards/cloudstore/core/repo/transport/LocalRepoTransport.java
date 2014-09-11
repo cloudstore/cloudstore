@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
+import java.util.Set;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
@@ -15,12 +16,10 @@ public interface LocalRepoTransport extends RepoTransport, ContextWithLocalRepoM
 	/**
 	 * Before transferring a file, mark it to be 'inProgress' for this specific from-to connection. In case of an
 	 * interruption of a sync, the next sync is aware of the situation.
+	 * @param inProgress TODO
 	 */
-	void setFileInProgressMark(UUID fromRepository, UUID toRepository, String path);
+	void markFileInProgress(UUID fromRepository, UUID toRepository, String path, boolean inProgress);
 
-	/** If one file transfer has finished, remove the file-in-progress-mark for this path and this from-to direction. */
-	void removeFileInProgressMark(UUID fromRepository, UUID toRepository, String path);
-
-	boolean hasFileInProgressMark(UUID fromRepository, UUID toRepository, String path);
+	Set<String> getFileInProgressPaths(UUID fromRepository, UUID toRepository);
 
 }

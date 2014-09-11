@@ -28,7 +28,7 @@ import co.codewizards.cloudstore.core.util.AssertUtil;
 // Note: It would be nice, but we cannot add unique keys combining localRevision and one of the properties here
 // in this sub-class, because there are 2 separate tables (InheritanceStrategy.NEW_TABLE).
 @Queries({
-	@Query(name="getCopyModificationsForPathAfter_pathSha1_localRevision_remoteRepository", value="SELECT WHERE this.pathSha1 == :pathSha1 && this.localRevision > :localRevision"),
+//	@Query(name="getCopyModificationsForPathAfter_pathSha1_localRevision_remoteRepository", value="SELECT WHERE this.pathSha1 == :pathSha1 && this.localRevision > :localRevision"),
 	@Query(name="getCopyModifications_sha1_length", value="SELECT WHERE this.sha1 == :sha1 && this.length == :length")
 })
 public class CopyModification extends Modification {

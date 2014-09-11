@@ -19,8 +19,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
@@ -63,8 +65,8 @@ import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
 import co.codewizards.cloudstore.local.persistence.Directory;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMark;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMarkDao;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepoDao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
@@ -433,12 +435,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				assertNotNull("toRepoFile", toRepoFile);
 
-				final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
-				final FileInProgressMark fileInProgressMark = fileInProgressMarkDao.getFileInProgressMark(
+				final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+				final FileInProgressMarker fileInProgressMarker = fileInProgressMarkerDao.getFileInProgressMarker(
 						getClientRepositoryId(), getLocalRepoManager().getRepositoryId(), fromPath);
-				if (fileInProgressMark != null ) {
+				if (fileInProgressMarker != null ) {
 					tempChunkFileManager.moveChunks(fromFile, toFile);
-					fileInProgressMark.setPath(toPath);
+					fileInProgressMarker.setPath(toPath);
 				}
 
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
@@ -867,9 +869,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
 
-				if (!hasFileInProgressMark(getClientRepositoryId(), getLocalRepoManager().getRepositoryId(), path)) {
-					tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
-				}
+				tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
 
 				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile == null)
@@ -1376,8 +1376,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			transferDoneMarkerDao.deleteRepoFileTransferDones(clientRepositoryId, getRepositoryId());
 
-			final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
-			fileInProgressMarkDao.deleteFileInProgressMarks(getLocalRepoManager().getRepositoryId(), clientRepositoryId);
+			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+			fileInProgressMarkerDao.deleteFileInProgressMarkers(getLocalRepoManager().getRepositoryId(), clientRepositoryId);
 
 			transaction.commit();
 		}
@@ -1419,44 +1419,37 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	@Override
-	public boolean hasFileInProgressMark(final UUID fromRepository, final UUID toRepository, final String path) {
-		boolean hasFileInProgressMark;
-		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
-			final FileInProgressMarkDao dao = transaction.getDao(FileInProgressMarkDao.class);
-			final FileInProgressMark fileInProgressMark = dao.getFileInProgressMark(fromRepository, toRepository, path);
-			hasFileInProgressMark = fileInProgressMark != null;
-			transaction.commit();
-		}
-		return hasFileInProgressMark;
-	}
+	public Set<String> getFileInProgressPaths(final UUID fromRepository, final UUID toRepository) {
+		try (final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction();) {
+			final FileInProgressMarkerDao dao = transaction.getDao(FileInProgressMarkerDao.class);
+			final Collection<FileInProgressMarker> fileInProgressMarkers = dao.getFileInProgressMarkers(fromRepository, toRepository);
+			final Set<String> paths = new HashSet<String>(fileInProgressMarkers.size());
+			for (final FileInProgressMarker fileInProgressMarker : fileInProgressMarkers)
+				paths.add(fileInProgressMarker.getPath());
 
-	@Override
-	public void setFileInProgressMark(final UUID fromRepository, final UUID toRepository, final String path) {
-		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
-			final FileInProgressMarkDao dao = transaction.getDao(FileInProgressMarkDao.class);
-			FileInProgressMark fileInProgressMark = dao.getFileInProgressMark(fromRepository, toRepository, path);
-			if (fileInProgressMark == null) {
-				fileInProgressMark = new FileInProgressMark();
-				fileInProgressMark.setFromRepositoryId(fromRepository);
-				fileInProgressMark.setToRepositoryId(toRepository);
-				fileInProgressMark.setPath(path);
-			}
-			dao.makePersistent(fileInProgressMark);
-			logger.info("markFileInProgress: {}", fileInProgressMark.toString());
 			transaction.commit();
+			return paths;
 		}
 	}
 
 	@Override
-	public void removeFileInProgressMark(final UUID fromRepository, final UUID toRepository, final String path) {
+	public void markFileInProgress(final UUID fromRepository, final UUID toRepository, final String path, final boolean inProgress) {
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
-			final FileInProgressMarkDao dao = transaction.getDao(FileInProgressMarkDao.class);
-			final FileInProgressMark fileInProgressMark = dao.getFileInProgressMark(fromRepository, toRepository, path);
-			if (fileInProgressMark != null) {
-				logger.info("removeFileInProgressMark: {}", fileInProgressMark.toString());
-				dao.deletePersistent(fileInProgressMark);
+			final FileInProgressMarkerDao dao = transaction.getDao(FileInProgressMarkerDao.class);
+			FileInProgressMarker fileInProgressMarker = dao.getFileInProgressMarker(fromRepository, toRepository, path);
+
+			if (fileInProgressMarker == null && inProgress) {
+				fileInProgressMarker = new FileInProgressMarker();
+				fileInProgressMarker.setFromRepositoryId(fromRepository);
+				fileInProgressMarker.setToRepositoryId(toRepository);
+				fileInProgressMarker.setPath(path);
+				dao.makePersistent(fileInProgressMarker);
 			}
 
+			if (fileInProgressMarker != null && !inProgress)
+				dao.deletePersistent(fileInProgressMarker);
+
+			logger.info("markFileInProgress: {} inProgress={}", fileInProgressMarker, inProgress);
 			transaction.commit();
 		}
 	}

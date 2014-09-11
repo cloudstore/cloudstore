@@ -18,8 +18,7 @@ public class DeleteModificationDao extends Dao<DeleteModification, DeleteModific
 		final Query query = pm().newNamedQuery(getEntityClass(), "getDeleteModificationsForPathAfter_pathSha1_localRevision_remoteRepository");
 		try {
 			@SuppressWarnings("unchecked")
-			final
-			Collection<DeleteModification> deleteModifications = (Collection<DeleteModification>) query.execute(pathSha1, localRevision, remoteRepository);
+			final Collection<DeleteModification> deleteModifications = (Collection<DeleteModification>) query.execute(pathSha1, localRevision, remoteRepository);
 			return new ArrayList<DeleteModification>(deleteModifications);
 		} finally {
 			query.closeAll();

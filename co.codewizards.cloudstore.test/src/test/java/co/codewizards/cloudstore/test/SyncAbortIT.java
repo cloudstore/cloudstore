@@ -18,8 +18,8 @@ import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMark;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMarkDao;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
+import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
 
 /**
  * @author Sebastian Schefczyk
@@ -335,24 +335,24 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 				: localRepoManagerRemote;
 
 		try (final LocalRepoTransaction transaction = localRepoManagerLocal.beginWriteTransaction();) {
-			final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
-			Collection<FileInProgressMark> fileInProgressMarks = fileInProgressMarkDao.getFileInProgressMarks(fromRepoManager.getRepositoryId(),
+			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+			Collection<FileInProgressMarker> fileInProgressMarkers = fileInProgressMarkerDao.getFileInProgressMarkers(fromRepoManager.getRepositoryId(),
 					toRepoManager.getRepositoryId());
-			assertThat(fileInProgressMarks.size()).isEqualTo(size);
+			assertThat(fileInProgressMarkers.size()).isEqualTo(size);
 			// also assert files are not in Progress in the opposite direction:
-			fileInProgressMarks = fileInProgressMarkDao.getFileInProgressMarks(toRepoManager.getRepositoryId(),
+			fileInProgressMarkers = fileInProgressMarkerDao.getFileInProgressMarkers(toRepoManager.getRepositoryId(),
 					fromRepoManager.getRepositoryId());
-			assertThat(fileInProgressMarks.size()).isEqualTo(0);
+			assertThat(fileInProgressMarkers.size()).isEqualTo(0);
 		}
 		// also assert there is nothing on the other side (local / remote):
 		try (final LocalRepoTransaction transaction = localRepoManagerRemote.beginWriteTransaction();) {
-			final FileInProgressMarkDao fileInProgressMarkDao = transaction.getDao(FileInProgressMarkDao.class);
-			Collection<FileInProgressMark> fileInProgressMarks = fileInProgressMarkDao.getFileInProgressMarks(fromRepoManager.getRepositoryId(),
+			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+			Collection<FileInProgressMarker> fileInProgressMarkers = fileInProgressMarkerDao.getFileInProgressMarkers(fromRepoManager.getRepositoryId(),
 					toRepoManager.getRepositoryId());
-			assertThat(fileInProgressMarks.size()).isEqualTo(0);
-			fileInProgressMarks = fileInProgressMarkDao.getFileInProgressMarks(toRepoManager.getRepositoryId(),
+			assertThat(fileInProgressMarkers.size()).isEqualTo(0);
+			fileInProgressMarkers = fileInProgressMarkerDao.getFileInProgressMarkers(toRepoManager.getRepositoryId(),
 					fromRepoManager.getRepositoryId());
-			assertThat(fileInProgressMarks.size()).isEqualTo(0);
+			assertThat(fileInProgressMarkers.size()).isEqualTo(0);
 		}
 	}
 

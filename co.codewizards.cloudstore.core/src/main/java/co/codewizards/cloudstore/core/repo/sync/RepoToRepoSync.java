@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -227,7 +228,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final ChangeSetDto changeSetDto, final ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 2 * changeSetDto.getRepoFileDtos().size() + 1);
+		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 3 * changeSetDto.getRepoFileDtos().size() + 1);
 		try {
 			final RepoFileDtoTreeNode repoFileDtoTree = RepoFileDtoTreeNode.createTree(changeSetDto.getRepoFileDtos());
 			if (repoFileDtoTree != null) {
@@ -257,7 +258,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final RepoFileDtoTreeNode repoFileDtoTree,
-			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl, final boolean syncFilesInProgress,
+			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl, final boolean filesInProgressOnly,
 			final ProgressMonitor monitor) {
 		assertNotNull("fromRepoTransport", fromRepoTransport);
 		assertNotNull("toRepoTransport", toRepoTransport);
@@ -269,13 +270,15 @@ public class RepoToRepoSync implements AutoCloseable {
 		final Map<Class<?>, Boolean> repoFileDtoClass2Included = new HashMap<Class<?>, Boolean>();
 		final Map<Class<?>, Boolean> repoFileDtoClass2Excluded = new HashMap<Class<?>, Boolean>();
 
+		final Set<String> fileInProgressPaths = filesInProgressOnly
+				? localRepoTransport.getFileInProgressPaths(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId())
+						: null;
+
 		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
 			for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
-				if (syncFilesInProgress) {
-					final boolean hasFileInProgressMark = localRepoTransport.hasFileInProgressMark(fromRepoTransport.getRepositoryId(),
-							toRepoTransport.getRepositoryId(), repoFileDtoTreeNode.getPath());
-					if (!hasFileInProgressMark) {
+				if (fileInProgressPaths != null) {
+					if (! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
 						monitor.worked(1);
 						continue;
 					}
@@ -517,7 +520,6 @@ public class RepoToRepoSync implements AutoCloseable {
 
 			try {
 				toRepoTransport.beginPutFile(path);
-				localRepoTransport.setFileInProgressMark(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path);
 			} catch (final DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
 				if (logger.isDebugEnabled())
@@ -525,6 +527,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 				return;
 			}
+			localRepoTransport.markFileInProgress(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path, true);
 			monitor.worked(1);
 
 			final Map<Long, FileChunkDto> offset2ToTempFileChunkDto = new HashMap<>(toNormalFileDto.getTempFileChunkDtos().size());
@@ -613,7 +616,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			toRepoTransport.endPutFile(
 					path, fromNormalFileDto.getLastModified(),
 					fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
-			localRepoTransport.removeFileInProgressMark(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path);
+			localRepoTransport.markFileInProgress(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path, false);
 			monitor.worked(6);
 		} finally {
 			monitor.done();
