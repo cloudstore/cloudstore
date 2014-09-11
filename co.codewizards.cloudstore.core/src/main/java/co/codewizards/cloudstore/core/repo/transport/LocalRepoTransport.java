@@ -16,10 +16,13 @@ public interface LocalRepoTransport extends RepoTransport, ContextWithLocalRepoM
 	/**
 	 * Before transferring a file, mark it to be 'inProgress' for this specific from-to connection. In case of an
 	 * interruption of a sync, the next sync is aware of the situation.
-	 * @param inProgress TODO
+	 * @param inProgress True will set the marker, false will remove it.
 	 */
 	void markFileInProgress(UUID fromRepository, UUID toRepository, String path, boolean inProgress);
 
 	Set<String> getFileInProgressPaths(UUID fromRepository, UUID toRepository);
+
+	void moveFileInProgressLocalRepo(UUID fromRepositoryId, UUID toRepositoryId, String prefixedFromPath,
+			String prefixedToPath);
 
 }

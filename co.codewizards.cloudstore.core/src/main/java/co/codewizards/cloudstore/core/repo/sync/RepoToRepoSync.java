@@ -277,12 +277,11 @@ public class RepoToRepoSync implements AutoCloseable {
 		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
 			for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
-				if (fileInProgressPaths != null) {
-					if (! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
-						monitor.worked(1);
-						continue;
-					}
+				if (fileInProgressPaths != null && ! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
+					monitor.worked(1);
+					continue;
 				}
+				final boolean isInProgress = filesInProgressOnly && fileInProgressPaths.contains(repoFileDtoTreeNode.getPath());
 
 				final RepoFileDto repoFileDto = repoFileDtoTreeNode.getRepoFileDto();
 				final Class<? extends RepoFileDto> repoFileDtoClass = repoFileDto.getClass();
@@ -325,7 +324,7 @@ public class RepoToRepoSync implements AutoCloseable {
 				if (repoFileDto instanceof DirectoryDto)
 					syncDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (DirectoryDto) repoFileDto, new SubProgressMonitor(monitor, 1));
 				else if (repoFileDto instanceof NormalFileDto) {
-					syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, repoFileDto, monitor);
+					syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, repoFileDto, isInProgress, monitor);
 				}
 				else if (repoFileDto instanceof SymlinkDto)
 					syncSymlink(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (SymlinkDto) repoFileDto, new SubProgressMonitor(monitor, 1));
@@ -402,6 +401,10 @@ public class RepoToRepoSync implements AutoCloseable {
 						if (moveInstead) {
 							logger.info("syncModifications: Moving from '{}' to '{}'", copyModificationDto.getFromPath(), copyModificationDto.getToPath());
 							toRepoTransport.move(copyModificationDto.getFromPath(), copyModificationDto.getToPath());
+							localRepoTransport.moveFileInProgressLocalRepo(fromRepoTransport.getRepositoryId(), 
+									toRepoTransport.getRepositoryId(), 
+									copyModificationDto.getFromPath(), copyModificationDto.getToPath());
+							toRepoTransport.moveFileInProgressToRepo(copyModificationDto.getFromPath(), copyModificationDto.getToPath());
 						}
 						else {
 							logger.info("syncModifications: Copying from '{}' to '{}'", copyModificationDto.getFromPath(), copyModificationDto.getToPath());
@@ -482,7 +485,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void syncFile(final RepoTransport fromRepoTransport,
 			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
-			final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
+			final RepoFileDto normalFileDto, final boolean isInProgress, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
 			final String path = repoFileDtoTreeNode.getPath();
@@ -519,7 +522,7 @@ public class RepoToRepoSync implements AutoCloseable {
 				toNormalFileDto = create(NormalFileDto.class); // dummy (null-object pattern)
 
 			try {
-				toRepoTransport.beginPutFile(path);
+				toRepoTransport.beginPutFile(path, isInProgress);
 			} catch (final DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
 				if (logger.isDebugEnabled())

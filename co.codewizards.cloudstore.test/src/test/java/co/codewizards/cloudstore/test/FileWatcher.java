@@ -130,7 +130,7 @@ public class FileWatcher {
 
 		final WatchTaskChunksCreatedDeleted watchTaskCreatedDeleted = new WatchTaskChunksCreatedDeleted(toCreate,
 				toDelete);
-		final WatchTaskChunksToFile watchTaskFileComplete = new WatchTaskChunksToFile();
+		final WatchTaskChunksToFile watchTaskChunksToFile = new WatchTaskChunksToFile();
 		final SyncTask syncTask = new SyncTask(repoToRepoSync, monitor);
 		final ExecutorService threadExecutor = Executors.newFixedThreadPool(3);
 
@@ -138,7 +138,7 @@ public class FileWatcher {
 		Future<Void> fileCompleteFuture = null;
 		try {
 			threadExecutor.submit(watchTaskCreatedDeleted);
-			fileCompleteFuture = threadExecutor.submit(watchTaskFileComplete);
+			fileCompleteFuture = threadExecutor.submit(watchTaskChunksToFile);
 			syncTaskFuture = threadExecutor.submit(syncTask);
 			// If Future.get returns, the file is complete, so the handling of
 			// the chunks must also be finished!
@@ -381,20 +381,20 @@ public class FileWatcher {
 					// entry
 					final WatchEvent<Path> ev = cast(event);
 					final Path name = ev.context();
-					final Path child = tempDir.resolve(name);
+//					final Path child = tempDir.resolve(name);
 					if (name.toString().endsWith(".xml")) {
 						break; // skip xml files!
 					}
-					System.err.format("_processEvents: %s: %s file \n", kind.name(), child);
+//					System.err.format("_processEvents: %s: %s file \n", kind.name(), child);
 					if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
 						chunksCreated++;
-						System.err.println("watchForCreationsDeletions: chunksCreated=" + chunksCreated);
+						System.err.println("watchForCreationsDeletions: ENTRY_CREATE=" + name + ", chunksCreated=" + chunksCreated);
 					} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
 						chunksDeleted++;
-						System.err.println("watchForCreationsDeletions: chunksDeleted=" + chunksDeleted);
+						System.err.println("watchForCreationsDeletions: ENTRY_DELETE=" + name + ", chunksDeleted=" + chunksDeleted);
 					} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-						System.err.println("watchForCreationsDeletions: modified: name=" + name + ", length="
-								+ child.toFile().length());
+//						System.err.println("watchForCreationsDeletions: ENTRY_MODIFY=" + name + ", length="
+//								+ child.toFile().length());
 					}
 					// the "too much" check:
 					assertThat(chunksCreated).isLessThanOrEqualTo(toBeCreated);
@@ -417,6 +417,7 @@ public class FileWatcher {
 		public Void call() throws Exception {
 			assertThat(parentDir).isNotNull();
 			assertThat(watcherParentDir).isNotNull();
+			System.err.println("WatchTaskChunksToFile: ready");
 
 			for (;;) {
 				// wait for key to be signalled
@@ -442,12 +443,12 @@ public class FileWatcher {
 						break;
 					}
 					if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-						System.err.println("WatchTaskChunksToFile: created=" + name);
+						System.err.println("WatchTaskChunksToFile: ENTRY_CREATE=" + name);
 						continue;
 					}
 					if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
 						final long length = child.toFile().length();
-						System.err.println("WatchTaskChunksToFile: modified=" + name + ", length=" + length);
+//						System.err.println("WatchTaskChunksToFile: ENTRY_MODIFY=" + name + ", length=" + length);
 						if (length == cumLength) {
 							System.err.println("WatchTaskChunksToFile: length reached! length=" + length);
 							key.reset();

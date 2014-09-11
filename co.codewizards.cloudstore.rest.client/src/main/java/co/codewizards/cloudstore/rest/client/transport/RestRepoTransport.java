@@ -47,6 +47,7 @@ import co.codewizards.cloudstore.rest.client.request.GetRepositoryDto;
 import co.codewizards.cloudstore.rest.client.request.MakeDirectory;
 import co.codewizards.cloudstore.rest.client.request.MakeSymlink;
 import co.codewizards.cloudstore.rest.client.request.Move;
+import co.codewizards.cloudstore.rest.client.request.MoveFileInProgress;
 import co.codewizards.cloudstore.rest.client.request.PutFileData;
 import co.codewizards.cloudstore.rest.client.request.RequestRepoConnection;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -158,6 +159,13 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
+	public void moveFileInProgressToRepo(String fromPath, String toPath) {
+		fromPath = prefixPath(fromPath);
+		toPath = prefixPath(toPath);
+		getClient().execute(new MoveFileInProgress(getRepositoryId().toString(), fromPath, toPath));
+	}
+
+	@Override
 	public void delete(String path) {
 		path = prefixPath(path);
 		getClient().execute(new Delete(getRepositoryId().toString(), path));
@@ -186,9 +194,9 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public void beginPutFile(String path) {
+	public void beginPutFile(String path, final boolean isInProgress) {
 		path = prefixPath(path);
-		getClient().execute(new BeginPutFile(getRepositoryId().toString(), path));
+		getClient().execute(new BeginPutFile(getRepositoryId().toString(), path, isInProgress));
 	}
 
 	@Override
