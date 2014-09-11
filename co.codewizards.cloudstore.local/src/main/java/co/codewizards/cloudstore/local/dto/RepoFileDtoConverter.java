@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local.dto;
 
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +14,7 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
+import co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -39,7 +38,11 @@ public class RepoFileDtoConverter {
 	private final RepoFileDao repoFileDao;
 	private boolean excludeLocalIds;
 
-	public RepoFileDtoConverter(final LocalRepoTransaction transaction) {
+	public static RepoFileDtoConverter create(final LocalRepoTransaction transaction) {
+		return ObjectFactoryUtil.create(RepoFileDtoConverter.class);
+	}
+
+	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
 		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
 		this.localRepoManager = AssertUtil.assertNotNull("transaction.localRepoManager", transaction.getLocalRepoManager());
 		this.repoFileDao = this.transaction.getDao(RepoFileDao.class);
@@ -52,7 +55,7 @@ public class RepoFileDtoConverter {
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
 			final NormalFileDto normalFileDto;
-			repoFileDto = normalFileDto = create(NormalFileDto.class);
+			repoFileDto = normalFileDto = ObjectFactoryUtil.create(NormalFileDto.class);
 			normalFileDto.setLength(normalFile.getLength());
 			normalFileDto.setSha1(normalFile.getSha1());
 			if (depth > 0) {
@@ -84,12 +87,12 @@ public class RepoFileDtoConverter {
 			}
 		}
 		else if (repoFile instanceof Directory) {
-			repoFileDto = create(DirectoryDto.class);
+			repoFileDto = ObjectFactoryUtil.create(DirectoryDto.class);
 		}
 		else if (repoFile instanceof Symlink) {
 			final Symlink symlink = (Symlink) repoFile;
 			final SymlinkDto symlinkDto;
-			repoFileDto = symlinkDto = create(SymlinkDto.class);
+			repoFileDto = symlinkDto = ObjectFactoryUtil.create(SymlinkDto.class);
 			symlinkDto.setTarget(symlink.getTarget());
 		}
 		else
