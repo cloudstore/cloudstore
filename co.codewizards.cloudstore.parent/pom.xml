@@ -418,9 +418,9 @@
 					<configuration>
 						<!--
 						<parallel>methods</parallel>
+						-->
 						<parallel>all</parallel>
 						<threadCount>4</threadCount>
-						-->
 					</configuration>
 				</plugin>
 
