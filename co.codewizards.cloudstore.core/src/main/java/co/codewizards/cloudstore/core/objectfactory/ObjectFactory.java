@@ -37,7 +37,7 @@ public class ObjectFactory {
 		this.baseClass2ClassExtension = Collections.unmodifiableMap(baseClass2ClassExtension);
 	}
 
-	public <T> Class<? extends T> getClass(final Class<T> clazz) {
+	public <T> Class<? extends T> getExtendingClass(final Class<T> clazz) {
 		Class<? extends T> c = clazz;
 		ClassExtension<? extends T> classExtension;
 		while (null != (classExtension = getClassExtension(c))) {
@@ -69,7 +69,7 @@ public class ObjectFactory {
 		if (parameterTypes == null && (parameters == null || parameters.length == 0))
 			parameterTypes = EMPTY_CLASS_ARRAY;
 
-		final Class<? extends T> c = getClass(clazz);
+		final Class<? extends T> c = getExtendingClass(clazz);
 
 		Constructor<? extends T> constructor;
 		if (parameterTypes == null && parameters != null)

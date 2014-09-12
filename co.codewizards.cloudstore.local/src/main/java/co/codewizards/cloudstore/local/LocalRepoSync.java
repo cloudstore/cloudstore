@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.IOException;
@@ -67,7 +68,7 @@ public class LocalRepoSync {
 	}
 
 	public static LocalRepoSync create(final LocalRepoTransaction transaction) {
-		return ObjectFactoryUtil.create(LocalRepoSync.class, transaction);
+		return ObjectFactoryUtil.createObject(LocalRepoSync.class, transaction);
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -278,16 +279,16 @@ public class LocalRepoSync {
 		try {
 			RepoFile repoFile;
 			if (file.isSymbolicLink()) {
-				final Symlink symlink = (Symlink) (repoFile = ObjectFactoryUtil.create(Symlink.class));
+				final Symlink symlink = (Symlink) (repoFile = createObject(Symlink.class));
 				try {
 					symlink.setTarget(file.readSymbolicLinkToPathString());
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			} else if (file.isDirectory()) {
-				repoFile = ObjectFactoryUtil.create(Directory.class);
+				repoFile = createObject(Directory.class);
 			} else if (file.isFile()) {
-				final NormalFile normalFile = (NormalFile) (repoFile = ObjectFactoryUtil.create(NormalFile.class));
+				final NormalFile normalFile = (NormalFile) (repoFile = createObject(NormalFile.class));
 				sha(normalFile, file, new SubProgressMonitor(monitor, 99));
 			} else {
 				if (file.exists())

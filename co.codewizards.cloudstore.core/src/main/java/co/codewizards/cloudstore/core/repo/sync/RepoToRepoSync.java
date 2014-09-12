@@ -513,7 +513,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			if (toRepoFileDto instanceof NormalFileDto)
 				toNormalFileDto = (NormalFileDto) toRepoFileDto;
 			else
-				toNormalFileDto = create(NormalFileDto.class); // dummy (null-object pattern)
+				toNormalFileDto = createObject(NormalFileDto.class); // dummy (null-object pattern)
 
 			try {
 				toRepoTransport.beginPutFile(path);

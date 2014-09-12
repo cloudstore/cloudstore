@@ -774,7 +774,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			if (repoFile == null) {
 				Directory directory;
-				repoFile = directory = create(Directory.class);
+				repoFile = directory = createObject(Directory.class);
 				directory.setName(file.getName());
 				directory.setParent(parentRepoFile);
 				directory.setLastModified(new Date(file.lastModified()));

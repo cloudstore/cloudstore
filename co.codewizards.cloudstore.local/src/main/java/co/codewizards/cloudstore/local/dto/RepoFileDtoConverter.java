@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.dto;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +41,7 @@ public class RepoFileDtoConverter {
 	private boolean excludeLocalIds;
 
 	public static RepoFileDtoConverter create(final LocalRepoTransaction transaction) {
-		return ObjectFactoryUtil.create(RepoFileDtoConverter.class, transaction);
+		return ObjectFactoryUtil.createObject(RepoFileDtoConverter.class, transaction);
 	}
 
 	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
@@ -55,7 +57,7 @@ public class RepoFileDtoConverter {
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
 			final NormalFileDto normalFileDto;
-			repoFileDto = normalFileDto = ObjectFactoryUtil.create(NormalFileDto.class);
+			repoFileDto = normalFileDto = createObject(NormalFileDto.class);
 			normalFileDto.setLength(normalFile.getLength());
 			normalFileDto.setSha1(normalFile.getSha1());
 			if (depth > 0) {
@@ -87,12 +89,12 @@ public class RepoFileDtoConverter {
 			}
 		}
 		else if (repoFile instanceof Directory) {
-			repoFileDto = ObjectFactoryUtil.create(DirectoryDto.class);
+			repoFileDto = createObject(DirectoryDto.class);
 		}
 		else if (repoFile instanceof Symlink) {
 			final Symlink symlink = (Symlink) repoFile;
 			final SymlinkDto symlinkDto;
-			repoFileDto = symlinkDto = ObjectFactoryUtil.create(SymlinkDto.class);
+			repoFileDto = symlinkDto = createObject(SymlinkDto.class);
 			symlinkDto.setTarget(symlink.getTarget());
 		}
 		else

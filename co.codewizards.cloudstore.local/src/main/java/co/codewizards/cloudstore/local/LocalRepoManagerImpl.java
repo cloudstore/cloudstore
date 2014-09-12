@@ -457,22 +457,30 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceCapableClasses(final PersistenceManager pm) {
-		pm.getExtent(CopyModification.class);
-		pm.getExtent(DeleteModification.class);
-		pm.getExtent(Directory.class);
-		pm.getExtent(Entity.class);
-		pm.getExtent(FileChunk.class);
-		pm.getExtent(LastSyncToRemoteRepo.class);
-		pm.getExtent(LocalRepository.class);
-		pm.getExtent(Modification.class);
-		pm.getExtent(NormalFile.class);
-		pm.getExtent(RemoteRepository.class);
-		pm.getExtent(RemoteRepositoryRequest.class);
-		pm.getExtent(Repository.class);
-		pm.getExtent(RepoFile.class);
-		pm.getExtent(FileInProgressMarker.class);
-		pm.getExtent(Symlink.class);
-		pm.getExtent(TransferDoneMarker.class);
+		initPersistenceCapableClasses(pm,
+				CopyModification.class,
+				DeleteModification.class,
+				Directory.class,
+				Entity.class,
+				FileChunk.class,
+				LastSyncToRemoteRepo.class,
+				LocalRepository.class,
+				Modification.class,
+				NormalFile.class,
+				RemoteRepository.class,
+				RemoteRepositoryRequest.class,
+				Repository.class,
+				RepoFile.class,
+				FileInProgressMarker.class,
+				Symlink.class,
+				TransferDoneMarker.class);
+	}
+
+	private void initPersistenceCapableClasses(final PersistenceManager pm, final Class<?> ... classes) {
+		for (final Class<?> clazz : classes) {
+			final Class<?> c = getExtendingClass(clazz);
+			pm.getExtent(c);
+		}
 	}
 
 	private void assertSinglePersistentLocalRepository(final PersistenceManager pm) {
@@ -485,8 +493,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void createAndPersistLocalRepository(final PersistenceManager pm) {
-		LocalRepository localRepository = create(LocalRepository.class);
-		final Directory root = create(Directory.class);
+		LocalRepository localRepository = createObject(LocalRepository.class);
+		final Directory root = createObject(Directory.class);
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));
 		localRepository.setRoot(root);
