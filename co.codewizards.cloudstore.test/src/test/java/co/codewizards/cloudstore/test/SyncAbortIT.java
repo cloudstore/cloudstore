@@ -263,6 +263,40 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 	}
 
 	@Test
+	public void syncAbortResume_localToRemote_renameSource() throws Exception {
+		final String fileName = "lrrs";
+		final File file = createFileWithChunks(localRoot, localRoot, fileName, 2);
+
+		final FileWatcher fileWatcher = new FileWatcher(remoteRoot, fileName, file.length());
+
+		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
+		// able to interrupt immediately.
+		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+				remoteRootURLWithPathPrefix);) {
+			// the sync will start and get interrupted inside the fileWatcher!
+			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
+		}
+
+		// check on file inProgress
+		assertFilesInProgress(Sync.UP, 1);
+
+		// modify the source file
+		final String newFileName = "lrrs-renamed";
+		moveFile(localRoot, file, createFile(localRoot, newFileName));
+
+		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+				remoteRootURLWithPathPrefix);) {
+			// because the chunk will be moved, the move operation is also observed as create/delete; so for the first
+			// chunk (move: 1 create, 1 delete), for the second (1 create); after appending the chunks to the
+			// destination file, 2 deletes.
+			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerRemote, new LoggerProgressMonitor(logger), 2,
+					3, newFileName);
+		}
+
+		afterSyncCompleteAssertionsAndCloseOperations(localRoot);
+	}
+
+	@Test
 	public void syncAbortResume_remoteToLocal_watchOrder() throws Exception {
 		final String fileName1 = "f1";
 		final File file1 = createFileWithChunks(remoteRoot, remoteRoot, fileName1, 2);

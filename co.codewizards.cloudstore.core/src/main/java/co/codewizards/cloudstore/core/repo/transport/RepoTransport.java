@@ -291,7 +291,7 @@ public interface RepoTransport extends AutoCloseable {
 	 * In normal operation, zero or more invocations of {@link #putFileData(String, long, byte[])} and
 	 * finally one invocation of {@link #endPutFile(String, Date, long, String)} follow this method. However, this is not
 	 * guaranteed and the file transfer may be interrupted. If it is resumed, later this method is called again,
-	 * without {@link #endPutFile(String, Date, long, String)} ever having been called inbetween.
+	 * without {@link #endPutFile(String, Date, long, String)} ever having been called in between.
 	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.

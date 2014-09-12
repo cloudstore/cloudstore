@@ -435,14 +435,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				assertNotNull("toRepoFile", toRepoFile);
 
-				final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
-				final FileInProgressMarker fileInProgressMarker = fileInProgressMarkerDao.getFileInProgressMarker(
-						getClientRepositoryId(), getLocalRepoManager().getRepositoryId(), fromPath);
-				if (fileInProgressMarker != null ) {
-					tempChunkFileManager.moveChunks(fromFile, toFile);
-					fileInProgressMarker.setPath(toPath);
-				}
-
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(fromParentFile);
@@ -451,6 +443,38 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transaction.commit();
 		}
 	}
+
+//	@Override
+//	public void moveFileInProgressLocalRepo(final UUID fromRepositoryId, final UUID toRepositoryId,
+//			String fromPath, String toPath) {
+//		fromPath = prefixPath(fromPath);
+//		toPath = prefixPath(toPath);
+//		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+//			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+//			final FileInProgressMarker toFileInProgressMarker = fileInProgressMarkerDao.getFileInProgressMarker(fromRepositoryId, toRepositoryId, fromPath);
+//			if (toFileInProgressMarker != null ) {
+//				logger.info("Updating FileInProgressMarker: {}, new toPath={}", toFileInProgressMarker, toPath);
+//				toFileInProgressMarker.setPath(toPath);
+//			}
+//			transaction.commit();
+//		}
+//	}
+//
+//	@Override
+//	public void moveFileInProgressToRepo(String fromPath, String toPath) {
+//		fromPath = prefixPath(fromPath);
+//		toPath = prefixPath(toPath);
+//
+//		final File fromFile = getFile(fromPath);
+//		final File toFile = getFile(toPath);
+//
+//		if (fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
+//			return;
+//
+//		if (!toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
+//			return;
+//		tempChunkFileManager.moveChunks(fromFile, toFile);
+//	}
 
 	@Override
 	public void delete(String path) {
@@ -1360,6 +1384,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			transferDoneMarkerDao.deleteRepoFileTransferDones(getRepositoryId(), clientRepositoryId);
 
+			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
+			fileInProgressMarkerDao.deleteFileInProgressMarkers(getRepositoryId(), clientRepositoryId);
+
 			transaction.commit();
 		}
 	}
@@ -1377,7 +1404,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transferDoneMarkerDao.deleteRepoFileTransferDones(clientRepositoryId, getRepositoryId());
 
 			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
-			fileInProgressMarkerDao.deleteFileInProgressMarkers(getLocalRepoManager().getRepositoryId(), clientRepositoryId);
+			fileInProgressMarkerDao.deleteFileInProgressMarkers(clientRepositoryId, getRepositoryId());
 
 			transaction.commit();
 		}
@@ -1444,12 +1471,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				fileInProgressMarker.setToRepositoryId(toRepository);
 				fileInProgressMarker.setPath(path);
 				dao.makePersistent(fileInProgressMarker);
-			}
-
-			if (fileInProgressMarker != null && !inProgress)
+				logger.info("Storing fileInProgressMarker: {} on repo={}", fileInProgressMarker, getRepositoryId());
+			} else if (fileInProgressMarker != null && !inProgress) {
+				logger.info("Removing fileInProgressMarker: {} on repo={}", fileInProgressMarker, getRepositoryId());
 				dao.deletePersistent(fileInProgressMarker);
+			}  else
+				logger.warn("Unexpected state: markFileInProgress==null='{}', inProgress='{}' on repo={}", fileInProgressMarker == null, inProgress, getRepositoryId());
 
-			logger.info("markFileInProgress: {} inProgress={}", fileInProgressMarker, inProgress);
 			transaction.commit();
 		}
 	}

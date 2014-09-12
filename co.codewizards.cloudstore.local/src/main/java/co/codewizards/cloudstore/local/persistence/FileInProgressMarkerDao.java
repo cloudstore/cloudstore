@@ -10,11 +10,17 @@ import java.util.UUID;
 
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /**
  *
  * @author Sebastian Schefczyk
  */
 public class FileInProgressMarkerDao extends Dao<FileInProgressMarker, FileInProgressMarkerDao> {
+
+	private static final Logger logger = LoggerFactory.getLogger(FileInProgressMarkerDao.class);
 
 	public Collection<FileInProgressMarker> getFileInProgressMarkers(final UUID fromRepository, final UUID toRepository) {
 		final Query query = pm().newNamedQuery(getEntityClass(), "getFileInProgressMarkers_fromRepositoryId_toRepositoryId");
@@ -51,7 +57,11 @@ public class FileInProgressMarkerDao extends Dao<FileInProgressMarker, FileInPro
 
 	public void deleteFileInProgressMarkers(final UUID fromRepositoryId, final UUID toRepositoryId) {
 		final Collection<FileInProgressMarker> fileInProgressMarkers = getFileInProgressMarkers(fromRepositoryId, toRepositoryId);
-		deletePersistentAll(fileInProgressMarkers);
+		if (fileInProgressMarkers.size() > 0) {
+			logger.info("deleteFileInProgressMarkers: deleting {} FileInProgressMarker(s) from={}, to={}", fileInProgressMarkers.size(),
+					fromRepositoryId, toRepositoryId);
+			deletePersistentAll(fileInProgressMarkers);
+		}
 	}
 
 	static UUID convertToUuid(final String repositoryId) {

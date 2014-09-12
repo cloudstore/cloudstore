@@ -277,12 +277,11 @@ public class RepoToRepoSync implements AutoCloseable {
 		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
 			for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
-				if (fileInProgressPaths != null) {
-					if (! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
-						monitor.worked(1);
-						continue;
-					}
+				if (fileInProgressPaths != null && ! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
+					monitor.worked(1);
+					continue;
 				}
+				final boolean isInProgress = filesInProgressOnly && fileInProgressPaths.contains(repoFileDtoTreeNode.getPath());
 
 				final RepoFileDto repoFileDto = repoFileDtoTreeNode.getRepoFileDto();
 				final Class<? extends RepoFileDto> repoFileDtoClass = repoFileDto.getClass();
@@ -325,7 +324,7 @@ public class RepoToRepoSync implements AutoCloseable {
 				if (repoFileDto instanceof DirectoryDto)
 					syncDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (DirectoryDto) repoFileDto, new SubProgressMonitor(monitor, 1));
 				else if (repoFileDto instanceof NormalFileDto) {
-					syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, repoFileDto, monitor);
+					syncFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, repoFileDto, isInProgress, monitor);
 				}
 				else if (repoFileDto instanceof SymlinkDto)
 					syncSymlink(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, (SymlinkDto) repoFileDto, new SubProgressMonitor(monitor, 1));
@@ -482,7 +481,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void syncFile(final RepoTransport fromRepoTransport,
 			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
-			final RepoFileDto normalFileDto, final ProgressMonitor monitor) {
+			final RepoFileDto normalFileDto, final boolean isInProgress, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
 			final String path = repoFileDtoTreeNode.getPath();
