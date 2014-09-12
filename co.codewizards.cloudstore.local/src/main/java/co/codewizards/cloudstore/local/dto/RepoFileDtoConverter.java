@@ -39,7 +39,7 @@ public class RepoFileDtoConverter {
 	private boolean excludeLocalIds;
 
 	public static RepoFileDtoConverter create(final LocalRepoTransaction transaction) {
-		return ObjectFactoryUtil.create(RepoFileDtoConverter.class);
+		return ObjectFactoryUtil.create(RepoFileDtoConverter.class, transaction);
 	}
 
 	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
