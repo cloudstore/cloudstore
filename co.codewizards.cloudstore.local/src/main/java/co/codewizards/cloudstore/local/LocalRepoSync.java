@@ -75,12 +75,12 @@ public class LocalRepoSync {
 		sync(null, localRoot, monitor, true);
 	}
 
-	public RepoFile sync(final File file, final ProgressMonitor monitor) {
+	public RepoFile sync(final File file, final ProgressMonitor monitor, final boolean recursiveChildren) {
 		if (!(assertNotNull("file", file).isAbsolute()))
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
 		if (localRoot.equals(file)) {
-			return sync(null, file, monitor, true);
+			return sync(null, file, monitor, recursiveChildren);
 		}
 
 		monitor.beginTask("Local sync...", 100);
@@ -110,7 +110,7 @@ public class LocalRepoSync {
 
 			monitor.worked(1);
 
-			return sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99), true);
+			return sync(parentRepoFile, file, new SubProgressMonitor(monitor, 99), recursiveChildren);
 		} finally {
 			monitor.done();
 		}

@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
@@ -316,7 +315,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new RuntimeException(e);
 				}
 
-				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
+				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // it's a symlink and *not* a directory - recursiveChildren has thus no effect
 
 				final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles = tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values();
 				for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
@@ -388,7 +387,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				}
 
 				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
-				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
+				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor(), true);
 				AssertUtil.assertNotNull("toRepoFile", toRepoFile);
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
@@ -428,7 +427,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				}
 
 				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
-				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor());
+				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor(), true);
 				final RepoFile fromRepoFile = transaction.getDao(RepoFileDao.class).getRepoFile(getLocalRepoManager().getLocalRoot(), fromFile);
 				if (fromRepoFile != null)
 					localRepoSync.deleteRepoFile(fromRepoFile);
@@ -472,7 +471,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
-				localRepoSync.sync(file, new NullProgressMonitor());
+				localRepoSync.sync(file, new NullProgressMonitor(), true);
 
 				if (fileIsLocalRoot) {
 					// Cannot delete the repository's root! Deleting all its contents instead.
@@ -524,7 +523,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			// WRITE tx, because it performs a local sync!
 
 			final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
-			localRepoSync.sync(file, new NullProgressMonitor());
+			localRepoSync.sync(file, new NullProgressMonitor(), false); // TODO or do we need recursiveChildren==true here?
 
 			final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 			final RepoFile repoFile = repoFileDao.getRepoFile(getLocalRepoManager().getLocalRoot(), file);
@@ -773,12 +772,21 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				file.setLastModified(lastModified.getTime());
 
 			if (repoFile == null) {
-				Directory directory;
-				repoFile = directory = createObject(Directory.class);
-				directory.setName(file.getName());
-				directory.setParent(parentRepoFile);
-				directory.setLastModified(new Date(file.lastModified()));
-				repoFile = directory = transaction.getDao(RepoFileDao.class).makePersistent(directory);
+				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB.
+				repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(localRoot, file);
+
+				if (repoFile == null)
+					throw new IllegalStateException("Just created directory, but corresponding RepoFile still does not exist after local sync: " + file);
+
+				if (!(repoFile instanceof Directory))
+					throw new IllegalStateException("Just created directory, and even though the corresponding RepoFile now exists, it is not an instance of Directory! It is a " + repoFile.getClass().getName() + " instead! " + file);
+
+//				Directory directory;
+//				repoFile = directory = createObject(Directory.class);
+//				directory.setName(file.getName());
+//				directory.setParent(parentRepoFile);
+//				directory.setLastModified(new Date(file.lastModified()));
+//				repoFile = directory = transaction.getDao(RepoFileDao.class).makePersistent(directory);
 			}
 			else if (repoFile.getLastModified().getTime() != file.lastModified())
 				repoFile.setLastModified(new Date(file.lastModified()));
@@ -850,7 +858,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					logger.info("beginPutFile: Collision: Destination file already exists and is a symlink or a directory! file='{}'", file.getAbsolutePath());
 					final File collisionFile = IOUtil.createCollisionFile(file);
 					file.renameTo(collisionFile);
-					LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor());
+					LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor(), true); // recursiveChildren==true, because the colliding thing might be a directory.
 				}
 
 				if (file.isSymbolicLink() || (file.exists() && !file.isFile()))
@@ -876,7 +884,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				// *immediately* before beginning the sync of this file and before detecting a collision.
 				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.
 				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
-				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
+				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren has no effect on simple files, anyway (it's no directory).
 
 				tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
 
@@ -939,7 +947,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				throw new RuntimeException(e);
 			}
 
-			LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor()); // TODO sub-progress-monitor!
+			LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor(), true); // TODO sub-progress-monitor!
 		}
 	}
 

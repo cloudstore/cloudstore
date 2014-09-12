@@ -11,9 +11,9 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 
 public class MakeDirectory extends VoidRequest {
 
-	private final String repositoryName;
-	private final String path;
-	private final Date lastModified;
+	protected final String repositoryName;
+	protected final String path;
+	protected final Date lastModified;
 
 	public MakeDirectory(final String repositoryName, final String path, final Date lastModified) {
 		this.repositoryName = assertNotNull("repositoryName", repositoryName);

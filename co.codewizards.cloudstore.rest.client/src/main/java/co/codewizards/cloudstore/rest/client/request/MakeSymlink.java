@@ -11,10 +11,10 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 
 public class MakeSymlink extends VoidRequest {
 
-	private final String repositoryName;
-	private final String path;
-	private final String target;
-	private final Date lastModified;
+	protected final String repositoryName;
+	protected final String path;
+	protected final String target;
+	protected final Date lastModified;
 
 	public MakeSymlink(final String repositoryName, final String path, final String target, final Date lastModified) {
 		this.repositoryName = assertNotNull("repositoryName", repositoryName);
