@@ -254,10 +254,26 @@ public class LocalRepoSync {
 		return false;
 	}
 
-	private RepoFile createRepoFile(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
+	protected RepoFile createRepoFile(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Creating the root this way is not possible! Why is it not existing, yet?!???");
 
+		monitor.beginTask("Local sync...", 100);
+		try {
+			final RepoFile repoFile = _createRepoFile(parentRepoFile, file, new SubProgressMonitor(monitor, 98));
+
+			if (repoFile instanceof NormalFile)
+				createCopyModificationsIfPossible((NormalFile)repoFile);
+
+			monitor.worked(1);
+
+			return repoFileDao.makePersistent(repoFile);
+		} finally {
+			monitor.done();
+		}
+	}
+
+	protected RepoFile _createRepoFile(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile;
@@ -286,10 +302,7 @@ public class LocalRepoSync {
 			repoFile.setName(file.getName());
 			repoFile.setLastModified(new Date(file.getLastModifiedNoFollow()));
 
-			if (repoFile instanceof NormalFile)
-				createCopyModificationsIfPossible((NormalFile)repoFile);
-
-			return repoFileDao.makePersistent(repoFile);
+			return repoFile;
 		} finally {
 			monitor.done();
 		}
