@@ -1,13 +1,11 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class PutFileData extends VoidRequest {
 	private final String repositoryName;
@@ -16,10 +14,10 @@ public class PutFileData extends VoidRequest {
 	private final byte[] fileData;
 
 	public PutFileData(final String repositoryName, final String path, final long offset, final byte[] fileData) {
-		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
-		this.path = AssertUtil.assertNotNull("path", path);
+		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.path = assertNotNull("path", path);
 		this.offset = offset;
-		this.fileData = AssertUtil.assertNotNull("fileData", fileData);
+		this.fileData = assertNotNull("fileData", fileData);
 	}
 
 	@Override

@@ -1,13 +1,12 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RequestRepoConnection extends VoidRequest {
 	private final String repositoryName;
@@ -15,11 +14,11 @@ public class RequestRepoConnection extends VoidRequest {
 	private final RepositoryDto clientRepositoryDto;
 
 	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
-		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull("repositoryName", repositoryName);
 		this.pathPrefix = pathPrefix;
-		this.clientRepositoryDto = AssertUtil.assertNotNull("clientRepositoryDto", clientRepositoryDto);
-		AssertUtil.assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
-		AssertUtil.assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
+		this.clientRepositoryDto = assertNotNull("clientRepositoryDto", clientRepositoryDto);
+		assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
+		assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
 	}
 
 	@Override
