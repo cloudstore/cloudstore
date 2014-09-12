@@ -446,7 +446,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		tempChunkFileManager.moveChunks(fromFile, toFile);
 	}
 
-<<<<<<< HEAD
 	private void moveFileInProgressLocalRepo(final UUID fromRepositoryId, final UUID toRepositoryId,
 			String fromPath, String toPath) {
 		fromPath = prefixPath(fromPath);
@@ -461,39 +460,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			transaction.commit();
 		}
 	}
-=======
-//	@Override
-//	public void moveFileInProgressLocalRepo(final UUID fromRepositoryId, final UUID toRepositoryId,
-//			String fromPath, String toPath) {
-//		fromPath = prefixPath(fromPath);
-//		toPath = prefixPath(toPath);
-//		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
-//			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
-//			final FileInProgressMarker toFileInProgressMarker = fileInProgressMarkerDao.getFileInProgressMarker(fromRepositoryId, toRepositoryId, fromPath);
-//			if (toFileInProgressMarker != null ) {
-//				logger.info("Updating FileInProgressMarker: {}, new toPath={}", toFileInProgressMarker, toPath);
-//				toFileInProgressMarker.setPath(toPath);
-//			}
-//			transaction.commit();
-//		}
-//	}
-//
-//	@Override
-//	public void moveFileInProgressToRepo(String fromPath, String toPath) {
-//		fromPath = prefixPath(fromPath);
-//		toPath = prefixPath(toPath);
-//
-//		final File fromFile = getFile(fromPath);
-//		final File toFile = getFile(toPath);
-//
-//		if (fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
-//			return;
-//
-//		if (!toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
-//			return;
-//		tempChunkFileManager.moveChunks(fromFile, toFile);
-//	}
->>>>>>> 1ecde4da2359ca980421a6ebd7a462414ab20d32
 
 	@Override
 	public void delete(String path) {
