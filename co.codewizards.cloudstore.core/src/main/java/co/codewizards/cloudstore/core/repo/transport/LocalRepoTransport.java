@@ -22,7 +22,4 @@ public interface LocalRepoTransport extends RepoTransport, ContextWithLocalRepoM
 
 	Set<String> getFileInProgressPaths(UUID fromRepository, UUID toRepository);
 
-	void moveFileInProgressLocalRepo(UUID fromRepositoryId, UUID toRepositoryId, String prefixedFromPath,
-			String prefixedToPath);
-
 }

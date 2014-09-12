@@ -15,7 +15,6 @@ import co.codewizards.cloudstore.rest.server.service.EndSyncFromRepositoryServic
 import co.codewizards.cloudstore.rest.server.service.EndSyncToRepositoryService;
 import co.codewizards.cloudstore.rest.server.service.MakeDirectoryService;
 import co.codewizards.cloudstore.rest.server.service.MakeSymlinkService;
-import co.codewizards.cloudstore.rest.server.service.MoveFileInProgressService;
 import co.codewizards.cloudstore.rest.server.service.MoveService;
 import co.codewizards.cloudstore.rest.server.service.RepoFileDtoService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDtoService;
@@ -55,7 +54,6 @@ public class CloudStoreRest extends ResourceConfig {
 				MakeDirectoryService.class,
 				MakeSymlinkService.class,
 				MoveService.class,
-				MoveFileInProgressService.class,
 				RepositoryDtoService.class,
 				RequestRepoConnectionService.class,
 				TestService.class,

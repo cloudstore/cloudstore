@@ -442,10 +442,11 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			}
 			transaction.commit();
 		}
+		moveFileInProgressLocalRepo(getClientRepositoryId(), getRepositoryId(), fromPath, toPath);
+		tempChunkFileManager.moveChunks(fromFile, toFile);
 	}
 
-	@Override
-	public void moveFileInProgressLocalRepo(final UUID fromRepositoryId, final UUID toRepositoryId,
+	private void moveFileInProgressLocalRepo(final UUID fromRepositoryId, final UUID toRepositoryId,
 			String fromPath, String toPath) {
 		fromPath = prefixPath(fromPath);
 		toPath = prefixPath(toPath);
@@ -458,22 +459,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			}
 			transaction.commit();
 		}
-	}
-
-	@Override
-	public void moveFileInProgressToRepo(String fromPath, String toPath) {
-		fromPath = prefixPath(fromPath);
-		toPath = prefixPath(toPath);
-
-		final File fromFile = getFile(fromPath);
-		final File toFile = getFile(toPath);
-
-		if (fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
-			return;
-
-		if (!toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
-			return;
-		tempChunkFileManager.moveChunks(fromFile, toFile);
 	}
 
 	@Override
@@ -853,7 +838,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	@Override
-	public void beginPutFile(String path, final boolean isInProgress) {
+	public void beginPutFile(String path) {
 		path = prefixPath(path);
 		final File file = getFile(path); // null-check already inside getFile(...) - no need for another check here
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
@@ -893,9 +878,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor());
 
-				if (!isInProgress) {
-					tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
-				}
+				tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
 
 				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 				if (repoFile == null)

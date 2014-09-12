@@ -245,7 +245,6 @@ public interface RepoTransport extends AutoCloseable {
 
 	void copy(String fromPath, String toPath);
 	void move(String fromPath, String toPath);
-	void moveFileInProgressToRepo(String fromPath, String toPath);
 
 	/**
 	 * Deletes the file (or directory) specified by {@code path}.
@@ -296,11 +295,10 @@ public interface RepoTransport extends AutoCloseable {
 	 * @param path the path of the file. Must not be <code>null</code>. No matter which operating system is used,
 	 * the separation-character is always '/'. This path may start with a "/", but there is no difference, if it does:
 	 * It is always relative to the repository's root directory.
-	 * @param isInProgress Set to true only, if this file was already in progress and is now resuming.
 	 * @see #putFileData(String, long, byte[])
 	 * @see #endPutFile(String, Date, long, String)
 	 */
-	void beginPutFile(String path, boolean isInProgress);
+	void beginPutFile(String path);
 
 	/**
 	 * Write a block of binary data into the file.

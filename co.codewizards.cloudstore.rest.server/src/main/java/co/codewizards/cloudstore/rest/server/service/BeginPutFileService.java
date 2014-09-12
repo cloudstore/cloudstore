@@ -25,14 +25,14 @@ public class BeginPutFileService extends AbstractServiceWithRepoToRepoAuth
 	}
 
 	@POST
-	@Path("{path:.*}/{isInProgress}")
-	public void beginPutFile(@PathParam("path") String path, @PathParam("isInProgress") final String isInProgress)
+	@Path("{path:.*}")
+	public void beginPutFile(@PathParam("path") String path)
 	{
 		AssertUtil.assertNotNull("path", path);
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);
-			repoTransport.beginPutFile(path, Boolean.parseBoolean(isInProgress));
+			repoTransport.beginPutFile(path);
 		} finally {
 			repoTransport.close();
 		}

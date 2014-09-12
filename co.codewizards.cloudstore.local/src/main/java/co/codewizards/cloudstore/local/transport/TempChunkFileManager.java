@@ -179,18 +179,17 @@ public class TempChunkFileManager {
 
 	/** If source file was moved, the chunks need to be moved, too. */
 	public void moveChunks(final File oldDestFile, final File newDestFile) {
-		final File tempDir = getTempDir(newDestFile);
-		tempDir.mkdir();
-		if (!tempDir.isDirectory())
-			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
-
 		final Map<Long, TempChunkFileWithDtoFile> offset2TempChunkFileWithDtoFile = getOffset2TempChunkFileWithDtoFile(oldDestFile);
 		for (final Map.Entry<Long, TempChunkFileWithDtoFile> entry : offset2TempChunkFileWithDtoFile.entrySet()) {
 			final Long offset = entry.getKey();
 			final TempChunkFileWithDtoFile tempChunkFileWithDtoFile = entry.getValue();
 			final File oldTempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile();
 			final File newTempChunkFile = createTempChunkFile(newDestFile, offset, false);
+			final File tempChunkFileDtoFile = getTempChunkFileDtoFile(oldTempChunkFile);
+			final File newTempChunkFileDtoFile = getTempChunkFileDtoFile(newTempChunkFile);
 			try {
+				tempChunkFileDtoFile.move(newTempChunkFileDtoFile);
+				logger.info("Moved chunkDto from {} to {}", tempChunkFileDtoFile, newTempChunkFileDtoFile);
 				oldTempChunkFile.move(newTempChunkFile);
 				logger.info("Moved chunk from {} to {}", oldTempChunkFile, newTempChunkFile);
 			} catch (final IOException e) {
