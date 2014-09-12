@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import javax.ws.rs.core.Response;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
+import javax.ws.rs.core.Response;
 
 public class Move extends VoidRequest {
 
@@ -11,9 +11,9 @@ public class Move extends VoidRequest {
 	private final String toPath;
 
 	public Move(final String repositoryName, final String fromPath, final String toPath) {
-		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
-		this.fromPath = AssertUtil.assertNotNull("fromPath", fromPath);
-		this.toPath = AssertUtil.assertNotNull("toPath", toPath);
+		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.fromPath = assertNotNull("fromPath", fromPath);
+		this.toPath = assertNotNull("toPath", toPath);
 	}
 
 	@Override

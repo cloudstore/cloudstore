@@ -1,19 +1,18 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class GetRepoFileDto extends AbstractRequest<RepoFileDto> {
 	private final String repositoryName;
 	private final String path;
 
 	public GetRepoFileDto(final String repositoryName, final String path) {
-		this.repositoryName = AssertUtil.assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull("repositoryName", repositoryName);
 		this.path = path;
 	}
 
