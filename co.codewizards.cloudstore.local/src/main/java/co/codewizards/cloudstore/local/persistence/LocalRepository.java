@@ -1,8 +1,13 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Inheritance;
@@ -41,7 +46,7 @@ public class LocalRepository extends Repository {
 	public Directory getRoot() {
 		return root;
 	}
-	public void setRoot(Directory root) {
+	public void setRoot(final Directory root) {
 		this.root = root;
 	}
 
@@ -49,7 +54,7 @@ public class LocalRepository extends Repository {
 		return privateKey;
 	}
 
-	public void setPrivateKey(byte[] privateKey) {
+	public void setPrivateKey(final byte[] privateKey) {
 		this.privateKey = privateKey;
 	}
 
@@ -58,5 +63,20 @@ public class LocalRepository extends Repository {
 			aliases = new HashSet<>();
 
 		return aliases;
+	}
+
+	@Override
+	public void jdoPreStore() {
+		super.jdoPreStore();
+		final PersistenceManager pm = assertNotNull("JDOHelper.getPersistenceManager(this)", JDOHelper.getPersistenceManager(this));
+		final Iterator<LocalRepository> iterator = pm.getExtent(LocalRepository.class).iterator();
+		if (iterator.hasNext()) {
+			final LocalRepository persistentInstance = iterator.next();
+			if (iterator.hasNext())
+				throw new IllegalStateException("There are multiple LocalRepository entities in the database.");
+
+			if (persistentInstance != null && ! persistentInstance.equals(this))
+				throw new IllegalStateException("Cannot persist a 2nd LocalRepository!");
+		}
 	}
 }
