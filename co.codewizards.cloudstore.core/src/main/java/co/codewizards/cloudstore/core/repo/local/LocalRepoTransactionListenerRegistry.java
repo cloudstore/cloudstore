@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -105,5 +103,4 @@ public class LocalRepoTransactionListenerRegistry {
 			throw new RuntimeException(e);
 		}
 	}
-
 }

@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -10,6 +8,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
+import co.codewizards.cloudstore.core.context.ExtensibleContextSupport;
 import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -29,6 +28,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final Lock lock;
 	private long localRevision = -1;
 	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
+	private final ExtensibleContextSupport extensibleContextSupport = new ExtensibleContextSupport();
 
 	private final LocalRepoTransactionListenerRegistry listenerRegistry = new LocalRepoTransactionListenerRegistry(this);
 
@@ -195,5 +195,15 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	public void flush() {
 		final PersistenceManager pm = getPersistenceManager();
 		pm.flush();
+	}
+
+	@Override
+	public void setContextObject(final Object object) {
+		extensibleContextSupport.setContextObject(object);
+	}
+
+	@Override
+	public <T> T getContextObject(final Class<T> clazz) {
+		return extensibleContextSupport.getContextObject(clazz);
 	}
 }

@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-public interface LocalRepoTransaction extends AutoCloseable {
+import co.codewizards.cloudstore.core.context.ExtensibleContext;
+
+public interface LocalRepoTransaction extends AutoCloseable, ExtensibleContext {
 
 	void commit();
 
