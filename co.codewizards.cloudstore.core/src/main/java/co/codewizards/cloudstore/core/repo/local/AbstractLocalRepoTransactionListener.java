@@ -1,11 +1,15 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public abstract class AbstractLocalRepoTransactionListener implements LocalRepoTransactionListener {
 
 	private LocalRepoTransaction transaction;
+
+	@Override
+	public int getPriority() {
+		return 0;
+	}
 
 	@Override
 	public LocalRepoTransaction getTransaction() {

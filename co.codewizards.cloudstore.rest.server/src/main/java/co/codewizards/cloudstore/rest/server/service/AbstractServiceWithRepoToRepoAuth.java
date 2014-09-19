@@ -187,21 +187,17 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 					.entity(new Error(String.format("HTTP 404: repositoryName='%s' is neither an alias nor an ID of a known repository!", repositoryName))).build());
 		}
 
+		// We don't clear this auth anymore, because we might need to invoke this authenticateAndReturnUserName() in service-sub-classes
+		// again, before delegating to the super-service-method.
 		final Auth auth = getAuth();
-		try {
-			final UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
-			if (clientRepositoryId != null) {
-				if (TransientRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
-					return auth.getUserName();
-				else
-					throw newUnauthorizedException();
-			}
-		} finally {
-			// We clear auth, even though it is kept in this instance, because we need the password only for
-			// authentication. We authenticate only once and don't need it later, again. Every service invocation
-			// has its own new REST service object instance. Hence, this is clearing should be really no problem.
-			auth.clear();
+		final UUID clientRepositoryId = getClientRepositoryIdFromUserName(auth.getUserName());
+		if (clientRepositoryId != null) {
+			if (TransientRepoPasswordManager.getInstance().isPasswordValid(serverRepositoryId, clientRepositoryId, auth.getPassword()))
+				return auth.getUserName();
+			else
+				throw newUnauthorizedException();
 		}
+
 		throw newUnauthorizedException();
 	}
 

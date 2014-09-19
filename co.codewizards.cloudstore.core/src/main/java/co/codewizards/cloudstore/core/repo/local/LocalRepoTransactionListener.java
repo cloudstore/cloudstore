@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.core.repo.local;
 
 public interface LocalRepoTransactionListener {
 
+	int getPriority();
+
 	LocalRepoTransaction getTransaction();
 
 	void setTransaction(LocalRepoTransaction transaction);

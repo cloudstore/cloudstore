@@ -91,6 +91,10 @@ public class LocalRepoTransactionListenerRegistry {
 		Collections.sort(listeners, new Comparator<LocalRepoTransactionListener>() {
 			@Override
 			public int compare(final LocalRepoTransactionListener o1, final LocalRepoTransactionListener o2) {
+				final int result = -1 * Integer.compare(o1.getPriority(), o2.getPriority());
+				if (result != 0)
+					return result;
+
 				return o1.getClass().getName().compareTo(o2.getClass().getName());
 			}
 		});
