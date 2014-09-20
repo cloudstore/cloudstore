@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
 import java.util.UUID;
 
@@ -43,11 +43,13 @@ import co.codewizards.cloudstore.core.util.Base64Url;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 @XmlJavaTypeAdapter(type=Uid.class, value=UidXmlAdapter.class)
-public class Uid implements Comparable<Uid> {
+public class Uid implements Comparable<Uid>, Serializable {
+	private static final long serialVersionUID = 1L;
 	private static final String CHARSET_ASCII = "ASCII";
 
 	private final long hi;
 	private final long lo;
+	private transient WeakReference<String> toString;
 
 	private static class RandomHolder {
 		static final SecureRandom random = new SecureRandom();
@@ -174,11 +176,17 @@ public class Uid implements Comparable<Uid> {
 	 */
 	@Override
 	public String toString() {
+		String s = toString == null ? null : toString.get();
+		if (s != null)
+			return s;
+
 		try {
-			return new String(Base64Url.encodeBase64(toBytes()), CHARSET_ASCII);
+			s = new String(Base64Url.encodeBase64(toBytes()), CHARSET_ASCII);
 		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
+		toString = new WeakReference<String>(s);
+		return s;
 	}
 
 	@Override
