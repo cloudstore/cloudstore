@@ -691,11 +691,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				continue;
 
 			while (rf != null) {
-				if (!entityID2RepoFileDto.containsKey(rf.getId())) {
+				RepoFileDto repoFileDto = entityID2RepoFileDto.get(rf.getId());
+				if (repoFileDto == null) {
 					if (repoFileDtoConverter == null)
 						repoFileDtoConverter = RepoFileDtoConverter.create(transaction);
 
-					final RepoFileDto repoFileDto = repoFileDtoConverter.toRepoFileDto(rf, 0);
+					repoFileDto = repoFileDtoConverter.toRepoFileDto(rf, 0);
+					repoFileDto.setNeededAsParent(true); // initially true, but not default-value in DTO so that it is omitted in the XML, if it is false (the majority are false).
 					if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf)) {
 						repoFileDto.setParentId(null); // virtual root has no parent!
 						repoFileDto.setName(""); // virtual root has no name!
@@ -703,6 +705,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 					entityID2RepoFileDto.put(rf.getId(), repoFileDto);
 				}
+
+				if (repoFile == rf)
+					repoFileDto.setNeededAsParent(false);
 
 				if (pathPrefixRepoFile != null && pathPrefixRepoFile.equals(rf))
 					break;

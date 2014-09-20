@@ -21,6 +21,8 @@ public class RepoFileDto {
 
 	private Date lastModified;
 
+	private boolean neededAsParent;
+
 	public RepoFileDto() { }
 
 	public long getId() {
@@ -61,5 +63,23 @@ public class RepoFileDto {
 	}
 	public void setLastModified(final Date lastModified) {
 		this.lastModified = lastModified;
+	}
+
+	/**
+	 * Indicates, whether this {@link RepoFileDto} was added to a {@link ChangeSetDto}, because it was needed
+	 * as parent.
+	 * <p>
+	 * If this is <code>true</code>, the underlying file/directory is not dirty and does thus not need
+	 * to be transferred. The presence of this {@code ChangeSetDto} serves only to complete the tree structure.
+	 * <p>
+	 * If this is <code>false</code>, the underlying file/directory was modified and must be transferred.
+	 * @return whether this instance is only a filler to complete the tree, and the underlying file/directory was not modified.
+	 */
+	public boolean isNeededAsParent() {
+		return neededAsParent;
+	}
+
+	public void setNeededAsParent(final boolean neededAsParent) {
+		this.neededAsParent = neededAsParent;
 	}
 }

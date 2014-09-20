@@ -277,6 +277,11 @@ public class RepoToRepoSync implements AutoCloseable {
 		monitor.beginTask("Synchronising...", repoFileDtoTree.size());
 		try {
 			for (final RepoFileDtoTreeNode repoFileDtoTreeNode : repoFileDtoTree) {
+				if (repoFileDtoTreeNode.getRepoFileDto().isNeededAsParent()) { // not actually modified - serves only to complete the tree structure.
+					monitor.worked(1);
+					continue;
+				}
+
 				if (fileInProgressPaths != null && ! fileInProgressPaths.contains(repoFileDtoTreeNode.getPath())) {
 					monitor.worked(1);
 					continue;
