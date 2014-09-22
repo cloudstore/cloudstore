@@ -49,12 +49,29 @@
 		<maven.compiler.source>7</maven.compiler.source>
 		<maven.compiler.target>7</maven.compiler.target>
 
+		<!-- TODO switch to 4.0.3 and remove this once it is released!
+		We cannot use anything older than 4.0.3 because of NUCRDBMS-829.
+		See: http://issues.datanucleus.org/browse/NUCRDBMS-829
+		-->
 		<datanucleus-maven-plugin.version>4.0.0-release</datanucleus-maven-plugin.version>
-		<datanucleus-core.version>4.0.2</datanucleus-core.version>
-		<datanucleus-api-jdo.version>4.0.2</datanucleus-api-jdo.version>
-		<datanucleus-rdbms.version>4.0.2</datanucleus-rdbms.version>
+		<datanucleus-core.version>4.0.3-SNAPSHOT</datanucleus-core.version>
+		<datanucleus-api-jdo.version>4.0.3-SNAPSHOT</datanucleus-api-jdo.version>
+		<datanucleus-rdbms.version>4.0.3-SNAPSHOT</datanucleus-rdbms.version>
 		<datanucleus.javadoc.version>4.0</datanucleus.javadoc.version>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>datanucleus-maven2-nightly</id>
+			<url>http://www.datanucleus.org/downloads/maven2-nightly</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
 	<distributionManagement>
 		<!--
