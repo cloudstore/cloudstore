@@ -73,6 +73,19 @@
 		</repository>
 	</repositories>
 
+	<pluginRepositories>
+		<pluginRepository>
+			<id>datanucleus-maven2-nightly</id>
+			<url>http://www.datanucleus.org/downloads/maven2-nightly</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
 	<distributionManagement>
 		<!--
 		We configure this "junk" directory here in order to make Maven upload everything but the
