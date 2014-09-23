@@ -33,7 +33,7 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 	public ChangeSetDto getChangeSetDto(final @QueryParam("localSync") boolean localSync) {
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			String callIdentifier = ChangeSetDtoService.class.getName() + ".getChangeSetDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
+			final String callIdentifier = ChangeSetDtoService.class.getName() + ".getChangeSetDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
 					new CallableProvider<ChangeSetDto>() {
@@ -45,7 +45,7 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 								@Override
 								public ChangeSetDto call() throws Exception { // called *A*synchronously
 									try {
-										ChangeSetDto changeSetDto = rt.getChangeSetDto(localSync);
+										final ChangeSetDto changeSetDto = getChangeSetDto(rt, localSync);
 										return changeSetDto;
 									} finally {
 										rt.close();
@@ -58,5 +58,9 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 			if (repoTransport[0] != null)
 				repoTransport[0].close();
 		}
+	}
+
+	protected ChangeSetDto getChangeSetDto(final RepoTransport repoTransport, final boolean localSync) {
+		return repoTransport.getChangeSetDto(localSync);
 	}
 }
