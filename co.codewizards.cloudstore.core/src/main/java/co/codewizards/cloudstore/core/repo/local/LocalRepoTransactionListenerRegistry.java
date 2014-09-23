@@ -42,8 +42,14 @@ public class LocalRepoTransactionListenerRegistry {
 	 * @see #onRollback()
 	 */
 	public void onCommit() {
-		for (final LocalRepoTransactionListener listener : listeners)
+		// We flush *before* triggering each listener! It's likely that flushing causes a few JDO-lifecycle-listeners to be
+		// triggered and thus the LocalRepoTransactionListeners might work on an incomplete state, if we flushed later.
+		// Additionally, every listener might change some data and we thus need to flush again between the listeners.
+		transaction.flush();
+		for (final LocalRepoTransactionListener listener : listeners) {
 			listener.onCommit();
+			transaction.flush();
+		}
 	}
 
 	/**
