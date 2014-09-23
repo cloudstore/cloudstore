@@ -103,10 +103,11 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	 * @return the path from the root to the current node. Never <code>null</code>.
 	 */
 	public String getPath() {
-		if (getParent() == null)
+		final RepoFileDtoTreeNode parent = getParent();
+		if (parent == null)
 			return getRepoFileDto().getName();
 		else
-			return getParent().getPath() + '/' + getRepoFileDto().getName();
+			return parent.getPath() + '/' + getRepoFileDto().getName();
 	}
 
 	public List<RepoFileDtoTreeNode> getLeafs() {
@@ -147,5 +148,13 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 		for (final RepoFileDtoTreeNode child : node.getChildren()) {
 			flattenTree(result, child);
 		}
+	}
+
+	public RepoFileDtoTreeNode getRoot() {
+		final RepoFileDtoTreeNode parent = getParent();
+		if (parent == null)
+			return this;
+		else
+			return parent.getRoot();
 	}
 }
