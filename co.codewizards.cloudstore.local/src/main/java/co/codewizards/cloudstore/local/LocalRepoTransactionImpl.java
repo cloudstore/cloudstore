@@ -69,11 +69,14 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public void commit() {
-		persistenceManager.flush();
 		lock.lock();
 		try {
 			if (!isActive())
 				throw new IllegalStateException("Transaction is not active!");
+
+			// We flush *before* triggering the listeners! It's likely that flushing causes a few JDO-lifecycle-listeners to be
+			// triggered and thus the LocalRepoTransactionListeners might work on an incomplete state, if we flushed later.
+			persistenceManager.flush();
 
 			listenerRegistry.onCommit();
 			daoClass2Dao.clear();
