@@ -776,25 +776,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			if (lastModified != null)
 				file.setLastModified(lastModified.getTime());
 
-			if (repoFile == null) {
-				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB.
-				repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(localRoot, file);
+			repoFile = LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
+			if (repoFile == null)
+				throw new IllegalStateException("Just created directory, but corresponding RepoFile still does not exist after local sync: " + file);
 
-				if (repoFile == null)
-					throw new IllegalStateException("Just created directory, but corresponding RepoFile still does not exist after local sync: " + file);
-
-				if (!(repoFile instanceof Directory))
-					throw new IllegalStateException("Just created directory, and even though the corresponding RepoFile now exists, it is not an instance of Directory! It is a " + repoFile.getClass().getName() + " instead! " + file);
-
-//				Directory directory;
-//				repoFile = directory = createObject(Directory.class);
-//				directory.setName(file.getName());
-//				directory.setParent(parentRepoFile);
-//				directory.setLastModified(new Date(file.lastModified()));
-//				repoFile = directory = transaction.getDao(RepoFileDao.class).makePersistent(directory);
-			}
-			else if (repoFile.getLastModified().getTime() != file.lastModified())
-				repoFile.setLastModified(new Date(file.lastModified()));
+			if (!(repoFile instanceof Directory))
+				throw new IllegalStateException("Just created directory, and even though the corresponding RepoFile now exists, it is not an instance of Directory! It is a " + repoFile.getClass().getName() + " instead! " + file);
 
 			repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
 		} finally {
