@@ -69,6 +69,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public void commit() {
+		persistenceManager.flush();
 		lock.lock();
 		try {
 			if (!isActive())
@@ -76,7 +77,6 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 			listenerRegistry.onCommit();
 			daoClass2Dao.clear();
-			persistenceManager.flush();
 			jdoTransaction.commit();
 			persistenceManager.close();
 			jdoTransaction = null;
