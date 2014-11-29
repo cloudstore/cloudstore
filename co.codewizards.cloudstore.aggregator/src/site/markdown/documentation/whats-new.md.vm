@@ -23,7 +23,10 @@ Compared to version 0.9.5, there are the following changes:
 	completely in the last, interrupted synchronisation run
 	([issue 40](https://github.com/cloudstore/cloudstore/issues/40)).
 
-* Enhancement: Many refactorings for improved extensibility.
+* Enhancement: Many refactorings for improved extensibility (enhances code quality - not user experience).
+
+* Enhancement: Renamed many classes for consistency reasons (enhances code quality - not user experience).
+	**Important:** This breaks compatibility - you cannot use a 0.9.6 server with older clients or vice-versa.
 
 
 $H$H$H What\'s new in 0.9.5?
