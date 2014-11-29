@@ -192,17 +192,22 @@ public class CloudStoreRestClient {
 
 	public <R> R execute(final Request<R> request) {
 		AssertUtil.assertNotNull("request", request);
-		int retryCounter = 0;
-		final int retryMax = 3;
+		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
+		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
 		while (true) {
 			acquireClient();
 			try {
 				final long start = System.currentTimeMillis();
-				logger.info("Execution starting: {}/{}", retryCounter, retryMax);
+				
+				if (logger.isInfoEnabled())
+					logger.info("execute: starting try {} of {}", retryCounter + 1, retryMax + 1);
+
 				try {
 					request.setCloudStoreRESTClient(this);
 					final R result = request.execute();
-					logger.info("Execution ended: took {} ms", System.currentTimeMillis() - start);
+					
+					if (logger.isInfoEnabled())
+						logger.info("execute: invocation took {} ms", System.currentTimeMillis() - start);
 
 					if (result == null && !request.isResultNullable())
 						throw new IllegalStateException("result == null, but request.resultNullable == false!");
@@ -211,9 +216,11 @@ public class CloudStoreRestClient {
 				} catch (final RuntimeException x) {
 					markClientBroken(); // make sure we do not reuse this client
 					if (++retryCounter > retryMax || !retryExecuteAfterException(x)) {
+						logger.warn("execute: invocation failed (will NOT retry): " + x, x);
 						handleAndRethrowException(x);
 						throw x;
 					}
+					logger.warn("execute: invocation failed (will retry): " + x, x);
 				}
 			} finally {
 				releaseClient();
