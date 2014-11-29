@@ -22,6 +22,10 @@ import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
 import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
 
 /**
+ * TODO rewrite this entire test! It is currently based on pretty fragile multi-threading. It might be better to use a different approach. Marco :-)
+ * Maybe we should using mocking or somehow replace the real services by some sub-classes that interact with the test. This should
+ * be more reliable than watching the file system from the outside on a different thread than the actual sync.  
+ *
  * @author Sebastian Schefczyk
  */
 public class SyncAbortIT extends AbstractRepoAwareIT {

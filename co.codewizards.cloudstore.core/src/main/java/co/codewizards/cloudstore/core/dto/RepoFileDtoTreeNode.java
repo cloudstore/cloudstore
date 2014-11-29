@@ -3,10 +3,14 @@ package co.codewizards.cloudstore.core.dto;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
@@ -67,9 +71,18 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 		return rootNode;
 	}
 
+	private static final Comparator<RepoFileDtoTreeNode> nodeComparatorByNameOnly = new Comparator<RepoFileDtoTreeNode>() {
+		@Override
+		public int compare(RepoFileDtoTreeNode node0, RepoFileDtoTreeNode node1) {
+			final String name0 = node0.getRepoFileDto().getName();
+			final String name1 = node1.getRepoFileDto().getName();
+			return name0.compareTo(name1);
+		}
+	};
+
 	private RepoFileDtoTreeNode parent;
 	private final RepoFileDto repoFileDto;
-	private final List<RepoFileDtoTreeNode> children = new ArrayList<RepoFileDtoTreeNode>();
+	private final SortedSet<RepoFileDtoTreeNode> children = new TreeSet<RepoFileDtoTreeNode>(nodeComparatorByNameOnly);
 	private List<RepoFileDtoTreeNode> flattenedTreeList;
 
 	protected RepoFileDtoTreeNode(final RepoFileDto repoFileDto) {
@@ -87,8 +100,8 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 		this.parent = parent;
 	}
 
-	public List<RepoFileDtoTreeNode> getChildren() {
-		return Collections.unmodifiableList(children);
+	public Set<RepoFileDtoTreeNode> getChildren() {
+		return Collections.unmodifiableSet(children);
 	}
 
 	protected void addChild(final RepoFileDtoTreeNode child) {

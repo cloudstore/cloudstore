@@ -72,12 +72,15 @@ public class FileWatcher {
 
 	/** Will throw Exception after one chunk is written! */
 	public void syncOneChunk(final RepoToRepoSync repoToRepoSync, final LoggerProgressMonitor monitor)
-			throws TimeoutException, ExecutionException {
+			throws TimeoutException, ExecutionException, IOException {
 		final SyncTask syncTask = new SyncTask(repoToRepoSync, monitor);
 		final ExecutorService threadExecutor = Executors.newFixedThreadPool(3);
 
 		try {
-			final Future<Void> watchTaskTempDirCreationFuture = threadExecutor.submit(new WatchTaskTempDirCreation());
+			if (HACKY_CREATION_OF_TEMP_DIR)
+				doHackyCreationOfTempDir();
+
+			final Future<Void> watchTaskTempDirCreationFuture = HACKY_CREATION_OF_TEMP_DIR ? null : threadExecutor.submit(new WatchTaskTempDirCreation());
 			Thread.sleep(200);
 			// Thread.sleep: before syncing, enforce the
 			// watchTaskFirstWrittenChunk is prepared! I have often seen
@@ -85,9 +88,19 @@ public class FileWatcher {
 			// folder, inside there creates chunk files, modify and delete them
 			// and the watchTaskFirstWrittenChunk missed the events. Most
 			// probably this will occur more often on fast file systems on SSDs.
-			threadExecutor.submit(syncTask);
-			watchTaskTempDirCreationFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
+			if (! HACKY_CREATION_OF_TEMP_DIR)
+				threadExecutor.submit(syncTask);
+
+			if (watchTaskTempDirCreationFuture != null)
+				watchTaskTempDirCreationFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
+
 			final Future<Void> watchTaskFirstWrittenFuture = threadExecutor.submit(new WatchTaskFirstWrittenChunk());
+			
+			if (HACKY_CREATION_OF_TEMP_DIR) {
+				Thread.sleep(200);
+				threadExecutor.submit(syncTask);
+			}
+			
 			watchTaskFirstWrittenFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
 		} catch (final InterruptedException e) {
 			// This exception is thrown if the child thread is interrupted.
@@ -195,6 +208,9 @@ public class FileWatcher {
 	}
 
 	private void doHackyCreationOfTempDir() throws IOException {
+		tempDir = parentDir.resolve(CLOUDSTORE_TMP);
+		watcherTempDir = tempDir.getFileSystem().newWatchService();
+		
 		assertThat(tempDir.toFile()).doesNotExist();
 		tempDir.toFile().mkdir();
 		tempDir.register(watcherTempDir, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE,
@@ -230,14 +246,17 @@ public class FileWatcher {
 		@Override
 		public Void call() throws IOException {
 			assertThat(parentDir).isNotNull();
-			tempDir = parentDir.resolve(CLOUDSTORE_TMP);
-			watcherTempDir = tempDir.getFileSystem().newWatchService();
+//			tempDir = parentDir.resolve(CLOUDSTORE_TMP);
+//			watcherTempDir = tempDir.getFileSystem().newWatchService();
 
 			// plz see jdoc on HACKY_CREATION_OF_TEMP_DIR ;
 			if (HACKY_CREATION_OF_TEMP_DIR) {
 				doHackyCreationOfTempDir();
 				return null;
 			}
+			
+			tempDir = parentDir.resolve(CLOUDSTORE_TMP);
+			watcherTempDir = tempDir.getFileSystem().newWatchService();
 
 			for (;;) {
 				// wait for key to be signalled
@@ -507,6 +526,7 @@ public class FileWatcher {
 					final WatchEvent.Kind<?> kind = event.kind();
 
 					if (kind == StandardWatchEventKinds.OVERFLOW) {
+						System.err.println("OVERFLOW!!!");
 						continue;
 					}
 					// Context for directory entry event is the file name of
