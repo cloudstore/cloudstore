@@ -73,102 +73,103 @@ public class ConfigTest extends AbstractTest {
 			localRoot.mkdirs();
 			assertThat(localRoot.isDirectory()).isTrue();
 
-			final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);
-			assertThat(localRepoManager).isNotNull();
+			try (final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRoot);) {
+				assertThat(localRepoManager).isNotNull();
 
-			final File child_1 = createFile(localRoot, "1_" + random.nextInt(10000));
-			assertThat(child_1.exists()).isFalse();
-			final Config config_1 = Config.getInstanceForDirectory(child_1);
-			assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
-			createDirectory(child_1);
-			assertThat(child_1.isDirectory()).isTrue();
-			setProperty(createFile(child_1, ".cloudstore.properties"), testKey1, "   testValueAAA     ");
-			assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueAAA");
-			setProperty(createFile(child_1, "cloudstore.properties"), testKey1, "    testValueBBB  ");
-			assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
+				final File child_1 = createFile(localRoot, "1_" + random.nextInt(10000));
+				assertThat(child_1.exists()).isFalse();
+				final Config config_1 = Config.getInstanceForDirectory(child_1);
+				assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
+				createDirectory(child_1);
+				assertThat(child_1.isDirectory()).isTrue();
+				setProperty(createFile(child_1, ".cloudstore.properties"), testKey1, "   testValueAAA     ");
+				assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueAAA");
+				setProperty(createFile(child_1, "cloudstore.properties"), testKey1, "    testValueBBB  ");
+				assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
 
-			assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directAfterTransfer);
-			assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
+				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directAfterTransfer);
+				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
 
-			waitForDifferentLastModifiedTimestamp();
-			setGlobalProperty(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.replaceAfterTransfer.name());
-			assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
+				waitForDifferentLastModifiedTimestamp();
+				setGlobalProperty(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.replaceAfterTransfer.name());
+				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
 
-			final File child_1_a = createFile(child_1, "a");
-			final Config config_1_a = Config.getInstanceForFile(child_1_a);
+				final File child_1_a = createFile(child_1, "a");
+				final Config config_1_a = Config.getInstanceForFile(child_1_a);
 
-			assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
-			assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
+				assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
+				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
 
-			waitForDifferentLastModifiedTimestamp();
+				waitForDifferentLastModifiedTimestamp();
 
-			setProperty(createFile(child_1, ".a.cloudstore.properties"), testKey1, "testValueCCC");
-			setProperty(createFile(child_1, ".a.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
+				setProperty(createFile(child_1, ".a.cloudstore.properties"), testKey1, "testValueCCC");
+				setProperty(createFile(child_1, ".a.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
 
-			assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueCCC");
-			assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directDuringTransfer);
+				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueCCC");
+				assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directDuringTransfer);
 
-			setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, "   testValueDDD  ");
-			assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueDDD");
+				setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, "   testValueDDD  ");
+				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueDDD");
 
-			waitForDifferentLastModifiedTimestamp();
+				waitForDifferentLastModifiedTimestamp();
 
-			setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, "    ");
-			assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("xxxyyyzzz");
-			assertThat(config_1_a.getProperty(testKey1, "xxxyyyzzz")).isEqualTo("    ");
+				setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, "    ");
+				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("xxxyyyzzz");
+				assertThat(config_1_a.getProperty(testKey1, "xxxyyyzzz")).isEqualTo("    ");
 
-			waitForDifferentLastModifiedTimestamp();
+				waitForDifferentLastModifiedTimestamp();
 
-			setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, null);
-			assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueCCC");
+				setProperty(createFile(child_1, "a.cloudstore.properties"), testKey1, null);
+				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueCCC");
 
-			createFileWithRandomContent(child_1_a);
+				createFileWithRandomContent(child_1_a);
 
-			final File child_1_2 = createDirectory(child_1, "2");
-			final File child_1_2_aaa = createFile(child_1_2, "aaa");
-			createFileWithRandomContent(child_1_2_aaa);
+				final File child_1_2 = createDirectory(child_1, "2");
+				final File child_1_2_aaa = createFile(child_1_2, "aaa");
+				createFileWithRandomContent(child_1_2_aaa);
 
-			final Config config_1_2_aaa = Config.getInstanceForFile(child_1_2_aaa);
-			assertThat(config_1_2_aaa.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueBBB");
+				final Config config_1_2_aaa = Config.getInstanceForFile(child_1_2_aaa);
+				assertThat(config_1_2_aaa.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueBBB");
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), testKey1, "val_1_2_hidden");
-			assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_hidden");
+				setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), testKey1, "val_1_2_hidden");
+				assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_hidden");
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), "cloudstore.properties"), testKey1, "val_1_2_visible");
-			assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_visible");
+				setProperty(createFile(child_1_2_aaa.getParentFile(), "cloudstore.properties"), testKey1, "val_1_2_visible");
+				assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_visible");
 
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer); // global
-			setProperty(createFile(localRoot, "cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directDuringTransfer); // root directory
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer); // global
+				setProperty(createFile(localRoot, "cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directDuringTransfer); // root directory
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), testKey1, "val_1_2_aaa_visible");
-			assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_aaa_visible");
+				setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), testKey1, "val_1_2_aaa_visible");
+				assertThat(config_1_2_aaa.getProperty(testKey1, null)).isEqualTo("val_1_2_aaa_visible");
 
-			waitForDifferentLastModifiedTimestamp();
-			setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer.name());
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directAfterTransfer);
+				waitForDifferentLastModifiedTimestamp();
+				setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer.name());
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directAfterTransfer);
 
-			waitForDifferentLastModifiedTimestamp();
-			setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, "");
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
+				waitForDifferentLastModifiedTimestamp();
+				setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, "");
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
 
-			waitForDifferentLastModifiedTimestamp();
+				waitForDifferentLastModifiedTimestamp();
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isEqualTo(FileWriteStrategy.directDuringTransfer);
+				setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directDuringTransfer.name());
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isEqualTo(FileWriteStrategy.directDuringTransfer);
 
-			waitForDifferentLastModifiedTimestamp();
+				waitForDifferentLastModifiedTimestamp();
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, null);
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
+				setProperty(createFile(child_1_2_aaa.getParentFile(), "aaa.cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, null);
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
 
-			setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, null);
-			assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isEqualTo(FileWriteStrategy.directDuringTransfer);
+				setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), FileWriteStrategy.CONFIG_KEY, null);
+				assertThat(config_1_2_aaa.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isEqualTo(FileWriteStrategy.directDuringTransfer);
 
-			setProperty(createFile(child_1, "cloudstore.properties"), testKey2, "    55588  ");
-			assertThat(config_1_2_aaa.getPropertyAsLong(testKey2, -1)).isEqualTo(55588);
+				setProperty(createFile(child_1, "cloudstore.properties"), testKey2, "    55588  ");
+				assertThat(config_1_2_aaa.getPropertyAsLong(testKey2, -1)).isEqualTo(55588);
 
-			deleteMainConfigFiles();
+				deleteMainConfigFiles();
+			}
 		}
 	}
 

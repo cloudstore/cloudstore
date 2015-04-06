@@ -262,46 +262,46 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
+		try (final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());) {
+			// This sync does down+up+down to make sure, everything is synced bidirectionally.
+			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 
-		// This sync does down+up+down to make sure, everything is synced bidirectionally.
-		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+			assertThatFilesInRepoAreCorrect(remoteRoot);
+			assertThatNoCollisionInRepo(localRoot);
+			assertThatNoCollisionInRepo(remoteRoot);
+			assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
 
-		assertThatFilesInRepoAreCorrect(remoteRoot);
-		assertThatNoCollisionInRepo(localRoot);
-		assertThatNoCollisionInRepo(remoteRoot);
-		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+			// The issue https://github.com/cloudstore/cloudstore/issues/25 was that when a file was modified
+			// between the down- and the up-sync (that happens inside the normal sync(...) method), a wrong
+			// collision was detected. So we do the steps normally happening in sync(...) individually here
+			// and change the file inbetween.
 
-		// The issue https://github.com/cloudstore/cloudstore/issues/25 was that when a file was modified
-		// between the down- and the up-sync (that happens inside the normal sync(...) method), a wrong
-		// collision was detected. So we do the steps normally happening in sync(...) individually here
-		// and change the file inbetween.
+			// First change the *remote* file and perform a down-sync.
+			modifyFileRandomly(file_1a);
+			repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
 
-		// First change the *remote* file and perform a down-sync.
-		modifyFileRandomly(file_1a);
-		repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
+			// Then change the same file again at the same (remote) location.
+			modifyFileRandomly(file_1a);
 
-		// Then change the same file again at the same (remote) location.
-		modifyFileRandomly(file_1a);
+			// Now perform the up-sync that would normally happen. This should cause the wrong collision of issue #25.
+			localRepoManagerLocal.localSync(new NullProgressMonitor()); // We make 100% sure, the local DB is up-to-date, before up-sync.
+			repoToRepoSync.syncUp(new LoggerProgressMonitor(logger));
 
-		// Now perform the up-sync that would normally happen. This should cause the wrong collision of issue #25.
-		localRepoManagerLocal.localSync(new NullProgressMonitor()); // We make 100% sure, the local DB is up-to-date, before up-sync.
-		repoToRepoSync.syncUp(new LoggerProgressMonitor(logger));
+			// Now we sync down again. This is not really important for this test, but it usually happens in the
+			// ordinary sync(...) method. This btw. syncs the collision file down (if there is one).
+			// Additionally, without this down-sync, we cannot use assertDirectoriesAreEqualRecursively(...).
+			repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
 
-		// Now we sync down again. This is not really important for this test, but it usually happens in the
-		// ordinary sync(...) method. This btw. syncs the collision file down (if there is one).
-		// Additionally, without this down-sync, we cannot use assertDirectoriesAreEqualRecursively(...).
-		repoToRepoSync.syncDown(true, new LoggerProgressMonitor(logger));
+			repoToRepoSync.close();
 
-		repoToRepoSync.close();
+			localRepoManagerLocal.close();
+			localRepoManagerRemote.close();
 
-		localRepoManagerLocal.close();
-		localRepoManagerRemote.close();
+			assertThatNoCollisionInRepo(remoteRoot);
+			assertThatNoCollisionInRepo(localRoot);
 
-		assertThatNoCollisionInRepo(remoteRoot);
-		assertThatNoCollisionInRepo(localRoot);
-
-		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+			assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+		}
 	}
 
 	private void modifyFileRandomly(final File file) throws IOException {
