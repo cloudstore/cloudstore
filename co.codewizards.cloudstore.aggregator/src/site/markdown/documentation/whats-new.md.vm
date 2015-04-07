@@ -9,6 +9,11 @@ $H$H$H What\'s new in 0.9.6?
 
 Compared to version 0.9.5, there are the following changes:
 
+* Bugfix: Fixed a bug concerning file (or directory) time-stamp reading/writing: With ext4, a file's time-stamp may have a
+	resolution finer than 1 ms. This, however, was not handled correctly, causing a file (or directory) to be incorrectly
+	resynced into the opposite direction.
+	([issue 46](https://github.com/cloudstore/cloudstore/issues/46)).
+
 * Enhancement: Store repository alias inside repository (makes moving a repository-directory easier)
 	([issue 18](https://github.com/cloudstore/cloudstore/issues/18)).
 
