@@ -217,7 +217,8 @@ public class IoFile implements File {
 
 	@Override
 	public long getLastModifiedNoFollow() {
-		return this.ioFile.lastModified();
+		// currently: no support for symlinks in this implementation => cannot do anything about follow/no-follow (that's exactly the reason for the nio-implementation!)
+		return lastModified();
 	}
 
 	@Override
@@ -257,7 +258,8 @@ public class IoFile implements File {
 
 	@Override
 	public long lastModified() {
-		return ioFile.lastModified();
+		final long result = ioFile.lastModified();
+		return result;
 	}
 
 	@Override

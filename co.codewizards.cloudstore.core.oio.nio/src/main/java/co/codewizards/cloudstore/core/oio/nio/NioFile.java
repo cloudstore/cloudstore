@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -136,6 +137,19 @@ public class NioFile extends IoFile implements File {
 	}
 
 	@Override
+	public long lastModified() {
+		try {
+			final BasicFileAttributes attributes = Files.readAttributes(
+					ioFile.toPath(), BasicFileAttributes.class);
+			return attributes.lastModifiedTime().toMillis();
+		} catch (final NoSuchFileException x) {
+			return 0; // be compatible with old, classic java.io.File.
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public long getLastModifiedNoFollow() {
 		try {
 			final BasicFileAttributes attributes = Files.readAttributes(
@@ -170,6 +184,18 @@ public class NioFile extends IoFile implements File {
 	@Override
 	public void copyToCopyAttributes(final File toFile) throws IOException {
 		Files.copy(ioFile.toPath(), toFile.getIoFile().toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+	}
+
+	@Override
+	public boolean setLastModified(long lastModified) {
+		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
+		try {
+			Files.getFileAttributeView(ioFile.toPath(), BasicFileAttributeView.class).setTimes(lastModifiedTime, null, null);
+		} catch (final IOException e) {
+			logger.error("Setting the lastModified timestamp of '"+ ioFile +"' failed with the following error: " + e, e);
+			return false;
+		}
+		return true;
 	}
 
 	@Override

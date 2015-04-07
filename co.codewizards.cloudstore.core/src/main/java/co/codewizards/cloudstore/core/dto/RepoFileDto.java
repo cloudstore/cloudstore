@@ -82,4 +82,9 @@ public class RepoFileDto {
 	public void setNeededAsParent(final boolean neededAsParent) {
 		this.neededAsParent = neededAsParent;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("%s[%d, '%s']", this.getClass().getSimpleName(), id, name);
+	}
 }
