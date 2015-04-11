@@ -93,20 +93,15 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 
 			repositoryId = localRepoManager.getRepositoryId();
 			localRoot = localRepoManager.getLocalRoot();
-			try ( LocalRepoTransaction transaction = localRepoManager.beginReadTransaction(); ) {
-				final Collection<RemoteRepository> remoteRepositories = transaction.getDao(RemoteRepositoryDao.class).getObjects();
-				for (final RemoteRepository remoteRepository : remoteRepositories) {
-					if (remoteRepository.getRemoteRoot() == null)
-						continue;
-
-					remoteRoots.add(remoteRepository.getRemoteRoot());
-					if ((remoteRepositoryId == null && remoteRoot == null)
-							|| (remoteRepositoryId != null && remoteRepositoryId.equals(remoteRepository.getRepositoryId()))
-							|| (remoteRoot != null && remoteRoot.equals(remoteRepository.getRemoteRoot())))
-						filteredRemoteRepositoryId2RemoteRoot.put(remoteRepository.getRepositoryId(), remoteRepository.getRemoteRoot());
-				}
-
-				transaction.commit();
+			for (final Map.Entry<UUID, URL> me : localRepoManager.getRemoteRepositoryId2RemoteRootMap().entrySet()) {
+				final UUID id = me.getKey();
+				final URL url = me.getValue();
+				
+				remoteRoots.add(url);
+				if ((remoteRepositoryId == null && remoteRoot == null)
+						|| (remoteRepositoryId != null && remoteRepositoryId.equals(id))
+						|| (remoteRoot != null && remoteRoot.equals(url)))
+					filteredRemoteRepositoryId2RemoteRoot.put(id, url);
 			}
 		} finally {
 			localRepoManager.close();

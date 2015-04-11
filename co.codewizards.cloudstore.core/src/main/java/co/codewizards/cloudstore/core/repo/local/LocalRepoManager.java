@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.lang.reflect.InvocationHandler;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
@@ -140,6 +142,8 @@ public interface LocalRepoManager extends AutoCloseable {
 	 * @param repositoryId the remote repository's unique ID. Must not be <code>null</code>.
 	 */
 	void deleteRemoteRepository(UUID repositoryId);
+
+	Map<UUID, URL> getRemoteRepositoryId2RemoteRootMap();
 
 	/**
 	 * Gets the local path-prefix (of the local repository managed by this {@code LocalRepoManager}) when syncing with

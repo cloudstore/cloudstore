@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.jdo.Query;
@@ -54,6 +56,18 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 					UrlUtil.canonicalizeURL(remoteRoot)));
 
 		return remoteRepository;
+	}
+
+	public Map<UUID, URL> getRemoteRepositoryId2RemoteRootMap() {
+		final Map<UUID, URL> result = new HashMap<UUID, URL>();
+		final Collection<RemoteRepository> remoteRepositories = getObjects();
+		for (final RemoteRepository remoteRepository : remoteRepositories) {
+			if (remoteRepository.getRemoteRoot() == null)
+				continue;
+
+			result.put(remoteRepository.getRepositoryId(), remoteRepository.getRemoteRoot());
+		}
+		return result;
 	}
 
 	@Override

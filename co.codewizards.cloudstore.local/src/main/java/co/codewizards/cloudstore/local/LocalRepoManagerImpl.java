@@ -1,8 +1,9 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.createObject;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.getExtendingClass;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
 
 import java.io.IOException;
 import java.net.URL;
@@ -810,6 +811,16 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	@Override
+	public Map<UUID, URL> getRemoteRepositoryId2RemoteRootMap() {
+		final Map<UUID, URL> result;
+		try ( LocalRepoTransaction transaction = beginReadTransaction(); ) {
+			result = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryId2RemoteRootMap();
+			transaction.commit();
+		}
+		return result;
 	}
 
 	@Override
