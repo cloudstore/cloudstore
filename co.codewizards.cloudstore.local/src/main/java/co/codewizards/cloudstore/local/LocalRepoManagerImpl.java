@@ -839,7 +839,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(repositoryId);
 			if (remoteRepository == null) {
-				remoteRepository = new RemoteRepository(repositoryId);
+				remoteRepository = createObject(RemoteRepository.class, repositoryId);
 				remoteRepository.setRevision(-1);
 			}
 			remoteRepository.setRemoteRoot(remoteRoot);

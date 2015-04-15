@@ -205,4 +205,9 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	public <T> T getContextObject(final Class<T> clazz) {
 		return extensibleContextSupport.getContextObject(clazz);
 	}
+
+	@Override
+	public void removeContextObject(Class<?> clazz) {
+		extensibleContextSupport.removeContextObject(clazz);
+	}
 }

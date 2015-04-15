@@ -6,4 +6,6 @@ public interface ExtensibleContext {
 
 	<T> T getContextObject(Class<T> clazz);
 
+	void removeContextObject(Class<?> clazz);
+
 }

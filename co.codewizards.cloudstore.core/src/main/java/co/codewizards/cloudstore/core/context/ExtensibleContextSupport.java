@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.context;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,5 +34,11 @@ public class ExtensibleContextSupport implements ExtensibleContext {
 	public <T> T getContextObject(final Class<T> clazz) {
 		assertNotNull("clazz", clazz);
 		return clazz.cast(contextClass2ContextObject.get(clazz));
+	}
+
+	@Override
+	public void removeContextObject(Class<?> clazz) {
+		assertNotNull("clazz", clazz);
+		contextClass2ContextObject.remove(clazz);
 	}
 }

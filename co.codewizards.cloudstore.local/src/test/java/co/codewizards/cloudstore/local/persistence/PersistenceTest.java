@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static org.assertj.core.api.Assertions.*;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.createObject;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
 
@@ -35,7 +36,7 @@ public class PersistenceTest extends AbstractTest {
 		assertThat(localRepoManager).isNotNull();
 		LocalRepoTransaction transaction = localRepoManager.beginWriteTransaction();
 		try {
-			RemoteRepository remoteRepository = new RemoteRepository();
+			RemoteRepository remoteRepository = createObject(RemoteRepository.class);
 			remoteRepository.setLocalPathPrefix("");
 			remoteRepository.setPublicKey(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 });
 			remoteRepository = transaction.getDao(RemoteRepositoryDao.class).makePersistent(remoteRepository);

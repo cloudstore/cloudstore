@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.CHARSET_NAME_UTF_8;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -83,37 +82,42 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	@Override
 	public String getPathPrefix() {
 		String pathPrefix = this.pathPrefix;
-		if (pathPrefix == null) {
-			final URL rr = getRemoteRoot();
-			if (rr == null)
-				throw new IllegalStateException("remoteRoot not yet assigned!");
+		if (pathPrefix == null)
+			this.pathPrefix = pathPrefix = determinePathPrefix();
 
-			final String remoteRoot = rr.toExternalForm();
-			final String remoteRootWithoutPathPrefix = getRemoteRootWithoutPathPrefix().toExternalForm();
-			if (!remoteRoot.startsWith(remoteRootWithoutPathPrefix))
-				throw new IllegalStateException(String.format(
-								"remoteRoot='%s' does not start with remoteRootWithoutPathPrefix='%s'",
-								remoteRoot, remoteRootWithoutPathPrefix));
-
-			String urlEncodedPathPrefix;
-			if (remoteRoot.equals(remoteRootWithoutPathPrefix))
-				urlEncodedPathPrefix = "";
-			else {
-				urlEncodedPathPrefix = remoteRoot.substring(remoteRootWithoutPathPrefix.length());
-				if (!urlEncodedPathPrefix.startsWith(SLASH))
-					urlEncodedPathPrefix = SLASH + urlEncodedPathPrefix;
-
-				if (urlEncodedPathPrefix.endsWith(SLASH))
-					throw new IllegalStateException("pathPrefix should not end with '" + SLASH + "', but it does!");
-			}
-
-			try {
-				this.pathPrefix = pathPrefix = URLDecoder.decode(urlEncodedPathPrefix, CHARSET_NAME_UTF_8);
-			} catch (final UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-		}
 		return pathPrefix;
+	}
+
+	protected String determinePathPrefix() {
+		final URL rr = getRemoteRoot();
+		if (rr == null)
+			throw new IllegalStateException("remoteRoot not yet assigned!");
+
+		final String remoteRoot = rr.toExternalForm();
+		final String remoteRootWithoutPathPrefix = getRemoteRootWithoutPathPrefix().toExternalForm();
+		if (!remoteRoot.startsWith(remoteRootWithoutPathPrefix))
+			throw new IllegalStateException(String.format(
+							"remoteRoot='%s' does not start with remoteRootWithoutPathPrefix='%s'",
+							remoteRoot, remoteRootWithoutPathPrefix));
+
+		String urlEncodedPathPrefix;
+		if (remoteRoot.equals(remoteRootWithoutPathPrefix))
+			urlEncodedPathPrefix = "";
+		else {
+			urlEncodedPathPrefix = remoteRoot.substring(remoteRootWithoutPathPrefix.length());
+			if (!urlEncodedPathPrefix.startsWith(SLASH))
+				urlEncodedPathPrefix = SLASH + urlEncodedPathPrefix;
+
+			if (urlEncodedPathPrefix.endsWith(SLASH))
+				throw new IllegalStateException("pathPrefix should not end with '" + SLASH + "', but it does!");
+		}
+
+		try {
+			final String pathPrefix = URLDecoder.decode(urlEncodedPathPrefix, CHARSET_NAME_UTF_8);
+			return pathPrefix;
+		} catch (final UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
