@@ -39,6 +39,15 @@ public class ExtensibleContextSupport implements ExtensibleContext {
 	@Override
 	public void removeContextObject(Class<?> clazz) {
 		assertNotNull("clazz", clazz);
-		contextClass2ContextObject.remove(clazz);
+
+		while (clazz != Object.class) {
+			contextClass2ContextObject.remove(clazz);
+
+			final Class<?>[] interfaces = clazz.getInterfaces();
+			for (final Class<?> iface : interfaces)
+				contextClass2ContextObject.remove(iface);
+
+			clazz = clazz.getSuperclass();
+		}
 	}
 }
