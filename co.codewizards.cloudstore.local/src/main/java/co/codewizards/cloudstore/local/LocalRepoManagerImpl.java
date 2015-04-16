@@ -14,9 +14,11 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
@@ -57,25 +59,14 @@ import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
-import co.codewizards.cloudstore.local.persistence.CopyModification;
-import co.codewizards.cloudstore.local.persistence.DeleteModification;
+import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
 import co.codewizards.cloudstore.local.persistence.Directory;
-import co.codewizards.cloudstore.local.persistence.Entity;
-import co.codewizards.cloudstore.local.persistence.FileChunk;
-import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
-import co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
-import co.codewizards.cloudstore.local.persistence.Modification;
-import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
-import co.codewizards.cloudstore.local.persistence.RepoFile;
-import co.codewizards.cloudstore.local.persistence.Repository;
-import co.codewizards.cloudstore.local.persistence.Symlink;
-import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 
 /**
  * Manager of a repository.
@@ -458,29 +449,16 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initPersistenceCapableClasses(final PersistenceManager pm) {
-		initPersistenceCapableClasses(pm,
-				CopyModification.class,
-				DeleteModification.class,
-				Directory.class,
-				Entity.class,
-				FileChunk.class,
-				LastSyncToRemoteRepo.class,
-				LocalRepository.class,
-				Modification.class,
-				NormalFile.class,
-				RemoteRepository.class,
-				RemoteRepositoryRequest.class,
-				Repository.class,
-				RepoFile.class,
-				FileInProgressMarker.class,
-				Symlink.class,
-				TransferDoneMarker.class);
-	}
-
-	private void initPersistenceCapableClasses(final PersistenceManager pm, final Class<?> ... classes) {
-		for (final Class<?> clazz : classes) {
-			final Class<?> c = getExtendingClass(clazz);
-			pm.getExtent(c);
+		final ServiceLoader<CloudStorePersistenceCapableClassesProvider> sl = ServiceLoader.load(CloudStorePersistenceCapableClassesProvider.class);
+		for (final Iterator<CloudStorePersistenceCapableClassesProvider> it = sl.iterator(); it.hasNext(); ) {
+			final CloudStorePersistenceCapableClassesProvider provider = it.next();
+			final Class<?>[] classes = provider.getPersistenceCapableClasses();
+			if (classes != null) {
+				for (Class<?> clazz : classes) {
+					final Class<?> c = getExtendingClass(clazz);
+					pm.getExtent(c);
+				}
+			}
 		}
 	}
 

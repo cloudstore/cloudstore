@@ -20,6 +20,9 @@ public class LocalRepoTransactionListenerRegistry {
 	public LocalRepoTransactionListenerRegistry(final LocalRepoTransaction transaction) {
 		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
 		this.listeners = createListeners();
+
+		for (final LocalRepoTransactionListener listener : listeners)
+			transaction.setContextObject(listener);
 	}
 
 	public LocalRepoTransaction getTransaction() {
