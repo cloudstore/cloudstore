@@ -310,7 +310,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		}
 	}
 
-	protected String getRepositoryName() {
+	public String getRepositoryName() {
 		if (repositoryName == null) {
 			final String pathAfterBaseURL = getPathAfterBaseURL();
 			final int indexOfFirstSlash = pathAfterBaseURL.indexOf('/');

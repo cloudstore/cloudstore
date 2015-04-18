@@ -51,9 +51,13 @@ public class RequestRepoConnectionService
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
 		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
 		try {
-			repoTransport.requestRepoConnection(clientRepositoryDto.getPublicKey());
+			requestConnection(repoTransport, pathPrefix, clientRepositoryDto);
 		} finally {
 			repoTransport.close();
 		}
+	}
+
+	protected void requestConnection(final RepoTransport repoTransport, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
+		repoTransport.requestRepoConnection(clientRepositoryDto.getPublicKey());
 	}
 }
