@@ -11,7 +11,6 @@ import co.codewizards.cloudstore.core.dto.FileChunkDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
-import co.codewizards.cloudstore.core.dto.RepoFileDtoList;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
@@ -32,7 +31,6 @@ public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbCon
 				ModificationDto.class,
 				NormalFileDto.class,
 				RepoFileDto.class,
-				RepoFileDtoList.class,
 				RepositoryDto.class,
 				SymlinkDto.class,
 				TempChunkFileDto.class

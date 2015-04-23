@@ -15,5 +15,4 @@ public class SymlinkDto extends RepoFileDto {
 	public void setTarget(final String target) {
 		this.target = target;
 	}
-
 }
