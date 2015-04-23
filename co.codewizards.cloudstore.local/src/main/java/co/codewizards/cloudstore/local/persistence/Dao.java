@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import javax.jdo.identity.LongIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.repo.local.DaoProvider;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.ContextWithPersistenceManager;
 
@@ -34,6 +37,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Logger logger;
 	private final Class<E> entityClass;
 	private final Class<D> daoClass;
+	private DaoProvider daoProvider;
 
 	/**
 	 * Instantiate the Dao.
@@ -101,6 +105,13 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			throw new IllegalStateException("persistenceManager not assigned!");
 		}
 		return pm;
+	}
+
+	public DaoProvider getDaoProvider() {
+		return daoProvider;
+	}
+	public void setDaoProvider(DaoProvider daoProvider) {
+		this.daoProvider = daoProvider;
 	}
 
 	/**
@@ -268,8 +279,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			return;
 
 		@SuppressWarnings("unchecked")
-		final
-		Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
+		final Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
 		result.addAll(c);
 		query.closeAll();
 		entityIDSubSet.clear();
@@ -278,7 +288,13 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);
 
 	protected <T extends Dao<?, ?>> T getDao(final Class<T> daoClass) {
-		T dao = daoClass.cast(daoClass2DaoInstance.get(AssertUtil.assertNotNull("daoClass", daoClass)));
+		assertNotNull("daoClass", daoClass);
+
+		final DaoProvider daoProvider = getDaoProvider();
+		if (daoProvider != null)
+			return daoProvider.getDao(daoClass);
+
+		T dao = daoClass.cast(daoClass2DaoInstance.get(daoClass));
 		if (dao == null) {
 			try {
 				dao = daoClass.newInstance();
@@ -287,7 +303,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			} catch (final IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
-			dao.persistenceManager(pm);
+			dao.setPersistenceManager(pm);
 			daoClass2DaoInstance.put(daoClass, dao);
 		}
 		return dao;

@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import co.codewizards.cloudstore.core.context.ExtensibleContext;
 
-public interface LocalRepoTransaction extends AutoCloseable, ExtensibleContext {
+public interface LocalRepoTransaction extends AutoCloseable, DaoProvider, ExtensibleContext {
 
 	void commit();
 
@@ -35,8 +35,5 @@ public interface LocalRepoTransaction extends AutoCloseable, ExtensibleContext {
 
 	LocalRepoManager getLocalRepoManager();
 
-	<D> D getDao(Class<D> daoClass);
-
 	void flush();
-
 }

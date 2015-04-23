@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -166,6 +168,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public <D> D getDao(final Class<D> daoClass) {
+		assertNotNull("daoClass", daoClass);
 
 		@SuppressWarnings("unchecked")
 		D dao = (D) daoClass2Dao.get(daoClass);
@@ -184,6 +187,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 				throw new IllegalStateException(String.format("dao class %s does not extend Dao!", daoClass.getName()));
 
 			((Dao<?, ?>)dao).setPersistenceManager(pm);
+			((Dao<?, ?>)dao).setDaoProvider(this);
 
 			daoClass2Dao.put(daoClass, dao);
 		}
