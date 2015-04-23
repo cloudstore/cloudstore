@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import co.codewizards.cloudstore.core.io.NoCloseInputStream;
+import co.codewizards.cloudstore.core.io.NoCloseOutputStream;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
@@ -38,18 +42,30 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serialize(final D dto, final OutputStream out) {
-		AssertUtil.assertNotNull("dto", dto);
-		AssertUtil.assertNotNull("out", out);
+		assertNotNull("dto", dto);
+		assertNotNull("out", out);
 		try {
-			getMarshaller().marshal(dto, out);
+			getMarshaller().marshal(dto, new NoCloseOutputStream(out));
 		} catch (final JAXBException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
+	public void serializeWithGz(final D dto, final OutputStream out) {
+		assertNotNull("dto", dto);
+		assertNotNull("out", out);
+		try {
+			try (GZIPOutputStream gzOut = new GZIPOutputStream(new NoCloseOutputStream(out));) {
+				getMarshaller().marshal(dto, gzOut);
+			}
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public void serialize(final D dto, final File file) {
-		AssertUtil.assertNotNull("dto", dto);
-		AssertUtil.assertNotNull("file", file);
+		assertNotNull("dto", dto);
+		assertNotNull("file", file);
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -62,8 +78,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serializeWithGz(final D dto, final File file) {
-		AssertUtil.assertNotNull("dto", dto);
-		AssertUtil.assertNotNull("file", file);
+		assertNotNull("dto", dto);
+		assertNotNull("file", file);
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -78,10 +94,21 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserialize(final InputStream in) {
-		AssertUtil.assertNotNull("in", in);
+		assertNotNull("in", in);
 		try {
-			return dtoClass.cast(getUnmarshaller().unmarshal(in));
+			return dtoClass.cast(getUnmarshaller().unmarshal(new NoCloseInputStream(in)));
 		} catch (final JAXBException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public D deserializeWithGz(final InputStream in) {
+		assertNotNull("in", in);
+		try {
+			try (GZIPInputStream gzIn = new GZIPInputStream(new NoCloseInputStream(in));) {
+				return dtoClass.cast(getUnmarshaller().unmarshal(gzIn));
+			}
+		} catch (JAXBException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -133,5 +160,4 @@ public abstract class DtoIo <D> {
 		}
 		return unmarshaller;
 	}
-
 }
