@@ -20,6 +20,7 @@
 		<module>../co.codewizards.cloudstore.local</module>
 		<module>../co.codewizards.cloudstore.ls.rest.client</module>
 		<module>../co.codewizards.cloudstore.ls.rest.server</module>
+		<module>../co.codewizards.cloudstore.ls.server</module>
 		<module>../co.codewizards.cloudstore.site.skin</module>
 		<module>../co.codewizards.cloudstore.rest.client</module>
 		<module>../co.codewizards.cloudstore.rest.server</module>
