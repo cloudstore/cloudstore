@@ -42,12 +42,9 @@ public class MakeSymlinkService extends AbstractServiceWithRepoToRepoAuth
 	{
 		AssertUtil.assertNotNull("path", path);
 		AssertUtil.assertNotNull("target", target);
-		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
-		try {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeSymlink(path, target, lastModified == null ? null : lastModified.toDate());
-		} finally {
-			repoTransport.close();
 		}
 	}
 }

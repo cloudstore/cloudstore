@@ -49,11 +49,8 @@ public class RequestRepoConnectionService
 		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);
 
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);
-		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());
-		try {
+		try (final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, clientRepositoryDto.getRepositoryId());) {
 			requestConnection(repoTransport, pathPrefix, clientRepositoryDto);
-		} finally {
-			repoTransport.close();
 		}
 	}
 

@@ -48,12 +48,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 			@QueryParam("length") @DefaultValue("-1") final int length)
 	{
 		AssertUtil.assertNotNull("path", path);
-		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
-		try {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			return repoTransport.getFileData(path, offset, length);
-		} finally {
-			repoTransport.close();
 		}
 	}
 
@@ -67,12 +64,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Path("{path:.*}")
 	public void delete(@PathParam("path") String path) {
 		AssertUtil.assertNotNull("path", path);
-		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
-		try {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.delete(path);
-		} finally {
-			repoTransport.close();
 		}
 	}
 
@@ -81,12 +75,9 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public void putFileData(@PathParam("path") String path, @QueryParam("offset") final long offset, final byte[] fileData) {
 		AssertUtil.assertNotNull("path", path);
-		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
-		try {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.putFileData(path, offset, fileData);
-		} finally {
-			repoTransport.close();
 		}
 	}
 

@@ -39,12 +39,9 @@ public class MakeDirectoryService extends AbstractServiceWithRepoToRepoAuth
 	public void makeDirectory(@PathParam("path") String path)
 	{
 		AssertUtil.assertNotNull("path", path);
-		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
-		try {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeDirectory(path, lastModified == null ? null : lastModified.toDate());
-		} finally {
-			repoTransport.close();
 		}
 	}
 }

@@ -37,12 +37,9 @@ public class RepositoryDtoService
 		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactoryRegistry repoTransportRegistry = RepoTransportFactoryRegistry.getInstance();
 		RepoTransportFactory repoTransportFactory = repoTransportRegistry.getRepoTransportFactory(localRootURL);
-		RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, null);
-		try {
+		try (final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, null);) {
 			RepositoryDto repositoryDto = repoTransport.getRepositoryDto();
 			return repositoryDto;
-		} finally {
-			repoTransport.close();
 		}
 	}
 }
