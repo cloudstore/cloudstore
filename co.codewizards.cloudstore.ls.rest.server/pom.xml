@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.core</artifactId>
+			<artifactId>co.codewizards.cloudstore.ls.core</artifactId>
 		</dependency>
 
 		<dependency>

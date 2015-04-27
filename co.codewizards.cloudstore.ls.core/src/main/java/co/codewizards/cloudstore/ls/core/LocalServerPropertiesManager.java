@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.ls;
+package co.codewizards.cloudstore.ls.core;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;

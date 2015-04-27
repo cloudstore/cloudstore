@@ -22,9 +22,9 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
-import co.codewizards.cloudstore.core.ls.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
+import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.rest.client.request.Request;
 
 /**

@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.ls.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 
 public class AuthFilter implements ContainerRequestFilter {
 

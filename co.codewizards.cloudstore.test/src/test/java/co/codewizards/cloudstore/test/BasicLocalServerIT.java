@@ -8,7 +8,7 @@ import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.rest.client.request.TestRequest;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 
-public class BasicLocalServerIT {
+public class BasicLocalServerIT extends AbstractIT {
 
 	private static LocalServer localServer;
 

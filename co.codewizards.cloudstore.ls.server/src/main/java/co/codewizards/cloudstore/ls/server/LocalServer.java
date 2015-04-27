@@ -28,9 +28,9 @@ import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
-import co.codewizards.cloudstore.core.ls.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.rest.server.LocalServerRest;
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthManager;
 

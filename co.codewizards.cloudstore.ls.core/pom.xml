@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>co.codewizards.cloudstore.ls.rest.client</artifactId>
+	<artifactId>co.codewizards.cloudstore.ls.core</artifactId>
 
 	<parent>
 		<groupId>co.codewizards.cloudstore</groupId>
@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.ls.core</artifactId>
+			<artifactId>co.codewizards.cloudstore.core</artifactId>
 		</dependency>
 
 		<dependency>
@@ -22,5 +22,4 @@
 			<artifactId>jersey-client</artifactId>
 		</dependency>
 	</dependencies>
-
 </project>

@@ -159,6 +159,11 @@
 			</dependency>
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.ls.core</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.local</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
