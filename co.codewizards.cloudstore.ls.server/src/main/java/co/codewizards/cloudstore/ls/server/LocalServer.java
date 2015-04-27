@@ -235,6 +235,7 @@ public class LocalServer {
 		final HttpConfiguration http_config = createHttpConfigurationForHTTP();
 
         final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(http_config));
+        http.setHost("127.0.0.1");
         http.setPort(getPort());
         http.setIdleTimeout(30000);
 

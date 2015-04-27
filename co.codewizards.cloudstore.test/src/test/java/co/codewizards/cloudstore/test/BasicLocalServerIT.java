@@ -24,7 +24,7 @@ public class BasicLocalServerIT extends AbstractIT {
 	}
 
 	@Test
-	public void invokeTestService() {
+	public void invokeTestService() throws Exception {
 		LocalServerRestClient client = new LocalServerRestClient();
 		client.execute(new TestRequest(false));
 	}
