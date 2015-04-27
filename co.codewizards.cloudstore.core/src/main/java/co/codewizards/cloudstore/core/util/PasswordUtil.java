@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.server.auth;
+package co.codewizards.cloudstore.core.util;
 
 import java.security.SecureRandom;
 

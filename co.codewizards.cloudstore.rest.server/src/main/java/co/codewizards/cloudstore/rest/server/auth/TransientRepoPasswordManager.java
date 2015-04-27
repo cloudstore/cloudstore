@@ -15,6 +15,7 @@ import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.core.util.PasswordUtil;
 
 public class TransientRepoPasswordManager {
 

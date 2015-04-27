@@ -1,9 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
-
 import java.net.SocketException;
-import java.net.URL;
 import java.util.LinkedList;
 
 import javax.net.ssl.SSLException;
@@ -12,7 +9,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.ResponseProcessingException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientConfig;
@@ -26,9 +22,9 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
+import co.codewizards.cloudstore.core.ls.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
-import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.ls.rest.client.request.Request;
 
 /**
@@ -67,8 +63,7 @@ public class LocalServerRestClient {
 
 	private Integer socketReadTimeout;
 
-	private final String url;
-	private String baseURL;
+	private final String baseURL;
 
 	private final LinkedList<Client> clientCache = new LinkedList<Client>();
 
@@ -109,78 +104,36 @@ public class LocalServerRestClient {
 	/**
 	 * Get the server's base-URL.
 	 * <p>
-	 * This base-URL is the base of the <code>CloudStoreREST</code> application. Hence all URLs
-	 * beneath this base-URL are processed by the <code>CloudStoreREST</code> application.
-	 * <p>
-	 * In other words: All repository-names are located directly beneath this base-URL. The special services, too,
-	 * are located directly beneath this base-URL.
-	 * <p>
-	 * For example, if the server's base-URL is "https://host.domain:8443/", then the test-service is
-	 * available via "https://host.domain:8443/_test" and the repository with the alias "myrepo" is
-	 * "https://host.domain:8443/myrepo".
+	 * This base-URL is the base of the <code>LocalServerRest</code> application. Hence all URLs
+	 * beneath this base-URL are processed by the <code>LocalServerRest</code> application.
 	 * @return the base-URL. This URL always ends with "/".
 	 */
 	public synchronized String getBaseURL() {
-		if (baseURL == null) {
-			determineBaseURL();
-		}
 		return baseURL;
 	}
 
 	/**
 	 * Create a new client.
-	 * @param url any URL to the server. Must not be <code>null</code>.
-	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
-	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public LocalServerRestClient(final URL url) {
-		this(AssertUtil.assertNotNull("url", url).toExternalForm());
-	}
+	public LocalServerRestClient() {
+		final int port = LocalServerPropertiesManager.getInstance().getPort();
+		this.baseURL = "http://127.0.0.1:" + port + '/';
 
-	/**
-	 * Create a new client.
-	 * @param url any URL to the server. Must not be <code>null</code>.
-	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
-	 * The base-URL is automatically determined by cutting sub-paths, step by step.
-	 */
-	public LocalServerRestClient(final String url) {
-		this.url = AssertUtil.assertNotNull("url", url);
-	}
-
-	private static String appendFinalSlashIfNeeded(final String url) {
-		return url.endsWith("/") ? url : url + "/";
-	}
-
-	private void determineBaseURL() {
-		acquireClient();
-		try {
-			final Client client = getClientOrFail();
-			String url = appendFinalSlashIfNeeded(this.url);
-			while (true) {
-				final String testUrl = url + "_test";
-				try {
-					final String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
-					if ("SUCCESS".equals(response)) {
-						baseURL = url;
-						break;
-					}
-				} catch (final WebApplicationException wax) {
-					doNothing();
-				}
-
-				if (!url.endsWith("/"))
-					throw new IllegalStateException("url does not end with '/'!");
-
-				final int secondLastSlashIndex = url.lastIndexOf('/', url.length() - 2);
-				url = url.substring(0, secondLastSlashIndex + 1);
-
-				if (StringUtil.getIndexesOf(url, '/').size() < 3)
-					throw new IllegalStateException("baseURL not found!");
+		setCredentialsProvider(new CredentialsProvider() {
+			@Override
+			public String getUserName() {
+				return LocalServerPropertiesManager.USER_NAME;
 			}
-		} finally {
-			releaseClient();
-		}
+			@Override
+			public String getPassword() {
+				return LocalServerPropertiesManager.getInstance().getPassword();
+			}
+		});
 	}
+
+//	private static String appendFinalSlashIfNeeded(final String url) {
+//		return url.endsWith("/") ? url : url + "/";
+//	}
 
 	public <R> R execute(final Request<R> request) {
 		AssertUtil.assertNotNull("request", request);

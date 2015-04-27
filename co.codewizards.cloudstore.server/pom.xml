@@ -21,7 +21,7 @@
 			<artifactId>co.codewizards.cloudstore.rest.server</artifactId>
 		</dependency>
 
-		<dependency> <!-- We package the entire client into the server, because it's needed for administration (=> CLI) anyway and does significantly increase the size. -->
+		<dependency> <!-- We package the entire client into the server, because it's needed for administration (=> CLI) anyway and does not significantly increase the size. -->
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.client</artifactId>
 		</dependency>

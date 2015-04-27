@@ -19,12 +19,12 @@ public class TestRequest extends AbstractRequest<Void> {
 	@Override
 	public Void execute() {
 		if (testException) {
-			final Response response = createWebTarget("_test").queryParam("exception", true).request().get();
+			final Response response = assignCredentials(createWebTarget("_test").queryParam("exception", true).request()).get();
 			assertResponseIndicatesSuccess(response);
 			throw new IllegalStateException("Server sent response instead of exception: " + response);
 		}
 		else {
-			final String response = createWebTarget("_test").request(MediaType.TEXT_PLAIN).get(String.class);
+			final String response = assignCredentials(createWebTarget("_test").request(MediaType.TEXT_PLAIN)).get(String.class);
 			if (!"SUCCESS".equals(response)) {
 				throw new IllegalStateException("Server response invalid: " + response);
 			}

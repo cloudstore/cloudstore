@@ -1,8 +1,10 @@
-package co.codewizards.cloudstore.rest.server.auth;
+package co.codewizards.cloudstore.core.util;
 
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+
+import co.codewizards.cloudstore.core.util.PasswordUtil;
 
 public class PasswordUtilTest {
 

@@ -219,6 +219,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	private WebApplicationException newUnauthorizedException() {
+		// TODO maybe better throw a new javax.ws.rs.NotAuthorizedException?
 		return new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
 	}
 
