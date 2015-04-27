@@ -1,7 +1,5 @@
-package co.codewizards.cloudstore.rest.client;
+package co.codewizards.cloudstore.core.dto;
 
-import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de

@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.server;
+package co.codewizards.cloudstore.ls.rest.server;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
@@ -23,11 +23,11 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultExceptionMapper.class);
 
-	public DefaultExceptionMapper(@Context final CloudStoreRest cloudStoreRest) {
-		logger.debug("<init>: Instance created. cloudStoreRest={}", cloudStoreRest);
+	public DefaultExceptionMapper(@Context final LocalServerRest localServerRest) {
+		logger.debug("<init>: Instance created. localServerRest={}", localServerRest);
 
-		if (cloudStoreRest == null)
-			throw new IllegalArgumentException("cloudStoreRest == null");
+		if (localServerRest == null)
+			throw new IllegalArgumentException("localServerRest == null");
 
 	}
 

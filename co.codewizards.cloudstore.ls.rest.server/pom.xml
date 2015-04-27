@@ -1,0 +1,31 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>co.codewizards.cloudstore.ls.rest.server</artifactId>
+
+	<parent>
+		<groupId>co.codewizards.cloudstore</groupId>
+		<artifactId>co.codewizards.cloudstore.parent</artifactId>
+		<version>0.9.7-SNAPSHOT</version>
+		<relativePath>../co.codewizards.cloudstore.parent</relativePath>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>co.codewizards.cloudstore</groupId>
+			<artifactId>co.codewizards.cloudstore.core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+		</dependency>
+	</dependencies>
+
+</project>

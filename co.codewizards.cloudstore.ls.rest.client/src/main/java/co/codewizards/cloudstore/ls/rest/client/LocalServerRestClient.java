@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client;
+package co.codewizards.cloudstore.ls.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
@@ -6,8 +6,6 @@ import java.net.SocketException;
 import java.net.URL;
 import java.util.LinkedList;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
@@ -31,10 +29,7 @@ import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.StringUtil;
-import co.codewizards.cloudstore.rest.client.request.Request;
-import co.codewizards.cloudstore.rest.client.ssl.CallbackDeniedTrustException;
-import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
-import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
+import co.codewizards.cloudstore.ls.rest.client.request.Request;
 
 /**
  * Client for executing REST requests.
@@ -47,9 +42,9 @@ import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
  * This class is thread-safe.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class CloudStoreRestClient {
+public class LocalServerRestClient {
 
-	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRestClient.class);
+	private static final Logger logger = LoggerFactory.getLogger(LocalServerRestClient.class);
 
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
 	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
@@ -59,14 +54,14 @@ public class CloudStoreRestClient {
 	 * <p>
 	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
-	public static final String CONFIG_KEY_SOCKET_CONNECT_TIMEOUT = "socket.connectTimeout"; //$NON-NLS-1$
+	public static final String CONFIG_KEY_SOCKET_CONNECT_TIMEOUT = "localServer.socket.connectTimeout"; //$NON-NLS-1$
 
 	/**
 	 * The {@code key} for the read timeout used with {@link Config#getPropertyAsInt(String, int)}.
 	 * <p>
 	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
-	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "socket.readTimeout"; //$NON-NLS-1$
+	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "localServer.socket.readTimeout"; //$NON-NLS-1$
 
 	private Integer socketConnectTimeout;
 
@@ -78,9 +73,6 @@ public class CloudStoreRestClient {
 	private final LinkedList<Client> clientCache = new LinkedList<Client>();
 
 	private boolean configFrozen;
-
-	private HostnameVerifier hostnameVerifier;
-	private SSLContext sslContext;
 
 	private CredentialsProvider credentialsProvider;
 
@@ -141,7 +133,7 @@ public class CloudStoreRestClient {
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final URL url) {
+	public LocalServerRestClient(final URL url) {
 		this(AssertUtil.assertNotNull("url", url).toExternalForm());
 	}
 
@@ -151,7 +143,7 @@ public class CloudStoreRestClient {
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final String url) {
+	public LocalServerRestClient(final String url) {
 		this.url = AssertUtil.assertNotNull("url", url);
 	}
 
@@ -203,7 +195,7 @@ public class CloudStoreRestClient {
 					logger.info("execute: starting try {} of {}", retryCounter + 1, retryMax + 1);
 
 				try {
-					request.setCloudStoreRestClient(this);
+					request.setLocalServerRestClient(this);
 					final R result = request.execute();
 
 					if (logger.isInfoEnabled())
@@ -224,17 +216,12 @@ public class CloudStoreRestClient {
 				}
 			} finally {
 				releaseClient();
-				request.setCloudStoreRestClient(null);
+				request.setLocalServerRestClient(null);
 			}
 		}
 	}
 
 	private boolean retryExecuteAfterException(final Exception x) {
-		// If the user explicitly denied trust, we do not retry, because we don't want to ask the user
-		// multiple times.
-		if (ExceptionUtil.getCause(x, CallbackDeniedTrustException.class) != null)
-			return false;
-
 		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
 				SSLException.class,
 				SocketException.class
@@ -257,26 +244,6 @@ public class CloudStoreRestClient {
 		builder.property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_USERNAME, credentialsProvider.getUserName());
 		builder.property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_PASSWORD, credentialsProvider.getPassword());
 		return builder;
-	}
-
-	public synchronized HostnameVerifier getHostnameVerifier() {
-		return hostnameVerifier;
-	}
-	public synchronized void setHostnameVerifier(final HostnameVerifier hostnameVerifier) {
-		if (configFrozen)
-			throw new IllegalStateException("Config already frozen! Cannot change hostnameVerifier anymore!");
-
-		this.hostnameVerifier = hostnameVerifier;
-	}
-
-	public synchronized SSLContext getSslContext() {
-		return sslContext;
-	}
-	public synchronized void setSslContext(final SSLContext sslContext) {
-		if (configFrozen)
-			throw new IllegalStateException("Config already frozen! Cannot change sslContext anymore!");
-
-		this.sslContext = sslContext;
 	}
 
 	private final ThreadLocal<ClientRef> clientThreadLocal = new ThreadLocal<ClientRef>();
@@ -308,23 +275,11 @@ public class CloudStoreRestClient {
 
 		Client client = clientCache.poll();
 		if (client == null) {
-			final SSLContext sslContext = this.sslContext;
-			final HostnameVerifier hostnameVerifier = this.hostnameVerifier;
-
 			final ClientConfig clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
 			clientConfig.property(ClientProperties.CONNECT_TIMEOUT, getSocketConnectTimeout()); // must be a java.lang.Integer
 			clientConfig.property(ClientProperties.READ_TIMEOUT, getSocketReadTimeout()); // must be a java.lang.Integer
 
 			final ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
-
-			if (sslContext != null)
-				clientBuilder.sslContext(sslContext);
-
-			if (hostnameVerifier != null)
-				clientBuilder.hostnameVerifier(hostnameVerifier);
-
-			clientBuilder.register(GZIPReaderInterceptor.class);
-			clientBuilder.register(GZIPWriterInterceptor.class);
 
 			client = clientBuilder.build();
 

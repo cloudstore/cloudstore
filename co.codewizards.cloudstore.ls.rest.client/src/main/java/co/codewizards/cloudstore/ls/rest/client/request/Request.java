@@ -1,19 +1,19 @@
-package co.codewizards.cloudstore.rest.client.request;
+package co.codewizards.cloudstore.ls.rest.client.request;
 
-import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
+import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 
 /**
  * REST request sending data to / querying data from / invoking logic on the server.
  * <p>
  * Every REST request should be a separate class implementing this interface. It should be instantiated for
  * an individual invocation, parameterised (usually directly via the constructor) and passed to
- * {@link CloudStoreRestClient#execute(Request)}.
+ * {@link LocalServerRestClient#execute(Request)}.
  * <p>
  * Objects of this type are therefore short-lived: They normally are only used for one single invocation and
  * forgotten afterwards. In most cases, anonymous instances are directly passed to the
- * {@code CloudStoreRestClient.execute(...)} method as shown in this example:
+ * {@code LocalServerRestClient.execute(...)} method as shown in this example:
  * <p>
- * <pre>return getCloudStoreRestClient().execute(new DoThisAndThatOnServer(param1, param2));</pre>
+ * <pre>return getLocalServerRestClient().execute(new DoThisAndThatOnServer(param1, param2));</pre>
  * <p>
  * Implementations of this interface are <i>not</i> thread-safe.
  * <p>
@@ -28,28 +28,28 @@ import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 public interface Request<R> {
 
 	/**
-	 * Gets the {@code CloudStoreRestClient}.
+	 * Gets the {@code LocalServerRestClient}.
 	 * <p>
-	 * {@link CloudStoreRestClient#execute(Request)} assigns this property, before invoking
+	 * {@link LocalServerRestClient#execute(Request)} assigns this property, before invoking
 	 * {@link #execute()}. After the invocation, this property is cleared, again.
-	 * @return the {@code CloudStoreRestClient}. Never <code>null</code> during
+	 * @return the {@code LocalServerRestClient}. Never <code>null</code> during
 	 * {@linkplain #execute() execution} (but otherwise it normally is <code>null</code>).
-	 * @see #setCloudStoreRestClient(CloudStoreRestClient)
+	 * @see #setLocalServerRestClient(LocalServerRestClient)
 	 */
-	CloudStoreRestClient getCloudStoreRestClient();
+	LocalServerRestClient getLocalServerRestClient();
 
 	/**
-	 * Sets the {@code CloudStoreRestClient}.
-	 * @param cloudStoreRestClient the {@code CloudStoreRestClient}. May be <code>null</code>.
-	 * @see #getCloudStoreRestClient()
+	 * Sets the {@code LocalServerRestClient}.
+	 * @param localServerRestClient the {@code LocalServerRestClient}. May be <code>null</code>.
+	 * @see #getLocalServerRestClient()
 	 */
-	void setCloudStoreRestClient(CloudStoreRestClient cloudStoreRestClient);
+	void setLocalServerRestClient(LocalServerRestClient localServerRestClient);
 
 	/**
 	 * Execute the actual request.
 	 * <p>
 	 * <b>Important:</b> You should never invoke this method directly! Instead, pass the {@code Request} to
-	 * {@link CloudStoreRestClient#execute(Request)}.
+	 * {@link LocalServerRestClient#execute(Request)}.
 	 * @return the response from the server. May be <code>null</code>. Depending on
 	 * {@link #isResultNullable()} a <code>null</code> result is considered an error and causes an exception.
 	 */

@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.client.request;
+package co.codewizards.cloudstore.ls.rest.client.request;
 
 
 import java.net.URI;
@@ -17,7 +17,7 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
 import co.codewizards.cloudstore.core.util.AssertUtil;
-import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
+import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 
 /**
  * Abstract base class for REST requests.
@@ -32,37 +32,37 @@ import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 public abstract class AbstractRequest<R> implements Request<R> {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRequest.class);
 
-	private CloudStoreRestClient cloudStoreRestClient;
+	private LocalServerRestClient localServerRestClient;
 
 	@Override
-	public CloudStoreRestClient getCloudStoreRestClient() {
-		return cloudStoreRestClient;
+	public LocalServerRestClient getLocalServerRestClient() {
+		return localServerRestClient;
 	}
 
 	@Override
-	public void setCloudStoreRestClient(final CloudStoreRestClient cloudStoreRestClient) {
-		this.cloudStoreRestClient = cloudStoreRestClient;
+	public void setLocalServerRestClient(final LocalServerRestClient localServerRestClient) {
+		this.localServerRestClient = localServerRestClient;
 	}
 
 	/**
-	 * Gets the {@link CloudStoreRestClient} or throws an exception, if it was not assigned.
+	 * Gets the {@link LocalServerRestClient} or throws an exception, if it was not assigned.
 	 * <p>
-	 * Implementors are encouraged to use this method instead of {@link #getCloudStoreRestClient()} in their
+	 * Implementors are encouraged to use this method instead of {@link #getLocalServerRestClient()} in their
 	 * {@link #execute()} method.
-	 * @return the {@link CloudStoreRestClient}. Never <code>null</code>.
+	 * @return the {@link LocalServerRestClient}. Never <code>null</code>.
 	 */
-	protected CloudStoreRestClient getCloudStoreRestClientOrFail() {
-		final CloudStoreRestClient cloudStoreRestClient = getCloudStoreRestClient();
-		AssertUtil.assertNotNull("cloudStoreRestClient", cloudStoreRestClient);
-		return cloudStoreRestClient;
+	protected LocalServerRestClient getLocalServerRestClientOrFail() {
+		final LocalServerRestClient localServerRestClient = getLocalServerRestClient();
+		AssertUtil.assertNotNull("localServerRestClient", localServerRestClient);
+		return localServerRestClient;
 	}
 
 	protected void handleException(final RuntimeException x) {
-		getCloudStoreRestClientOrFail().handleAndRethrowException(x);
+		getLocalServerRestClientOrFail().handleAndRethrowException(x);
 	}
 
 	protected Invocation.Builder assignCredentials(final Invocation.Builder builder) {
-		return getCloudStoreRestClientOrFail().assignCredentials(builder);
+		return getLocalServerRestClientOrFail().assignCredentials(builder);
 	}
 
 	protected String getPath(final Class<?> dtoClass) {
@@ -142,11 +142,11 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 * @return the base-URL. This URL always ends with "/".
 	 */
 	protected String getBaseURL() {
-		return getCloudStoreRestClientOrFail().getBaseURL();
+		return getLocalServerRestClientOrFail().getBaseURL();
 	}
 
 	protected Client getClientOrFail() {
-		return getCloudStoreRestClientOrFail().getClientOrFail();
+		return getLocalServerRestClientOrFail().getClientOrFail();
 	}
 
 	/**
