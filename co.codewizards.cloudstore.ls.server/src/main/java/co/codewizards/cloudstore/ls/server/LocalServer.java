@@ -115,6 +115,8 @@ public class LocalServer {
 
 			writeLocalServerProperties();
 
+//			waitForServerToGetReady(); // seems not to be necessary => start() seems to block until the REST app is ready => commented out.
+
 			return true;
 		} catch (final RuntimeException x) {
 			throw x;
@@ -125,6 +127,27 @@ public class LocalServer {
 				_localServerRunningLockFile.release();
 		}
 	}
+
+//	private void waitForServerToGetReady() throws TimeoutException { // seems not to be necessary => start() seems to block until the REST app is ready => commented out.
+//		final int localPort = getLocalPort();
+//		if (localPort < 0)
+//			return;
+//
+//		final long timeoutMillis = 60000L;
+//		final long begin = System.currentTimeMillis();
+//		while (true) {
+//			try {
+//				final Socket socket = new Socket("127.0.0.1", localPort);
+//				socket.close();
+//				return; // success!
+//			} catch (final Exception x) {
+//				try { Thread.sleep(1000); } catch (final InterruptedException ie) { }
+//			}
+//
+//			if (System.currentTimeMillis() - begin > timeoutMillis)
+//				throw new TimeoutException("Server did not start within timeout (ms): " + timeoutMillis);
+//		}
+//	}
 
 	private void onStopOrFailure() {
 		synchronized (localServerRunningFile2LocalServer_running) {

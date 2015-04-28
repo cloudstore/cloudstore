@@ -216,8 +216,22 @@ public class CloudStoreClient {
 					try {
 						final String[] argsWithoutSubCommand = stripSubCommand(args);
 						parser.parseArgument(argsWithoutSubCommand);
+
+						boolean failed = true;
 						subCommand.prepare();
-						subCommand.run();
+						try {
+							subCommand.run();
+							failed = false;
+						} finally {
+							try {
+								subCommand.cleanUp();
+							} catch (final Exception x) {
+								if (failed)
+									logger.error("cleanUp() failed (but suppressing this exception to prevent primary exception from being lost): " + x, x);
+								else
+									throw x;
+							}
+						}
 						programExitStatus = 0;
 					} catch (final CmdLineException e) {
 						// handling of wrong arguments

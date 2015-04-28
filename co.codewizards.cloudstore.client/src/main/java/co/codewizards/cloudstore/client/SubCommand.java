@@ -2,6 +2,9 @@ package co.codewizards.cloudstore.client;
 
 import java.io.Console;
 
+import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
+import co.codewizards.cloudstore.ls.server.LocalServer;
+
 /**
  * <p>
  * Sub-command for a certain CLI operation.
@@ -18,6 +21,8 @@ import java.io.Console;
 public abstract class SubCommand
 {
 	private String subCommandName;
+
+	private LocalServer localServer;
 
 	/**
 	 * Get the name of the sub-command, i.e. what the user has to write in the command line.
@@ -45,19 +50,45 @@ public abstract class SubCommand
 		return subCommandName;
 	}
 
+	private LocalServerRestClient localServerRestClient;
+
 	/**
 	 * Get the description for this sub-command.
 	 * @return the description.
 	 */
 	public abstract String getSubCommandDescription();
 
-	public void prepare()
-	throws Exception
-	{
+	/**
+	 * Invoked before {@link #run()}.
+	 * <p>
+	 * Implementors should always invoked the super-method when overriding!
+	 * @throws Exception in case, the preparation failed.
+	 * @see #cleanUp()
+	 */
+	public void prepare() throws Exception {
+		localServer = new LocalServer();
+		if (! localServer.start())
+			localServer = null;
 	}
 
 	public abstract void run()
 	throws Exception;
+
+	/**
+	 * Invoked after {@link #run()}.
+	 * <p>
+	 * This method is always invoked, when {@link #prepare()} was invoked - even if {@link #run()} failed with an exception.
+	 * <p>
+	 * Implementors should always invoked the super-method when overriding (preferably at the end)!
+	 * @throws Exception in case, cleaning up failed.
+	 * @see #prepare()
+	 */
+	public void cleanUp() throws Exception {
+		if (localServer != null) {
+			localServer.stop();
+			localServer = null;
+		}
+	}
 
 	protected String promptPassword(String fmt, Object ... args) {
 		Console console = System.console();
@@ -82,5 +113,12 @@ public abstract class SubCommand
 
 	public boolean isVisibleInHelp() {
 		return true;
+	}
+
+	public LocalServerRestClient getLocalServerRestClient() {
+		if (localServerRestClient == null)
+			localServerRestClient = new LocalServerRestClient();
+
+		return localServerRestClient;
 	}
 }

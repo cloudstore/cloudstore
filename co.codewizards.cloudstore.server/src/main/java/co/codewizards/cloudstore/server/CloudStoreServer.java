@@ -57,6 +57,7 @@ import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
+import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
 public class CloudStoreServer implements Runnable {
@@ -123,25 +124,42 @@ public class CloudStoreServer implements Runnable {
 		if (!running.compareAndSet(false, true))
 			throw new IllegalStateException("Server is already running!");
 
+		LocalServer localServer = null;
 		try {
 			initKeyStore();
 			synchronized (this) {
+				localServer = createLocalServer();
+				localServer.start();
+
 				server = createServer();
 				server.start();
 			}
 
 			server.join();
 
-			synchronized (this) {
-				server = null;
-			}
 		} catch (final RuntimeException x) {
 			throw x;
 		} catch (final Exception x) {
 			throw new RuntimeException(x);
 		} finally {
+			synchronized (this) {
+				if (localServer != null) {
+					try {
+						localServer.stop();
+					} catch (Exception x) {
+						logger.warn("localServer.stop() failed: " + x, x);
+					}
+					localServer = null;
+				}
+				server = null;
+			}
+
 			running.set(false);
 		}
+	}
+
+	protected LocalServer createLocalServer() {
+		return new LocalServer();
 	}
 
 	public synchronized void stop() {

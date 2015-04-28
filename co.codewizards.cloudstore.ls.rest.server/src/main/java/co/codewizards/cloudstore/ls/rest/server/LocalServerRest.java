@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthFilter;
+import co.codewizards.cloudstore.ls.rest.server.service.RepoInfoService;
 import co.codewizards.cloudstore.ls.rest.server.service.TestService;
 
 /**
@@ -25,19 +26,7 @@ public class LocalServerRest extends ResourceConfig {
 
 		registerClasses(
 				// BEGIN services
-//				BeginPutFileService.class,
-//				ChangeSetDtoService.class,
-//				CopyService.class,
-//				EncryptedSignedAuthTokenService.class,
-//				EndPutFileService.class,
-//				EndSyncFromRepositoryService.class,
-//				EndSyncToRepositoryService.class,
-//				RepoFileDtoService.class,
-//				MakeDirectoryService.class,
-//				MakeSymlinkService.class,
-//				MoveService.class,
-//				RepositoryDtoService.class,
-//				RequestRepoConnectionService.class,
+				RepoInfoService.class,
 				TestService.class,
 				// END services
 
