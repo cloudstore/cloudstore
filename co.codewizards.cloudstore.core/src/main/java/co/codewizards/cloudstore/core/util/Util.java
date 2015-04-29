@@ -77,6 +77,10 @@ public final class Util {
 		return Arrays.equals(one, two);
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T cast(final Object o) {
+		return (T) o;
+	}
 
 	/**
 	 * Does really nothing.
