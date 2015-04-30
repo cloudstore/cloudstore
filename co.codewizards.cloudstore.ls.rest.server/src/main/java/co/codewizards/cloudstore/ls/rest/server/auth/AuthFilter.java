@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.security.Principal;
 import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
@@ -25,11 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 
 public class AuthFilter implements ContainerRequestFilter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthFilter.class);
+
+	protected @Context UriInfo uriInfo;
 
 	protected @Context HttpServletRequest request;
 
@@ -122,15 +126,61 @@ public class AuthFilter implements ContainerRequestFilter {
 			}
 		}
 
-		final String userName = userNameSB.toString();
-		if (LocalServerPropertiesManager.USER_NAME.equals(userName)) {
-			final String pw = new String(password);
-			if (AuthManager.getInstance().isPasswordValid(pw))
-				return;
+		final String userName = userNameSB.toString(); // user-name is a unique client JVM identifier - not a real user name.
+		final String pw = new String(password);
+		if (AuthManager.getInstance().isPasswordValid(pw)) {
+			requestContext.setSecurityContext(new SecurityContextImpl(userName, "https".equals(uriInfo.getRequestUri().getScheme())));
+			return;
 		}
-
 		throw newUnauthorizedException();
 	}
+
+	public static class SecurityContextImpl implements SecurityContext {
+
+        private final Principal principal;
+        private final boolean secure;
+
+        public SecurityContextImpl(final String userName, final boolean secure) {
+        	this.principal = new Principal() {
+        		@Override
+				public String getName() {
+        			return userName;
+        		}
+        	};
+        	this.secure = secure;
+        }
+
+        @Override
+		public Principal getUserPrincipal() {
+            return principal;
+        }
+
+        /**
+         * @param role Role to be checked
+         */
+        @Override
+		public boolean isUserInRole(String role) {
+        	if ("admin".equals(role)) {
+        		return false;
+        	} else if ("user".equals(role)) {
+        		return principal != null;
+        	}
+        	return false;
+        }
+
+        @Override
+		public boolean isSecure() {
+        	return secure;
+        }
+
+        @Override
+		public String getAuthenticationScheme() {
+        	if (principal == null) {
+        		return null;
+        	}
+        	return SecurityContext.BASIC_AUTH;
+        }
+    }
 
 	private WebApplicationException newUnauthorizedException() {
 		return new NotAuthorizedException("Basic realm=\"CloudStoreServer.Local\"");

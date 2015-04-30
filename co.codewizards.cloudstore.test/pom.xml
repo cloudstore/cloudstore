@@ -27,7 +27,7 @@
 		</dependency>
 		<dependency> <!-- TODO remove this, when the LS stuff is integrated in client and server (no need for redundant dependencies!) -->
 			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.ls.rest.client</artifactId>
+			<artifactId>co.codewizards.cloudstore.ls.client</artifactId>
 		</dependency>
 	</dependencies>
 

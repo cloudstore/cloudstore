@@ -50,8 +50,6 @@ public abstract class SubCommand
 		return subCommandName;
 	}
 
-	private LocalServerRestClient localServerRestClient;
-
 	/**
 	 * Get the description for this sub-command.
 	 * @return the description.
@@ -116,9 +114,6 @@ public abstract class SubCommand
 	}
 
 	public LocalServerRestClient getLocalServerRestClient() {
-		if (localServerRestClient == null)
-			localServerRestClient = new LocalServerRestClient();
-
-		return localServerRestClient;
+		return LocalServerRestClient.getInstance();
 	}
 }

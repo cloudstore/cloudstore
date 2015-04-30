@@ -18,6 +18,7 @@
 		<module>../co.codewizards.cloudstore.core</module>
 		<module>../co.codewizards.cloudstore.core.oio.nio</module>
 		<module>../co.codewizards.cloudstore.local</module>
+		<module>../co.codewizards.cloudstore.ls.client</module>
 		<module>../co.codewizards.cloudstore.ls.rest.client</module>
 		<module>../co.codewizards.cloudstore.ls.rest.server</module>
 		<module>../co.codewizards.cloudstore.ls.server</module>

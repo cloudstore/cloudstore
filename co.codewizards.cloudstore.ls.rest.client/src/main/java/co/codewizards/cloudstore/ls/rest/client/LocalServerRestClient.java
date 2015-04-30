@@ -22,9 +22,12 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
+import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.client.request.Request;
 
 /**
@@ -71,6 +74,14 @@ public class LocalServerRestClient {
 
 	private CredentialsProvider credentialsProvider;
 
+	private static final class Holder {
+		public static final LocalServerRestClient instance = new LocalServerRestClient();
+	}
+
+	public static LocalServerRestClient getInstance() {
+		return Holder.instance;
+	}
+
 	public synchronized Integer getSocketConnectTimeout() {
 		if (socketConnectTimeout == null)
 			socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
@@ -115,14 +126,18 @@ public class LocalServerRestClient {
 	/**
 	 * Create a new client.
 	 */
-	public LocalServerRestClient() {
+	protected LocalServerRestClient() {
 		final int port = LocalServerPropertiesManager.getInstance().getPort();
 		this.baseURL = "http://127.0.0.1:" + port + '/';
+
+		// The clientId is used for memory management in the server: if a client is closed or disappears, i.e. doesn't
+		// send keep-alives regularly, anymore, the server removes all object-references kept for this client in its ObjectManager.
+		final String clientId = new Uid().toString();
 
 		setCredentialsProvider(new CredentialsProvider() {
 			@Override
 			public String getUserName() {
-				return LocalServerPropertiesManager.USER_NAME;
+				return clientId;
 			}
 			@Override
 			public String getPassword() {
@@ -233,6 +248,9 @@ public class LocalServerRestClient {
 			clientConfig.property(ClientProperties.READ_TIMEOUT, getSocketReadTimeout()); // must be a java.lang.Integer
 
 			final ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
+
+			clientBuilder.register(JavaNativeMessageBodyReader.class);
+			clientBuilder.register(JavaNativeMessageBodyWriter.class);
 
 			client = clientBuilder.build();
 

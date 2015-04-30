@@ -6,7 +6,10 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthFilter;
+import co.codewizards.cloudstore.ls.rest.server.service.InvokeMethodService;
 import co.codewizards.cloudstore.ls.rest.server.service.RepoInfoService;
 import co.codewizards.cloudstore.ls.rest.server.service.TestService;
 
@@ -26,6 +29,7 @@ public class LocalServerRest extends ResourceConfig {
 
 		registerClasses(
 				// BEGIN services
+				InvokeMethodService.class,
 				RepoInfoService.class,
 				TestService.class,
 				// END services
@@ -33,8 +37,8 @@ public class LocalServerRest extends ResourceConfig {
 				// BEGIN providers
 				// providers are not services (they are infrastructure), but they are registered the same way.
 				AuthFilter.class,
-//				GZIPReaderInterceptor.class, // compression not needed - local (same machine)
-//				GZIPWriterInterceptor.class, // compression not needed - local (same machine)
+				JavaNativeMessageBodyReader.class,
+				JavaNativeMessageBodyWriter.class,
 				CloudStoreJaxbContextResolver.class,
 				DefaultExceptionMapper.class
 				// END providers

@@ -8,6 +8,7 @@ import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.dto.ListDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -28,6 +29,7 @@ public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbCon
 				Error.class,
 				ErrorStackTraceElement.class,
 				FileChunkDto.class,
+				ListDto.class,
 				ModificationDto.class,
 				NormalFileDto.class,
 				RepoFileDto.class,

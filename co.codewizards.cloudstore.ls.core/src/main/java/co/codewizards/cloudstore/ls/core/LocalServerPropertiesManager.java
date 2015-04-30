@@ -23,8 +23,6 @@ public class LocalServerPropertiesManager {
 	public static final String PROPERTY_KEY_PORT = "port";
 	public static final String PROPERTY_KEY_PASSWORD = "password";
 
-	public static final String USER_NAME = "admin";
-
 	private static final class Holder {
 		public static final LocalServerPropertiesManager instance = new LocalServerPropertiesManager();
 	}

@@ -66,7 +66,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	}
 
 	protected String getPath(final Class<?> dtoClass) {
-		return "_" + dtoClass.getSimpleName();
+		return dtoClass.getSimpleName();
 	}
 
 	/**

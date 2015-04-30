@@ -144,6 +144,11 @@
 			</dependency>
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.ls.client</artifactId>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.ls.rest.client</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
