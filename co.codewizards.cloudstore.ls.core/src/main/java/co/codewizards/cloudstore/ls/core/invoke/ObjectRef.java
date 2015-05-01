@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.core.remoteobject;
+package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -11,15 +11,20 @@ public class ObjectRef implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final Uid clientId;
+	private final int classId;
 	private final long objectId;
 
-	public ObjectRef(final Uid clientId, final long objectId) {
+	public ObjectRef(final Uid clientId, final int classId, final long objectId) {
 		this.clientId = assertNotNull("clientId", clientId);
+		this.classId = classId;
 		this.objectId = objectId;
 	}
 
 	public Uid getClientId() {
 		return clientId;
+	}
+	public int getClassId() {
+		return classId;
 	}
 	public long getObjectId() {
 		return objectId;
@@ -48,6 +53,6 @@ public class ObjectRef implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("%s[%s, %s]", this.getClass().getSimpleName(), clientId, objectId);
+		return String.format("%s[%s, %s, %s]", this.getClass().getSimpleName(), clientId, classId, objectId);
 	}
 }

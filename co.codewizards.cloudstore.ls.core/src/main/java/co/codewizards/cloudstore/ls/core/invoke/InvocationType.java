@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.core.remoteobject;
+package co.codewizards.cloudstore.ls.core.invoke;
 
 public enum InvocationType {
 	CONSTRUCTOR,

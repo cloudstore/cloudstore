@@ -1,0 +1,2 @@
+co.codewizards.cloudstore.ls.client.handler.GetClassInfoRequestHandler
+co.codewizards.cloudstore.ls.client.handler.InverseMethodInvocationRequestHandler

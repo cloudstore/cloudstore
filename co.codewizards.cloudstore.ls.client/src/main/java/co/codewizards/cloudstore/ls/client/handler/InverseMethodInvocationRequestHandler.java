@@ -1,39 +1,27 @@
-package co.codewizards.cloudstore.ls.rest.server.service;
+package co.codewizards.cloudstore.ls.client.handler;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
+import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
+import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.InvocationType;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
-import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
-import co.codewizards.cloudstore.ls.rest.server.InverseInvoker;
 
-@Path("InvokeMethod")
-@Consumes(MediaTypeConst.APPLICATION_JAVA_NATIVE)
-@Produces(MediaTypeConst.APPLICATION_JAVA_NATIVE)
-public class InvokeMethodService extends AbstractService {
+public class InverseMethodInvocationRequestHandler extends AbstractInverseServiceRequestHandler<InverseMethodInvocationRequest, InverseMethodInvocationResponse> {
 
-	private InverseInvoker inverseInvoker;
 	private ObjectManager objectManager;
-	private ClassManager classManager;
 
-	@POST
-	public MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) {
-		assertNotNull("methodInvocationRequest", methodInvocationRequest);
+	@Override
+	public InverseMethodInvocationResponse handle(final InverseMethodInvocationRequest request) {
+		assertNotNull("request", request);
+		MethodInvocationRequest methodInvocationRequest = request.getMethodInvocationRequest();
 
-		// *always* acquiring to make sure the lastUseDate is updated - and to make things easy: we have what we need.
-		inverseInvoker = getInverseInvoker();
-		objectManager = inverseInvoker.getObjectManager();
-		classManager = objectManager.getClassManager();
+		objectManager = getLocalServerClient().getObjectManager();
+		final ClassManager classManager = objectManager.getClassManager();
 
 		final String className = methodInvocationRequest.getClassName();
 		final Class<?> clazz = className == null ? null : classManager.getClassOrFail(className);
@@ -65,8 +53,7 @@ public class InvokeMethodService extends AbstractService {
 
 		final Object resultObjectOrObjectRef = objectManager.getObjectRefOrObject(resultObject);
 
-		final MethodInvocationResponse result = MethodInvocationResponse.forInvocation(resultObjectOrObjectRef);
-		return result;
+		return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(resultObjectOrObjectRef));
 	}
 
 	private Object[] fromObjectRefsToObjects(final Object[] objects) {
@@ -81,7 +68,7 @@ public class InvokeMethodService extends AbstractService {
 				if (objectManager.getClientId().equals(objectRef.getClientId()))
 					result[i] = objectManager.getObjectOrFail(objectRef);
 				else // the reference is a remote object from the client-side => lookup or create proxy
-					result[i] = inverseInvoker.getRemoteObjectProxyOrCreate(objectRef);
+					result[i] = getLocalServerClient().getRemoteObjectProxyOrCreate(objectRef);
 			} else
 				result[i] = object;
 		}

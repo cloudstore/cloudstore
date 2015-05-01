@@ -4,7 +4,7 @@ import co.codewizards.cloudstore.core.dto.jaxb.AbstractCloudStoreJaxbContextProv
 import co.codewizards.cloudstore.ls.core.dto.RemoteRepositoryDto;
 import co.codewizards.cloudstore.ls.core.dto.RepoInfoRequestDto;
 import co.codewizards.cloudstore.ls.core.dto.RepoInfoResponseDto;
-import co.codewizards.cloudstore.ls.core.remoteobject.ObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 
 public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbContextProvider {
 

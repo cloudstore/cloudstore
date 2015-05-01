@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.core.remoteobject;
+package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 

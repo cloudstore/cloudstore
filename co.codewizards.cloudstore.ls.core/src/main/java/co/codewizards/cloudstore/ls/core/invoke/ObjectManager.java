@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.core.remoteobject;
+package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -24,9 +24,17 @@ public class ObjectManager {
 
 	private final Uid clientId;
 
-	private long nextObjectId = 0;
+	private long nextObjectId;
 
 	private volatile Date lastUseDate;
+	private volatile boolean neverEvict;
+
+	private final Map<ObjectRef, Object> objectRef2Object = new HashMap<>();
+	private final Map<Object, ObjectRef> object2ObjectRef = new IdentityHashMap<>();
+	private final Map<String, Object> contextObjectMap = new HashMap<>();
+
+	private final RemoteObjectProxyManager remoteObjectProxyManager = new RemoteObjectProxyManager();
+	private final ClassManager classManager = new ClassManager();
 
 	private static final Map<Uid, ObjectManager> clientId2ObjectManager = new HashMap<>();
 
@@ -59,6 +67,10 @@ public class ObjectManager {
 	private static synchronized void evictOldObjectManagers() {
 		for (Iterator<ObjectManager> it = clientId2ObjectManager.values().iterator(); it.hasNext();) {
 			final ObjectManager objectManager = it.next();
+
+			if (objectManager.isNeverEvict())
+				continue;
+
 			if (objectManager.getLastUseDate().getTime() < System.currentTimeMillis() - EVICT_AGE_MS)
 				it.remove();
 		}
@@ -76,6 +88,14 @@ public class ObjectManager {
 		this.lastUseDate = new Date();
 	}
 
+	public boolean isNeverEvict() {
+		return neverEvict;
+	}
+
+	public void setNeverEvict(boolean neverEvict) {
+		this.neverEvict = neverEvict;
+	}
+
 	/**
 	 * Gets the id of the client using this {@code ObjectManager}. This is either the remote client talking to a server
 	 * or it is the server (when the remote client holds references e.g. to listeners or other callbacks for the server).
@@ -85,12 +105,18 @@ public class ObjectManager {
 		return clientId;
 	}
 
-	protected synchronized ObjectRef createObjectRef() {
-		return new ObjectRef(clientId, nextObjectId++);
+	public synchronized Object getContextObject(String key) {
+		return contextObjectMap.get(key);
 	}
 
-	private final Map<ObjectRef, Object> objectRef2Object = new HashMap<>();
-	private final Map<Object, ObjectRef> object2ObjectRef = new IdentityHashMap<>();
+	public synchronized void putContextObject(String key, Object object) {
+		contextObjectMap.put(key, object);
+	}
+
+	protected synchronized ObjectRef createObjectRef(Class<?> clazz) {
+		final int classId = classManager.getClassIdOrCreate(clazz);
+		return new ObjectRef(clientId, classId, nextObjectId++);
+	}
 
 	public synchronized Object getObjectRefOrObject(final Object object) {
 		if (isObjectRefMappingEnabled(object))
@@ -102,7 +128,7 @@ public class ObjectManager {
 	public synchronized ObjectRef getObjectRefOrCreate(final Object object) {
 		ObjectRef objectRef = getObjectRef(object);
 		if (objectRef == null) {
-			objectRef = createObjectRef();
+			objectRef = createObjectRef(object.getClass());
 			objectRef2Object.put(objectRef, object);
 			object2ObjectRef.put(object, objectRef);
 		}
@@ -158,6 +184,14 @@ public class ObjectManager {
 	private static void assertNotInstanceOfObjectRef(final Object object) {
 		if (object instanceof ObjectRef)
 			throw new IllegalArgumentException("object is an instance of ObjectRef! " + object);
+	}
+
+	public RemoteObjectProxyManager getRemoteObjectProxyManager() {
+		return remoteObjectProxyManager;
+	}
+
+	public ClassManager getClassManager() {
+		return classManager;
 	}
 
 	public boolean isObjectRefMappingEnabled(final Object object) { // TODO maybe use annotations or a meta-data-service?! or both?!

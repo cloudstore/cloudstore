@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -105,6 +106,10 @@ public abstract class AbstractIT {
 	@Before
 	public void before() {
 		localRoot2FilesInRepo.clear();
+	}
+
+	@After
+	public void after() {
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {

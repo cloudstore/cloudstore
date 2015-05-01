@@ -2,6 +2,11 @@ package co.codewizards.cloudstore.test;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,35 +19,36 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
-import co.codewizards.cloudstore.ls.core.remoteobject.RemoteObject;
+import co.codewizards.cloudstore.ls.core.invoke.RemoteObject;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.server.LocalServer;
+import co.codewizards.cloudstore.test.model.ExampleService;
+import co.codewizards.cloudstore.test.model.ExampleServiceImpl;
 
 public class LocalServerClientIT extends AbstractIT {
 
 	private static LocalServer localServer;
-	private LocalServerClient client;
+	private static LocalServerClient client;
 
 	@BeforeClass
 	public static void beforeLocalServerClientIT() {
 		localServer = new LocalServer();
 		localServer.start();
-	}
 
-	@Override
-	public void before() {
-		super.before();
+		final LocalServerRestClient localServerRestClient = new LocalServerRestClient() {
+		};
+
 		client = new LocalServerClient() {
 			@Override
-			protected LocalServerRestClient getLocalServerRestClient() {
-				return new LocalServerRestClient() {
-				};
+			public LocalServerRestClient getLocalServerRestClient() {
+				return localServerRestClient;
 			}
 		};
 	}
 
 	@AfterClass
 	public static void afterLocalServerClientIT() {
+		client.close();
 		localServer.stop();
 	}
 
@@ -93,5 +99,69 @@ public class LocalServerClientIT extends AbstractIT {
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isInstanceOf(RemoteObject.class);
 		localRepoManager.close();
+	}
+
+	private static class PropertyChangeListenerInvocation {
+		public final PropertyChangeListener listener;
+		public final PropertyChangeEvent event;
+
+		public PropertyChangeListenerInvocation(final PropertyChangeListener listener, final PropertyChangeEvent event) {
+			this.listener = listener;
+			this.event = event;
+		}
+	}
+
+	@Test
+	public void testPropertyChangeListener() throws Exception {
+		ExampleService exampleService = client.invokeConstructor(ExampleServiceImpl.class);
+
+		final List<PropertyChangeListenerInvocation> propertyChangeListenerInvocations = new ArrayList<>();
+
+		PropertyChangeListener globalPropertyChangeListener = new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent event) {
+				propertyChangeListenerInvocations.add(new PropertyChangeListenerInvocation(this, event));
+			}
+		};
+
+		PropertyChangeListener stringValuePropertyChangeListener = new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent event) {
+				propertyChangeListenerInvocations.add(new PropertyChangeListenerInvocation(this, event));
+			}
+		};
+
+		exampleService.addPropertyChangeListener(globalPropertyChangeListener);
+		exampleService.addPropertyChangeListener(ExampleService.PropertyEnum.stringValue, stringValuePropertyChangeListener);
+
+		propertyChangeListenerInvocations.clear();
+		exampleService.setStringValue("aaa");
+		assertThat(propertyChangeListenerInvocations).hasSize(2);
+
+		exampleService.setStringValue("bbb");
+		assertThat(propertyChangeListenerInvocations).hasSize(4);
+
+		exampleService.setLongValue(123);
+		assertThat(propertyChangeListenerInvocations).hasSize(5);
+
+		assertThat(propertyChangeListenerInvocations.get(0).listener).isSameAs(globalPropertyChangeListener);
+		assertThat(propertyChangeListenerInvocations.get(0).event.getOldValue()).isEqualTo(null);
+		assertThat(propertyChangeListenerInvocations.get(0).event.getNewValue()).isEqualTo("aaa");
+
+		assertThat(propertyChangeListenerInvocations.get(1).listener).isSameAs(stringValuePropertyChangeListener);
+		assertThat(propertyChangeListenerInvocations.get(1).event.getOldValue()).isEqualTo(null);
+		assertThat(propertyChangeListenerInvocations.get(1).event.getNewValue()).isEqualTo("aaa");
+
+		assertThat(propertyChangeListenerInvocations.get(2).listener).isSameAs(globalPropertyChangeListener);
+		assertThat(propertyChangeListenerInvocations.get(2).event.getOldValue()).isEqualTo("aaa");
+		assertThat(propertyChangeListenerInvocations.get(2).event.getNewValue()).isEqualTo("bbb");
+
+		assertThat(propertyChangeListenerInvocations.get(3).listener).isSameAs(stringValuePropertyChangeListener);
+		assertThat(propertyChangeListenerInvocations.get(3).event.getOldValue()).isEqualTo("aaa");
+		assertThat(propertyChangeListenerInvocations.get(3).event.getNewValue()).isEqualTo("bbb");
+
+		assertThat(propertyChangeListenerInvocations.get(4).listener).isSameAs(globalPropertyChangeListener);
+		assertThat(propertyChangeListenerInvocations.get(4).event.getOldValue()).isEqualTo(0L);
+		assertThat(propertyChangeListenerInvocations.get(4).event.getNewValue()).isEqualTo(123L);
 	}
 }

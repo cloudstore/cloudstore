@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthFilter;
+import co.codewizards.cloudstore.ls.rest.server.service.ClassInfoService;
+import co.codewizards.cloudstore.ls.rest.server.service.InverseServiceRequestService;
+import co.codewizards.cloudstore.ls.rest.server.service.InverseServiceResponseService;
 import co.codewizards.cloudstore.ls.rest.server.service.InvokeMethodService;
 import co.codewizards.cloudstore.ls.rest.server.service.RepoInfoService;
 import co.codewizards.cloudstore.ls.rest.server.service.TestService;
@@ -29,6 +32,9 @@ public class LocalServerRest extends ResourceConfig {
 
 		registerClasses(
 				// BEGIN services
+				ClassInfoService.class,
+				InverseServiceRequestService.class,
+				InverseServiceResponseService.class,
 				InvokeMethodService.class,
 				RepoInfoService.class,
 				TestService.class,

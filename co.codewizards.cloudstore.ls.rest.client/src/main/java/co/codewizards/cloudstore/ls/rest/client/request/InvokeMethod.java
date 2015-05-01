@@ -5,9 +5,9 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 
+import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
+import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
-import co.codewizards.cloudstore.ls.core.remoteobject.MethodInvocationRequest;
-import co.codewizards.cloudstore.ls.core.remoteobject.MethodInvocationResponse;
 
 public class InvokeMethod extends AbstractRequest<MethodInvocationResponse> {
 
