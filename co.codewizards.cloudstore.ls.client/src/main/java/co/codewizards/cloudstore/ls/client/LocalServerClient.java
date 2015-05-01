@@ -22,7 +22,7 @@ import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
-import co.codewizards.cloudstore.ls.core.invoke.RemoteObject;
+import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyFactory;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.rest.client.request.GetClassInfo;
@@ -114,10 +114,10 @@ public class LocalServerClient implements Closeable {
 		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
 
-		if (!(object instanceof RemoteObject))
-			throw new IllegalArgumentException("object is not an instance of RemoteObject!");
+		if (!(object instanceof RemoteObjectProxy))
+			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
-		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObject)object).getObjectRef());
+		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
 		return invoke(objectRef, methodName, (Class<?>[]) null, arguments);
 	}
 
@@ -147,8 +147,8 @@ public class LocalServerClient implements Closeable {
 		final Object[] result = new Object[objects.length];
 		for (int i = 0; i < objects.length; i++) {
 			final Object object = objects[i];
-			if (object instanceof RemoteObject) {
-				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObject)object).getObjectRef());
+			if (object instanceof RemoteObjectProxy) {
+				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
 			} else
 				result[i] = objectManager.getObjectRefOrObject(object);
 		}
@@ -173,17 +173,23 @@ public class LocalServerClient implements Closeable {
 		return cast(result);
 	}
 
-	private RemoteObject _createRemoteObjectProxy(final ObjectRef objectRef, final Class<?>[] interfaces) {
+	private RemoteObjectProxy _createRemoteObjectProxy(final ObjectRef objectRef, final Class<?>[] interfaces) {
 		final ClassLoader classLoader = this.getClass().getClassLoader();
-		return (RemoteObject) Proxy.newProxyInstance(classLoader, interfaces, new InvocationHandler() {
+		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces, new InvocationHandler() {
 			@Override
 			public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-				// BEGIN implement RemoteObject
+				// BEGIN implement RemoteObjectProxy
 				if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
 					return objectRef;
-				// END implement RemoteObject
+				// END implement RemoteObjectProxy
 
 				return LocalServerClient.this.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+			}
+
+			@Override
+			protected void finalize() throws Throwable {
+				LocalServerClient.this.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF, (Class<?>[])null, (Object[])null);
+				super.finalize();
 			}
 		});
 	}
@@ -204,7 +210,7 @@ public class LocalServerClient implements Closeable {
 			if (iface != null)
 				interfaces.add(iface);
 		}
-		interfaces.add(RemoteObject.class);
+		interfaces.add(RemoteObjectProxy.class);
 		return interfaces.toArray(new Class<?>[interfaces.size()]);
 	}
 
@@ -241,7 +247,7 @@ public class LocalServerClient implements Closeable {
 	public Object getRemoteObjectProxyOrCreate(ObjectRef objectRef) {
 		return objectManager.getRemoteObjectProxyManager().getRemoteObjectProxy(objectRef, new RemoteObjectProxyFactory() {
 			@Override
-			public RemoteObject createRemoteObject(ObjectRef objectRef) {
+			public RemoteObjectProxy createRemoteObject(ObjectRef objectRef) {
 				final Class<?>[] interfaces = getInterfaces(objectRef.getClassId());
 				return _createRemoteObjectProxy(objectRef, interfaces);
 			}

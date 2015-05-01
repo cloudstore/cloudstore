@@ -19,7 +19,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
-import co.codewizards.cloudstore.ls.core.invoke.RemoteObject;
+import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.test.model.ExampleService;
@@ -63,7 +63,7 @@ public class LocalServerClientIT extends AbstractIT {
 	@Test
 	public void invokeConstructorAndSomeMethodsViaApi() throws Exception {
 		Object localRepository = client.invokeConstructor(LocalRepository.class);
-		assertThat(localRepository).isInstanceOf(RemoteObject.class);
+		assertThat(localRepository).isInstanceOf(RemoteObjectProxy.class);
 
 		byte[] privateKeyOutput = client.invoke(localRepository, "getPrivateKey");
 		assertThat(privateKeyOutput).isNull();
@@ -78,26 +78,26 @@ public class LocalServerClientIT extends AbstractIT {
 		Object rootDirectoryOutput = client.invoke(localRepository, "getRoot");
 
 		Object rootDirectoryInput = client.invokeConstructor(Directory.class);
-		assertThat(rootDirectoryInput).isInstanceOf(RemoteObject.class);
+		assertThat(rootDirectoryInput).isInstanceOf(RemoteObjectProxy.class);
 
 		client.invoke(localRepository, "setRoot", rootDirectoryInput);
 		rootDirectoryOutput = client.invoke(localRepository, "getRoot");
-		assertThat(rootDirectoryOutput).isInstanceOf(RemoteObject.class);
+		assertThat(rootDirectoryOutput).isInstanceOf(RemoteObjectProxy.class);
 		assertThat(rootDirectoryOutput).isSameAs(rootDirectoryInput);
 	}
 
 	@Test
 	public void invokeStaticMethodAndSomeMethodsViaProxy() throws Exception {
 		File localRootInput = newTestRepositoryLocalRoot("");
-		assertThat(localRootInput).isNotInstanceOf(RemoteObject.class);
+		assertThat(localRootInput).isNotInstanceOf(RemoteObjectProxy.class);
 
 		File localRoot = client.invokeStatic(OioFileFactory.class, "createFile", localRootInput.getAbsolutePath());
-		assertThat(localRoot).isInstanceOf(RemoteObject.class);
+		assertThat(localRoot).isInstanceOf(RemoteObjectProxy.class);
 		assertThat(localRoot.mkdir()).isTrue();
 
 		LocalRepoManagerFactory localRepoManagerFactory = client.invokeStatic(LocalRepoManagerFactory.Helper.class, "getInstance");
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
-		assertThat(localRepoManager).isInstanceOf(RemoteObject.class);
+		assertThat(localRepoManager).isInstanceOf(RemoteObjectProxy.class);
 		localRepoManager.close();
 	}
 

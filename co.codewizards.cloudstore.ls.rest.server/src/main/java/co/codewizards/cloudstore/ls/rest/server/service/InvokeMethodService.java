@@ -38,7 +38,14 @@ public class InvokeMethodService extends AbstractService {
 		final String className = methodInvocationRequest.getClassName();
 		final Class<?> clazz = className == null ? null : classManager.getClassOrFail(className);
 
+		final String methodName = methodInvocationRequest.getMethodName();
+
 		final ObjectRef objectRef = methodInvocationRequest.getObjectRef();
+		if (ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF.equals(methodName)) {
+			objectManager.remove(objectRef);
+			return MethodInvocationResponse.forInvocation(null);
+		}
+
 		final Object object = objectRef == null ? null : objectManager.getObjectOrFail(objectRef);
 
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
@@ -54,10 +61,10 @@ public class InvokeMethodService extends AbstractService {
 				resultObject = invokeConstructor(clazz, arguments);
 				break;
 			case OBJECT:
-				resultObject = invoke(object, methodInvocationRequest.getMethodName(), argumentTypes, arguments);
+				resultObject = invoke(object, methodName, argumentTypes, arguments);
 				break;
 			case STATIC:
-				resultObject = invokeStatic(clazz, methodInvocationRequest.getMethodName(), arguments);
+				resultObject = invokeStatic(clazz, methodName, arguments);
 				break;
 			default:
 				throw new IllegalStateException("Unknown InvocationType: " + invocationType);

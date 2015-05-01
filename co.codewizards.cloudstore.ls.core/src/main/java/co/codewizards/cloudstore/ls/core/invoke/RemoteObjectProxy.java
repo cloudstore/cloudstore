@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-public interface RemoteObject {
+public interface RemoteObjectProxy {
 
 	ObjectRef getObjectRef();
 
