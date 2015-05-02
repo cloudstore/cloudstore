@@ -7,7 +7,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,24 +39,41 @@ import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyFactory;
 
 public class InverseInvoker {
+	/**
+	 * Timeout (in milliseconds) before sending an empty HTTP response to the polling client. The client does
+	 * <i>long polling</i> in order to allow for
+	 * {@linkplain #performInverseServiceRequest(InverseServiceRequest) inverse service invocations}.
+	 * <p>
+	 * This timeout must be (significantly) shorter than {@link ObjectManager#TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS} to make sure, the
+	 * {@linkplain #pollInverseServiceRequest() polling} serves additionally as a keep-alive for
+	 * the server-side {@code ObjectManager}.
+	 */
 	private static final long POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 30L * 1000L; // 30 seconds
+
+	/**
+	 * Timeout for {@link #performInverseServiceRequest(InverseServiceRequest)}.
+	 * <p>
+	 * If an inverse service-request does not receive a response within this timeout, a {@link TimeoutException} is thrown.
+	 */
 	private static final long PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 15L * 60L * 1000L; // 15 minutes
 
 	private final ObjectManager objectManager;
 	private final LinkedList<InverseServiceRequest> inverseServiceRequests = new LinkedList<>();
-	private final Set<Uid> requestIdsWaitingForResponse = Collections.synchronizedSet(new HashSet<Uid>());
-	private final Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = Collections.synchronizedMap(new HashMap<Uid, InverseServiceResponse>());
+	private final Set<Uid> requestIdsWaitingForResponse = new HashSet<Uid>(); // synchronized by: requestId2InverseServiceResponse
+	private final Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = new HashMap<Uid, InverseServiceResponse>();
 	private final ClassInfoCache classInfoCache = new ClassInfoCache();
 
-	public static synchronized InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
+	public static InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
 		assertNotNull("objectManager", objectManager);
 
-		InverseInvoker inverseInvoker = (InverseInvoker) objectManager.getContextObject(InverseInvoker.class.getName());
-		if (inverseInvoker == null) {
-			inverseInvoker = new InverseInvoker(objectManager);
-			objectManager.putContextObject(InverseInvoker.class.getName(), inverseInvoker);
+		synchronized (objectManager) {
+			InverseInvoker inverseInvoker = (InverseInvoker) objectManager.getContextObject(InverseInvoker.class.getName());
+			if (inverseInvoker == null) {
+				inverseInvoker = new InverseInvoker(objectManager);
+				objectManager.putContextObject(InverseInvoker.class.getName(), inverseInvoker);
+			}
+			return inverseInvoker;
 		}
-		return inverseInvoker;
 	}
 
 	private InverseInvoker(final ObjectManager objectManager) {
@@ -235,24 +251,38 @@ public class InverseInvoker {
 		return result;
 	}
 
+	/**
+	 * Invokes a service on the client-side.
+	 * <p>
+	 * Normally, a client initiates a request-response-cycle by sending a request to a server-side service and waiting
+	 * for the response. In order to notify client-side listeners, we need the inverse, though: the server must invoke
+	 * a service on the client-side. This can be easily done by sending an implementation of {@code InverseServiceRequest}
+	 * to a {@code InverseServiceRequestHandler} implementation on the client-side using this method.
+	 *
+	 * @param request the request to be processed on the client-side. Must not be <code>null</code>.
+	 * @return the response created and sent back by the client-side {@code InverseServiceRequestHandler}.
+	 * @throws TimeoutException if this method did not receive a response within the timeout
+	 * {@link #PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS}.
+	 */
 	public <T extends InverseServiceResponse> T performInverseServiceRequest(final InverseServiceRequest request) throws TimeoutException {
 		assertNotNull("request", request);
 
 		final Uid requestId = request.getRequestId();
 		assertNotNull("request.requestId", requestId);
 
-		if (!requestIdsWaitingForResponse.add(requestId))
-			throw new IllegalStateException("requestId already queued: " + requestId);
-
-		synchronized (inverseServiceRequests) {
-			inverseServiceRequests.add(request);
-			inverseServiceRequests.notify();
+		synchronized (requestId2InverseServiceResponse) {
+			if (!requestIdsWaitingForResponse.add(requestId))
+				throw new IllegalStateException("requestId already queued: " + requestId);
 		}
-
-		// The request is pushed, hence from now on, we wait for the response until the timeout in PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS.
-		final long startTimestamp = System.currentTimeMillis();
-
 		try {
+			synchronized (inverseServiceRequests) {
+				inverseServiceRequests.add(request);
+				inverseServiceRequests.notify();
+			}
+
+			// The request is pushed, hence from now on, we wait for the response until the timeout in PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS.
+			final long startTimestamp = System.currentTimeMillis();
+
 			synchronized (requestId2InverseServiceResponse) {
 				boolean first = true;
 				while (first || System.currentTimeMillis() - startTimestamp < PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
@@ -288,15 +318,20 @@ public class InverseInvoker {
 				}
 			}
 		} finally {
+			boolean requestWasStillWaiting;
 			// in case, it was not yet polled, we make sure garbage does not pile up.
-			if (requestIdsWaitingForResponse.remove(requestId)) {
+			synchronized (requestId2InverseServiceResponse) {
+				requestWasStillWaiting = requestIdsWaitingForResponse.remove(requestId);
+
+				// Make sure, no garbage is left over by removing this together with the requestId from requestIdsWaitingForResponse.
+				requestId2InverseServiceResponse.remove(requestId);
+			}
+
+			if (requestWasStillWaiting) {
 				synchronized (inverseServiceRequests) {
 					inverseServiceRequests.remove(request);
 				}
 			}
-
-			// Make absolutely sure, no garbage is left over be removing this *after* removing the requestId from requestIdsWaitingForResponse.
-			requestId2InverseServiceResponse.remove(requestId);
 		}
 
 		throw new TimeoutException(String.format("Timeout waiting for response matching requestId=%s!", requestId));
@@ -336,10 +371,10 @@ public class InverseInvoker {
 		final Uid requestId = response.getRequestId();
 		assertNotNull("response.requestId", requestId);
 
-		if (!requestIdsWaitingForResponse.contains(requestId))
-			throw new IllegalArgumentException(String.format("response.requestId=%s does not match any waiting request!", requestId));
-
 		synchronized (requestId2InverseServiceResponse) {
+			if (!requestIdsWaitingForResponse.contains(requestId))
+				throw new IllegalArgumentException(String.format("response.requestId=%s does not match any waiting request!", requestId));
+
 			requestId2InverseServiceResponse.put(requestId, response);
 			requestId2InverseServiceResponse.notifyAll();
 		}

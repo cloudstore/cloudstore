@@ -18,7 +18,23 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.Uid;
 
 public class ObjectManager {
-	private static final long EVICT_AGE_MS = 15 * 60 * 1000L; // 15 minutes
+	/**
+	 * Timeout after which an unused {@code ObjectManager} is evicted.
+	 * <p>
+	 * If a client is closed normally (or crashes) we must make sure that the object-references held
+	 * by this {@code ObjectManager} in the server's JVM are released and can be garbage-collected.
+	 * Therefore, we track the {@linkplain #getLastUseDate() last use timestamp} (e.g.
+	 * {@linkplain #updateLastUseDate() update it} when {@link #getInstance(Uid)} is called).
+	 * <p>
+	 * Periodically, all {@code ObjectManager}s not being used for a time period longer than this timeout
+	 * are "forgotten" and thus both the {@code ObjectManager}s and all the objects they hold can be
+	 * garbage-collected.
+	 * <p>
+	 * This timeout must be (significantly) longer than {@code InverseInvoker.POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS}
+	 * to make sure, the long-polling of inverse-service-invocation-requests serves additionally as a keep-alive for
+	 * the server-side {@code ObjectManager}.
+	 */
+	private static final long TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS = 5 * 60 * 1000L; // 5 minutes
 
 	private static final Logger logger = LoggerFactory.getLogger(ObjectManager.class);
 
@@ -71,7 +87,7 @@ public class ObjectManager {
 			if (objectManager.isNeverEvict())
 				continue;
 
-			if (objectManager.getLastUseDate().getTime() < System.currentTimeMillis() - EVICT_AGE_MS)
+			if (objectManager.getLastUseDate().getTime() < System.currentTimeMillis() - TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS)
 				it.remove();
 		}
 	}
