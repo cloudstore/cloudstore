@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.client;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.net.SocketException;
 import java.util.LinkedList;
 
@@ -181,6 +183,9 @@ public class LocalServerRestClient {
 						throw x;
 					}
 					logger.warn("execute: invocation failed (will retry): " + x, x);
+
+					// Wait a bit before retrying (increasingly longer).
+					try { Thread.sleep(retryCounter * 3000L); } catch (Exception y) { doNothing(); }
 				}
 			} finally {
 				releaseClient();

@@ -10,7 +10,6 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
@@ -30,8 +29,7 @@ import co.codewizards.cloudstore.ls.rest.client.request.InvokeMethod;
 
 public class LocalServerClient implements Closeable {
 
-	private static final int INVERSE_SERVICE_REQUEST_HANDLER_THREADS_COUNT = 3;
-	private final List<InverseServiceRequestHandlerThread> inverseServiceRequestHandlerThreads = new CopyOnWriteArrayList<>();
+	private volatile InverseServiceRequestHandlerThread inverseServiceRequestHandlerThread;
 
 	private LocalServerRestClient localServerRestClient;
 	private final ObjectManager objectManager = ObjectManager.getInstance(new Uid()); // needed for inverse references as used by listeners!
@@ -60,22 +58,8 @@ public class LocalServerClient implements Closeable {
 	}
 
 	protected LocalServerClient() {
-		startInverseServiceRequestHandlerThreads();
-	}
-
-	private void startInverseServiceRequestHandlerThreads() {
-		for (int i = 0; i < INVERSE_SERVICE_REQUEST_HANDLER_THREADS_COUNT; ++i) {
-			final InverseServiceRequestHandlerThread thread = new InverseServiceRequestHandlerThread(this);
-			inverseServiceRequestHandlerThreads.add(thread);
-			thread.start();
-		}
-	}
-
-	private void stopInverseServiceRequestHandlerThreads() {
-		for (final InverseServiceRequestHandlerThread thread : inverseServiceRequestHandlerThreads) {
-			thread.interrupt();
-			inverseServiceRequestHandlerThreads.remove(thread);
-		}
+		inverseServiceRequestHandlerThread = new InverseServiceRequestHandlerThread(this);
+		inverseServiceRequestHandlerThread.start();
 	}
 
 	public ObjectManager getObjectManager() {
@@ -241,7 +225,12 @@ public class LocalServerClient implements Closeable {
 	@Override
 	public void close() {
 		objectManager.setNeverEvict(false);
-		stopInverseServiceRequestHandlerThreads();
+
+		final Thread thread = inverseServiceRequestHandlerThread;
+		if (thread != null) {
+			inverseServiceRequestHandlerThread = null;
+			thread.interrupt();
+		}
 	}
 
 	public Object getRemoteObjectProxyOrCreate(ObjectRef objectRef) {

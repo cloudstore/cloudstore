@@ -1,8 +1,11 @@
 package co.codewizards.cloudstore.ls.client.handler;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -29,6 +32,7 @@ public class InverseServiceRequestHandlerThread extends Thread {
 	private final WeakReference<LocalServerClient> localServerClientRef;
 	private final WeakReference<LocalServerRestClient> localServerRestClientRef;
 	private final InverseServiceRequestHandlerManager inverseServiceRequestHandlerManager = InverseServiceRequestHandlerManager.getInstance();
+	private final Executor executor = Executors.newCachedThreadPool();
 
 	public InverseServiceRequestHandlerThread(final LocalServerClient localServerClient) {
 		this.localServerClientRef = new WeakReference<LocalServerClient>(assertNotNull("localServerClient", localServerClient));
@@ -46,51 +50,72 @@ public class InverseServiceRequestHandlerThread extends Thread {
 	}
 
 	@Override
+	public boolean isInterrupted() {
+		return interrupted || super.isInterrupted();
+	}
+
+	@Override
 	public void run() {
-		while (! interrupted) {
+		int consecutiveErrorCounter = 0;
+		while (! isInterrupted()) {
 			try {
 				final InverseServiceRequest inverseServiceRequest = getLocalServerRestClientOrFail().execute(new PollInverseServiceRequest());
 				if (inverseServiceRequest != null)
-					handleInverseServiceRequest(inverseServiceRequest);
+					executor.execute(new HandlerRunnable(inverseServiceRequest));
 
+				consecutiveErrorCounter = 0;
 			} catch (Exception x) {
 				logger.error(x.toString(), x);
+
+				// Wait a bit before retrying (increasingly longer) in order to prevent the log from filling up too quickly.
+				// We wait 1 second longer after each consecutive error up to a maximum of 1 minute.
+				consecutiveErrorCounter = Math.min(60, ++consecutiveErrorCounter);
+				try { Thread.sleep(consecutiveErrorCounter * 1000L); } catch (Exception y) { doNothing(); }
 			}
 		}
 	}
 
-	private void handleInverseServiceRequest(InverseServiceRequest inverseServiceRequest) {
-		assertNotNull("inverseServiceRequest", inverseServiceRequest);
-		final Uid requestId = inverseServiceRequest.getRequestId();
-		assertNotNull("inverseServiceRequest.requestId", requestId);
+	private class HandlerRunnable implements Runnable {
+		private final InverseServiceRequest inverseServiceRequest;
 
-		final LocalServerRestClient localServerRestClient = getLocalServerRestClientOrFail();
-
-		InverseServiceResponse inverseServiceResponse = null;
-		try {
-			@SuppressWarnings("unchecked")
-			final InverseServiceRequestHandler<InverseServiceRequest, InverseServiceResponse> handler = inverseServiceRequestHandlerManager.getInverseServiceRequestHandlerOrFail(inverseServiceRequest);
-
-			final LocalServerClient localServerClient = getLocalServerClientOrFail();
-
-			handler.setLocalServerClient(localServerClient);
-
-			inverseServiceResponse = handler.handle(inverseServiceRequest);
-			if (inverseServiceResponse == null)
-				inverseServiceResponse = new NullResponse(requestId);
-
-			if (!requestId.equals(inverseServiceResponse.getRequestId()))
-				throw new IllegalStateException(String.format("Implementation error in %s: handle(...) returned a response with a requestId different from the request!", handler.getClass().getName()));
-
-		} catch (final Exception x) {
-			logger.warn("handleInverseServiceRequest: " + x, x);
-			final ErrorResponse errorResponse = new ErrorResponse(requestId, new Error(x));
-			localServerRestClient.execute(new PushInverseServiceResponse(errorResponse));
+		public HandlerRunnable(final InverseServiceRequest inverseServiceRequest) {
+			this.inverseServiceRequest = assertNotNull("inverseServiceRequest", inverseServiceRequest);
 		}
 
-		// Send this outside of the try-catch, because it might otherwise cause 2 responses for the same requestId to be delivered to the server.
-		if (inverseServiceResponse != null)
-			localServerRestClient.execute(new PushInverseServiceResponse(inverseServiceResponse));
+		@Override
+		public void run() {
+			assertNotNull("inverseServiceRequest", inverseServiceRequest);
+			final Uid requestId = inverseServiceRequest.getRequestId();
+			assertNotNull("inverseServiceRequest.requestId", requestId);
+
+			final LocalServerRestClient localServerRestClient = getLocalServerRestClientOrFail();
+
+			InverseServiceResponse inverseServiceResponse = null;
+			try {
+				@SuppressWarnings("unchecked")
+				final InverseServiceRequestHandler<InverseServiceRequest, InverseServiceResponse> handler = inverseServiceRequestHandlerManager.getInverseServiceRequestHandlerOrFail(inverseServiceRequest);
+
+				final LocalServerClient localServerClient = getLocalServerClientOrFail();
+
+				handler.setLocalServerClient(localServerClient);
+
+				inverseServiceResponse = handler.handle(inverseServiceRequest);
+				if (inverseServiceResponse == null)
+					inverseServiceResponse = new NullResponse(requestId);
+
+				if (!requestId.equals(inverseServiceResponse.getRequestId()))
+					throw new IllegalStateException(String.format("Implementation error in %s: handle(...) returned a response with a requestId different from the request!", handler.getClass().getName()));
+
+			} catch (final Exception x) {
+				logger.warn("handleInverseServiceRequest: " + x, x);
+				final ErrorResponse errorResponse = new ErrorResponse(requestId, new Error(x));
+				localServerRestClient.execute(new PushInverseServiceResponse(errorResponse));
+			}
+
+			// Send this outside of the try-catch, because it might otherwise cause 2 responses for the same requestId to be delivered to the server.
+			if (inverseServiceResponse != null)
+				localServerRestClient.execute(new PushInverseServiceResponse(inverseServiceResponse));
+		}
 	}
 
 	private LocalServerClient getLocalServerClientOrFail() {

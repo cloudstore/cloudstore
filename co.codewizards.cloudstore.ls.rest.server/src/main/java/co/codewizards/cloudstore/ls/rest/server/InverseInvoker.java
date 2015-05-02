@@ -7,7 +7,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +44,9 @@ public class InverseInvoker {
 	private static final long PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 15L * 60L * 1000L; // 15 minutes
 
 	private final ObjectManager objectManager;
-	private LinkedList<InverseServiceRequest> inverseServiceRequests = new LinkedList<>();
-	private Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = new HashMap<>();
+	private final LinkedList<InverseServiceRequest> inverseServiceRequests = new LinkedList<>();
+	private final Set<Uid> requestIdsWaitingForResponse = Collections.synchronizedSet(new HashSet<Uid>());
+	private final Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = Collections.synchronizedMap(new HashMap<Uid, InverseServiceResponse>());
 	private final ClassInfoCache classInfoCache = new ClassInfoCache();
 
 	public static synchronized InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
@@ -238,46 +241,62 @@ public class InverseInvoker {
 		final Uid requestId = request.getRequestId();
 		assertNotNull("request.requestId", requestId);
 
+		if (!requestIdsWaitingForResponse.add(requestId))
+			throw new IllegalStateException("requestId already queued: " + requestId);
+
 		synchronized (inverseServiceRequests) {
 			inverseServiceRequests.add(request);
 			inverseServiceRequests.notify();
 		}
 
+		// The request is pushed, hence from now on, we wait for the response until the timeout in PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS.
 		final long startTimestamp = System.currentTimeMillis();
 
-		synchronized (requestId2InverseServiceResponse) {
-			boolean first = true;
-			while (first || System.currentTimeMillis() - startTimestamp < PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
-				if (first)
-					first = false;
-				else {
-					final long timeSpentTillNowMillis = System.currentTimeMillis() - startTimestamp;
-					final long waitTimeout = PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS - timeSpentTillNowMillis;
-					if (waitTimeout > 0) {
-						try {
-							requestId2InverseServiceResponse.wait(waitTimeout);
-						} catch (InterruptedException e) {
-							doNothing();
+		try {
+			synchronized (requestId2InverseServiceResponse) {
+				boolean first = true;
+				while (first || System.currentTimeMillis() - startTimestamp < PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
+					if (first)
+						first = false;
+					else {
+						final long timeSpentTillNowMillis = System.currentTimeMillis() - startTimestamp;
+						final long waitTimeout = PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS - timeSpentTillNowMillis;
+						if (waitTimeout > 0) {
+							try {
+								requestId2InverseServiceResponse.wait(waitTimeout);
+							} catch (InterruptedException e) {
+								doNothing();
+							}
+						}
+					}
+
+					final InverseServiceResponse response = requestId2InverseServiceResponse.remove(requestId);
+					if (response != null) {
+						if (response instanceof NullResponse)
+							return null;
+						else if (response instanceof ErrorResponse) {
+							final Error error = ((ErrorResponse) response).getError();
+							RemoteExceptionUtil.throwOriginalExceptionIfPossible(error);
+							throw new RemoteException(error);
+						}
+						else {
+							@SuppressWarnings("unchecked")
+							final T t = (T) response;
+							return t;
 						}
 					}
 				}
-
-				final InverseServiceResponse response = requestId2InverseServiceResponse.get(requestId);
-				if (response != null) {
-					if (response instanceof NullResponse)
-						return null;
-					else if (response instanceof ErrorResponse) {
-						final Error error = ((ErrorResponse) response).getError();
-						RemoteExceptionUtil.throwOriginalExceptionIfPossible(error);
-						throw new RemoteException(error);
-					}
-					else {
-						@SuppressWarnings("unchecked")
-						final T t = (T) response;
-						return t;
-					}
+			}
+		} finally {
+			// in case, it was not yet polled, we make sure garbage does not pile up.
+			if (requestIdsWaitingForResponse.remove(requestId)) {
+				synchronized (inverseServiceRequests) {
+					inverseServiceRequests.remove(request);
 				}
 			}
+
+			// Make absolutely sure, no garbage is left over be removing this *after* removing the requestId from requestIdsWaitingForResponse.
+			requestId2InverseServiceResponse.remove(requestId);
 		}
 
 		throw new TimeoutException(String.format("Timeout waiting for response matching requestId=%s!", requestId));
@@ -316,6 +335,9 @@ public class InverseInvoker {
 
 		final Uid requestId = response.getRequestId();
 		assertNotNull("response.requestId", requestId);
+
+		if (!requestIdsWaitingForResponse.contains(requestId))
+			throw new IllegalArgumentException(String.format("response.requestId=%s does not match any waiting request!", requestId));
 
 		synchronized (requestId2InverseServiceResponse) {
 			requestId2InverseServiceResponse.put(requestId, response);
