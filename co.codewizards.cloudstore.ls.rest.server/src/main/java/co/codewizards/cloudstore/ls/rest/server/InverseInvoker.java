@@ -94,7 +94,7 @@ public class InverseInvoker {
 		assertNotNull("className", className);
 		assertNotNull("methodName", methodName);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forStaticInvocation(
-				className, methodName, fromObjectsToObjectRefs(arguments));
+				className, methodName, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -107,7 +107,7 @@ public class InverseInvoker {
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
 		assertNotNull("className", className);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forConstructorInvocation(
-				className, fromObjectsToObjectRefs(arguments));
+				className, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -137,7 +137,7 @@ public class InverseInvoker {
 		}
 
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
-				objectRef, methodName, argumentTypeNames, fromObjectsToObjectRefs(arguments));
+				objectRef, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -153,14 +153,13 @@ public class InverseInvoker {
 		final MethodInvocationResponse methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
 
 		final Object result = methodInvocationResponse.getResult();
-		if (result == null)
-			return null;
-
-		if (result instanceof ObjectRef) {
-			final ObjectRef resultObjectRef = (ObjectRef) result;
-			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
-		}
-
+//		if (result == null)
+//			return null;
+//
+//		if (result instanceof ObjectRef) {
+//			final ObjectRef resultObjectRef = (ObjectRef) result;
+//			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
+//		}
 		return cast(result);
 	}
 
@@ -236,20 +235,20 @@ public class InverseInvoker {
 		return classInfo;
 	}
 
-	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
-		if (objects == null)
-			return objects;
-
-		final Object[] result = new Object[objects.length];
-		for (int i = 0; i < objects.length; i++) {
-			final Object object = objects[i];
-			if (object instanceof RemoteObjectProxy) {
-				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-			} else
-				result[i] = objectManager.getObjectRefOrObject(object);
-		}
-		return result;
-	}
+//	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
+//		if (objects == null)
+//			return objects;
+//
+//		final Object[] result = new Object[objects.length];
+//		for (int i = 0; i < objects.length; i++) {
+//			final Object object = objects[i];
+//			if (object instanceof RemoteObjectProxy) {
+//				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
+//			} else
+//				result[i] = objectManager.getObjectRefOrObject(object);
+//		}
+//		return result;
+//	}
 
 	/**
 	 * Invokes a service on the client-side.

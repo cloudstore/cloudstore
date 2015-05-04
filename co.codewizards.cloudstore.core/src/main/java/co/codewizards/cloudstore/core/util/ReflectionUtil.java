@@ -4,12 +4,15 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ReflectionUtil {
@@ -216,6 +219,67 @@ public class ReflectionUtil {
 			c = c.getSuperclass();
 		}
 		return null;
+	}
+
+	public static List<Field> getAllDeclaredFields(final Class<?> clazz) {
+		final List<Field> result = new ArrayList<>();
+		Class<?> c = clazz;
+		while (c != null) {
+			final Field[] declaredFields = c.getDeclaredFields();
+			for (Field field : declaredFields)
+				result.add(field);
+
+			c = c.getSuperclass();
+		}
+		return result;
+	}
+
+	public static Map<Field, Object> getAllDeclaredFieldValues(final Object object) {
+		assertNotNull("object", object);
+
+		final List<Field> allDeclaredFields = getAllDeclaredFields(object.getClass());
+		final Map<Field, Object> result = new HashMap<>(allDeclaredFields.size());
+		for (Field field : allDeclaredFields) {
+			field.setAccessible(true);
+			try {
+				final Object fieldValue = field.get(object);
+				result.put(field, fieldValue);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return result;
+	}
+
+	public static void setFieldValue(final Object object, final String fieldName, final Object value) {
+		// TODO very inefficient implementation - make better!
+
+		String className = null;
+		String simpleFieldName = fieldName;
+
+		final int lastDotIndex = fieldName.lastIndexOf('.');
+		if (lastDotIndex >= 0) {
+			className = fieldName.substring(0, lastDotIndex);
+			simpleFieldName = fieldName.substring(lastDotIndex + 1);
+		}
+
+		final List<Field> declaredFields = getAllDeclaredFields(object.getClass());
+		for (final Field field : declaredFields) {
+			if (className != null && !className.equals(field.getDeclaringClass().getName()))
+				continue;
+
+			if (!simpleFieldName.equals(field.getName()))
+				continue;
+
+			field.setAccessible(true);
+			try {
+				field.set(object, value);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		throw new IllegalArgumentException("object's class does not have this field: " + fieldName);
 	}
 
 	public static Set<Class<?>> getAllInterfaces(final Class<?> clazz) {

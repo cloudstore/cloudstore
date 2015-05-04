@@ -18,8 +18,8 @@ import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
 import co.codewizards.cloudstore.ls.rest.server.InverseInvoker;
 
 @Path("InvokeMethod")
-@Consumes(MediaTypeConst.APPLICATION_JAVA_NATIVE)
-@Produces(MediaTypeConst.APPLICATION_JAVA_NATIVE)
+@Consumes(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF)
+@Produces(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF)
 public class InvokeMethodService extends AbstractService {
 
 	private InverseInvoker inverseInvoker;
@@ -40,18 +40,19 @@ public class InvokeMethodService extends AbstractService {
 
 		final String methodName = methodInvocationRequest.getMethodName();
 
-		final ObjectRef objectRef = methodInvocationRequest.getObjectRef();
+		final Object object = methodInvocationRequest.getObject();
 		if (ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF.equals(methodName)) {
-			objectManager.remove(objectRef);
+			objectManager.remove(object);
 			return MethodInvocationResponse.forInvocation(null);
 		}
 
-		final Object object = objectRef == null ? null : objectManager.getObjectOrFail(objectRef);
+//		final Object object = objectRef == null ? null : objectManager.getObjectOrFail(objectRef);
 
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
 		final Class<?>[] argumentTypes = argumentTypeNames == null ? null : classManager.getClassesOrFail(argumentTypeNames);
 
-		final Object[] arguments = fromObjectRefsToObjects(methodInvocationRequest.getArguments());
+//		final Object[] arguments = fromObjectRefsToObjects(methodInvocationRequest.getArguments());
+		final Object[] arguments = methodInvocationRequest.getArguments();
 
 		final Object resultObject;
 
@@ -70,28 +71,29 @@ public class InvokeMethodService extends AbstractService {
 				throw new IllegalStateException("Unknown InvocationType: " + invocationType);
 		}
 
-		final Object resultObjectOrObjectRef = objectManager.getObjectRefOrObject(resultObject);
+//		final Object resultObjectOrObjectRef = objectManager.getObjectRefOrObject(resultObject);
+//		final MethodInvocationResponse result = MethodInvocationResponse.forInvocation(resultObjectOrObjectRef);
+//		return result;
 
-		final MethodInvocationResponse result = MethodInvocationResponse.forInvocation(resultObjectOrObjectRef);
-		return result;
+		return MethodInvocationResponse.forInvocation(resultObject);
 	}
 
-	private Object[] fromObjectRefsToObjects(final Object[] objects) {
-		if (objects == null)
-			return objects;
-
-		final Object[] result = new Object[objects.length];
-		for (int i = 0; i < objects.length; i++) {
-			final Object object = objects[i];
-			if (object instanceof ObjectRef) {
-				final ObjectRef objectRef = (ObjectRef) object;
-				if (objectManager.getClientId().equals(objectRef.getClientId()))
-					result[i] = objectManager.getObjectOrFail(objectRef);
-				else // the reference is a remote object from the client-side => lookup or create proxy
-					result[i] = inverseInvoker.getRemoteObjectProxyOrCreate(objectRef);
-			} else
-				result[i] = object;
-		}
-		return result;
-	}
+//	private Object[] fromObjectRefsToObjects(final Object[] objects) {
+//		if (objects == null)
+//			return objects;
+//
+//		final Object[] result = new Object[objects.length];
+//		for (int i = 0; i < objects.length; i++) {
+//			final Object object = objects[i];
+//			if (object instanceof ObjectRef) {
+//				final ObjectRef objectRef = (ObjectRef) object;
+//				if (objectManager.getClientId().equals(objectRef.getClientId()))
+//					result[i] = objectManager.getObjectOrFail(objectRef);
+//				else // the reference is a remote object from the client-side => lookup or create proxy
+//					result[i] = inverseInvoker.getRemoteObjectProxyOrCreate(objectRef);
+//			} else
+//				result[i] = object;
+//		}
+//		return result;
+//	}
 }

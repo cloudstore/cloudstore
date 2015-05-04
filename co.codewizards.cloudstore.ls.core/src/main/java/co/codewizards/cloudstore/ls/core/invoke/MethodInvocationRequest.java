@@ -9,7 +9,7 @@ public class MethodInvocationRequest implements Serializable {
 
 	private final String className;
 
-	private final ObjectRef objectRef;
+	private final Object object;
 
 	private final String methodName;
 
@@ -17,9 +17,9 @@ public class MethodInvocationRequest implements Serializable {
 
 	private final Object[] arguments;
 
-	protected MethodInvocationRequest(final String className, final ObjectRef objectRef, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
+	protected MethodInvocationRequest(final String className, final Object object, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
 		this.className = className;
-		this.objectRef = objectRef;
+		this.object = object;
 		this.methodName = methodName;
 		this.argumentTypeNames = argumentTypeNames;
 		this.arguments = arguments;
@@ -34,12 +34,12 @@ public class MethodInvocationRequest implements Serializable {
 				assertNotNull("className", className), null, assertNotNull("methodName", methodName), null, arguments);
 	}
 
-	public static MethodInvocationRequest forObjectInvocation(final ObjectRef objectRef, final String methodName, final Object ... arguments) {
+	public static MethodInvocationRequest forObjectInvocation(final Object object, final String methodName, final Object ... arguments) {
 		return new MethodInvocationRequest(
-				null, assertNotNull("objectRef", objectRef), assertNotNull("methodName", methodName), null, arguments);
+				null, assertNotNull("object", object), assertNotNull("methodName", methodName), null, arguments);
 	}
 
-	public static MethodInvocationRequest forObjectInvocation(final ObjectRef objectRef, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
+	public static MethodInvocationRequest forObjectInvocation(final Object object, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
 		if (argumentTypeNames != null) {
 			if (argumentTypeNames.length > 0 && arguments == null)
 				throw new IllegalArgumentException("argumentTypeNames != null && argumentTypeNames.length > 0 && arguments == null");
@@ -49,15 +49,15 @@ public class MethodInvocationRequest implements Serializable {
 				throw new IllegalArgumentException(String.format("argumentTypeNames.length != arguments.length :: %d != %d", argumentTypeNames.length, argumentsLength));
 		}
 		return new MethodInvocationRequest(
-				null, assertNotNull("objectRef", objectRef), assertNotNull("methodName", methodName), argumentTypeNames, arguments);
+				null, assertNotNull("object", object), assertNotNull("methodName", methodName), argumentTypeNames, arguments);
 	}
 
 	public String getClassName() {
 		return className;
 	}
 
-	public ObjectRef getObjectRef() {
-		return objectRef;
+	public Object getObject() {
+		return object;
 	}
 
 	public String getMethodName() {
@@ -79,7 +79,7 @@ public class MethodInvocationRequest implements Serializable {
 			else
 				return InvocationType.STATIC;
 		}
-		else if (objectRef != null)
+		else if (object != null)
 			return InvocationType.OBJECT;
 
 		throw new IllegalStateException("Cannot determine InvocationType!");

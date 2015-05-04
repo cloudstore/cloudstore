@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyReader;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthFilter;
 import co.codewizards.cloudstore.ls.rest.server.service.ClassInfoService;
 import co.codewizards.cloudstore.ls.rest.server.service.InverseServiceRequestService;
@@ -51,5 +53,9 @@ public class LocalServerRest extends ResourceConfig {
 				);
 
 		register(new LocalServerRestBinder());
+
+		final ObjectRefConverterFactoryImpl objectRefConverterFactory = new ObjectRefConverterFactoryImpl();
+		register(new JavaNativeWithObjectRefMessageBodyReader(objectRefConverterFactory));
+		register(new JavaNativeWithObjectRefMessageBodyWriter(objectRefConverterFactory));
 	}
 }

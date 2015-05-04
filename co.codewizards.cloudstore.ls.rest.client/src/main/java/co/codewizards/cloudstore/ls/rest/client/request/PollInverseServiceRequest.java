@@ -10,7 +10,7 @@ public class PollInverseServiceRequest extends AbstractRequest<InverseServiceReq
 	@Override
 	public InverseServiceRequest execute() {
 		final WebTarget webTarget = createWebTarget(getPath(InverseServiceRequest.class));
-		final InverseServiceRequest inverseServiceRequest = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_TYPE))
+		final InverseServiceRequest inverseServiceRequest = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE))
 				.post(null, InverseServiceRequest.class);
 		return inverseServiceRequest;
 	}

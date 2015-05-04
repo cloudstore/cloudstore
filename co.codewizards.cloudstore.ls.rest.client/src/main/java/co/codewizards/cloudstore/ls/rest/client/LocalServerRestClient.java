@@ -4,6 +4,8 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.SocketException;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.net.ssl.SSLException;
 import javax.ws.rs.WebApplicationException;
@@ -257,6 +259,13 @@ public class LocalServerRestClient {
 			clientBuilder.register(JavaNativeMessageBodyReader.class);
 			clientBuilder.register(JavaNativeMessageBodyWriter.class);
 
+			for (final Object restComponent : restComponents) {
+				if (restComponent instanceof Class<?>)
+					clientBuilder.register((Class<?>) restComponent);
+				else
+					clientBuilder.register(restComponent);
+			}
+
 			client = clientBuilder.build();
 
 			// An authentication is always required. Otherwise Jersey throws an exception.
@@ -268,6 +277,12 @@ public class LocalServerRestClient {
 			configFrozen = true;
 		}
 		clientThreadLocal.set(new ClientRef(client));
+	}
+
+	private final List<Object> restComponents = new CopyOnWriteArrayList<Object>();
+
+	public void registerRestComponent(Object restComponent) {
+		restComponents.add(restComponent);
 	}
 
 	/**

@@ -10,5 +10,8 @@ public class MediaTypeConst
 	public final static String APPLICATION_JAVA_NATIVE = "application/java-native"; //$NON-NLS-1$
 	public static final MediaType APPLICATION_JAVA_NATIVE_TYPE = new MediaType("application", "java-native"); //$NON-NLS-1$ //$NON-NLS-2$
 
+	public final static String APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF = "application/java-native+oref"; //$NON-NLS-1$
+	public static final MediaType APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE = new MediaType("application", "java-native+oref"); //$NON-NLS-1$ //$NON-NLS-2$
+
 	protected MediaTypeConst() { }
 }

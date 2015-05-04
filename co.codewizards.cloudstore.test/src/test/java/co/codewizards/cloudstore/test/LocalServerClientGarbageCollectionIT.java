@@ -45,7 +45,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 		client = new LocalServerClient() {
 			@Override
-			public LocalServerRestClient getLocalServerRestClient() {
+			public LocalServerRestClient _getLocalServerRestClient() {
 				return localServerRestClient;
 			}
 		};

@@ -20,8 +20,8 @@ public class PushInverseServiceResponse extends VoidRequest {
 	@Override
 	protected Response _execute() {
 		final WebTarget webTarget = createWebTarget(getPath(InverseServiceResponse.class));
-		final Response r = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_TYPE))
-				.post(Entity.entity(response, MediaTypeConst.APPLICATION_JAVA_NATIVE_TYPE));
+		final Response r = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE))
+				.post(Entity.entity(response, MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE));
 		return r;
 	}
 }

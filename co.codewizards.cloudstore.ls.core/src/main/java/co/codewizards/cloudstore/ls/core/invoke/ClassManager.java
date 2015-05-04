@@ -33,6 +33,11 @@ public class ClassManager {
 
 		primitiveClassName2Class = Collections.unmodifiableMap(m);
 	}
+//	private static Set<Class<?>> primitiveClasses = Collections.unmodifiableSet(new HashSet<Class<?>>(primitiveClassName2Class.values()));
+//
+//	public static Set<Class<?>> getPrimitiveClasses() {
+//		return primitiveClasses;
+//	}
 
 	public ClassManager() {
 	}

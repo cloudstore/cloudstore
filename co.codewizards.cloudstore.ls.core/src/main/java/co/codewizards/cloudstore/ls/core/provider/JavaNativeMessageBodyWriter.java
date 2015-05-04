@@ -23,13 +23,13 @@ import co.codewizards.cloudstore.core.io.NoCloseOutputStream;
 public class JavaNativeMessageBodyWriter
 implements MessageBodyWriter<Object>
 {
-	private String getLogPrefix()
-	{
-		return "(" + Integer.toHexString(System.identityHashCode(this)) + ") "; //$NON-NLS-1$ //$NON-NLS-2$
-	}
+//	private String getLogPrefix()
+//	{
+//		return "(" + Integer.toHexString(System.identityHashCode(this)) + ") "; //$NON-NLS-1$ //$NON-NLS-2$
+//	}
 
 	public JavaNativeMessageBodyWriter() {
-		System.out.println(JavaNativeMessageBodyWriter.class.getName() + getLogPrefix() + ": instantiated."); //$NON-NLS-1$
+//		System.out.println(JavaNativeMessageBodyWriter.class.getName() + getLogPrefix() + ": instantiated."); //$NON-NLS-1$
 	}
 
 	@Override

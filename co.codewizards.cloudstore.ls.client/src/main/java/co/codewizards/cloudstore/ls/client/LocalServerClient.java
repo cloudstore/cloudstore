@@ -25,6 +25,8 @@ import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyFactory;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyReader;
+import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.rest.client.request.GetClassInfo;
 import co.codewizards.cloudstore.ls.rest.client.request.InvokeMethod;
@@ -55,11 +57,19 @@ public class LocalServerClient implements Closeable {
 		return Holder.instance;
 	}
 
-	public synchronized LocalServerRestClient getLocalServerRestClient() {
-		if (localServerRestClient == null)
-			localServerRestClient = LocalServerRestClient.getInstance();
+	public final synchronized LocalServerRestClient getLocalServerRestClient() {
+		if (localServerRestClient == null) {
+			localServerRestClient = _getLocalServerRestClient();
 
+			final ObjectRefConverterFactoryImpl objectRefConverterFactory = new ObjectRefConverterFactoryImpl(this);
+			localServerRestClient.registerRestComponent(new JavaNativeWithObjectRefMessageBodyReader(objectRefConverterFactory));
+			localServerRestClient.registerRestComponent(new JavaNativeWithObjectRefMessageBodyWriter(objectRefConverterFactory));
+		}
 		return localServerRestClient;
+	}
+
+	protected LocalServerRestClient _getLocalServerRestClient() {
+		return LocalServerRestClient.getInstance();
 	}
 
 	protected LocalServerClient() {
@@ -104,7 +114,7 @@ public class LocalServerClient implements Closeable {
 		assertNotNull("className", className);
 		assertNotNull("methodName", methodName);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forStaticInvocation(
-				className, methodName, fromObjectsToObjectRefs(arguments));
+				className, methodName, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -138,7 +148,7 @@ public class LocalServerClient implements Closeable {
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
 		assertNotNull("className", className);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forConstructorInvocation(
-				className, fromObjectsToObjectRefs(arguments));
+				className, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -186,12 +196,12 @@ public class LocalServerClient implements Closeable {
 		if (!(object instanceof RemoteObjectProxy))
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
-		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-		return invoke(objectRef, methodName, (Class<?>[]) null, arguments);
+//		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
+		return _invoke(object, methodName, (Class<?>[]) null, arguments);
 	}
 
-	private <T> T invoke(final ObjectRef objectRef, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
-		assertNotNull("objectRef", objectRef);
+	private <T> T _invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
+		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
 
 		final String[] argumentTypeNames;
@@ -203,26 +213,29 @@ public class LocalServerClient implements Closeable {
 				argumentTypeNames[i] = argumentTypes[i].getName();
 		}
 
+//		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
+//				objectRef, methodName, argumentTypeNames, fromObjectsToObjectRefs(arguments));
+
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
-				objectRef, methodName, argumentTypeNames, fromObjectsToObjectRefs(arguments));
+				object, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
 
-	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
-		if (objects == null)
-			return objects;
-
-		final Object[] result = new Object[objects.length];
-		for (int i = 0; i < objects.length; i++) {
-			final Object object = objects[i];
-			if (object instanceof RemoteObjectProxy) {
-				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-			} else
-				result[i] = objectManager.getObjectRefOrObject(object);
-		}
-		return result;
-	}
+//	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
+//		if (objects == null)
+//			return objects;
+//
+//		final Object[] result = new Object[objects.length];
+//		for (int i = 0; i < objects.length; i++) {
+//			final Object object = objects[i];
+//			if (object instanceof RemoteObjectProxy) {
+//				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
+//			} else
+//				result[i] = objectManager.getObjectRefOrObject(object);
+//		}
+//		return result;
+//	}
 
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
 		assertNotNull("methodInvocationRequest", methodInvocationRequest);
@@ -231,13 +244,13 @@ public class LocalServerClient implements Closeable {
 				new InvokeMethod(methodInvocationRequest));
 
 		final Object result = methodInvocationResponse.getResult();
-		if (result == null)
-			return null;
-
-		if (result instanceof ObjectRef) {
-			final ObjectRef resultObjectRef = (ObjectRef) result;
-			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
-		}
+//		if (result == null)
+//			return null;
+//
+//		if (result instanceof ObjectRef) {
+//			final ObjectRef resultObjectRef = (ObjectRef) result;
+//			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
+//		}
 
 		return cast(result);
 	}
@@ -252,12 +265,12 @@ public class LocalServerClient implements Closeable {
 					return objectRef;
 				// END implement RemoteObjectProxy
 
-				return LocalServerClient.this.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+				return LocalServerClient.this._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 			}
 
 			@Override
 			protected void finalize() throws Throwable {
-				LocalServerClient.this.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF, (Class<?>[])null, (Object[])null);
+				LocalServerClient.this._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF, (Class<?>[])null, (Object[])null);
 				super.finalize();
 			}
 		});

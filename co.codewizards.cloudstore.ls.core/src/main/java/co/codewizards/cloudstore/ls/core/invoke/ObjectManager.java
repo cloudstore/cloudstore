@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -53,6 +54,8 @@ public class ObjectManager {
 	private final ClassManager classManager = new ClassManager();
 
 	private static final Map<Uid, ObjectManager> clientId2ObjectManager = new HashMap<>();
+
+//	private List<ObjectRefMappingEnabledAdvisor> objectRefMappingEnabledAdvisors;
 
 	private static final Timer timer = new Timer(true);
 	private static final TimerTask timerTask = new TimerTask() {
@@ -210,16 +213,64 @@ public class ObjectManager {
 		return classManager;
 	}
 
-	public boolean isObjectRefMappingEnabled(final Object object) { // TODO maybe use annotations or a meta-data-service?! or both?!
+//	private List<ObjectRefMappingEnabledAdvisor> getObjectRefMappingEnabledAdvisors() {
+//		if (objectRefMappingEnabledAdvisors == null) {
+//			final ArrayList<ObjectRefMappingEnabledAdvisor> l = new ArrayList<>();
+//
+//			final Iterator<ObjectRefMappingEnabledAdvisor> iterator = ServiceLoader.load(ObjectRefMappingEnabledAdvisor.class).iterator();
+//			while (iterator.hasNext())
+//				l.add(iterator.next());
+//
+//			Collections.sort(l, new Comparator<ObjectRefMappingEnabledAdvisor>() {
+//				@Override
+//				public int compare(ObjectRefMappingEnabledAdvisor o1, ObjectRefMappingEnabledAdvisor o2) {
+//					int result = -1 * Integer.compare(o1.getPriority(), o2.getPriority());
+//					if (result != 0)
+//						return result;
+//
+//					return o1.getClass().getName().compareTo(o2.getClass().getName());
+//				}
+//			});
+//
+//			objectRefMappingEnabledAdvisors = Collections.unmodifiableList(l);
+//		}
+//		return objectRefMappingEnabledAdvisors;
+//	}
+
+	public boolean isObjectRefMappingEnabled(final Object object) {
+//		for (final ObjectRefMappingEnabledAdvisor advisor : getObjectRefMappingEnabledAdvisors()) {
+//			final Boolean result = advisor.isObjectRefMappingEnabled(object);
+//			if (result != null)
+//				return result;
+//		}
+//
+//		return true;
+
 		if (object == null)
 			return false;
 
-		if (Proxy.isProxyClass(object.getClass()))
+		if (object instanceof ObjectRef)
+			return false;
+
+		final Class<? extends Object> clazz = getClassOrArrayComponentType(object);
+
+		if (Proxy.isProxyClass(clazz))
+			return true;
+
+		if (Collection.class.isAssignableFrom(clazz) || Map.class.isAssignableFrom(clazz)) // a collection can be modified on the server-side - we want this to be reflected on the client-side, hence we proxy it
 			return true;
 
 		if (object instanceof Serializable)
 			return false;
 
 		return true;
+	}
+
+	private Class<?> getClassOrArrayComponentType(final Object object) {
+		final Class<? extends Object> clazz = object.getClass();
+		if (clazz.isArray())
+			return clazz.getComponentType();
+		else
+			return clazz;
 	}
 }

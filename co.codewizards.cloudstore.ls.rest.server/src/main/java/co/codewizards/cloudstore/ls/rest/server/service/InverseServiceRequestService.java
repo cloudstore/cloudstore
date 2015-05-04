@@ -9,8 +9,8 @@ import co.codewizards.cloudstore.ls.core.dto.InverseServiceRequest;
 import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
 
 @Path("InverseServiceRequest")
-@Consumes(MediaTypeConst.APPLICATION_JAVA_NATIVE)
-@Produces(MediaTypeConst.APPLICATION_JAVA_NATIVE)
+@Consumes(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF)
+@Produces(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF)
 public class InverseServiceRequestService extends AbstractService {
 
 	@POST

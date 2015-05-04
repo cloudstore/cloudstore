@@ -5,6 +5,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.io.Serializable;
 import java.util.Set;
 
+@NoObjectRef
 public class ClassInfo implements Serializable {
 
 	private static final long serialVersionUID = 1L;

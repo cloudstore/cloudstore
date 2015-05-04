@@ -40,7 +40,7 @@ public class LocalServerClientIT extends AbstractIT {
 
 		client = new LocalServerClient() {
 			@Override
-			public LocalServerRestClient getLocalServerRestClient() {
+			protected LocalServerRestClient _getLocalServerRestClient() {
 				return localServerRestClient;
 			}
 		};

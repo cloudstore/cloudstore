@@ -20,8 +20,8 @@ public class InvokeMethod extends AbstractRequest<MethodInvocationResponse> {
 	@Override
 	public MethodInvocationResponse execute() {
 		final WebTarget webTarget = createWebTarget("InvokeMethod");
-		final MethodInvocationResponse repoInfoResponseDto = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_TYPE))
-				.post(Entity.entity(methodInvocationRequest, MediaTypeConst.APPLICATION_JAVA_NATIVE_TYPE), MethodInvocationResponse.class);
+		final MethodInvocationResponse repoInfoResponseDto = assignCredentials(webTarget.request(MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE))
+				.post(Entity.entity(methodInvocationRequest, MediaTypeConst.APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE), MethodInvocationResponse.class);
 		return repoInfoResponseDto;
 	}
 
