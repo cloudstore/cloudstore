@@ -142,7 +142,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 * @return the base-URL. This URL always ends with "/".
 	 */
 	protected String getBaseURL() {
-		return getLocalServerRestClientOrFail().getBaseURL();
+		return getLocalServerRestClientOrFail().getBaseUrl();
 	}
 
 	protected Client getClientOrFail() {

@@ -299,7 +299,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	protected URL determineRemoteRootWithoutPathPrefix() {
 		final String repositoryName = getRepositoryName();
-		final String baseURL = getClient().getBaseURL();
+		final String baseURL = getClient().getBaseUrl();
 		if (!baseURL.endsWith("/"))
 			throw new IllegalStateException(String.format("baseURL does not end with a '/'! baseURL='%s'", baseURL));
 
@@ -335,7 +335,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			if (remoteRoot == null)
 				throw new IllegalStateException("remoteRoot not yet assigned!");
 
-			final String baseURL = getClient().getBaseURL();
+			final String baseURL = getClient().getBaseUrl();
 			if (!baseURL.endsWith("/"))
 				throw new IllegalStateException(String.format("baseURL does not end with a '/'! remoteRoot='%s' baseURL='%s'", remoteRoot, baseURL));
 

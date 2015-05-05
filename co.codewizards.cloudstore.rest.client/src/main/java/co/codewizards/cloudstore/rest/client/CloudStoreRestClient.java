@@ -2,13 +2,11 @@ package co.codewizards.cloudstore.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.SocketException;
 import java.net.URL;
 import java.util.LinkedList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -128,9 +126,9 @@ public class CloudStoreRestClient {
 	 * "https://host.domain:8443/myrepo".
 	 * @return the base-URL. This URL always ends with "/".
 	 */
-	public synchronized String getBaseURL() {
+	public synchronized String getBaseUrl() {
 		if (baseURL == null) {
-			determineBaseURL();
+			determineBaseUrl();
 		}
 		return baseURL;
 	}
@@ -159,7 +157,7 @@ public class CloudStoreRestClient {
 		return url.endsWith("/") ? url : url + "/";
 	}
 
-	private void determineBaseURL() {
+	private void determineBaseUrl() {
 		acquireClient();
 		try {
 			final Client client = getClientOrFail();
@@ -238,21 +236,22 @@ public class CloudStoreRestClient {
 		if (ExceptionUtil.getCause(x, CallbackDeniedTrustException.class) != null)
 			return false;
 
-		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
-				SSLException.class,
-				SocketException.class
-		};
-		for (final Class<?> exceptionClass : exceptionClassesCausingRetry) {
-			@SuppressWarnings("unchecked")
-			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
-			if (ExceptionUtil.getCause(x, xc) != null) {
-				logger.warn(
-						String.format("retryExecuteAfterException: Encountered %s and will retry.", xc.getSimpleName()),
-						x);
-				return true;
-			}
-		}
-		return false;
+//		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
+//				SSLException.class,
+//				SocketException.class
+//		};
+//		for (final Class<?> exceptionClass : exceptionClassesCausingRetry) {
+//			@SuppressWarnings("unchecked")
+//			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
+//			if (ExceptionUtil.getCause(x, xc) != null) {
+//				logger.warn(
+//						String.format("retryExecuteAfterException: Encountered %s and will retry.", xc.getSimpleName()),
+//						x);
+//				return true;
+//			}
+//		}
+//		return false;
+		return true;
 	}
 
 	public Invocation.Builder assignCredentials(final Invocation.Builder builder) {
@@ -361,7 +360,7 @@ public class CloudStoreRestClient {
 	 * Release a {@link Client} which was previously {@linkplain #acquireClient() acquired}.
 	 * @see #acquireClient()
 	 */
-	private void releaseClient() {
+	private synchronized void releaseClient() {
 		final ClientRef clientRef = clientThreadLocal.get();
 		if (clientRef == null)
 			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() called more often than acquireClient())!");

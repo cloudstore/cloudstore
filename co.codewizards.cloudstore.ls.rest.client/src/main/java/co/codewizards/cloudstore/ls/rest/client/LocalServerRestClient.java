@@ -2,12 +2,10 @@ package co.codewizards.cloudstore.ls.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.net.ssl.SSLException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -28,7 +26,6 @@ import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.AssertUtil;
-import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
@@ -70,7 +67,7 @@ public class LocalServerRestClient {
 
 	private Integer socketReadTimeout;
 
-	private final String baseURL;
+	private String baseURL;
 
 	private final LinkedList<Client> clientCache = new LinkedList<Client>();
 
@@ -123,7 +120,11 @@ public class LocalServerRestClient {
 	 * beneath this base-URL are processed by the <code>LocalServerRest</code> application.
 	 * @return the base-URL. This URL always ends with "/".
 	 */
-	public synchronized String getBaseURL() {
+	public synchronized String getBaseUrl() {
+		if (baseURL == null) {
+			final int port = LocalServerPropertiesManager.getInstance().getPort();
+			baseURL = "http://127.0.0.1:" + port + '/';
+		}
 		return baseURL;
 	}
 
@@ -131,9 +132,6 @@ public class LocalServerRestClient {
 	 * Create a new client.
 	 */
 	protected LocalServerRestClient() {
-		final int port = LocalServerPropertiesManager.getInstance().getPort();
-		this.baseURL = "http://127.0.0.1:" + port + '/';
-
 		// The clientId is used for memory management in the server: if a client is closed or disappears, i.e. doesn't
 		// send keep-alives regularly, anymore, the server removes all object-references kept for this client in its ObjectManager.
 		final String clientId = new Uid().toString();
@@ -178,6 +176,13 @@ public class LocalServerRestClient {
 
 					return result;
 				} catch (final RuntimeException x) {
+					final String oldBaseUrl = getBaseUrl();
+					baseURL = null;
+					if (!oldBaseUrl.equals(getBaseUrl())) {
+						retryCounter = 0; // reset to make sure we really try again with the new URL
+						clearClientCache();
+					}
+
 					markClientBroken(); // make sure we do not reuse this client
 					if (++retryCounter > retryMax || !retryExecuteAfterException(x)) {
 						logger.warn("execute: invocation failed (will NOT retry): " + x, x);
@@ -196,22 +201,27 @@ public class LocalServerRestClient {
 		}
 	}
 
+	private synchronized void clearClientCache() {
+		clientCache.clear();
+	}
+
 	private boolean retryExecuteAfterException(final Exception x) {
-		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
-				SSLException.class,
-				SocketException.class
-		};
-		for (final Class<?> exceptionClass : exceptionClassesCausingRetry) {
-			@SuppressWarnings("unchecked")
-			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
-			if (ExceptionUtil.getCause(x, xc) != null) {
-				logger.warn(
-						String.format("retryExecuteAfterException: Encountered %s and will retry.", xc.getSimpleName()),
-						x);
-				return true;
-			}
-		}
-		return false;
+//		final Class<?>[] exceptionClassesCausingRetry = new Class<?>[] {
+//				SSLException.class,
+//				SocketException.class
+//		};
+//		for (final Class<?> exceptionClass : exceptionClassesCausingRetry) {
+//			@SuppressWarnings("unchecked")
+//			final Class<? extends Throwable> xc = (Class<? extends Throwable>) exceptionClass;
+//			if (ExceptionUtil.getCause(x, xc) != null) {
+//				logger.warn(
+//						String.format("retryExecuteAfterException: Encountered %s and will retry.", xc.getSimpleName()),
+//						x);
+//				return true;
+//			}
+//		}
+//		return false;
+		return true;
 	}
 
 	public Invocation.Builder assignCredentials(final Invocation.Builder builder) {
@@ -304,7 +314,7 @@ public class LocalServerRestClient {
 	 * Release a {@link Client} which was previously {@linkplain #acquireClient() acquired}.
 	 * @see #acquireClient()
 	 */
-	private void releaseClient() {
+	private synchronized void releaseClient() {
 		final ClientRef clientRef = clientThreadLocal.get();
 		if (clientRef == null)
 			throw new IllegalStateException("acquireClient() not called on the same thread (or releaseClient() called more often than acquireClient())!");

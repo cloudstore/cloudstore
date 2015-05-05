@@ -9,6 +9,9 @@ import co.codewizards.cloudstore.local.RepairDatabase;
  */
 public class RepairDatabaseSubCommand extends SubCommandWithExistingLocalRepo
 {
+	private RepairDatabase repairDatabase;
+	private RepoInfoSubCommand repoInfoSubCommand;
+
 	public RepairDatabaseSubCommand() { }
 
 	@Override
@@ -17,8 +20,23 @@ public class RepairDatabaseSubCommand extends SubCommandWithExistingLocalRepo
 	}
 
 	@Override
+	public void prepare() throws Exception {
+		super.prepare();
+		repairDatabase = new RepairDatabase(localRoot);
+
+		repoInfoSubCommand = new RepoInfoSubCommand(localRoot);
+		repoInfoSubCommand.prepare();
+	}
+
+	@Override
 	public void run() throws Exception {
-		new RepairDatabase(localRoot).run();
-		new RepoInfoSubCommand(localRoot).run();
+		repairDatabase.run();
+		repoInfoSubCommand.run();
+	}
+
+	@Override
+	public void cleanUp() throws Exception {
+		repoInfoSubCommand.cleanUp();
+		super.cleanUp();
 	}
 }

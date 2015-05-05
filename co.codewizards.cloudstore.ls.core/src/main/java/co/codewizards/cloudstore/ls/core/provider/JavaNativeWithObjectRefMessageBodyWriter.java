@@ -149,6 +149,23 @@ implements MessageBodyWriter<Object>
 		}
 	}
 
+	private static NoObjectRef NO_OBJECT_REF_FALLBACK = new NoObjectRef() {
+		@Override
+		public Class<? extends Annotation> annotationType() {
+			return NoObjectRef.class;
+		}
+
+		@Override
+		public boolean value() {
+			return false;
+		}
+
+		@Override
+		public boolean inheritToObjectGraphChildren() {
+			return true;
+		}
+	};
+
 	private static class NoObjectRefAnalyser {
 		private static final Logger logger = LoggerFactory.getLogger(JavaNativeWithObjectRefMessageBodyWriter.NoObjectRefAnalyser.class);
 
@@ -173,7 +190,7 @@ implements MessageBodyWriter<Object>
 			if (noObjectRefVal == null) {
 				final NoObjectRef noObjectRef = object.getClass().getAnnotation(NoObjectRef.class);
 				if (noObjectRef == null) {
-					final NoObjectRef parentNoObjectRef = parent == null ? NoObjectRef.DEFAULT_IF_MISSING : object2NoObjectRef.get(parent);
+					final NoObjectRef parentNoObjectRef = parent == null ? NO_OBJECT_REF_FALLBACK : object2NoObjectRef.get(parent);
 					object2NoObjectRef.put(object, parentNoObjectRef);
 				}
 				else
