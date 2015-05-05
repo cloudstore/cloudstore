@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.SocketException;
 import java.net.URL;
@@ -221,6 +221,9 @@ public class CloudStoreRestClient {
 						throw x;
 					}
 					logger.warn("execute: invocation failed (will retry): " + x, x);
+
+					// Wait a bit before retrying (increasingly longer).
+					try { Thread.sleep(retryCounter * 1000L); } catch (Exception y) { doNothing(); }
 				}
 			} finally {
 				releaseClient();

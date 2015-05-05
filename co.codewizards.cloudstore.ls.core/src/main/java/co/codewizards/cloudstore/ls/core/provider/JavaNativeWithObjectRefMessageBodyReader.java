@@ -21,6 +21,7 @@ import javax.ws.rs.ext.Provider;
 
 import co.codewizards.cloudstore.core.io.NoCloseInputStream;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientContainer;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectGraphContainer;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverterFactory;
 
@@ -58,10 +59,26 @@ implements MessageBodyReader<Object>
 	{
 		final ObjectRefConverter objectRefConverter = objectRefConverterFactory.createObjectRefConverter(securityContext);
 		try (ObjectInputStream oin = new ResolvingObjectInputStream(new NoCloseInputStream(entityStream), objectRefConverter);) {
-			final Object entity = oin.readObject();
-			return entity;
+			final Object o = oin.readObject();
+			final ObjectGraphContainer objectGraphContainer = (ObjectGraphContainer) o;
+
+			for (ForceNonTransientContainer forceNonTransientContainer : objectGraphContainer.getTransientFieldOwnerObject2ForceNonTransientContainer().values())
+				restoreTransientFields(forceNonTransientContainer);
+
+			return objectGraphContainer.getRoot();
 		} catch (ClassNotFoundException e) {
 			throw new IOException(e);
+		}
+
+	}
+
+	private void restoreTransientFields(final ForceNonTransientContainer container) {
+		final Object ownerObject = container.getTransientFieldOwnerObject();
+
+		for (final Map.Entry<String, Object> me : container.getTransientFieldName2Value().entrySet()) {
+			final String qualifiedFieldName = me.getKey();
+			final Object fieldValue = me.getValue();
+			setFieldValue(ownerObject, qualifiedFieldName, fieldValue);
 		}
 	}
 
@@ -76,21 +93,7 @@ implements MessageBodyReader<Object>
 
 		@Override
 		protected Object resolveObject(Object object) throws IOException {
-			if (object instanceof ForceNonTransientContainer)
-				object = restoreTransientFields((ForceNonTransientContainer) object);
-
 			final Object result = objectRefConverter.convertFromObjectRefIfNeeded(object);
-			return result;
-		}
-
-		private Object restoreTransientFields(final ForceNonTransientContainer container) {
-			final Object result = container.getObjectWithTransientFields();
-
-			for (final Map.Entry<String, Object> me : container.getTransientFieldName2Value().entrySet()) {
-				final String qualifiedFieldName = me.getKey();
-				final Object fieldValue = me.getValue();
-				setFieldValue(result, qualifiedFieldName, fieldValue);
-			}
 			return result;
 		}
 	}

@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +20,6 @@ public class ForceNonTransientClassSet {
 	private ForceNonTransientClassSet() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 
-		final ArrayList<ForceNonTransientAdvisor> l = new ArrayList<>();
 		for (Iterator<ForceNonTransientAdvisor> it = ServiceLoader.load(ForceNonTransientAdvisor.class).iterator(); it.hasNext(); ) {
 			final ForceNonTransientAdvisor advisor = it.next();
 			final Class<?>[] classes = advisor.getForceNonTransientClasses();

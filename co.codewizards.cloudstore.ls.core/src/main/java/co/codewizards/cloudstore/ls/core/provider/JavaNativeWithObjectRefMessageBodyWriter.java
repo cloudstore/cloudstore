@@ -35,6 +35,7 @@ import co.codewizards.cloudstore.core.io.NoCloseOutputStream;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientClassSet;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientContainer;
 import co.codewizards.cloudstore.ls.core.invoke.NoObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectGraphContainer;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverterFactory;
@@ -77,11 +78,11 @@ implements MessageBodyWriter<Object>
 			OutputStream entityStream
 			) throws IOException, WebApplicationException
 	{
-		final NoObjectRefAnalyser noObjectRefAnalyser = new NoObjectRefAnalyser(t);
 		final ObjectRefConverter objectRefConverter = objectRefConverterFactory.createObjectRefConverter(securityContext);
-		try (ObjectOutputStream oout = new ReplacingObjectOutputStream(new NoCloseOutputStream(entityStream), objectRefConverter, noObjectRefAnalyser);) {
-			// TODO wrap t in ObjectGraphContainer
-			oout.writeObject(t);
+		final ObjectGraphContainer objectGraphContainer = new ObjectGraphContainer(t);
+		final NoObjectRefAnalyser noObjectRefAnalyser = new NoObjectRefAnalyser(objectGraphContainer);
+		try (ObjectOutputStream oout = new ReplacingObjectOutputStream(new NoCloseOutputStream(entityStream), objectRefConverter, noObjectRefAnalyser, objectGraphContainer);) {
+			oout.writeObject(objectGraphContainer);
 			oout.flush();
 		}
 	}
@@ -89,11 +90,13 @@ implements MessageBodyWriter<Object>
 	private static class ReplacingObjectOutputStream extends ObjectOutputStream {
 		private final NoObjectRefAnalyser noObjectRefAnalyser;
 		private final ObjectRefConverter objectRefConverter;
+		private final ObjectGraphContainer objectGraphContainer;
 
-		public ReplacingObjectOutputStream(OutputStream out, final ObjectRefConverter objectRefConverter, final NoObjectRefAnalyser noObjectRefAnalyser) throws IOException {
+		public ReplacingObjectOutputStream(OutputStream out, final ObjectRefConverter objectRefConverter, final NoObjectRefAnalyser noObjectRefAnalyser, final ObjectGraphContainer objectGraphContainer) throws IOException {
 			super(out);
 			this.objectRefConverter = assertNotNull("objectRefConverter", objectRefConverter);
 			this.noObjectRefAnalyser = assertNotNull("noObjectRefAnalyser", noObjectRefAnalyser);
+			this.objectGraphContainer = assertNotNull("objectGraphContainer", objectGraphContainer);
 			enableReplaceObject(true);
 		}
 
@@ -111,7 +114,7 @@ implements MessageBodyWriter<Object>
 				final List<Field> transientFields = getTransientFields(result.getClass());
 				if (!transientFields.isEmpty()) {
 					final ForceNonTransientContainer forceNonTransientContainer = createForceNonTransientContainer(result, transientFields);
-					// TODO register in ObjectGraphContainer
+					objectGraphContainer.putForceNonTransientContainer(forceNonTransientContainer);
 				}
 			}
 			return result;
@@ -149,7 +152,7 @@ implements MessageBodyWriter<Object>
 	private static class NoObjectRefAnalyser {
 		private static final Logger logger = LoggerFactory.getLogger(JavaNativeWithObjectRefMessageBodyWriter.NoObjectRefAnalyser.class);
 
-		private final IdentityHashMap<Object, Boolean> object2NoObjectRef = new IdentityHashMap<>();
+		private final IdentityHashMap<Object, NoObjectRef> object2NoObjectRef = new IdentityHashMap<>();
 
 		public NoObjectRefAnalyser(final Object root) {
 			analyse(null, root, new IdentityHashMap<Object, Void>());
@@ -166,15 +169,15 @@ implements MessageBodyWriter<Object>
 
 			processedObjects.put(object, null);
 
-			final Boolean noObjectRefVal = object2NoObjectRef.get(object);
+			final NoObjectRef noObjectRefVal = object2NoObjectRef.get(object);
 			if (noObjectRefVal == null) {
 				final NoObjectRef noObjectRef = object.getClass().getAnnotation(NoObjectRef.class);
 				if (noObjectRef == null) {
-					final boolean parentNoObjectRef = parent == null ? false : object2NoObjectRef.get(parent);
+					final NoObjectRef parentNoObjectRef = parent == null ? NoObjectRef.DEFAULT_IF_MISSING : object2NoObjectRef.get(parent);
 					object2NoObjectRef.put(object, parentNoObjectRef);
 				}
 				else
-					object2NoObjectRef.put(object, noObjectRef.value());
+					object2NoObjectRef.put(object, noObjectRef);
 			}
 
 			if (isTypeConsideredLeaf(object))
@@ -221,11 +224,12 @@ implements MessageBodyWriter<Object>
 						noObjectRef = child == null ? null : child.getClass().getAnnotation(NoObjectRef.class);
 
 					if (noObjectRef == null) {
-						final boolean parentNoObjectRef = object2NoObjectRef.get(object);
-						object2NoObjectRef.put(child, parentNoObjectRef);
+						final NoObjectRef parentNoObjectRef = object2NoObjectRef.get(object);
+						if (parentNoObjectRef.inheritToObjectGraphChildren())
+							object2NoObjectRef.put(child, parentNoObjectRef);
 					}
 					else
-						object2NoObjectRef.put(child, noObjectRef.value());
+						object2NoObjectRef.put(child, noObjectRef);
 				}
 
 				for (final Object child : children)
@@ -243,12 +247,16 @@ implements MessageBodyWriter<Object>
 		}
 
 		public boolean isNoObjectRef(Object object) {
-			final Boolean result = object2NoObjectRef.get(object);
-			if (result == null)
-				return false;
-//				throw new IllegalArgumentException("object is not in analysed object-graph: " + object);
+			final NoObjectRef result = object2NoObjectRef.get(object);
+			if (result == null) {
+				final NoObjectRef noObjectRef = object.getClass().getAnnotation(NoObjectRef.class);
+				if (noObjectRef != null)
+					return noObjectRef.value();
 
-			return result;
+				return false;
+			}
+
+			return result.value();
 		}
 
 		private boolean isTypeConsideredLeaf(final Object object) {

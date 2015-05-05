@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
-import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.test.model.ExampleService;
@@ -23,7 +22,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 	private LocalServer localServer;
 	private LocalServerClient client;
-	private List<ObjectRef> removedObjectRefs = new ArrayList<>();
+	private List<Object> removedObjects = new ArrayList<>();
 
 	@Override
 	public void before() {
@@ -31,9 +30,9 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 		new MockUp<ObjectManager>() {
 			@Mock
-			void remove(Invocation invocation, ObjectRef objectRef) {
-				removedObjectRefs.add(objectRef);
-				invocation.proceed(objectRef);
+			void remove(Invocation invocation, Object object) {
+				removedObjects.add(object);
+				invocation.proceed(object);
 			}
 		};
 
@@ -65,7 +64,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 		String stringValue = "testGarbageCollection";
 
 		// Test that GC was *not* (yet) done on server-side, because we still hold references on the client-side.
-		removedObjectRefs.clear();
+		removedObjects.clear();
 
 		for (int i = 0; i < 1000; ++i) {
 			ExampleService exampleService = client.invokeConstructor(ExampleServiceImpl.class);
@@ -77,7 +76,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 		}
 		System.gc();
 
-		assertThat(removedObjectRefs).isEmpty();
+		assertThat(removedObjects).isEmpty();
 
 		// Now, release the client-side references and expect garbage-collection to happen on the server-side.
 		exampleServices.clear();
@@ -91,6 +90,6 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 		}
 		System.gc();
 
-		assertThat(removedObjectRefs.size()).isGreaterThan(200);
+		assertThat(removedObjects.size()).isGreaterThan(200);
 	}
 }

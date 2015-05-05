@@ -277,6 +277,7 @@ public class ReflectionUtil {
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
+			return;
 		}
 
 		throw new IllegalArgumentException("object's class does not have this field: " + fieldName);

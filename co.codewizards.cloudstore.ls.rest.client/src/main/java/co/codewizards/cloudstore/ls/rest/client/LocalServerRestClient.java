@@ -187,7 +187,7 @@ public class LocalServerRestClient {
 					logger.warn("execute: invocation failed (will retry): " + x, x);
 
 					// Wait a bit before retrying (increasingly longer).
-					try { Thread.sleep(retryCounter * 3000L); } catch (Exception y) { doNothing(); }
+					try { Thread.sleep(retryCounter * 1000L); } catch (Exception y) { doNothing(); }
 				}
 			} finally {
 				releaseClient();
