@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -370,7 +371,7 @@ public final class PropertiesUtil
 	 * </pre>
 	 * <p>
 	 * But to override the datasource properties to be null, is not possible by simply writing
-	 * "javax.jdo.option.ConnectionFactoryName = = " as this would
+	 * "javax.jdo.option.ConnectionFactoryName = " as this would
 	 * be interpreted as empty string. Therefore it is possible to declare the <code>null</code> value using an additional
 	 * key:
 	 * <pre>
@@ -413,16 +414,20 @@ public final class PropertiesUtil
 	}
 
 	public static long getSystemPropertyValueAsLong(final String key, final long defaultValue) {
-		final String value = System.getProperty(key);
-		if (value == null) {
-			logger.debug("System property '{}' is not set. Falling back to default value {}.", key, defaultValue);
+		return getPropertyValueAsLong(System.getProperties(), key, defaultValue);
+	}
+
+	public static long getPropertyValueAsLong(final Properties properties, final String key, long defaultValue) {
+		assertNotNull("properties", properties);
+		assertNotNull("key", key);
+
+		final String value = properties.getProperty(key);
+		if (value == null)
 			return defaultValue;
-		}
+
 		try {
-			return Integer.valueOf(value);
-		} catch (final NumberFormatException x) {
-			logger.warn("System property '{}' is set to the value '{}' which is not an integer (long). Falling back to default value {}.",
-					key, value, defaultValue);
+			return Long.parseLong(value.trim());
+		} catch (NumberFormatException x) {
 			return defaultValue;
 		}
 	}
