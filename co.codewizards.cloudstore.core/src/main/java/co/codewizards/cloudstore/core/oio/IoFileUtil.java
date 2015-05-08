@@ -82,30 +82,29 @@ public class IoFileUtil {
 		final LinkedList<File> stack = new LinkedList<File>();
 		stack.push(dir);
 		while (!stack.isEmpty()) {
-			final File lastElement = stack.getLast();
-			if (!lastElement.exists())
-				stack.removeLast();
-			else if (lastElement.isDirectory()) {
-				final File[] currList = lastElement.listFiles();
-				if (null != currList && currList.length > 0) {
-					for (final File curr : currList) {
-						try {
-							final boolean delete = curr.delete();
-							/* Remark: delete() should succeed on empty directories, files and symlinks;
-							 * only if was not successful, this *directory* should be
-							 * pushed to the stack. So symlinked directories
-							 * and its contents will not be deleted.
-							 */
-							if (!delete) {
-								stack.push(curr);
-							}
-						} catch(final SecurityException e) {
-							logger.warn("Problem on delete of '{}'! ", curr, e.getMessage());
+			final File stackElement = stack.getFirst();
+			final File[] currList = stackElement.listFiles();
+			if (null != currList && currList.length > 0) {
+				for (final File curr : currList) {
+					try {
+						final boolean delete = curr.delete();
+						/* Remark: delete() should succeed on empty directories, files and symlinks;
+						 * only if was not successful, this *directory* should be
+						 * pushed to the stack. So symlinked directories
+						 * and its contents will not be deleted.
+						 */
+						if (!delete) {
+							stack.addFirst(curr);
 						}
+					} catch(final SecurityException e) {
+						logger.warn("Problem on delete of '{}'! ", curr, e.getMessage());
 					}
-				} else {
-					deleteOrLog(stack.pop());
 				}
+			} else {
+				if (stackElement != stack.removeFirst())
+					throw new IllegalStateException("WTF?!");
+
+				deleteOrLog(stackElement);
 			}
 		}
 		return !dir.exists();
