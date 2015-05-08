@@ -80,7 +80,7 @@ public class IoFileUtil {
 	 */
 	static boolean deleteRecursively(final File dir) {
 		final LinkedList<File> stack = new LinkedList<File>();
-		stack.push(dir);
+		stack.addFirst(dir);
 		while (!stack.isEmpty()) {
 			final File stackElement = stack.getFirst();
 			final File[] currList = stackElement.listFiles();
