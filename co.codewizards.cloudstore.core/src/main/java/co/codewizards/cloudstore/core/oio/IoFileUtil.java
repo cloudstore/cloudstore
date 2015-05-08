@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.core.oio;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
-import java.util.Stack;
+import java.util.LinkedList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,12 +79,14 @@ public class IoFileUtil {
 	 * @return True, if the param dir does not exist at the end.
 	 */
 	static boolean deleteRecursively(final File dir) {
-		File[] currList;
-		final Stack<File> stack = new Stack<File>();
+		final LinkedList<File> stack = new LinkedList<File>();
 		stack.push(dir);
 		while (!stack.isEmpty()) {
-			if (stack.lastElement().isDirectory()) {
-				currList = stack.lastElement().listFiles();
+			final File lastElement = stack.getLast();
+			if (!lastElement.exists())
+				stack.removeLast();
+			else if (lastElement.isDirectory()) {
+				final File[] currList = lastElement.listFiles();
 				if (null != currList && currList.length > 0) {
 					for (final File curr : currList) {
 						try {
