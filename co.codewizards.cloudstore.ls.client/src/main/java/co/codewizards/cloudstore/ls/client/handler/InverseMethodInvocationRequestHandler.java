@@ -13,14 +13,12 @@ import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 
 public class InverseMethodInvocationRequestHandler extends AbstractInverseServiceRequestHandler<InverseMethodInvocationRequest, InverseMethodInvocationResponse> {
 
-	private ObjectManager objectManager;
-
 	@Override
 	public InverseMethodInvocationResponse handle(final InverseMethodInvocationRequest request) {
 		assertNotNull("request", request);
-		MethodInvocationRequest methodInvocationRequest = request.getMethodInvocationRequest();
+		final MethodInvocationRequest methodInvocationRequest = request.getMethodInvocationRequest();
 
-		objectManager = getLocalServerClient().getObjectManager();
+		final ObjectManager objectManager = getLocalServerClient().getObjectManager();
 		final ClassManager classManager = objectManager.getClassManager();
 
 		final String className = methodInvocationRequest.getClassName();
@@ -34,12 +32,9 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
 
-//		final Object object = objectRef == null ? null : objectManager.getObjectOrFail(objectRef);
-
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
 		final Class<?>[] argumentTypes = argumentTypeNames == null ? null : classManager.getClassesOrFail(argumentTypeNames);
 
-//		final Object[] arguments = fromObjectRefsToObjects(methodInvocationRequest.getArguments());
 		final Object[] arguments = methodInvocationRequest.getArguments();
 
 		final Object resultObject;
@@ -59,28 +54,6 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 				throw new IllegalStateException("Unknown InvocationType: " + invocationType);
 		}
 
-//		final Object resultObjectOrObjectRef = objectManager.getObjectRefOrObject(resultObject);
-//		return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(resultObjectOrObjectRef));
-
 		return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(resultObject));
 	}
-
-//	private Object[] fromObjectRefsToObjects(final Object[] objects) {
-//		if (objects == null)
-//			return objects;
-//
-//		final Object[] result = new Object[objects.length];
-//		for (int i = 0; i < objects.length; i++) {
-//			final Object object = objects[i];
-//			if (object instanceof ObjectRef) {
-//				final ObjectRef objectRef = (ObjectRef) object;
-//				if (objectManager.getClientId().equals(objectRef.getClientId()))
-//					result[i] = objectManager.getObjectOrFail(objectRef);
-//				else // the reference is a remote object from the client-side => lookup or create proxy
-//					result[i] = getLocalServerClient().getRemoteObjectProxyOrCreate(objectRef);
-//			} else
-//				result[i] = object;
-//		}
-//		return result;
-//	}
 }

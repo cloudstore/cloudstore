@@ -44,9 +44,13 @@ public abstract class Repository extends Entity implements StoreCallback
 
 	public UUID getRepositoryId() {
 		if (repositoryId == null)
-			repositoryId = UUID.randomUUID().toString();
+			repositoryId = createRepositoryId().toString();
 
 		return UUID.fromString(repositoryId);
+	}
+
+	protected UUID createRepositoryId() {
+		return UUID.randomUUID();
 	}
 
 	public long getRevision() {
