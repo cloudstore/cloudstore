@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.ls.core.invoke;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class MethodInvocationRequest implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -83,5 +84,20 @@ public class MethodInvocationRequest implements Serializable {
 			return InvocationType.OBJECT;
 
 		throw new IllegalStateException("Cannot determine InvocationType!");
+	}
+
+	@Override
+	public String toString() {
+		final InvocationType invocationType = getInvocationType();
+		final String argumentsString = arguments == null ? "[]" : Arrays.toString(arguments);
+		switch (invocationType) {
+			case CONSTRUCTOR:
+				return String.format("%s[%s, %s, %s]", getClass().getSimpleName(), invocationType, className, argumentsString);
+			case STATIC:
+				return String.format("%s[%s, %s, %s, %s]", getClass().getSimpleName(), invocationType, className, methodName, argumentsString);
+			case OBJECT:
+				return String.format("%s[%s, %s, %s, %s, %s]", getClass().getSimpleName(), invocationType, object.getClass().getName(), object, methodName, argumentsString);
+		}
+		throw new IllegalStateException("Unexpected InvocationType!");
 	}
 }

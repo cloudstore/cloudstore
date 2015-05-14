@@ -14,6 +14,8 @@ import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.filter.ExtMethodInvocationRequest;
+import co.codewizards.cloudstore.ls.core.invoke.filter.InvocationFilterRegistry;
 import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
 import co.codewizards.cloudstore.ls.rest.server.InverseInvoker;
 
@@ -41,6 +43,9 @@ public class InvokeMethodService extends AbstractService {
 			objectManager.remove(object);
 			return MethodInvocationResponse.forInvocation(null);
 		}
+
+		InvocationFilterRegistry.getInstance().assertCanInvoke(
+				new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz));
 
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
 		final Class<?>[] argumentTypes = argumentTypeNames == null ? null : classManager.getClassesOrFail(argumentTypeNames);

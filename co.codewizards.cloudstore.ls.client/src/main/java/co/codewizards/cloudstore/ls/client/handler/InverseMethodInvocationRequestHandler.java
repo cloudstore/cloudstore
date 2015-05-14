@@ -10,6 +10,8 @@ import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.filter.ExtMethodInvocationRequest;
+import co.codewizards.cloudstore.ls.core.invoke.filter.InvocationFilterRegistry;
 
 public class InverseMethodInvocationRequestHandler extends AbstractInverseServiceRequestHandler<InverseMethodInvocationRequest, InverseMethodInvocationResponse> {
 
@@ -31,6 +33,9 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 			objectManager.remove(object);
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
+
+		InvocationFilterRegistry.getInstance().assertCanInvoke(
+				new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz));
 
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
 		final Class<?>[] argumentTypes = argumentTypeNames == null ? null : classManager.getClassesOrFail(argumentTypeNames);

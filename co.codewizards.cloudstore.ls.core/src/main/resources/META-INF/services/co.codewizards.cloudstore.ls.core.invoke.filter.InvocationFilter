@@ -1,0 +1,3 @@
+co.codewizards.cloudstore.ls.core.invoke.filter.AllowCloudStoreInvocationFilter
+co.codewizards.cloudstore.ls.core.invoke.filter.AllowJavaInvocationFilter
+co.codewizards.cloudstore.ls.core.invoke.filter.DenyReflectInvocationFilter

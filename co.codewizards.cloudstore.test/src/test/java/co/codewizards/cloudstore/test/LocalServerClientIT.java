@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.beans.PropertyChangeEvent;
@@ -16,6 +17,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.OioFileFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+import co.codewizards.cloudstore.core.util.ReflectionUtil;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
@@ -58,6 +60,24 @@ public class LocalServerClientIT extends AbstractIT {
 		long localMillis = System.currentTimeMillis();
 		assertThat(remoteMillis).isNotNull();
 		assertThat(localMillis - remoteMillis).isBetween(0L, 10000L);
+	}
+
+	@Test
+	public void invokeDeniedMethods() throws Exception {
+		try {
+			client.invokeStatic(System.class, "setProperty", "key1", "value1");
+			fail("Succeeded invoking a method that should be denied!");
+		} catch (SecurityException x) {
+			doNothing();
+		}
+
+		// This is denied by the explicit blacklist in AllowCloudStoreInvocationFilter (by default all classes in *our* package are allowed)
+		try {
+			client.invokeStatic(ReflectionUtil.class, "invokeStatic", System.class, "getProperty", new Object[] { "user.home" });
+			fail("Succeeded invoking a method that should be denied!");
+		} catch (SecurityException x) {
+			doNothing();
+		}
 	}
 
 	@Test
