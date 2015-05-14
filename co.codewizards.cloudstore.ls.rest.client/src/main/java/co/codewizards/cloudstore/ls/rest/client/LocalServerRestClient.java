@@ -47,7 +47,7 @@ public class LocalServerRestClient {
 	private static final Logger logger = LoggerFactory.getLogger(LocalServerRestClient.class);
 
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
-	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
+	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 15 * 60 * 1000;
 
 	/**
 	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
