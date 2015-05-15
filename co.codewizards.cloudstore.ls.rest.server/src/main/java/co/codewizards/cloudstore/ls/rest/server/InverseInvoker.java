@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
@@ -48,7 +51,7 @@ public class InverseInvoker {
 	 * {@linkplain #pollInverseServiceRequest() polling} serves additionally as a keep-alive for
 	 * the server-side {@code ObjectManager}.
 	 */
-	private static final long POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 30L * 1000L; // 30 seconds
+	private static final long POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 10L * 1000L; // 10 seconds
 
 	/**
 	 * Timeout for {@link #performInverseServiceRequest(InverseServiceRequest)}.
@@ -120,10 +123,10 @@ public class InverseInvoker {
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
 		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-		return invoke(objectRef, methodName, (Class<?>[]) null, arguments);
+		return _invoke(objectRef, methodName, (Class<?>[]) null, arguments);
 	}
 
-	private <T> T invoke(final ObjectRef objectRef, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
+	private <T> T _invoke(final ObjectRef objectRef, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
 		assertNotNull("objectRef", objectRef);
 		assertNotNull("methodName", methodName);
 
@@ -153,20 +156,13 @@ public class InverseInvoker {
 		final MethodInvocationResponse methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
 
 		final Object result = methodInvocationResponse.getResult();
-//		if (result == null)
-//			return null;
-//
-//		if (result instanceof ObjectRef) {
-//			final ObjectRef resultObjectRef = (ObjectRef) result;
-//			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
-//		}
 		return cast(result);
 	}
 
 	public Object getRemoteObjectProxyOrCreate(ObjectRef objectRef) {
-		return objectManager.getRemoteObjectProxyManager().getRemoteObjectProxy(objectRef, new RemoteObjectProxyFactory() {
+		return objectManager.getRemoteObjectProxyManager().getRemoteObjectProxyOrCreate(objectRef, new RemoteObjectProxyFactory() {
 			@Override
-			public RemoteObjectProxy createRemoteObject(ObjectRef objectRef) {
+			public RemoteObjectProxy createRemoteObjectProxy(ObjectRef objectRef) {
 				return _createRemoteObjectProxy(objectRef);
 			}
 		});
@@ -176,23 +172,56 @@ public class InverseInvoker {
 		final Class<?>[] interfaces = getInterfaces(objectRef.getClassId());
 
 		final ClassLoader classLoader = this.getClass().getClassLoader();
-		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces, new InvocationHandler() {
-			@Override
-			public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-				// BEGIN implement RemoteObjectProxy
-				if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
-					return objectRef;
-				// END implement RemoteObjectProxy
+		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces,
+				new RemoteObjectProxyInvocationHandler(this, objectRef));
+	}
 
-				return InverseInvoker.this.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
-			}
+	private static class RemoteObjectProxyInvocationHandler implements InvocationHandler {
+		private static final Logger logger = LoggerFactory.getLogger(InverseInvoker.RemoteObjectProxyInvocationHandler.class);
 
-			@Override
-			protected void finalize() throws Throwable {
-				InverseInvoker.this.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF, (Class<?>[])null, (Object[])null);
-				super.finalize();
+		private final Uid refId = new Uid();
+		private final InverseInvoker inverseInvoker;
+		private final ObjectRef objectRef;
+
+		public RemoteObjectProxyInvocationHandler(final InverseInvoker inverseInvoker, final ObjectRef objectRef) {
+			this.inverseInvoker = assertNotNull("inverseInvoker", inverseInvoker);
+			this.objectRef = assertNotNull("objectRef", objectRef);
+
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]<init>: {}", getThisId(), objectRef);
+
+			inverseInvoker._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+		}
+
+		@Override
+		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+			// BEGIN implement RemoteObjectProxy
+			if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
+				return objectRef;
+			// END implement RemoteObjectProxy
+
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]invoke: method='{}'", getThisId(), method);
+
+			return inverseInvoker._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+		}
+
+		@Override
+		protected void finalize() throws Throwable {
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]finalize: {}", getThisId(), objectRef);
+
+			try {
+				inverseInvoker._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+			} catch (Exception x) {
+				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}
-		});
+			super.finalize();
+		}
+
+		private String getThisId() {
+			return Integer.toHexString(System.identityHashCode(this));
+		}
 	}
 
 	private Class<?>[] getInterfaces(int classId) {
@@ -234,21 +263,6 @@ public class InverseInvoker {
 		}
 		return classInfo;
 	}
-
-//	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
-//		if (objects == null)
-//			return objects;
-//
-//		final Object[] result = new Object[objects.length];
-//		for (int i = 0; i < objects.length; i++) {
-//			final Object object = objects[i];
-//			if (object instanceof RemoteObjectProxy) {
-//				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-//			} else
-//				result[i] = objectManager.getObjectRefOrObject(object);
-//		}
-//		return result;
-//	}
 
 	/**
 	 * Invokes a service on the client-side.

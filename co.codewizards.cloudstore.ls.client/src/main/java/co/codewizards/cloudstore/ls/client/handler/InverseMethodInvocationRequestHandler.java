@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.ls.client.handler;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
@@ -29,8 +30,15 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 		final String methodName = methodInvocationRequest.getMethodName();
 
 		final Object object = methodInvocationRequest.getObject();
-		if (ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF.equals(methodName)) {
-			objectManager.remove(object);
+
+		if (ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT.equals(methodName)) {
+			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
+			objectManager.incRefCount(object, refId);
+			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
+		}
+		else if (ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT.equals(methodName)) {
+			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
+			objectManager.decRefCount(object, refId);
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
 

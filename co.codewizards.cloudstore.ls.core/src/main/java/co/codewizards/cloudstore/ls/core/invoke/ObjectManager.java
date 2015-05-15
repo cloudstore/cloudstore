@@ -4,12 +4,18 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -35,7 +41,11 @@ public class ObjectManager {
 	 * to make sure, the long-polling of inverse-service-invocation-requests serves additionally as a keep-alive for
 	 * the server-side {@code ObjectManager}.
 	 */
-	private static final long TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS = 5 * 60 * 1000L; // 5 minutes
+	private static final long EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS = 5 * 60 * 1000L; // 5 minutes
+	private static final long EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS = 60 * 1000L;
+
+	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS = 15 * 1000L; // 30 seconds
+	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS = 5 * 1000L;
 
 	private static final Logger logger = LoggerFactory.getLogger(ObjectManager.class);
 
@@ -50,12 +60,16 @@ public class ObjectManager {
 	private final Map<Object, ObjectRef> object2ObjectRef = new IdentityHashMap<>();
 	private final Map<String, Object> contextObjectMap = new HashMap<>();
 
+	private final Map<ObjectRef, Long> zeroReferenceObjectRef2Timestamp = new HashMap<>();
+	private final Map<ObjectRef, Set<Uid>> objectRef2RefIds = new HashMap<>();
+
 	private final RemoteObjectProxyManager remoteObjectProxyManager = new RemoteObjectProxyManager();
 	private final ClassManager classManager = new ClassManager();
 
 	private static final Map<Uid, ObjectManager> clientId2ObjectManager = new HashMap<>();
 
-//	private List<ObjectRefMappingEnabledAdvisor> objectRefMappingEnabledAdvisors;
+	private static long evictOldObjectManagersLastInvocation = 0;
+	private static long evictZeroReferenceObjectRefsLastInvocation = 0;
 
 	private static final Timer timer = new Timer(true);
 	private static final TimerTask timerTask = new TimerTask() {
@@ -66,10 +80,15 @@ public class ObjectManager {
 			} catch (Exception x) {
 				logger.error("run: " + x, x);
 			}
+			try {
+				allObjectManagers_evictZeroReferenceObjectRefs();
+			} catch (Exception x) {
+				logger.error("run: " + x, x);
+			}
 		}
 	};
 	static {
-		timer.schedule(timerTask, 60000L, 60000L);
+		timer.schedule(timerTask, 1000L, 1000L);
 	}
 
 	public static synchronized ObjectManager getInstance(final Uid clientId) {
@@ -83,16 +102,65 @@ public class ObjectManager {
 		return objectManager;
 	}
 
+	/**
+	 * @deprecated Only used for tests! Don't use this method productively!
+	 */
+	@Deprecated
+	public static synchronized void clearObjectManagers() {
+		clientId2ObjectManager.clear();
+	}
+
 	private static synchronized void evictOldObjectManagers() {
+		final long now = System.currentTimeMillis();
+
+		if (evictOldObjectManagersLastInvocation >= now - EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS)
+			return;
+
+		evictOldObjectManagersLastInvocation = now;
+
 		for (Iterator<ObjectManager> it = clientId2ObjectManager.values().iterator(); it.hasNext();) {
 			final ObjectManager objectManager = it.next();
 
 			if (objectManager.isNeverEvict())
 				continue;
 
-			if (objectManager.getLastUseDate().getTime() < System.currentTimeMillis() - TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS)
+			if (objectManager.getLastUseDate().getTime() < now - EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS)
 				it.remove();
 		}
+	}
+
+	private static synchronized List<ObjectManager> getObjectManagers() {
+		final List<ObjectManager> objectManagers = new ArrayList<ObjectManager>(clientId2ObjectManager.values());
+		return objectManagers;
+	}
+
+	private static void allObjectManagers_evictZeroReferenceObjectRefs() {
+		final long now = System.currentTimeMillis();
+
+		if (evictZeroReferenceObjectRefsLastInvocation >= now - EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS)
+			return;
+
+		evictZeroReferenceObjectRefsLastInvocation = now;
+
+		final List<ObjectManager> objectManagers = getObjectManagers();
+		for (final ObjectManager objectManager : objectManagers)
+			objectManager.evictZeroReferenceObjectRefs();
+	}
+
+	private synchronized void evictZeroReferenceObjectRefs() {
+		final long now = System.currentTimeMillis();
+
+		final LinkedList<ObjectRef> objectRefsToRemove = new LinkedList<>();
+		for (final Map.Entry<ObjectRef, Long> me : zeroReferenceObjectRef2Timestamp.entrySet()) {
+			final ObjectRef objectRef = me.getKey();
+			final long timestamp = me.getValue();
+
+			if (timestamp < now - EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS)
+				objectRefsToRemove.add(objectRef);
+		}
+
+		for (final ObjectRef objectRef : objectRefsToRemove)
+			remove(objectRef);
 	}
 
 	protected ObjectManager(final Uid clientId) {
@@ -150,6 +218,7 @@ public class ObjectManager {
 			objectRef = createObjectRef(object.getClass());
 			objectRef2Object.put(objectRef, object);
 			object2ObjectRef.put(object, objectRef);
+			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
 		}
 		return objectRef;
 	}
@@ -185,19 +254,55 @@ public class ObjectManager {
 		return object;
 	}
 
-	public synchronized void remove(final ObjectRef objectRef) {
+	private synchronized void remove(final ObjectRef objectRef) {
 		assertNotNull("objectRef", objectRef);
+
+		if (!objectRef2Object.containsKey(objectRef))
+			throw new IllegalStateException("!objectRef2Object.containsKey(objectRef): " + objectRef);
+
+		zeroReferenceObjectRef2Timestamp.remove(objectRef);
 		final Object object = objectRef2Object.remove(objectRef);
 		object2ObjectRef.remove(object);
 		updateLastUseDate();
 	}
 
-	public synchronized void remove(final Object object) {
+//	private synchronized void remove(final Object object) {
+//		assertNotNull("object", object);
+//		assertNotInstanceOfObjectRef(object);
+//		final ObjectRef objectRef = object2ObjectRef.remove(object);
+//		objectRef2Object.remove(objectRef);
+//		updateLastUseDate();
+//	}
+
+	public synchronized void incRefCount(final Object object, final Uid refId) {
 		assertNotNull("object", object);
-		assertNotInstanceOfObjectRef(object);
-		final ObjectRef objectRef = object2ObjectRef.remove(object);
-		objectRef2Object.remove(objectRef);
-		updateLastUseDate();
+		assertNotNull("refId", refId);
+		final ObjectRef objectRef = getObjectRefOrFail(object);
+		if (zeroReferenceObjectRef2Timestamp.remove(objectRef) != null) {
+			if (objectRef2RefIds.put(objectRef, new HashSet<Uid>(Collections.singleton(refId))) != null)
+				throw new IllegalStateException("Collision! WTF?!");
+		}
+		else {
+			final Set<Uid> refIds = objectRef2RefIds.get(objectRef);
+			assertNotNull("objectRef2RefIds.get(" + objectRef + ")", refIds);
+			refIds.add(refId);
+		}
+	}
+
+	public synchronized void decRefCount(final Object object, final Uid refId) {
+		assertNotNull("object", object);
+		assertNotNull("refId", refId);
+		final ObjectRef objectRef = getObjectRefOrFail(object);
+		final Set<Uid> refIds = objectRef2RefIds.get(objectRef);
+		if (refIds == null)
+			return;
+
+		refIds.remove(refId);
+
+		if (refIds.isEmpty()) {
+			objectRef2RefIds.remove(objectRef);
+			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+		}
 	}
 
 	private static void assertNotInstanceOfObjectRef(final Object object) {
@@ -213,39 +318,7 @@ public class ObjectManager {
 		return classManager;
 	}
 
-//	private List<ObjectRefMappingEnabledAdvisor> getObjectRefMappingEnabledAdvisors() {
-//		if (objectRefMappingEnabledAdvisors == null) {
-//			final ArrayList<ObjectRefMappingEnabledAdvisor> l = new ArrayList<>();
-//
-//			final Iterator<ObjectRefMappingEnabledAdvisor> iterator = ServiceLoader.load(ObjectRefMappingEnabledAdvisor.class).iterator();
-//			while (iterator.hasNext())
-//				l.add(iterator.next());
-//
-//			Collections.sort(l, new Comparator<ObjectRefMappingEnabledAdvisor>() {
-//				@Override
-//				public int compare(ObjectRefMappingEnabledAdvisor o1, ObjectRefMappingEnabledAdvisor o2) {
-//					int result = -1 * Integer.compare(o1.getPriority(), o2.getPriority());
-//					if (result != 0)
-//						return result;
-//
-//					return o1.getClass().getName().compareTo(o2.getClass().getName());
-//				}
-//			});
-//
-//			objectRefMappingEnabledAdvisors = Collections.unmodifiableList(l);
-//		}
-//		return objectRefMappingEnabledAdvisors;
-//	}
-
 	public boolean isObjectRefMappingEnabled(final Object object) {
-//		for (final ObjectRefMappingEnabledAdvisor advisor : getObjectRefMappingEnabledAdvisors()) {
-//			final Boolean result = advisor.isObjectRefMappingEnabled(object);
-//			if (result != null)
-//				return result;
-//		}
-//
-//		return true;
-
 		if (object == null)
 			return false;
 

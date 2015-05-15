@@ -23,19 +23,18 @@ import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
-import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.test.model.ExampleService;
 import co.codewizards.cloudstore.test.model.ExampleServiceImpl;
 
 public class LocalServerClientIT extends AbstractIT {
 
-	private static LocalServer localServer;
+//	private static LocalServer localServer; // LocalServer is already started by main server.
 	private static LocalServerClient client;
 
 	@BeforeClass
 	public static void beforeLocalServerClientIT() {
-		localServer = new LocalServer();
-		localServer.start();
+//		localServer = new LocalServer();
+//		localServer.start();
 
 		final LocalServerRestClient localServerRestClient = new LocalServerRestClient() {
 		};
@@ -51,7 +50,7 @@ public class LocalServerClientIT extends AbstractIT {
 	@AfterClass
 	public static void afterLocalServerClientIT() {
 		client.close();
-		localServer.stop();
+//		localServer.stop();
 	}
 
 	@Test

@@ -11,7 +11,19 @@ public class ObjectRef implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Virtual method indicating that the associated {@link ObjectRef} should be removed from the {@link ObjectManager}.
+	 * Virtual method indicating that the associated {@link ObjectRef} is used by a reference on the other side.
+	 * <p>
+	 * This method is "virtual", because it does not exist and actually has a name that is illegal as a Java method name
+	 * (thus making sure, we'll never have a collision with a real method).
+	 * This special name is transferred as method-name in the remote-invocation-protocol whenever a proxy on the other side
+	 * is created. Normally, there should be only one proxy, but there might be multiple, if the old objects were not yet
+	 * garbage-collected. Additionally, there might be 0 for a short while - the actual removal is deferred a few seconds.
+	 */
+	public static final String VIRTUAL_METHOD_NAME_INC_REF_COUNT = "*objectRef_incRefCount*";
+
+	/**
+	 * Virtual method indicating that the associated {@link ObjectRef} is not needed anymore - and should
+	 * eventually (when the counter is 0) be removed from the {@link ObjectManager}.
 	 * <p>
 	 * This method is "virtual", because it does not exist and actually has a name that is illegal as a Java method name
 	 * (thus making sure, we'll never have a collision with a real method).
@@ -19,7 +31,7 @@ public class ObjectRef implements Serializable {
 	 * is garbage-collected and the corresponding ObjectRef-to-Object-mapping should thus be removed from the
 	 * {@link ObjectManager}.
 	 */
-	public static final String VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF = "***removeObjectRef***";
+	public static final String VIRTUAL_METHOD_NAME_DEC_REF_COUNT = "*objectRef_decRefCount*";
 
 	private final Uid clientId;
 	private final int classId;

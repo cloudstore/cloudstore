@@ -8,6 +8,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InvocationType;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
@@ -39,8 +40,15 @@ public class InvokeMethodService extends AbstractService {
 		final String methodName = methodInvocationRequest.getMethodName();
 
 		final Object object = methodInvocationRequest.getObject();
-		if (ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF.equals(methodName)) {
-			objectManager.remove(object);
+
+		if (ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT.equals(methodName)) {
+			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
+			objectManager.incRefCount(object, refId);
+			return MethodInvocationResponse.forInvocation(null);
+		}
+		else if (ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT.equals(methodName)) {
+			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
+			objectManager.decRefCount(object, refId);
 			return MethodInvocationResponse.forInvocation(null);
 		}
 

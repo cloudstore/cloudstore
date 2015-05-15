@@ -129,7 +129,8 @@ public class CloudStoreServer implements Runnable {
 			initKeyStore();
 			synchronized (this) {
 				localServer = createLocalServer();
-				localServer.start();
+				if (!localServer.start())
+					localServer = null;
 
 				server = createServer();
 				server.start();

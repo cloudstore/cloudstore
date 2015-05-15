@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.ls.client.handler.InverseServiceRequestHandlerThread;
@@ -196,7 +199,6 @@ public class LocalServerClient implements Closeable {
 		if (!(object instanceof RemoteObjectProxy))
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
-//		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
 		return _invoke(object, methodName, (Class<?>[]) null, arguments);
 	}
 
@@ -213,29 +215,11 @@ public class LocalServerClient implements Closeable {
 				argumentTypeNames[i] = argumentTypes[i].getName();
 		}
 
-//		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
-//				objectRef, methodName, argumentTypeNames, fromObjectsToObjectRefs(arguments));
-
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
 				object, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
-
-//	private Object[] fromObjectsToObjectRefs(final Object[] objects) {
-//		if (objects == null)
-//			return objects;
-//
-//		final Object[] result = new Object[objects.length];
-//		for (int i = 0; i < objects.length; i++) {
-//			final Object object = objects[i];
-//			if (object instanceof RemoteObjectProxy) {
-//				result[i] = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-//			} else
-//				result[i] = objectManager.getObjectRefOrObject(object);
-//		}
-//		return result;
-//	}
 
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
 		assertNotNull("methodInvocationRequest", methodInvocationRequest);
@@ -244,36 +228,61 @@ public class LocalServerClient implements Closeable {
 				new InvokeMethod(methodInvocationRequest));
 
 		final Object result = methodInvocationResponse.getResult();
-//		if (result == null)
-//			return null;
-//
-//		if (result instanceof ObjectRef) {
-//			final ObjectRef resultObjectRef = (ObjectRef) result;
-//			return cast(getRemoteObjectProxyOrCreate(resultObjectRef));
-//		}
-
 		return cast(result);
 	}
 
 	private RemoteObjectProxy _createRemoteObjectProxy(final ObjectRef objectRef, final Class<?>[] interfaces) {
 		final ClassLoader classLoader = this.getClass().getClassLoader();
-		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces, new InvocationHandler() {
-			@Override
-			public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-				// BEGIN implement RemoteObjectProxy
-				if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
-					return objectRef;
-				// END implement RemoteObjectProxy
+		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces,
+				new RemoteObjectProxyInvocationHandler(this, objectRef));
+	}
 
-				return LocalServerClient.this._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
-			}
+	private static class RemoteObjectProxyInvocationHandler implements InvocationHandler {
+		private static final Logger logger = LoggerFactory.getLogger(LocalServerClient.RemoteObjectProxyInvocationHandler.class);
 
-			@Override
-			protected void finalize() throws Throwable {
-				LocalServerClient.this._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_REMOVE_OBJECT_REF, (Class<?>[])null, (Object[])null);
-				super.finalize();
+		private final Uid refId = new Uid();
+		private final LocalServerClient localServerClient;
+		private final ObjectRef objectRef;
+
+		public RemoteObjectProxyInvocationHandler(final LocalServerClient localServerClient, final ObjectRef objectRef) {
+			this.localServerClient = assertNotNull("localServerClient", localServerClient);
+			this.objectRef = assertNotNull("objectRef", objectRef);
+
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
+
+			localServerClient._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+		}
+
+		@Override
+		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+			// BEGIN implement RemoteObjectProxy
+			if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
+				return objectRef;
+			// END implement RemoteObjectProxy
+
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]invoke: method='{}'", getThisId(), method);
+
+			return localServerClient._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+		}
+
+		@Override
+		protected void finalize() throws Throwable {
+			if (logger.isDebugEnabled())
+				logger.debug("[{}]finalize: {}", getThisId(), objectRef);
+
+			try {
+				localServerClient._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+			} catch (Exception x) {
+				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}
-		});
+			super.finalize();
+		}
+
+		private String getThisId() {
+			return Integer.toHexString(System.identityHashCode(this));
+		}
 	}
 
 	private Class<?>[] getInterfaces(int classId) {
@@ -328,13 +337,18 @@ public class LocalServerClient implements Closeable {
 		if (thread != null) {
 			inverseServiceRequestHandlerThread = null;
 			thread.interrupt();
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				doNothing();
+			}
 		}
 	}
 
 	public Object getRemoteObjectProxyOrCreate(ObjectRef objectRef) {
-		return objectManager.getRemoteObjectProxyManager().getRemoteObjectProxy(objectRef, new RemoteObjectProxyFactory() {
+		return objectManager.getRemoteObjectProxyManager().getRemoteObjectProxyOrCreate(objectRef, new RemoteObjectProxyFactory() {
 			@Override
-			public RemoteObjectProxy createRemoteObject(ObjectRef objectRef) {
+			public RemoteObjectProxy createRemoteObjectProxy(ObjectRef objectRef) {
 				final Class<?>[] interfaces = getInterfaces(objectRef.getClassId());
 				return _createRemoteObjectProxy(objectRef, interfaces);
 			}
