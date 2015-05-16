@@ -140,12 +140,18 @@ public class ReflectionUtil {
 
 			final Object result = method.invoke(object, args);
 			return cast(result);
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			throw e;
-		} catch (IllegalAccessException e) {
+		} catch (final IllegalAccessException e) {
 			throw new RuntimeException(e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e.getCause());
+		} catch (final InvocationTargetException e) {
+			final Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException)
+				throw (RuntimeException) cause;
+			else if (cause instanceof Error)
+				throw (Error) cause;
+			else
+				throw new RuntimeException(cause);
 		}
 	}
 
