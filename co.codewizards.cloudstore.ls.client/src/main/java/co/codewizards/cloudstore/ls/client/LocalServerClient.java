@@ -6,7 +6,6 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.ls.client.handler.InverseServiceRequestHandlerThread;
+import co.codewizards.cloudstore.ls.core.invoke.AbstractRemoteObjectProxyInvocationHandler;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfoCache;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
@@ -237,16 +237,14 @@ public class LocalServerClient implements Closeable {
 				new RemoteObjectProxyInvocationHandler(this, objectRef));
 	}
 
-	private static class RemoteObjectProxyInvocationHandler implements InvocationHandler {
+	private static class RemoteObjectProxyInvocationHandler extends AbstractRemoteObjectProxyInvocationHandler {
 		private static final Logger logger = LoggerFactory.getLogger(LocalServerClient.RemoteObjectProxyInvocationHandler.class);
 
-		private final Uid refId = new Uid();
 		private final LocalServerClient localServerClient;
-		private final ObjectRef objectRef;
 
 		public RemoteObjectProxyInvocationHandler(final LocalServerClient localServerClient, final ObjectRef objectRef) {
+			super(objectRef);
 			this.localServerClient = assertNotNull("localServerClient", localServerClient);
-			this.objectRef = assertNotNull("objectRef", objectRef);
 
 			if (logger.isDebugEnabled())
 				logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
@@ -255,15 +253,7 @@ public class LocalServerClient implements Closeable {
 		}
 
 		@Override
-		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-			// BEGIN implement RemoteObjectProxy
-			if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
-				return objectRef;
-			// END implement RemoteObjectProxy
-
-			if (logger.isDebugEnabled())
-				logger.debug("[{}]invoke: method='{}'", getThisId(), method);
-
+		protected Object doInvoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 			return localServerClient._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 		}
 
@@ -278,10 +268,6 @@ public class LocalServerClient implements Closeable {
 				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}
 			super.finalize();
-		}
-
-		private String getThisId() {
-			return Integer.toHexString(System.identityHashCode(this));
 		}
 	}
 

@@ -28,20 +28,36 @@ public class RemoteObjectProxyManager {
 		return remoteObjectProxy;
 	}
 
-	public synchronized RemoteObjectProxy getRemoteObjectProxyOrCreate(final ObjectRef objectRef, final RemoteObjectProxyFactory remoteObjectProxyFactory) {
+	public RemoteObjectProxy getRemoteObjectProxyOrCreate(final ObjectRef objectRef, final RemoteObjectProxyFactory remoteObjectProxyFactory) {
 		assertNotNull("objectRef", objectRef);
 		assertNotNull("remoteObjectProxyFactory", remoteObjectProxyFactory);
 
-		final WeakReference<RemoteObjectProxy> remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
-		RemoteObjectProxy remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
+		WeakReference<RemoteObjectProxy> remoteObjectProxyRef;
+		RemoteObjectProxy remoteObjectProxy;
+		synchronized (this) {
+			remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
+			remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
+		}
+
 		if (remoteObjectProxy == null) {
 			if (logger.isDebugEnabled())
 				logger.debug("[{}]getRemoteObjectProxy: Creating proxy for {}. remoteObjectProxyRef={}", getThisId(), objectRef, remoteObjectProxyRef);
 
-			remoteObjectProxy = remoteObjectProxyFactory.createRemoteObjectProxy(objectRef);
-			assertNotNull("remoteObjectProxyFactory.createRemoteObjectProxy(objectRef)", remoteObjectProxy);
+			// We create the proxy outside of the synchronized block in order to make sure that we cannot run into a deadlock.
+			final RemoteObjectProxy newRemoteObjectProxy = remoteObjectProxyFactory.createRemoteObjectProxy(objectRef);
+			assertNotNull("remoteObjectProxyFactory.createRemoteObjectProxy(objectRef)", newRemoteObjectProxy);
 
-			objectRef2RemoteObjectProxyRef.put(objectRef, new WeakReference<>(remoteObjectProxy));
+			synchronized (this) {
+				// Check again, whether another thread already created a proxy...
+				remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
+				remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
+
+				// ... if yes, we discard our newRemoteObjectProxy - if no, we use our new instance!
+				if (remoteObjectProxy == null) {
+					remoteObjectProxy = newRemoteObjectProxy;
+					objectRef2RemoteObjectProxyRef.put(objectRef, new WeakReference<>(remoteObjectProxy));
+				}
+			}
 		}
 		return remoteObjectProxy;
 	}

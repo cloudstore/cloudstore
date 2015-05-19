@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.ls.rest.server;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import co.codewizards.cloudstore.ls.core.dto.ErrorResponse;
 import co.codewizards.cloudstore.ls.core.dto.InverseServiceRequest;
 import co.codewizards.cloudstore.ls.core.dto.InverseServiceResponse;
 import co.codewizards.cloudstore.ls.core.dto.NullResponse;
+import co.codewizards.cloudstore.ls.core.invoke.AbstractRemoteObjectProxyInvocationHandler;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfoCache;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
@@ -176,16 +176,14 @@ public class InverseInvoker {
 				new RemoteObjectProxyInvocationHandler(this, objectRef));
 	}
 
-	private static class RemoteObjectProxyInvocationHandler implements InvocationHandler {
+	private static class RemoteObjectProxyInvocationHandler extends AbstractRemoteObjectProxyInvocationHandler {
 		private static final Logger logger = LoggerFactory.getLogger(InverseInvoker.RemoteObjectProxyInvocationHandler.class);
 
-		private final Uid refId = new Uid();
 		private final InverseInvoker inverseInvoker;
-		private final ObjectRef objectRef;
 
 		public RemoteObjectProxyInvocationHandler(final InverseInvoker inverseInvoker, final ObjectRef objectRef) {
+			super(objectRef);
 			this.inverseInvoker = assertNotNull("inverseInvoker", inverseInvoker);
-			this.objectRef = assertNotNull("objectRef", objectRef);
 
 			if (logger.isDebugEnabled())
 				logger.debug("[{}]<init>: {}", getThisId(), objectRef);
@@ -194,15 +192,7 @@ public class InverseInvoker {
 		}
 
 		@Override
-		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-			// BEGIN implement RemoteObjectProxy
-			if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
-				return objectRef;
-			// END implement RemoteObjectProxy
-
-			if (logger.isDebugEnabled())
-				logger.debug("[{}]invoke: method='{}'", getThisId(), method);
-
+		protected Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
 			return inverseInvoker._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 		}
 
@@ -217,10 +207,6 @@ public class InverseInvoker {
 				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}
 			super.finalize();
-		}
-
-		private String getThisId() {
-			return Integer.toHexString(System.identityHashCode(this));
 		}
 	}
 
