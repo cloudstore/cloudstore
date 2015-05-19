@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.core.repo.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -30,7 +32,6 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
 public class LocalRepoRegistryImpl implements LocalRepoRegistry
@@ -91,7 +92,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized UUID getRepositoryId(final String repositoryName) {
-		AssertUtil.assertNotNull("repositoryName", repositoryName);
+		assertNotNull("repositoryName", repositoryName);
 		loadRepoRegistryIfNeeded();
 		final String repositoryIdString = repoRegistryProperties.getProperty(getPropertyKeyForAlias(repositoryName));
 		if (repositoryIdString != null) {
@@ -155,7 +156,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized File getLocalRootForRepositoryName(final String repositoryName) {
-		AssertUtil.assertNotNull("repositoryName", repositoryName);
+		assertNotNull("repositoryName", repositoryName);
 
 		// If the repositoryName is an alias, this should find the corresponding repositoryId.
 		final UUID repositoryId = getRepositoryId(repositoryName);
@@ -167,7 +168,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized File getLocalRoot(final UUID repositoryId) {
-		AssertUtil.assertNotNull("repositoryId", repositoryId);
+		assertNotNull("repositoryId", repositoryId);
 		loadRepoRegistryIfNeeded();
 		final String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryId));
 		if (localRootString == null)
@@ -188,8 +189,8 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized void putRepositoryAlias(final String repositoryAlias, final UUID repositoryId) {
-		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
-		AssertUtil.assertNotNull("repositoryId", repositoryId);
+		assertNotNull("repositoryAlias", repositoryAlias);
+		assertNotNull("repositoryId", repositoryId);
 
 		if (repositoryAlias.isEmpty())
 			throw new IllegalArgumentException("repositoryAlias must not be empty!");
@@ -233,7 +234,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized void removeRepositoryAlias(final String repositoryAlias) {
-		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
+		assertNotNull("repositoryAlias", repositoryAlias);
 		boolean modified = false;
 		try ( LockFile lockFile = acquireLockFile(); ) {
 			loadRepoRegistryIfNeeded();
@@ -251,8 +252,8 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	@Override
 	public synchronized void putRepository(final UUID repositoryId, final File localRoot) {
-		AssertUtil.assertNotNull("repositoryId", repositoryId);
-		AssertUtil.assertNotNull("localRoot", localRoot);
+		assertNotNull("repositoryId", repositoryId);
+		assertNotNull("localRoot", localRoot);
 
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
@@ -282,21 +283,22 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	}
 
 	private void setProperty(final String key, final Date value) {
-		setProperty(key, new DateTime(AssertUtil.assertNotNull("value", value)).toString());
+		setProperty(key, new DateTime(assertNotNull("value", value)).toString());
 	}
 
 	private String getProperty(final String key) {
-		return repoRegistryProperties.getProperty(AssertUtil.assertNotNull("key", key));
+		return repoRegistryProperties.getProperty(assertNotNull("key", key));
 	}
 
 	private void setProperty(final String key, final String value) {
-		repoRegistryPropertiesDirty = true;
-		repoRegistryProperties.setProperty(AssertUtil.assertNotNull("key", key), AssertUtil.assertNotNull("value", value));
+		final Object oldValue = repoRegistryProperties.setProperty(assertNotNull("key", key), assertNotNull("value", value));
+		if (!equal(oldValue, value))
+			repoRegistryPropertiesDirty = true;
 	}
 
 	private void removeProperty(final String key) {
-		repoRegistryPropertiesDirty = true;
-		repoRegistryProperties.remove(AssertUtil.assertNotNull("key", key));
+		if (repoRegistryProperties.remove(assertNotNull("key", key)) != null)
+			repoRegistryPropertiesDirty = true;
 	}
 
 	@Override
@@ -331,11 +333,11 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	}
 
 	private String getPropertyKeyForAlias(final String repositoryAlias) {
-		return PROP_KEY_PREFIX_REPOSITORY_ALIAS + AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
+		return PROP_KEY_PREFIX_REPOSITORY_ALIAS + assertNotNull("repositoryAlias", repositoryAlias);
 	}
 
 	private String getPropertyKeyForID(final UUID repositoryId) {
-		return PROP_KEY_PREFIX_REPOSITORY_ID + AssertUtil.assertNotNull("repositoryId", repositoryId).toString();
+		return PROP_KEY_PREFIX_REPOSITORY_ID + assertNotNull("repositoryId", repositoryId).toString();
 	}
 
 	private void loadRepoRegistryIfNeeded() {
