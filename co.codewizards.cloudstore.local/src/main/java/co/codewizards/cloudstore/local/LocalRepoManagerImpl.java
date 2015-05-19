@@ -1,9 +1,8 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.createObject;
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.getExtendingClass;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
-import static co.codewizards.cloudstore.core.util.DerbyUtil.shutdownDerbyDatabase;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -54,6 +53,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
 import co.codewizards.cloudstore.core.util.AssertUtil;
@@ -166,7 +166,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			if (!localRepository.getAliases().contains(repositoryAlias))
 				localRepository.getAliases().add(repositoryAlias);
 
-			LocalRepoRegistry.getInstance().putRepositoryAlias(repositoryAlias, repositoryId);
+			LocalRepoRegistryImpl.getInstance().putRepositoryAlias(repositoryAlias, repositoryId);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -180,7 +180,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		try {
 			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			localRepository.getAliases().remove(repositoryAlias);
-			LocalRepoRegistry.getInstance().removeRepositoryAlias(repositoryAlias);
+			LocalRepoRegistryImpl.getInstance().removeRepositoryAlias(repositoryAlias);
 			transaction.commit();
 		} finally {
 			transaction.rollbackIfActive();
@@ -297,10 +297,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void syncWithLocalRepoRegistry() {
 		AssertUtil.assertNotNull("repositoryId", repositoryId);
-		LocalRepoRegistry.getInstance().putRepository(repositoryId, localRoot);
+		final LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
+		localRepoRegistry.putRepository(repositoryId, localRoot);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
-			final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
 			final LocalRepository localRepository = transaction.getDao(LocalRepositoryDao.class).getLocalRepositoryOrFail();
 			for (final String repositoryAlias : new ArrayList<>(localRepository.getAliases())) {
 				final UUID repositoryIdInRegistry = localRepoRegistry.getRepositoryId(repositoryAlias);

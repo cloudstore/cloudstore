@@ -6,6 +6,7 @@ import org.kohsuke.args4j.Argument;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.
@@ -26,7 +27,7 @@ public class DropRepoAliasSubCommand extends SubCommand
 
 	@Override
 	public void run() throws Exception {
-		LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+		LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
 		UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
 
 		File oldLocalRoot = null;

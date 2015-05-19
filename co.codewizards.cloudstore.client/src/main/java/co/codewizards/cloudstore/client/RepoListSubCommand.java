@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 
 /**
  * {@link SubCommand} implementation for listing all repositories in the local file system
@@ -23,7 +24,7 @@ public class RepoListSubCommand extends SubCommand
 
 	@Override
 	public void run() throws Exception {
-		LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+		LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
 		System.out.println("Local repositories:");
 		for (UUID repositoryId : localRepoRegistry.getRepositoryIds()) {
 			File localRoot = localRepoRegistry.getLocalRoot(repositoryId);

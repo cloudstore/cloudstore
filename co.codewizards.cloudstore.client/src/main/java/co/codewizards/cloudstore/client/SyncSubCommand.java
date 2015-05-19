@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.client;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +17,8 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
-import co.codewizards.cloudstore.local.persistence.RemoteRepository;
-import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 
 public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	private static final Logger logger = LoggerFactory.getLogger(SyncSubCommand.class);
@@ -68,7 +64,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	@Override
 	public void run() throws Exception {
 		if (isAll()) {
-			for (final UUID repositoryId : LocalRepoRegistry.getInstance().getRepositoryIds())
+			for (final UUID repositoryId : LocalRepoRegistryImpl.getInstance().getRepositoryIds())
 				sync(repositoryId);
 		}
 		else
@@ -76,7 +72,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 	}
 
 	private void sync(final UUID repositoryId) {
-		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(repositoryId);
+		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootOrFail(repositoryId);
 		sync(localRoot);
 	}
 
@@ -96,7 +92,7 @@ public class SyncSubCommand extends SubCommandWithExistingLocalRepo {
 			for (final Map.Entry<UUID, URL> me : localRepoManager.getRemoteRepositoryId2RemoteRootMap().entrySet()) {
 				final UUID id = me.getKey();
 				final URL url = me.getValue();
-				
+
 				remoteRoots.add(url);
 				if ((remoteRepositoryId == null && remoteRoot == null)
 						|| (remoteRepositoryId != null && remoteRepositoryId.equals(id))

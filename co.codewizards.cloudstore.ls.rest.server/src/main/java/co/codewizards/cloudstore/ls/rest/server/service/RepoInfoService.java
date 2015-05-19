@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.local.persistence.CopyModificationDao;
 import co.codewizards.cloudstore.local.persistence.DeleteModificationDao;
@@ -79,7 +79,7 @@ public class RepoInfoService
 		repoInfoResponseDto.setLocalRoot(localRepoManager.getLocalRoot().getPath());
 		repoInfoResponseDto.setPublicKey(localRepoManager.getPublicKey());
 
-		final Collection<String> repositoryAliases = LocalRepoRegistry.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryId().toString());
+		final Collection<String> repositoryAliases = LocalRepoRegistryImpl.getInstance().getRepositoryAliasesOrFail(localRepoManager.getRepositoryId().toString());
 		repoInfoResponseDto.getRepositoryAliases().addAll(repositoryAliases);
 	}
 

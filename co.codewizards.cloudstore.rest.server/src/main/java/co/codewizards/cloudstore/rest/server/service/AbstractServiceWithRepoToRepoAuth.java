@@ -31,7 +31,7 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -180,7 +180,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	protected String authenticateAndReturnUserName()
 	throws WebApplicationException
 	{
-		final UUID serverRepositoryId = LocalRepoRegistry.getInstance().getRepositoryId(repositoryName);
+		final UUID serverRepositoryId = LocalRepoRegistryImpl.getInstance().getRepositoryId(repositoryName);
 		if (serverRepositoryId == null) {
 			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
 					.type(MediaType.APPLICATION_XML)
@@ -240,7 +240,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 	protected URL getLocalRootURL(final UUID clientRepositoryId) {
 		assertNotNull("repositoryName", repositoryName);
-		final File localRoot = LocalRepoRegistry.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			final String localPathPrefix = localRepoManager.getLocalPathPrefixOrFail(clientRepositoryId);

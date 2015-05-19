@@ -19,6 +19,7 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 
 public class LocalRepoRegistryTest extends AbstractTest
 {
@@ -62,14 +63,14 @@ public class LocalRepoRegistryTest extends AbstractTest
 
 		final Set<Entry<UUID, File>> newEntrySet = newRepositoryId2FileMap.entrySet();
 		for (final Entry<UUID, File> newEntry : newEntrySet) {
-			final File localRoot = LocalRepoRegistry.getInstance().getLocalRootOrFail(newEntry.getKey());
+			final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootOrFail(newEntry.getKey());
 			assertThat(localRoot).isEqualTo(newEntry.getValue());
 		}
 	}
 
 	@Test
 	public void moveLocalRepositoryWithAliases() throws Exception {
-		final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+		final LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
 		final File localRootOld = newTestRepositoryLocalRoot().getCanonicalFile();
 		assertThat(localRootOld.exists()).isFalse();
 		localRootOld.mkdirs();

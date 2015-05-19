@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -45,7 +45,7 @@ public class RequestRepoConnectionService
 		AssertUtil.assertNotNull("pathPrefix", pathPrefix);
 		AssertUtil.assertNotNull("repositoryDto", clientRepositoryDto);
 
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
+		URL localRootURL = LocalRepoRegistryImpl.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);
 
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(localRootURL);

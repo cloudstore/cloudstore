@@ -8,6 +8,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 
 /**
  * {@link SubCommand} implementation for showing information about a repository in the local file system.
@@ -28,7 +29,7 @@ public class CreateRepoAliasSubCommand extends SubCommandWithExistingLocalRepo
 
 	@Override
 	public void run() throws Exception {
-		LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+		LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
 		LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);

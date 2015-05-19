@@ -28,7 +28,7 @@ import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
@@ -239,7 +239,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			logger.debug("getAuthToken: getting new AuthToken: clientRepositoryId={} serverRepositoryId={}",
 					clientRepositoryId, getRepositoryId());
 
-			final File localRoot = LocalRepoRegistry.getInstance().getLocalRoot(clientRepositoryId);
+			final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRoot(clientRepositoryId);
 			final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 			try {
 				final EncryptedSignedAuthToken encryptedSignedAuthToken = getClient().execute(new GetEncryptedSignedAuthToken(getRepositoryName(), localRepoManager.getRepositoryId()));

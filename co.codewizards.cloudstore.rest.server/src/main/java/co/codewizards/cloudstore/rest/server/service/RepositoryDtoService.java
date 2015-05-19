@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
-import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -34,7 +34,7 @@ public class RepositoryDtoService
 	@GET
 	public RepositoryDto getRepositoryDto()
 	{
-		URL localRootURL = LocalRepoRegistry.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
+		URL localRootURL = LocalRepoRegistryImpl.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		RepoTransportFactoryRegistry repoTransportRegistry = RepoTransportFactoryRegistry.getInstance();
 		RepoTransportFactory repoTransportFactory = repoTransportRegistry.getRepoTransportFactory(localRootURL);
 		try (final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(localRootURL, null);) {

@@ -12,6 +12,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -77,7 +78,7 @@ public class CreateRepoSubCommand extends SubCommand
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForNewRepository(localRootFile);
 		try {
 			if (!noAlias && alias != null) {
-				final LocalRepoRegistry localRepoRegistry = LocalRepoRegistry.getInstance();
+				final LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
 				UUID oldRepositoryId = localRepoRegistry.getRepositoryId(alias);
 
 				File oldLocalRoot = null;
