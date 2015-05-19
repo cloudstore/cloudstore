@@ -60,6 +60,12 @@ In this example, \"hqzur8ul\" is the encoded timestamp of when the collision was
 If you instead deleted the file in one repository, there won\'t be two files, but the one affected file is still renamed
 as shown above.
 
+$H$H$H How can I set log level?
+
+You can find all logging configuration files at ~/.cloudstore directory.
+There are : 
+* *logback.server.xml for server project*
+* *logback.client.xml for client project*
 
 $H$H$H Another question?
 
