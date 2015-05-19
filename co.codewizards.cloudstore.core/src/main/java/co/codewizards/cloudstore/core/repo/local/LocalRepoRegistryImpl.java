@@ -348,10 +348,11 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 				modified = true;
 			}
 
-			evictDeadEntriesPeriodically();
+			if (evictDeadEntriesPeriodically())
+				modified = true;
 		}
 
-		if (modified || repoRegistryPropertiesDirty) {
+		if (modified) {
 			// We don't know what exactly changed => fire all events ;-)
 			fireRepositoryIdsChanged();
 			fireRepositoryAliasesChanged();
@@ -436,21 +437,23 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	 * Checks, which entries point to non-existing directories or directories which are not (anymore) repositories
 	 * and removes them.
 	 */
-	private void evictDeadEntriesPeriodically() {
+	private boolean evictDeadEntriesPeriodically() {
 		final Long period = Config.getInstance().getPropertyAsLong(CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD, DEFAULT_EVICT_DEAD_ENTRIES_PERIOD);
 		removeProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD);
 		final Date last = getPropertyAsDate(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP);
 		if (last != null) {
 			final long millisAfterLast = System.currentTimeMillis() - last.getTime();
 			if (millisAfterLast >= 0 && millisAfterLast <= period) // < 0 : travelled back in time
-				return;
+				return false;
 		}
-		evictDeadEntries();
+		final boolean modified = evictDeadEntries();
 		setProperty(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP, new Date());
+		return modified;
 	}
 
 
-	private void evictDeadEntries() {
+	private boolean evictDeadEntries() {
+		boolean modified = false;
 		for (final Entry<Object, Object> me : new ArrayList<Entry<Object, Object>>(repoRegistryProperties.entrySet())) {
 			final String key = String.valueOf(me.getKey());
 			final String value = String.valueOf(me.getValue());
@@ -464,18 +467,21 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 			final String localRootString = repoRegistryProperties.getProperty(getPropertyKeyForID(repositoryIdFromRegistry));
 			if (localRootString == null) {
+				modified = true;
 				evictDeadEntry(key);
 				continue;
 			}
 
 			final File localRoot = createFile(localRootString);
 			if (!localRoot.isDirectory()) {
+				modified = true;
 				evictDeadEntry(key);
 				continue;
 			}
 
 			final File repoMetaDir = createFile(localRoot, LocalRepoManager.META_DIR_NAME);
 			if (!repoMetaDir.isDirectory()) {
+				modified = true;
 				evictDeadEntry(key);
 				continue;
 			}
@@ -505,10 +511,12 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 			}
 
 			if (!repositoryIdFromRegistry.toString().equals(repositoryIdFromRepo)) { // new repo was created at the same location
+				modified = true;
 				evictDeadEntry(key);
 				continue;
 			}
 		}
+		return modified;
 	}
 
 	private void evictDeadEntry(final String key) {
