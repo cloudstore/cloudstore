@@ -197,15 +197,15 @@ public class CloudStoreRestClient {
 			try {
 				final long start = System.currentTimeMillis();
 
-				if (logger.isInfoEnabled())
-					logger.info("execute: starting try {} of {}", retryCounter + 1, retryMax + 1);
+				if (logger.isDebugEnabled())
+					logger.debug("execute: starting try {} of {}", retryCounter + 1, retryMax + 1);
 
 				try {
 					request.setCloudStoreRestClient(this);
 					final R result = request.execute();
 
-					if (logger.isInfoEnabled())
-						logger.info("execute: invocation took {} ms", System.currentTimeMillis() - start);
+					if (logger.isDebugEnabled())
+						logger.debug("execute: invocation took {} ms", System.currentTimeMillis() - start);
 
 					if (result == null && !request.isResultNullable())
 						throw new IllegalStateException("result == null, but request.resultNullable == false!");
