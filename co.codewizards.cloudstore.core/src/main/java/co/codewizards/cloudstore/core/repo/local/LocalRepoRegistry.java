@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.core.repo.local;
 
+import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 
+import co.codewizards.cloudstore.core.bean.PropertyBase;
 import co.codewizards.cloudstore.core.oio.File;
 
 public interface LocalRepoRegistry {
@@ -11,6 +13,13 @@ public interface LocalRepoRegistry {
 	String CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD = "repoRegistry.evictDeadEntriesPeriod";
 	long DEFAULT_EVICT_DEAD_ENTRIES_PERIOD = 24 * 60 * 60 * 1000L;
 
+	public static interface Property extends PropertyBase {
+	}
+
+	public static enum PropertyEnum implements Property {
+		repositoryIds,
+		repositoryAliases
+	}
 
 	Collection<UUID> getRepositoryIds();
 
@@ -70,4 +79,13 @@ public interface LocalRepoRegistry {
 	 */
 	Collection<String> getRepositoryAliases(String repositoryName);
 
+	void addPropertyChangeListener(PropertyChangeListener listener);
+
+	void addPropertyChangeListener(Property property, PropertyChangeListener listener);
+
+	void removePropertyChangeListener(PropertyChangeListener listener);
+
+	void removePropertyChangeListener(Property property, PropertyChangeListener listener);
+
+	Collection<String> getRepositoryAliases();
 }

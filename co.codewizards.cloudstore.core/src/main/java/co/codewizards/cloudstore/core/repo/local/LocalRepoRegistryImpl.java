@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,14 +13,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.collection.LazyUnmodifiableList;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
@@ -31,6 +36,8 @@ import co.codewizards.cloudstore.core.util.PropertiesUtil;
 public class LocalRepoRegistryImpl implements LocalRepoRegistry
 {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoRegistry.class);
+
+	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ID = "repositoryId:";
 	private static final String PROP_KEY_PREFIX_REPOSITORY_ALIAS = "repositoryAlias:";
@@ -67,9 +74,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return registryFile;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getRepositoryIds()
-	 */
 	@Override
 	public synchronized Collection<UUID> getRepositoryIds() {
 		loadRepoRegistryIfNeeded();
@@ -85,9 +89,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getRepositoryId(java.lang.String)
-	 */
 	@Override
 	public synchronized UUID getRepositoryId(final String repositoryName) {
 		AssertUtil.assertNotNull("repositoryName", repositoryName);
@@ -112,9 +113,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return repositoryId;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getRepositoryIdOrFail(java.lang.String)
-	 */
 	@Override
 	public UUID getRepositoryIdOrFail(final String repositoryName) {
 		final UUID repositoryId = getRepositoryId(repositoryName);
@@ -124,9 +122,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return repositoryId;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRootURLForRepositoryNameOrFail(java.lang.String)
-	 */
 	@Override
 	public URL getLocalRootURLForRepositoryNameOrFail(final String repositoryName) {
 		try {
@@ -136,9 +131,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRootURLForRepositoryName(java.lang.String)
-	 */
 	@Override
 	public synchronized URL getLocalRootURLForRepositoryName(final String repositoryName) {
 		final File localRoot = getLocalRootForRepositoryName(repositoryName);
@@ -152,9 +144,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRootForRepositoryNameOrFail(java.lang.String)
-	 */
 	@Override
 	public File getLocalRootForRepositoryNameOrFail(final String repositoryName) {
 		final File localRoot = getLocalRootForRepositoryName(repositoryName);
@@ -164,9 +153,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return localRoot;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRootForRepositoryName(java.lang.String)
-	 */
 	@Override
 	public synchronized File getLocalRootForRepositoryName(final String repositoryName) {
 		AssertUtil.assertNotNull("repositoryName", repositoryName);
@@ -179,9 +165,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return getLocalRoot(repositoryId);
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRoot(java.util.UUID)
-	 */
 	@Override
 	public synchronized File getLocalRoot(final UUID repositoryId) {
 		AssertUtil.assertNotNull("repositoryId", repositoryId);
@@ -194,9 +177,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return localRoot;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getLocalRootOrFail(java.util.UUID)
-	 */
 	@Override
 	public File getLocalRootOrFail(final UUID repositoryId) {
 		final File localRoot = getLocalRoot(repositoryId);
@@ -206,9 +186,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		return localRoot;
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#putRepositoryAlias(java.lang.String, java.util.UUID)
-	 */
 	@Override
 	public synchronized void putRepositoryAlias(final String repositoryAlias, final UUID repositoryId) {
 		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
@@ -226,39 +203,52 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		if (repositoryAlias.indexOf('/') >= 0)
 			throw new IllegalArgumentException("repositoryAlias must not contain a '/': " + repositoryAlias);
 
+		boolean modified = false;
 		try ( final LockFile lockFile = acquireLockFile(); ) {
 			loadRepoRegistryIfNeeded();
 			getLocalRootOrFail(repositoryId); // make sure, this is a known repositoryId!
 			final String propertyKey = getPropertyKeyForAlias(repositoryAlias);
 			final String oldRepositoryIdString = repoRegistryProperties.getProperty(propertyKey);
 			final String repositoryIdString = repositoryId.toString();
-			if (!repositoryIdString.equals(oldRepositoryIdString))
+			if (!repositoryIdString.equals(oldRepositoryIdString)) {
+				modified = true;
 				setProperty(propertyKey, repositoryIdString);
-
+			}
 			storeRepoRegistryIfDirty();
 		}
+		if (modified)
+			fireRepositoryAliasesChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#removeRepositoryAlias(java.lang.String)
-	 */
+	@Override
+	public synchronized Collection<String> getRepositoryAliases() {
+		final Set<String> result= new LinkedHashSet<>();
+		final Collection<UUID> repositoryIds = getRepositoryIds();
+		for (final UUID repositoryId : repositoryIds) {
+			final Collection<String> repositoryAliases = getRepositoryAliasesOrFail(repositoryId.toString());
+			result.addAll(repositoryAliases);
+		}
+		return result;
+	}
+
 	@Override
 	public synchronized void removeRepositoryAlias(final String repositoryAlias) {
 		AssertUtil.assertNotNull("repositoryAlias", repositoryAlias);
+		boolean modified = false;
 		try ( LockFile lockFile = acquireLockFile(); ) {
 			loadRepoRegistryIfNeeded();
 			final String propertyKey = getPropertyKeyForAlias(repositoryAlias);
 			final String repositoryIdString = repoRegistryProperties.getProperty(propertyKey);
-			if (repositoryIdString != null)
+			if (repositoryIdString != null) {
+				modified = true;
 				removeProperty(propertyKey);
-
+			}
 			storeRepoRegistryIfDirty();
 		}
+		if (modified)
+			fireRepositoryAliasesChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#putRepository(java.util.UUID, co.codewizards.cloudstore.core.oio.File)
-	 */
 	@Override
 	public synchronized void putRepository(final UUID repositoryId, final File localRoot) {
 		AssertUtil.assertNotNull("repositoryId", repositoryId);
@@ -267,16 +257,20 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		if (!localRoot.isAbsolute())
 			throw new IllegalArgumentException("localRoot is not absolute.");
 
+		boolean modified = false;
 		try ( final LockFile lockFile = acquireLockFile(); ) {
 			loadRepoRegistryIfNeeded();
 			final String propertyKey = getPropertyKeyForID(repositoryId);
 			final String oldLocalRootPath = repoRegistryProperties.getProperty(propertyKey);
 			final String localRootPath = localRoot.getPath();
-			if (!localRootPath.equals(oldLocalRootPath))
+			if (!localRootPath.equals(oldLocalRootPath)) {
+				modified = true;
 				setProperty(propertyKey, localRootPath);
-
+			}
 			storeRepoRegistryIfDirty();
 		}
+		if (modified)
+			fireRepositoryIdsChanged();
 	}
 
 	protected Date getPropertyAsDate(final String key) {
@@ -290,18 +284,6 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	private void setProperty(final String key, final Date value) {
 		setProperty(key, new DateTime(AssertUtil.assertNotNull("value", value)).toString());
 	}
-
-//	private Long getPropertyAsLong(String key) {
-//		String value = getProperty(key);
-//		if (value == null || value.trim().isEmpty())
-//			return null;
-//
-//		return Long.valueOf(value);
-//	}
-//
-//	private void setProperty(String key, long value) {
-//		setProperty(key, Long.toString(value));
-//	}
 
 	private String getProperty(final String key) {
 		return repoRegistryProperties.getProperty(AssertUtil.assertNotNull("key", key));
@@ -317,17 +299,11 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		repoRegistryProperties.remove(AssertUtil.assertNotNull("key", key));
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getRepositoryAliasesOrFail(java.lang.String)
-	 */
 	@Override
 	public synchronized Collection<String> getRepositoryAliasesOrFail(final String repositoryName) throws IllegalArgumentException {
 		return getRepositoryAliases(repositoryName, true);
 	}
 
-	/* (non-Javadoc)
-	 * @see co.codewizards.cloudstore.core.repo.local.ILocalRepoRegistry#getRepositoryAliases(java.lang.String)
-	 */
 	@Override
 	public synchronized Collection<String> getRepositoryAliases(final String repositoryName) {
 		return getRepositoryAliases(repositoryName, false);
@@ -363,12 +339,39 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	}
 
 	private void loadRepoRegistryIfNeeded() {
+		boolean modified = false;
 		try ( final LockFile lockFile = acquireLockFile(); ) {
-			if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified())
+			if (repoRegistryProperties == null || repoRegistryFileLastModified != getRegistryFile().lastModified()) {
 				loadRepoRegistry();
+				modified = true;
+			}
 
 			evictDeadEntriesPeriodically();
 		}
+
+		if (modified || repoRegistryPropertiesDirty) {
+			// We don't know what exactly changed => fire all events ;-)
+			fireRepositoryIdsChanged();
+			fireRepositoryAliasesChanged();
+		}
+	}
+
+	private void fireRepositoryIdsChanged() {
+		firePropertyChange(PropertyEnum.repositoryIds, null, new LazyUnmodifiableList<UUID>() {
+			@Override
+			protected Collection<UUID> loadElements() {
+				return getRepositoryIds();
+			}
+		});
+	}
+
+	private void fireRepositoryAliasesChanged() {
+		firePropertyChange(PropertyEnum.repositoryAliases, null, new LazyUnmodifiableList<String>() {
+			@Override
+			protected java.util.Collection<String> loadElements() {
+				return getRepositoryAliases();
+			}
+		});
 	}
 
 	private LockFile acquireLockFile() {
@@ -510,5 +513,30 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		repoRegistryPropertiesDirty = true;
 		final Object value = repoRegistryProperties.remove(key);
 		logger.info("evictDeadEntry: key='{}' value='{}'", key, value);
+	}
+
+
+	@Override
+	public void addPropertyChangeListener(PropertyChangeListener listener) {
+		propertyChangeSupport.addPropertyChangeListener(listener);
+	}
+
+	@Override
+	public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+		propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
+	}
+
+	@Override
+	public void removePropertyChangeListener(PropertyChangeListener listener) {
+		propertyChangeSupport.removePropertyChangeListener(listener);
+	}
+
+	@Override
+	public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+		propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
+	}
+
+	protected void firePropertyChange(Property property, Object oldValue, Object newValue) {
+		propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
 	}
 }
