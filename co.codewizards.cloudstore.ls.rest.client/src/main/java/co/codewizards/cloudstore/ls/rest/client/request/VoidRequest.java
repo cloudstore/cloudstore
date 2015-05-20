@@ -18,7 +18,7 @@ public abstract class VoidRequest extends AbstractRequest<Void> {
 
 	/**
 	 * REST requests without response should implement this delegate method instead of {@link #execute()}.
-	 * @return the response object returned from {@link SyncInvoker#put(javax.ws.rs.client.Entity)} or a
+	 * @return the response objectRef returned from {@link SyncInvoker#put(javax.ws.rs.client.Entity)} or a
 	 * similar method.
 	 */
 	protected abstract Response _execute();

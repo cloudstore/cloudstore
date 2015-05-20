@@ -109,6 +109,8 @@ implements MessageBodyWriter<Object>
 				return object;
 
 			final Object result = objectRefConverter.convertToObjectRefIfNeeded(object);
+			if (result != object)
+				noObjectRefAnalyser.analyse(result);
 
 			if (ForceNonTransientClassSet.getInstance().isForceNonTransientClass(result.getClass())) {
 				final List<Field> transientFields = getTransientFields(result.getClass());
@@ -172,6 +174,10 @@ implements MessageBodyWriter<Object>
 		private final IdentityHashMap<Object, NoObjectRef> object2NoObjectRef = new IdentityHashMap<>();
 
 		public NoObjectRefAnalyser(final Object root) {
+			analyse(root);
+		}
+
+		public void analyse(Object root) {
 			analyse(null, root, new IdentityHashMap<Object, Void>());
 		}
 
@@ -281,36 +287,6 @@ implements MessageBodyWriter<Object>
 
 			// TODO do not hard-code the following, but use an advisor-service!
 			return !clazz.getName().startsWith("co.codewizards.") && !clazz.getName().startsWith("org.");
-
-//			return object instanceof BigDecimal
-//					|| object instanceof BigInteger
-//					|| object instanceof String
-//					// BEGIN wrappers of simple types
-//					|| object instanceof Boolean
-//					|| object instanceof Byte
-//					|| object instanceof Character
-//					|| object instanceof Double
-//					|| object instanceof Float
-//					|| object instanceof Integer
-//					|| object instanceof Long
-//					|| object instanceof Short
-//					// END wrappers of simple types
-//					|| object instanceof Uid
-//					|| object instanceof UUID
-//					|| object instanceof PropertyChangeSupport
-//					|| isProxy(object)
-//					|| object instanceof Logger
-//					|| object instanceof InvocationHandler
-//					|| object instanceof Thread;
 		}
-
-//		private boolean isProxy(final Object object) {
-//			final Class<?> clazz = object.getClass();
-//
-//			if (clazz.getSuperclass() == null) // without this, Proxy.isProxyClass(...) throws an exception - sometimes :-(
-//				return false;
-//
-//			return Proxy.isProxyClass(clazz);
-//		}
 	}
 }

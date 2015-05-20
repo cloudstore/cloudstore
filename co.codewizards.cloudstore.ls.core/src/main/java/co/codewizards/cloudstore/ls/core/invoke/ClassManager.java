@@ -4,14 +4,23 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.PathParam;
+
 public class ClassManager {
 
+	// classes on the side of the real objects (not the proxies!)
 	private Map<Integer, Class<?>> classId2Class = new HashMap<>();
 	private Map<Class<?>, Integer> class2ClassId = new HashMap<>();
+	private Set<Integer> classIdsKnownByRemoteSide = new HashSet<>();
+
+	// class-info on the side of the real objects (not the proxies!)
+	// the ClassInfoMap is used on the proxies' side.
+	private Map<Integer, ClassInfo> classId2ClassInfo = new HashMap<Integer, ClassInfo>();
 
 	private static final Map<String, Class<?>> primitiveClassName2Class;
 	static {
@@ -85,11 +94,35 @@ public class ClassManager {
 		return clazz;
 	}
 
+	public synchronized boolean isClassIdKnownByRemoteSide(int classId) {
+		final boolean result = classIdsKnownByRemoteSide.contains(classId);
+		return result;
+	}
+
+	public synchronized void setClassIdKnownByRemoteSide(int classId) {
+		classIdsKnownByRemoteSide.add(classId);
+	}
+
+	public synchronized ClassInfo getClassInfo(@PathParam("classId") int classId) {
+		ClassInfo classInfo = classId2ClassInfo.get(classId);
+		if (classInfo == null) {
+			final Class<?> clazz = getClass(classId);
+
+			if (clazz == null)
+				return null;
+
+			final Set<String> interfaceNames = getInterfaceNames(clazz);
+			classInfo = new ClassInfo(classId, clazz.getName(), interfaceNames);
+			classId2ClassInfo.put(classId, classInfo);
+		}
+		return classInfo;
+	}
+
 	protected synchronized int nextClassId() {
 		return nextClassId++;
 	}
 
-	public Set<String> getInterfaceNames(Class<?> clazz) {
+	protected Set<String> getInterfaceNames(Class<?> clazz) {
 		assertNotNull("clazz", clazz);
 		final Set<String> interfaceNames = new LinkedHashSet<>();
 		populateInterfaceNames(interfaceNames, clazz);

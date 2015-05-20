@@ -44,7 +44,7 @@ public class ObjectManager {
 	private static final long EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS = 5 * 60 * 1000L; // 5 minutes
 	private static final long EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS = 60 * 1000L;
 
-	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS = 15 * 1000L; // 30 seconds
+	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS = 30 * 1000L; // 30 seconds
 	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS = 5 * 1000L;
 
 	private static final Logger logger = LoggerFactory.getLogger(ObjectManager.class);
@@ -202,7 +202,12 @@ public class ObjectManager {
 
 	protected synchronized ObjectRef createObjectRef(Class<?> clazz) {
 		final int classId = classManager.getClassIdOrCreate(clazz);
-		return new ObjectRef(clientId, classId, nextObjectId++);
+		final ObjectRef objectRef = new ObjectRef(clientId, classId, nextObjectId++);
+
+		if (! classManager.isClassIdKnownByRemoteSide(classId))
+			objectRef.setClassInfo(classManager.getClassInfo(classId));
+
+		return objectRef;
 	}
 
 	public synchronized Object getObjectRefOrObject(final Object object) {
@@ -266,14 +271,6 @@ public class ObjectManager {
 		updateLastUseDate();
 	}
 
-//	private synchronized void remove(final Object object) {
-//		assertNotNull("object", object);
-//		assertNotInstanceOfObjectRef(object);
-//		final ObjectRef objectRef = object2ObjectRef.remove(object);
-//		objectRef2Object.remove(objectRef);
-//		updateLastUseDate();
-//	}
-
 	public synchronized void incRefCount(final Object object, final Uid refId) {
 		assertNotNull("object", object);
 		assertNotNull("refId", refId);
@@ -287,6 +284,7 @@ public class ObjectManager {
 			assertNotNull("objectRef2RefIds.get(" + objectRef + ")", refIds);
 			refIds.add(refId);
 		}
+		classManager.setClassIdKnownByRemoteSide(objectRef.getClassId());
 	}
 
 	public synchronized void decRefCount(final Object object, final Uid refId) {
@@ -325,7 +323,7 @@ public class ObjectManager {
 		if (object instanceof ObjectRef)
 			return false;
 
-		final Class<? extends Object> clazz = getClassOrArrayComponentType(object);
+		final Class<?> clazz = getClassOrArrayComponentType(object);
 
 		if (Proxy.isProxyClass(clazz))
 			return true;
@@ -340,7 +338,7 @@ public class ObjectManager {
 	}
 
 	private Class<?> getClassOrArrayComponentType(final Object object) {
-		final Class<? extends Object> clazz = object.getClass();
+		final Class<?> clazz = object.getClass();
 		if (clazz.isArray())
 			return clazz.getComponentType();
 		else

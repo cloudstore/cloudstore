@@ -11,18 +11,29 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Uid;
 
-public abstract class AbstractRemoteObjectProxyInvocationHandler implements InvocationHandler {
+public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteObjectProxyInvocationHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(RemoteObjectProxyInvocationHandler.class);
 
 	protected final Uid refId = new Uid();
+	protected final Invoker invoker;
 	protected final ObjectRef objectRef;
 
-	public AbstractRemoteObjectProxyInvocationHandler(final ObjectRef objectRef) {
+	public RemoteObjectProxyInvocationHandler(final Invoker invoker, final ObjectRef objectRef) {
+		this.invoker = assertNotNull("invoker", invoker);
 		this.objectRef = assertNotNull("objectRef", objectRef);
 
 		if (logger.isDebugEnabled())
-			logger.debug("[{}]<init>: {}", getThisId(), objectRef);
+			logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
+
+		// TODO make bulk operation (collect multiple refIds) or at least use a ThreadPool in Invoker.
+//		new Thread() {
+//			@Override
+//			public void run() {
+//			}
+//		}.start();
+//		invoker.invoke(object, Object.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+		invoker.incRefCount(objectRef, refId);
 	}
 
 	@Override
@@ -44,10 +55,22 @@ public abstract class AbstractRemoteObjectProxyInvocationHandler implements Invo
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]invoke: method='{}'", getThisId(), method);
 
-		return doInvoke(proxy, method, args);
+		return invoker.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 	}
 
-	protected abstract Object doInvoke(final Object proxy, final Method method, final Object[] args) throws Throwable;
+	@Override
+	protected void finalize() throws Throwable {
+		if (logger.isDebugEnabled())
+			logger.debug("[{}]finalize: {}", getThisId(), objectRef);
+
+//		try {
+//			invoker.invoke(object, Object.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+//		} catch (Exception x) {
+//			logger.warn("[" + getThisId() + "]finalize: " + x, x);
+//		}
+		invoker.decRefCount(objectRef, refId);
+		super.finalize();
+	}
 
 	private Object _equals(final Object proxy, final Method method, final Object other) {
 		if (proxy == other)
@@ -59,7 +82,7 @@ public abstract class AbstractRemoteObjectProxyInvocationHandler implements Invo
 		if (proxy.getClass() != other.getClass())
 			return false;
 
-		final AbstractRemoteObjectProxyInvocationHandler otherHandler = (AbstractRemoteObjectProxyInvocationHandler) Proxy.getInvocationHandler(other);
+		final RemoteObjectProxyInvocationHandler otherHandler = (RemoteObjectProxyInvocationHandler) Proxy.getInvocationHandler(other);
 		return this.objectRef.equals(otherHandler.objectRef);
 	}
 

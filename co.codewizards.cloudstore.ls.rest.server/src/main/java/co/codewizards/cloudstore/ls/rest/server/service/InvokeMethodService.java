@@ -2,19 +2,20 @@ package co.codewizards.cloudstore.ls.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InvocationType;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectRefWithRefId;
 import co.codewizards.cloudstore.ls.core.invoke.filter.ExtMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.filter.InvocationFilterRegistry;
 import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
@@ -42,13 +43,17 @@ public class InvokeMethodService extends AbstractService {
 		final Object object = methodInvocationRequest.getObject();
 
 		if (ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT.equals(methodName)) {
-			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
-			objectManager.incRefCount(object, refId);
+			final ObjectRefWithRefId[] objectRefWithRefIds = cast(methodInvocationRequest.getArguments()[0]);
+			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
+				objectManager.incRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
+
 			return MethodInvocationResponse.forInvocation(null);
 		}
 		else if (ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT.equals(methodName)) {
-			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
-			objectManager.decRefCount(object, refId);
+			final ObjectRefWithRefId[] objectRefWithRefIds = cast(methodInvocationRequest.getArguments()[0]);
+			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
+				objectManager.decRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
+
 			return MethodInvocationResponse.forInvocation(null);
 		}
 

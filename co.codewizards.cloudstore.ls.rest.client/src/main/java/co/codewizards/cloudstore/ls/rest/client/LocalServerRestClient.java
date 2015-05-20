@@ -133,7 +133,7 @@ public class LocalServerRestClient {
 	 */
 	protected LocalServerRestClient() {
 		// The clientId is used for memory management in the server: if a client is closed or disappears, i.e. doesn't
-		// send keep-alives regularly, anymore, the server removes all object-references kept for this client in its ObjectManager.
+		// send keep-alives regularly, anymore, the server removes all objectRef-references kept for this client in its ObjectManager.
 		final String clientId = new Uid().toString();
 
 		setCredentialsProvider(new CredentialsProvider() {

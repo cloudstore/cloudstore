@@ -23,7 +23,7 @@ import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  *
- * @param <R> the response type, i.e. the type of the object sent from the server back to the client.
+ * @param <R> the response type, i.e. the type of the objectRef sent from the server back to the client.
  */
 public interface Request<R> {
 

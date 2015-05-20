@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.ls.client.handler;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
-import co.codewizards.cloudstore.core.dto.Uid;
+import static co.codewizards.cloudstore.core.util.Util.*;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
@@ -11,6 +11,7 @@ import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectRefWithRefId;
 import co.codewizards.cloudstore.ls.core.invoke.filter.ExtMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.filter.InvocationFilterRegistry;
 
@@ -32,13 +33,17 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 		final Object object = methodInvocationRequest.getObject();
 
 		if (ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT.equals(methodName)) {
-			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
-			objectManager.incRefCount(object, refId);
+			final ObjectRefWithRefId[] objectRefWithRefIds = cast(methodInvocationRequest.getArguments()[0]);
+			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
+				objectManager.incRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
+
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
 		else if (ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT.equals(methodName)) {
-			final Uid refId = (Uid) methodInvocationRequest.getArguments()[0];
-			objectManager.decRefCount(object, refId);
+			final ObjectRefWithRefId[] objectRefWithRefIds = cast(methodInvocationRequest.getArguments()[0]);
+			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
+				objectManager.decRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
+
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
 

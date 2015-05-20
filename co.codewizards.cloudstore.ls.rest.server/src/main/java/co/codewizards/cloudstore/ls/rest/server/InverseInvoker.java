@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.ls.rest.server;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,9 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
@@ -26,12 +22,10 @@ import co.codewizards.cloudstore.ls.core.dto.ErrorResponse;
 import co.codewizards.cloudstore.ls.core.dto.InverseServiceRequest;
 import co.codewizards.cloudstore.ls.core.dto.InverseServiceResponse;
 import co.codewizards.cloudstore.ls.core.dto.NullResponse;
-import co.codewizards.cloudstore.ls.core.invoke.AbstractRemoteObjectProxyInvocationHandler;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
-import co.codewizards.cloudstore.ls.core.invoke.ClassInfoCache;
+import co.codewizards.cloudstore.ls.core.invoke.ClassInfoMap;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
-import co.codewizards.cloudstore.ls.core.invoke.GetClassInfoRequest;
-import co.codewizards.cloudstore.ls.core.invoke.GetClassInfoResponse;
+import co.codewizards.cloudstore.ls.core.invoke.IncDecRefCountQueue;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.Invoker;
@@ -41,6 +35,7 @@ import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyFactory;
+import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyInvocationHandler;
 
 public class InverseInvoker implements Invoker {
 	/**
@@ -61,11 +56,12 @@ public class InverseInvoker implements Invoker {
 	 */
 	private static final long PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 15L * 60L * 1000L; // 15 minutes
 
+	private final IncDecRefCountQueue incDecRefCountQueue = new IncDecRefCountQueue(this);
 	private final ObjectManager objectManager;
 	private final LinkedList<InverseServiceRequest> inverseServiceRequests = new LinkedList<>();
 	private final Set<Uid> requestIdsWaitingForResponse = new HashSet<Uid>(); // synchronized by: requestId2InverseServiceResponse
 	private final Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = new HashMap<Uid, InverseServiceResponse>();
-	private final ClassInfoCache classInfoCache = new ClassInfoCache();
+	private final ClassInfoMap classInfoMap = new ClassInfoMap();
 
 	public static InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
 		assertNotNull("objectManager", objectManager);
@@ -191,6 +187,16 @@ public class InverseInvoker implements Invoker {
 		return cast(result);
 	}
 
+	@Override
+	public void incRefCount(final ObjectRef objectRef, final Uid refId) {
+		incDecRefCountQueue.incRefCount(objectRef, refId);
+	}
+
+	@Override
+	public void decRefCount(final ObjectRef objectRef, final Uid refId) {
+		incDecRefCountQueue.decRefCount(objectRef, refId);
+	}
+
 	private String[] toClassNames(Class<?> ... classes) {
 		final String[] classNames;
 		if (classes == null)
@@ -213,49 +219,24 @@ public class InverseInvoker implements Invoker {
 	}
 
 	private RemoteObjectProxy _createRemoteObjectProxy(final ObjectRef objectRef) {
-		final Class<?>[] interfaces = getInterfaces(objectRef.getClassId());
+		final Class<?>[] interfaces = getInterfaces(objectRef);
 
 		final ClassLoader classLoader = this.getClass().getClassLoader();
 		return (RemoteObjectProxy) Proxy.newProxyInstance(classLoader, interfaces,
 				new RemoteObjectProxyInvocationHandler(this, objectRef));
 	}
 
-	private static class RemoteObjectProxyInvocationHandler extends AbstractRemoteObjectProxyInvocationHandler {
-		private static final Logger logger = LoggerFactory.getLogger(InverseInvoker.RemoteObjectProxyInvocationHandler.class);
+	private Class<?>[] getInterfaces(final ObjectRef objectRef) {
+		ClassInfo classInfo = classInfoMap.getClassInfo(objectRef.getClassId());
+		if (classInfo == null) {
+			classInfo = objectRef.getClassInfo();
+			if (classInfo == null)
+				throw new IllegalStateException("There is no ClassInfo in the ClassInfoMap and neither in the ObjectRef! " + objectRef);
 
-		private final InverseInvoker inverseInvoker;
-
-		public RemoteObjectProxyInvocationHandler(final InverseInvoker inverseInvoker, final ObjectRef objectRef) {
-			super(objectRef);
-			this.inverseInvoker = assertNotNull("inverseInvoker", inverseInvoker);
-
-			if (logger.isDebugEnabled())
-				logger.debug("[{}]<init>: {}", getThisId(), objectRef);
-
-			inverseInvoker.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+			classInfoMap.putClassInfo(classInfo);
+			objectRef.setClassInfo(null);
 		}
 
-		@Override
-		protected Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
-			return inverseInvoker.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
-		}
-
-		@Override
-		protected void finalize() throws Throwable {
-			if (logger.isDebugEnabled())
-				logger.debug("[{}]finalize: {}", getThisId(), objectRef);
-
-			try {
-				inverseInvoker.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
-			} catch (Exception x) {
-				logger.warn("[" + getThisId() + "]finalize: " + x, x);
-			}
-			super.finalize();
-		}
-	}
-
-	private Class<?>[] getInterfaces(int classId) {
-		final ClassInfo classInfo = getClassInfoOrFail(classId);
 		final ClassManager classManager = objectManager.getClassManager();
 		final Set<String> interfaceNames = classInfo.getInterfaceNames();
 		final List<Class<?>> interfaces = new ArrayList<>(interfaceNames.size() + 1);
@@ -272,26 +253,6 @@ public class InverseInvoker implements Invoker {
 		}
 		interfaces.add(RemoteObjectProxy.class);
 		return interfaces.toArray(new Class<?>[interfaces.size()]);
-	}
-
-	private ClassInfo getClassInfoOrFail(final int classId) {
-		final ClassInfo classInfo = getClassInfo(classId);
-		if (classInfo == null)
-			throw new IllegalArgumentException("No ClassInfo found for classId=" + classId);
-
-		return classInfo;
-	}
-
-	private ClassInfo getClassInfo(final int classId) {
-		ClassInfo classInfo = classInfoCache.getClassInfo(classId);
-		if (classInfo == null) {
-			final GetClassInfoResponse getClassInfoResponse = performInverseServiceRequest(new GetClassInfoRequest(classId));
-			if (getClassInfoResponse != null) {
-				classInfo = getClassInfoResponse.getClassInfo();
-				classInfoCache.putClassInfo(classInfo);
-			}
-		}
-		return classInfo;
 	}
 
 	/**

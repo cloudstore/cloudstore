@@ -27,7 +27,7 @@ import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  *
- * @param <R> the response type, i.e. the type of the object sent from the server back to the client.
+ * @param <R> the response type, i.e. the type of the objectRef sent from the server back to the client.
  */
 public abstract class AbstractRequest<R> implements Request<R> {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRequest.class);
@@ -96,7 +96,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 * We do not use <code>client.target(getBaseURL()).path("...")</code>, because the
 	 * {@link WebTarget#path(String) path(...)} method does not encode curly braces
 	 * (which might be part of a file name!).
-	 * Instead it resolves them using {@linkplain WebTarget#matrixParam(String, Object...) matrix-parameters}.
+	 * Instead it resolves them using {@linkplain WebTarget#matrixParam(String, ObjectRef...) matrix-parameters}.
 	 * The matrix-parameters need to be encoded manually, too (at least I tried it and it failed, if I didn't).
 	 * Because of these reasons and in order to make the calls more compact, we assemble the path
 	 * ourselves here.

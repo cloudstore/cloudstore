@@ -37,6 +37,8 @@ public class ObjectRef implements Serializable {
 	private final int classId;
 	private final long objectId;
 
+	private ClassInfo classInfo;
+
 	public ObjectRef(final Uid clientId, final int classId, final long objectId) {
 		this.clientId = assertNotNull("clientId", clientId);
 		this.classId = classId;
@@ -51,6 +53,13 @@ public class ObjectRef implements Serializable {
 	}
 	public long getObjectId() {
 		return objectId;
+	}
+
+	public ClassInfo getClassInfo() {
+		return classInfo;
+	}
+	public void setClassInfo(ClassInfo classInfo) {
+		this.classInfo = classInfo;
 	}
 
 	@Override

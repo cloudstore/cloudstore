@@ -5,11 +5,12 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClassInfoCache {
+public class ClassInfoMap {
 
+	// class-info on the proxies' side. the ClassManager is used on the real objects' side.
 	private final Map<Integer, ClassInfo> classId2ClassInfo = new HashMap<>();
 
-	public ClassInfoCache() {
+	public ClassInfoMap() {
 	}
 
 	public synchronized ClassInfo getClassInfo(final int classId) {
