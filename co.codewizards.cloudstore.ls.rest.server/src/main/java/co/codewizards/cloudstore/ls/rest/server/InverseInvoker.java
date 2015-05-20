@@ -34,6 +34,7 @@ import co.codewizards.cloudstore.ls.core.invoke.GetClassInfoRequest;
 import co.codewizards.cloudstore.ls.core.invoke.GetClassInfoResponse;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
+import co.codewizards.cloudstore.ls.core.invoke.Invoker;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
@@ -41,7 +42,7 @@ import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyFactory;
 
-public class InverseInvoker {
+public class InverseInvoker implements Invoker {
 	/**
 	 * Timeout (in milliseconds) before sending an empty HTTP response to the polling client. The client does
 	 * <i>long polling</i> in order to allow for
@@ -87,34 +88,67 @@ public class InverseInvoker {
 		return objectManager;
 	}
 
+	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
 		assertNotNull("methodName", methodName);
-		return invokeStatic(clazz.getName(), methodName, arguments);
+		return invokeStatic(clazz.getName(), methodName, (String[]) null, arguments);
 	}
 
+	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final Object ... arguments) {
 		assertNotNull("className", className);
 		assertNotNull("methodName", methodName);
+		return invokeStatic(className, methodName, (String[]) null, arguments);
+	}
+
+	@Override
+	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Class<?>[] argumentTypes, final Object ... arguments) {
+		assertNotNull("clazz", clazz);
+		assertNotNull("methodName", methodName);
+		return invokeStatic(clazz.getName(), methodName, toClassNames(argumentTypes), arguments);
+	}
+
+	@Override
+	public <T> T invokeStatic(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
+		assertNotNull("className", className);
+		assertNotNull("methodName", methodName);
+
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forStaticInvocation(
-				className, methodName, arguments);
+				className, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
 
+	@Override
 	public <T> T invokeConstructor(final Class<?> clazz, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
-		return invokeConstructor(clazz.getName(), arguments);
+		return invokeConstructor(clazz.getName(), (String[]) null, arguments);
 	}
 
+	@Override
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
 		assertNotNull("className", className);
+		return invokeConstructor(className, (String[]) null, arguments);
+	}
+
+	@Override
+	public <T> T invokeConstructor(final Class<?> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
+		assertNotNull("clazz", clazz);
+		return invokeConstructor(clazz.getName(), toClassNames(argumentTypes), arguments);
+	}
+
+	@Override
+	public <T> T invokeConstructor(final String className, final String[] argumentTypeNames, final Object ... arguments) {
+		assertNotNull("className", className);
+
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forConstructorInvocation(
-				className, arguments);
+				className, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
 
+	@Override
 	public <T> T invoke(final Object object, final String methodName, final Object ... arguments) {
 		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
@@ -122,25 +156,23 @@ public class InverseInvoker {
 		if (!(object instanceof RemoteObjectProxy))
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
-		final ObjectRef objectRef = assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
-		return _invoke(objectRef, methodName, (Class<?>[]) null, arguments);
+		return invoke(object, methodName, (Class<?>[]) null, arguments);
 	}
 
-	private <T> T _invoke(final ObjectRef objectRef, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
-		assertNotNull("objectRef", objectRef);
+	@Override
+	public <T> T invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object... arguments) {
+		assertNotNull("object", object);
+		assertNotNull("methodName", methodName);
+		return invoke(object, methodName, toClassNames(argumentTypes), arguments);
+	}
+
+	@Override
+	public <T> T invoke(final Object object, final String methodName, final String[] argumentTypeNames, final Object... arguments) {
+		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
 
-		final String[] argumentTypeNames;
-		if (argumentTypes == null)
-			argumentTypeNames = null;
-		else {
-			argumentTypeNames = new String[argumentTypes.length];
-			for (int i = 0; i < argumentTypes.length; i++)
-				argumentTypeNames[i] = argumentTypes[i].getName();
-		}
-
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
-				objectRef, methodName, argumentTypeNames, arguments);
+				object, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -157,6 +189,18 @@ public class InverseInvoker {
 
 		final Object result = methodInvocationResponse.getResult();
 		return cast(result);
+	}
+
+	private String[] toClassNames(Class<?> ... classes) {
+		final String[] classNames;
+		if (classes == null)
+			classNames = null;
+		else {
+			classNames = new String[classes.length];
+			for (int i = 0; i < classes.length; i++)
+				classNames[i] = classes[i].getName();
+		}
+		return classNames;
 	}
 
 	public Object getRemoteObjectProxyOrCreate(ObjectRef objectRef) {
@@ -188,12 +232,12 @@ public class InverseInvoker {
 			if (logger.isDebugEnabled())
 				logger.debug("[{}]<init>: {}", getThisId(), objectRef);
 
-			inverseInvoker._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+			inverseInvoker.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
 		}
 
 		@Override
 		protected Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
-			return inverseInvoker._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+			return inverseInvoker.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 		}
 
 		@Override
@@ -202,7 +246,7 @@ public class InverseInvoker {
 				logger.debug("[{}]finalize: {}", getThisId(), objectRef);
 
 			try {
-				inverseInvoker._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+				inverseInvoker.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
 			} catch (Exception x) {
 				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}

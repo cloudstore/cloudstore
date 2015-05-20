@@ -22,6 +22,7 @@ import co.codewizards.cloudstore.ls.core.invoke.AbstractRemoteObjectProxyInvocat
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfoCache;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
+import co.codewizards.cloudstore.ls.core.invoke.Invoker;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
@@ -37,7 +38,7 @@ import co.codewizards.cloudstore.ls.rest.client.request.InvokeMethod;
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
-public class LocalServerClient implements Closeable {
+public class LocalServerClient implements Invoker, Closeable {
 
 	private volatile InverseServiceRequestHandlerThread inverseServiceRequestHandlerThread;
 
@@ -97,10 +98,11 @@ public class LocalServerClient implements Closeable {
 	 * @see #invokeStatic(String, String, Object...)
 	 * @see #invoke(Object, String, Object...)
 	 */
+	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
 		assertNotNull("methodName", methodName);
-		return invokeStatic(clazz.getName(), methodName, arguments);
+		return invokeStatic(clazz.getName(), methodName, (String[]) null, arguments);
 	}
 
 	/**
@@ -113,11 +115,26 @@ public class LocalServerClient implements Closeable {
 	 * @return the result of the method invocation. May be <code>null</code>.
 	 * @see #invoke(Object, String, Object...)
 	 */
+	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final Object ... arguments) {
 		assertNotNull("className", className);
 		assertNotNull("methodName", methodName);
+		return invokeStatic(className, methodName, (String[]) null, arguments);
+	}
+
+	@Override
+	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Class<?>[] argumentTypes, final Object ... arguments) {
+		assertNotNull("clazz", clazz);
+		assertNotNull("methodName", methodName);
+		return invokeStatic(clazz.getName(), methodName, toClassNames(argumentTypes), arguments);
+	}
+
+	@Override
+	public <T> T invokeStatic(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
+		assertNotNull("className", className);
+		assertNotNull("methodName", methodName);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forStaticInvocation(
-				className, methodName, arguments);
+				className, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -134,9 +151,10 @@ public class LocalServerClient implements Closeable {
 	 * @see #invokeConstructor(String, Object...)
 	 * @see #invoke(Object, String, Object...)
 	 */
+	@Override
 	public <T> T invokeConstructor(final Class<?> clazz, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
-		return invokeConstructor(clazz.getName(), arguments);
+		return invokeConstructor(clazz.getName(), (String[]) null, arguments);
 	}
 
 	/**
@@ -148,10 +166,23 @@ public class LocalServerClient implements Closeable {
 	 * @return the newly created object. Never <code>null</code>.
 	 * @see #invoke(Object, String, Object...)
 	 */
+	@Override
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
 		assertNotNull("className", className);
+		return invokeConstructor(className, (String[]) null, arguments);
+	}
+
+	@Override
+	public <T> T invokeConstructor(final Class<?> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
+		assertNotNull("clazz", clazz);
+		return invokeConstructor(clazz.getName(), toClassNames(argumentTypes), arguments);
+	}
+
+	@Override
+	public <T> T invokeConstructor(final String className, final String[] argumentTypeNames, final Object ... arguments) {
+		assertNotNull("className", className);
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forConstructorInvocation(
-				className, arguments);
+				className, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
 	}
@@ -192,6 +223,7 @@ public class LocalServerClient implements Closeable {
 	 * @return the result of the method invocation. This is either a serialized and deserialized "simple" object or a
 	 * proxy for a more complex object on the server-side.
 	 */
+	@Override
 	public <T> T invoke(final Object object, final String methodName, final Object ... arguments) {
 		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
@@ -199,26 +231,37 @@ public class LocalServerClient implements Closeable {
 		if (!(object instanceof RemoteObjectProxy))
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
 
-		return _invoke(object, methodName, (Class<?>[]) null, arguments);
+		return invoke(object, methodName, (Class<?>[]) null, arguments);
 	}
 
-	private <T> T _invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object[] arguments) {
+	@Override
+	public <T> T invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object... arguments) {
 		assertNotNull("object", object);
 		assertNotNull("methodName", methodName);
+		return invoke(object, methodName, toClassNames(argumentTypes), arguments);
+	}
 
-		final String[] argumentTypeNames;
-		if (argumentTypes == null)
-			argumentTypeNames = null;
-		else {
-			argumentTypeNames = new String[argumentTypes.length];
-			for (int i = 0; i < argumentTypes.length; i++)
-				argumentTypeNames[i] = argumentTypes[i].getName();
-		}
+	@Override
+	public <T> T invoke(final Object object, final String methodName, final String[] argumentTypeNames, final Object... arguments) {
+		assertNotNull("object", object);
+		assertNotNull("methodName", methodName);
 
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
 				object, methodName, argumentTypeNames, arguments);
 
 		return invoke(methodInvocationRequest);
+	}
+
+	private String[] toClassNames(Class<?> ... classes) {
+		final String[] classNames;
+		if (classes == null)
+			classNames = null;
+		else {
+			classNames = new String[classes.length];
+			for (int i = 0; i < classes.length; i++)
+				classNames[i] = classes[i].getName();
+		}
+		return classNames;
 	}
 
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
@@ -249,12 +292,12 @@ public class LocalServerClient implements Closeable {
 			if (logger.isDebugEnabled())
 				logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
 
-			localServerClient._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+			localServerClient.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
 		}
 
 		@Override
 		protected Object doInvoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-			return localServerClient._invoke(objectRef, method.getName(), method.getParameterTypes(), args);
+			return localServerClient.invoke(objectRef, method.getName(), method.getParameterTypes(), args);
 		}
 
 		@Override
@@ -263,7 +306,7 @@ public class LocalServerClient implements Closeable {
 				logger.debug("[{}]finalize: {}", getThisId(), objectRef);
 
 			try {
-				localServerClient._invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+				localServerClient.invoke(objectRef, ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
 			} catch (Exception x) {
 				logger.warn("[" + getThisId() + "]finalize: " + x, x);
 			}

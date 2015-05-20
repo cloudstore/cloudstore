@@ -18,7 +18,7 @@ public class MethodInvocationRequest implements Serializable {
 
 	private final Object[] arguments;
 
-	protected MethodInvocationRequest(final String className, final Object object, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
+	protected MethodInvocationRequest(final String className, final Object object, final String methodName, final String[] argumentTypeNames, final Object[] arguments) {
 		this.className = className;
 		this.object = object;
 		this.methodName = methodName;
@@ -26,18 +26,13 @@ public class MethodInvocationRequest implements Serializable {
 		this.arguments = arguments;
 	}
 
-	public static MethodInvocationRequest forConstructorInvocation(final String className, final Object ... arguments) {
-		return new MethodInvocationRequest(assertNotNull("className", className), null, null, null, arguments);
+	public static MethodInvocationRequest forConstructorInvocation(final String className, final String[] argumentTypeNames, final Object ... arguments) {
+		return new MethodInvocationRequest(assertNotNull("className", className), null, null, argumentTypeNames, arguments);
 	}
 
-	public static MethodInvocationRequest forStaticInvocation(final String className, final String methodName, final Object ... arguments) {
+	public static MethodInvocationRequest forStaticInvocation(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
 		return new MethodInvocationRequest(
-				assertNotNull("className", className), null, assertNotNull("methodName", methodName), null, arguments);
-	}
-
-	public static MethodInvocationRequest forObjectInvocation(final Object object, final String methodName, final Object ... arguments) {
-		return new MethodInvocationRequest(
-				null, assertNotNull("object", object), assertNotNull("methodName", methodName), null, arguments);
+				assertNotNull("className", className), null, assertNotNull("methodName", methodName), argumentTypeNames, arguments);
 	}
 
 	public static MethodInvocationRequest forObjectInvocation(final Object object, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
