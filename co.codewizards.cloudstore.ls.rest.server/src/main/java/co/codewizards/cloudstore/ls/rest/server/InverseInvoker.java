@@ -80,6 +80,7 @@ public class InverseInvoker implements Invoker {
 		this.objectManager = assertNotNull("objectManager", objectManager);
 	}
 
+	@Override
 	public ObjectManager getObjectManager() {
 		return objectManager;
 	}
@@ -382,5 +383,10 @@ public class InverseInvoker implements Invoker {
 			requestId2InverseServiceResponse.put(requestId, response);
 			requestId2InverseServiceResponse.notifyAll();
 		}
+	}
+
+	@Override
+	public ClassInfoMap getClassInfoMap() {
+		return classInfoMap;
 	}
 }

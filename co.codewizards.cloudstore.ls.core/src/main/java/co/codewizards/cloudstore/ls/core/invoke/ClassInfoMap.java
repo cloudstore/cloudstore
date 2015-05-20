@@ -13,6 +13,14 @@ public class ClassInfoMap {
 	public ClassInfoMap() {
 	}
 
+	public ClassInfo getClassInfoOrFail(int classId) {
+		final ClassInfo classInfo = getClassInfo(classId);
+		if (classInfo == null)
+			throw new IllegalArgumentException("There is no ClassInfo for classId=" + classId);
+
+		return classInfo;
+	}
+
 	public synchronized ClassInfo getClassInfo(final int classId) {
 		return classId2ClassInfo.get(classId);
 	}

@@ -152,4 +152,8 @@ public interface Invoker {
 	void incRefCount(ObjectRef objectRef, Uid refId);
 
 	void decRefCount(ObjectRef objectRef, Uid refId);
+
+	ObjectManager getObjectManager();
+
+	ClassInfoMap getClassInfoMap();
 }

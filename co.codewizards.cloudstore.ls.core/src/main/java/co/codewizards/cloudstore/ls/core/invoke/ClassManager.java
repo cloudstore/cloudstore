@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,8 +9,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-
-import javax.ws.rs.PathParam;
 
 public class ClassManager {
 
@@ -103,7 +102,7 @@ public class ClassManager {
 		classIdsKnownByRemoteSide.add(classId);
 	}
 
-	public synchronized ClassInfo getClassInfo(@PathParam("classId") int classId) {
+	public synchronized ClassInfo getClassInfo(int classId) {
 		ClassInfo classInfo = classId2ClassInfo.get(classId);
 		if (classInfo == null) {
 			final Class<?> clazz = getClass(classId);
@@ -112,10 +111,24 @@ public class ClassManager {
 				return null;
 
 			final Set<String> interfaceNames = getInterfaceNames(clazz);
-			classInfo = new ClassInfo(classId, clazz.getName(), interfaceNames);
+			classInfo = new ClassInfo(classId, clazz.getName(), interfaceNames, isEqualsOverridden(clazz));
 			classId2ClassInfo.put(classId, classInfo);
 		}
 		return classInfo;
+	}
+
+	private boolean isEqualsOverridden(final Class<?> clazz) {
+		Class<?> c = clazz;
+		while (c != Object.class) {
+			try {
+				c.getDeclaredMethod("equals", Object.class);
+				return true;
+			} catch (NoSuchMethodException | SecurityException e) {
+				doNothing();
+			}
+			c = c.getSuperclass();
+		}
+		return false;
 	}
 
 	protected synchronized int nextClassId() {

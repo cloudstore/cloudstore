@@ -2,8 +2,11 @@ package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -13,18 +16,20 @@ public class RemoteObjectProxyManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(RemoteObjectProxyManager.class);
 
-	// TODO need to purge orphaned keys! Use ReferenceQueue in WeakReference!
 	private final Map<ObjectRef, WeakReference<RemoteObjectProxy>> objectRef2RemoteObjectProxyRef = new HashMap<>();
+	private final Map<WeakReference<RemoteObjectProxy>, ObjectRef> remoteObjectProxyRef2ObjectRef = new IdentityHashMap<>();
+	private final ReferenceQueue<RemoteObjectProxy> referenceQueue = new ReferenceQueue<RemoteObjectProxy>();
 
 	protected RemoteObjectProxyManager() {
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]<init>", getThisId());
 	}
 
-	public synchronized RemoteObjectProxy getRemoteObjectProxyOrCreate(final ObjectRef objectRef) {
+	public synchronized RemoteObjectProxy getRemoteObjectProxy(final ObjectRef objectRef) {
 		assertNotNull("objectRef", objectRef);
 		final WeakReference<RemoteObjectProxy> remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
 		final RemoteObjectProxy remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
+		evictOrphanedObjectRefs();
 		return remoteObjectProxy;
 	}
 
@@ -44,12 +49,23 @@ public class RemoteObjectProxyManager {
 			remoteObjectProxy = remoteObjectProxyFactory.createRemoteObjectProxy(objectRef);
 			assertNotNull("remoteObjectProxyFactory.createRemoteObjectProxy(objectRef)", remoteObjectProxy);
 
-			objectRef2RemoteObjectProxyRef.put(objectRef, new WeakReference<>(remoteObjectProxy));
+			final WeakReference<RemoteObjectProxy> reference = new WeakReference<>(remoteObjectProxy, referenceQueue);
+			objectRef2RemoteObjectProxyRef.put(objectRef, reference);
+			remoteObjectProxyRef2ObjectRef.put(reference, objectRef);
 		}
+		evictOrphanedObjectRefs();
 		return remoteObjectProxy;
 	}
 
 	private String getThisId() {
 		return Integer.toHexString(System.identityHashCode(this));
+	}
+
+	private synchronized void evictOrphanedObjectRefs() {
+		Reference<? extends RemoteObjectProxy> reference;
+		while (null != (reference = referenceQueue.poll())) {
+			final ObjectRef objectRef = remoteObjectProxyRef2ObjectRef.remove(reference);
+			objectRef2RemoteObjectProxyRef.remove(objectRef);
+		}
 	}
 }

@@ -45,6 +45,7 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	private final IncDecRefCountQueue incDecRefCountQueue = new IncDecRefCountQueue(this);
 
+	@Override
 	public ClassInfoMap getClassInfoMap() {
 		return classInfoMap;
 	}
@@ -77,6 +78,7 @@ public class LocalServerClient implements Invoker, Closeable {
 		inverseServiceRequestHandlerThread.start();
 	}
 
+	@Override
 	public ObjectManager getObjectManager() {
 		return objectManager;
 	}

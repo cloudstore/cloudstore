@@ -18,6 +18,7 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 	protected final Uid refId = new Uid();
 	protected final Invoker invoker;
 	protected final ObjectRef objectRef;
+	protected final boolean equalsOverridden;
 
 	public RemoteObjectProxyInvocationHandler(final Invoker invoker, final ObjectRef objectRef) {
 		this.invoker = assertNotNull("invoker", invoker);
@@ -26,13 +27,7 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
 
-		// TODO make bulk operation (collect multiple refIds) or at least use a ThreadPool in Invoker.
-//		new Thread() {
-//			@Override
-//			public void run() {
-//			}
-//		}.start();
-//		invoker.invoke(object, Object.VIRTUAL_METHOD_NAME_INC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
+		equalsOverridden = invoker.getClassInfoMap().getClassInfoOrFail(objectRef.getClassId()).isEqualsOverridden();
 		invoker.incRefCount(objectRef, refId);
 	}
 
@@ -41,16 +36,17 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 		// BEGIN implement RemoteObjectProxy
 		if ("getObjectRef".equals(method.getName()) && method.getParameterTypes().length == 0)
 			return objectRef;
-
-		// TODO we must somehow support delegating equals and hashCode to the real object - but this should
-		// only happen, if either the method is overridden (can we find this out?) or if there is a special annotation.
-
-		if ("equals".equals(method.getName()) && method.getParameterTypes().length == 1)
-			return _equals(proxy, method, args[0]);
-
-		if ("hashCode".equals(method.getName()) && method.getParameterTypes().length == 0)
-			return _hashCode(proxy, method);
 		// END implement RemoteObjectProxy
+
+		// BEGIN equals(...) + hashCode()
+		if (! equalsOverridden) {
+			if ("equals".equals(method.getName()) && method.getParameterTypes().length == 1)
+				return _equals(proxy, method, args[0]);
+
+			if ("hashCode".equals(method.getName()) && method.getParameterTypes().length == 0)
+				return _hashCode(proxy, method);
+		}
+		// END equals(...) + hashCode()
 
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]invoke: method='{}'", getThisId(), method);
@@ -63,11 +59,6 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]finalize: {}", getThisId(), objectRef);
 
-//		try {
-//			invoker.invoke(object, Object.VIRTUAL_METHOD_NAME_DEC_REF_COUNT, (Class<?>[])null, new Object[] { refId });
-//		} catch (Exception x) {
-//			logger.warn("[" + getThisId() + "]finalize: " + x, x);
-//		}
 		invoker.decRefCount(objectRef, refId);
 		super.finalize();
 	}
