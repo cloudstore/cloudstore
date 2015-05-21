@@ -11,6 +11,9 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -18,6 +21,10 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  *
  */
 public class IoFile implements File {
+	private static final long serialVersionUID = 1L;
+
+	private static final Logger logger = LoggerFactory.getLogger(IoFile.class);
+
 
 	protected final java.io.File ioFile;
 
@@ -403,5 +410,16 @@ public class IoFile implements File {
 	public String toString() {
 		return this.ioFile.toString();
 	}
+
+//	private void writeObject(ObjectOutputStream out) throws IOException {
+//		if (!ioFile.isAbsolute())
+//			logger.warn("File is not absolute! This may cause w");
+//
+//		out.defaultWriteObject();
+//	}
+//
+//	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+//
+//	}
 
 }

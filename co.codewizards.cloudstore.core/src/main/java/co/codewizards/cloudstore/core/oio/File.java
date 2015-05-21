@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.net.URI;
 
 
@@ -16,7 +17,7 @@ import java.net.URI;
  *
  * @author Sebastian Schefczyk
  */
-public interface File {
+public interface File extends Serializable {
 
 	String[] list();
 	String[] list(FilenameFilter filenameFilter);

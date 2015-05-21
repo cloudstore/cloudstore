@@ -34,6 +34,7 @@ import co.codewizards.cloudstore.core.util.childprocess.DumpStreamThread;
  * @author Sebastian Schefczyk
  */
 public class NioFile extends IoFile implements File {
+	private static final long serialVersionUID = 1L;
 
 	private static final Logger logger = LoggerFactory.getLogger(NioFile.class);
 
