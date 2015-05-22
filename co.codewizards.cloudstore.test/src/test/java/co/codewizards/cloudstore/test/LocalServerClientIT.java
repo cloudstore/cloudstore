@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -117,6 +120,8 @@ public class LocalServerClientIT extends AbstractIT {
 		LocalRepoManagerFactory localRepoManagerFactory = client.invokeStatic(LocalRepoManagerFactory.Helper.class, "getInstance");
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManager).isInstanceOf(RemoteObjectProxy.class);
+		Map<UUID, URL> map = localRepoManager.getRemoteRepositoryId2RemoteRootMap();
+		assertThat(map).isInstanceOf(RemoteObjectProxy.class);
 		localRepoManager.close();
 	}
 
