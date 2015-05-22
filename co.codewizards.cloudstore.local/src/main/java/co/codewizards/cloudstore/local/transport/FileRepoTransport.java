@@ -59,6 +59,7 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.LocalRepoSync;
 import co.codewizards.cloudstore.local.LocalRepoTransactionImpl;
+import co.codewizards.cloudstore.local.dto.DeleteModificationDtoConverter;
 import co.codewizards.cloudstore.local.dto.RepoFileDtoConverter;
 import co.codewizards.cloudstore.local.persistence.CopyModification;
 import co.codewizards.cloudstore.local.persistence.DeleteModification;
@@ -652,9 +653,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			path = unprefixPath(path);
 
-			DeleteModificationDto deleteModificationDto;
-			modificationDto = deleteModificationDto = new DeleteModificationDto();
-			deleteModificationDto.setPath(path);
+			modificationDto = DeleteModificationDtoConverter.create().toDeleteModificationDto(deleteModification);
+			((DeleteModificationDto) modificationDto).setPath(path);
 		}
 		else
 			throw new IllegalArgumentException("Unknown modification type: " + modification);

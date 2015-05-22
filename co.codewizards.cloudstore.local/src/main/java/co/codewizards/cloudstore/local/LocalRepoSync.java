@@ -22,7 +22,6 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
@@ -68,7 +67,7 @@ public class LocalRepoSync {
 	}
 
 	public static LocalRepoSync create(final LocalRepoTransaction transaction) {
-		return ObjectFactoryUtil.createObject(LocalRepoSync.class, transaction);
+		return createObject(LocalRepoSync.class, transaction);
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -484,20 +483,32 @@ public class LocalRepoSync {
 		createCopyModifications(fromNormalFile.getPath(), toNormalFile, fromPaths);
 	}
 
-	private void createDeleteModifications(final RepoFile repoFile) {
+	protected void createDeleteModifications(final RepoFile repoFile) {
 		assertNotNull("repoFile", repoFile);
-		NormalFile normalFile = null;
-		if (repoFile instanceof NormalFile)
-			normalFile = (NormalFile) repoFile;
 
-		for (final RemoteRepository remoteRepository : getRemoteRepositories()) {
-			final DeleteModification modification = new DeleteModification();
-			modification.setRemoteRepository(remoteRepository);
-			modification.setPath(repoFile.getPath());
-			modification.setLength(normalFile == null ? -1 : normalFile.getLength());
-			modification.setSha1(normalFile == null ? null : normalFile.getSha1());
-			modificationDao.makePersistent(modification);
-		}
+		for (final RemoteRepository remoteRepository : getRemoteRepositories())
+			createDeleteModification(repoFile, remoteRepository);
+	}
+
+	protected DeleteModification createDeleteModification(final RepoFile repoFile, final RemoteRepository remoteRepository) {
+		assertNotNull("repoFile", repoFile);
+		assertNotNull("remoteRepository", remoteRepository);
+		final DeleteModification modification = createObject(DeleteModification.class);
+		populateDeleteModification(modification, repoFile, remoteRepository);
+		return modificationDao.makePersistent(modification);
+	}
+
+	protected void populateDeleteModification(final DeleteModification modification, final RepoFile repoFile, final RemoteRepository remoteRepository) {
+		assertNotNull("modification", modification);
+		assertNotNull("repoFile", repoFile);
+		assertNotNull("remoteRepository", remoteRepository);
+
+		final NormalFile normalFile = (repoFile instanceof NormalFile) ? (NormalFile) repoFile : null;
+
+		modification.setRemoteRepository(remoteRepository);
+		modification.setPath(repoFile.getPath());
+		modification.setLength(normalFile == null ? -1 : normalFile.getLength());
+		modification.setSha1(normalFile == null ? null : normalFile.getSha1());
 	}
 
 	private Collection<RemoteRepository> getRemoteRepositories() {

@@ -24,7 +24,7 @@ import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
 /**
  * TODO rewrite this entire test! It is currently based on pretty fragile multi-threading. It might be better to use a different approach. Marco :-)
  * Maybe we should using mocking or somehow replace the real services by some sub-classes that interact with the test. This should
- * be more reliable than watching the file system from the outside on a different thread than the actual sync.  
+ * be more reliable than watching the file system from the outside on a different thread than the actual sync.
  *
  * @author Sebastian Schefczyk
  */
@@ -89,7 +89,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -97,7 +97,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		assertFilesInProgress(Sync.DOWN, 1);
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger), 1,
 					2);
@@ -122,7 +122,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -130,7 +130,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		assertFilesInProgress(Sync.UP, 1);
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerRemote, new LoggerProgressMonitor(logger),
 					1, 2);
@@ -148,7 +148,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -160,7 +160,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		// delete the chunks; the sync algorithm should tolerate this
 		fileWatcher.deleteTempDir();
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger), 2,
 					2);
@@ -178,7 +178,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -190,7 +190,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		// delete the chunks; the sync algorithm should tolerate this
 		fileWatcher.deleteTempDir();
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger), 2,
 					2);
@@ -208,7 +208,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -220,7 +220,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		// modify the source file
 		file = createFileWithChunks(remoteRoot, remoteRoot, fileName, 2);
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// chunks that will differ after modification of the source file
 			// will be overwritten without deletion; so no difference in amount
@@ -241,7 +241,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -254,7 +254,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		final String newFileName = "ee-renamed";
 		moveFile(remoteRoot, file, createFile(remoteRoot, newFileName));
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// because the chunk will be moved, the move operation is also observed as create/delete; so for the first
 			// chunk (move: 1 create, 1 delete), for the second (1 create); after appending the chunks to the
@@ -275,7 +275,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -288,7 +288,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		final String newFileName = "lrrs-renamed";
 		moveFile(localRoot, file, createFile(localRoot, newFileName));
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// because the chunk will be moved, the move operation is also observed as create/delete; so for the first
 			// chunk (move: 1 create, 1 delete), for the second (1 create); after appending the chunks to the
@@ -309,7 +309,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		// special: delegate the repoToRepoSync.sync into fileWatcher, to be
 		// able to interrupt immediately.
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// the sync will start and get interrupted inside the fileWatcher!
 			fileWatcher.syncOneChunk(repoToRepoSync, new LoggerProgressMonitor(logger));
@@ -323,7 +323,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		final File file0 = createFileWithChunks(remoteRoot, remoteRoot, fileName0, 2);
 		final File file2 = createFileWithChunks(remoteRoot, remoteRoot, fileName2, 2);
 
-		try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(),
+		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// we expect the aborted file to resume at first, then syncing the rest (and not again the first).
 			fileWatcher.watchSyncOrder(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger),

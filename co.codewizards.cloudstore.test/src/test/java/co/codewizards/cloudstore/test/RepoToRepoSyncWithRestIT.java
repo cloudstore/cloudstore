@@ -88,7 +88,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		final File child_5 = createDirectory(remoteRoot, "5#");
 		createFileWithRandomContent(child_5, "e");
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -151,7 +151,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -185,7 +185,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		r_child_2.deleteRecursively();
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
+			final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(localRoot, remoteRootURLWithPathPrefix);
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -225,7 +225,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		l_child_2.deleteRecursively();
 
 		for (int i = 0; i < 2; ++i) { // We have to sync twice to make sure the collision is synced, too (it is created during the first sync).
-			final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(localRoot, remoteRootURLWithPathPrefix);
+			final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(localRoot, remoteRootURLWithPathPrefix);
 			repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			repoToRepoSync.close();
 		}
@@ -297,7 +297,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_b.isFile()).isTrue();
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -331,7 +331,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 
@@ -356,7 +356,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		localRepoManagerRemote.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 		localRepoManagerRemote.close();
@@ -407,7 +407,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 		localRepoManagerLocal.close();
@@ -429,7 +429,7 @@ public class RepoToRepoSyncWithRestIT extends AbstractRepoAwareIT
 		localRepoManagerLocal.localSync(new NullProgressMonitor());
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 		repoToRepoSync.close();
 		localRepoManagerLocal.close();

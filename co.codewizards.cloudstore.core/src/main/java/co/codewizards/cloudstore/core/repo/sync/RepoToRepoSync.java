@@ -86,7 +86,7 @@ public class RepoToRepoSync implements AutoCloseable {
 	 * If a sub-directory of the remote repository is connected to the local repository, this sub-directory
 	 * must be referenced here.
 	 */
-	public RepoToRepoSync(File localRoot, final URL remoteRoot) {
+	protected RepoToRepoSync(File localRoot, final URL remoteRoot) {
 		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
 		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
@@ -100,6 +100,10 @@ public class RepoToRepoSync implements AutoCloseable {
 
 		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
 		localRepoTransport = (LocalRepoTransport) createRepoTransport(localRoot, remoteRepositoryId);
+	}
+
+	public static RepoToRepoSync create(final File localRoot, final URL remoteRoot) {
+		return createObject(RepoToRepoSync.class, localRoot, remoteRoot);
 	}
 
 	public void sync(final ProgressMonitor monitor) {
@@ -413,7 +417,7 @@ public class RepoToRepoSync implements AutoCloseable {
 						if (!moveInstead && deleteModificationDtos != null) {
 							for (final DeleteModificationDto deleteModificationDto : deleteModificationDtos) {
 								logger.info("syncModifications: Deleting '{}'", deleteModificationDto.getPath());
-								toRepoTransport.delete(deleteModificationDto.getPath());
+								applyDeleteModification(fromRepoTransport, toRepoTransport, deleteModificationDto);
 							}
 						}
 
@@ -430,7 +434,7 @@ public class RepoToRepoSync implements AutoCloseable {
 						}
 
 						logger.info("syncModifications: Deleting '{}'", deleteModificationDto.getPath());
-						toRepoTransport.delete(deleteModificationDto.getPath());
+						applyDeleteModification(fromRepoTransport, toRepoTransport, deleteModificationDto);
 
 						markDone(fromRepoTransport, toRepoTransport, deleteModificationDto);
 					}
@@ -439,6 +443,14 @@ public class RepoToRepoSync implements AutoCloseable {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	protected void applyDeleteModification(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final DeleteModificationDto deleteModificationDto) {
+		assertNotNull("fromRepoTransport", fromRepoTransport);
+		assertNotNull("toRepoTransport", toRepoTransport);
+		assertNotNull("deleteModificationDto", deleteModificationDto);
+
+		toRepoTransport.delete(deleteModificationDto.getPath());
 	}
 
 	private void syncDirectory(

@@ -36,7 +36,7 @@ class RepoSyncRunner implements Runnable {
 		}
 
 		for (final URL remoteRoot : remoteRoots) {
-			try (RepoToRepoSync repoToRepoSync = new RepoToRepoSync(repoSyncQueueItem.localRoot, remoteRoot);) {
+			try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(repoSyncQueueItem.localRoot, remoteRoot);) {
 				repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 			}
 		}
