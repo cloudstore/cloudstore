@@ -111,7 +111,7 @@ public class LocalServerClientIT extends AbstractIT {
 		assertThat(localRootInput).isNotInstanceOf(RemoteObjectProxy.class);
 
 		File localRoot = client.invokeStatic(OioFileFactory.class, "createFile", localRootInput.getAbsolutePath());
-		assertThat(localRoot).isInstanceOf(RemoteObjectProxy.class);
+		assertThat(localRoot).isInstanceOf(File.class);
 		assertThat(localRoot.mkdir()).isTrue();
 
 		LocalRepoManagerFactory localRepoManagerFactory = client.invokeStatic(LocalRepoManagerFactory.Helper.class, "getInstance");
