@@ -6,8 +6,8 @@ import javax.ws.rs.core.Response;
 
 public class Delete extends VoidRequest {
 
-	private final String repositoryName;
-	private final String path;
+	protected final String repositoryName;
+	protected final String path;
 
 	public Delete(final String repositoryName, final String path) {
 		this.repositoryName = assertNotNull("repositoryName", repositoryName);

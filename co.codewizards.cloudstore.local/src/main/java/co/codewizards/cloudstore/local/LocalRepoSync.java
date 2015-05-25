@@ -341,7 +341,7 @@ public class LocalRepoSync {
 		deleteRepoFile(repoFile, true);
 	}
 
-	private void deleteRepoFile(final RepoFile repoFile, final boolean createDeleteModifications) {
+	public void deleteRepoFile(final RepoFile repoFile, final boolean createDeleteModifications) {
 		final RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");

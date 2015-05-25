@@ -943,7 +943,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		}
 	}
 
-	private boolean detectFileCollisionRecursively(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File fileOrDirectory) {
+	protected boolean detectFileCollisionRecursively(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File fileOrDirectory) {
 		AssertUtil.assertNotNull("transaction", transaction);
 		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
 		AssertUtil.assertNotNull("fileOrDirectory", fileOrDirectory);
@@ -990,7 +990,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param normalFileOrSymlink
 	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
 	 */
-	private boolean detectFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
+	protected boolean detectFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
 		AssertUtil.assertNotNull("transaction", transaction);
 		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
 		AssertUtil.assertNotNull("file", file);
