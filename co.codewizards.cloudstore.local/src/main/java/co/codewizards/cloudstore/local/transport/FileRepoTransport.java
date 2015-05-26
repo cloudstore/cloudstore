@@ -344,7 +344,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		}
 	}
 
-	private void assertNoDeleteModificationCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
+	protected void assertNoDeleteModificationCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
 		final RemoteRepository fromRemoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		final long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 
@@ -926,7 +926,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>.
 	 * @param normalFileOrSymlink the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
-	private void detectAndHandleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
+	protected void detectAndHandleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
 		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
 			final File collisionFile = IOUtil.createCollisionFile(file);
 			file.renameTo(collisionFile);

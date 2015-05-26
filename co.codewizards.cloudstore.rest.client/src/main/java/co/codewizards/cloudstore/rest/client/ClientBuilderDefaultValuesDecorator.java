@@ -55,7 +55,12 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 
 		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, socketConnectTimeout); // must be a java.lang.Integer
 		clientConfig.property(ClientProperties.READ_TIMEOUT, socketReadTimeout); // must be a java.lang.Integer
+		// The following line allows for PUT without entity. We decide whether to use PUT or POST dependent on whether
+		// it is idempotent (=> PUT) or not (=> POST). Jersey allows to use POST with null as entity, but throws an exception
+		// when trying to PUT the same way.
+		clientConfig.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
 
+		
 		this.builder.withConfig(clientConfig)
 			.register(GZIPReaderInterceptor.class)
 			.register(GZIPWriterInterceptor.class)

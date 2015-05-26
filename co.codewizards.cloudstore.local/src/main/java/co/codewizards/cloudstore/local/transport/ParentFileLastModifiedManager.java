@@ -6,7 +6,7 @@ import java.util.Map;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
-class ParentFileLastModifiedManager {
+public class ParentFileLastModifiedManager {
 	private static class ParentFileEntry {
 		public final File parentFile;
 		public final long lastModified;

@@ -18,7 +18,7 @@ public class BeginPutFile extends VoidRequest {
 	public Response _execute() {
 		return assignCredentials(
 				createWebTarget("_beginPutFile", urlEncode(repositoryName), encodePath(path))
-				.request()).post(null);
+				.request()).put(null);
 	}
 
 }

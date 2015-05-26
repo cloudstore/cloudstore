@@ -8,11 +8,11 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 
 public class EndPutFile extends VoidRequest {
 
-	private final String repositoryName;
-	private final String path;
-	private final DateTime lastModified;
-	private final long length;
-	private final String sha1;
+	protected final String repositoryName;
+	protected final String path;
+	protected final DateTime lastModified;
+	protected final long length;
+	protected final String sha1;
 
 	public EndPutFile(final String repositoryName, final String path, final DateTime lastModified, final long length, final String sha1) {
 		this.repositoryName = assertNotNull("repositoryName", repositoryName);
@@ -29,7 +29,7 @@ public class EndPutFile extends VoidRequest {
 				.queryParam("lastModified", lastModified.toString())
 				.queryParam("length", length)
 				.queryParam("sha1", sha1)
-				.request()).post(null);
+				.request()).put(null);
 	}
 
 }
