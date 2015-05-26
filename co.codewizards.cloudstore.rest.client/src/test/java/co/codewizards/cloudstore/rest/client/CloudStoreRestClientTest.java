@@ -30,11 +30,11 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 		}};
-		
+
 		cloudstoreClient.getBaseUrl();
 	}
 
@@ -48,10 +48,10 @@ public class CloudStoreRestClientTest {
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/");
-		
+
 		new Verifications() {{
 		    client.target("https://localhost:8080/aaa/_test"); times = 0;
 		    client.target("https://localhost:8080/aaa/bbb/_test"); times = 0;
@@ -64,11 +64,11 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/");
 	}
@@ -79,7 +79,7 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080//aaa//bbb/", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -91,7 +91,7 @@ public class CloudStoreRestClientTest {
 			client.target("https://localhost:8080/aaa/bbb/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/");
 	}
@@ -102,7 +102,7 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 			client.target("https://localhost:8080/aaa/_test").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -112,7 +112,7 @@ public class CloudStoreRestClientTest {
 			client.target("https://localhost:8080/aaa/bbb/ccc/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/ccc/");
 	}
@@ -123,7 +123,7 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 			client.target("https://localhost:8080/aaa/_test").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -131,15 +131,15 @@ public class CloudStoreRestClientTest {
 			client.target("https://localhost:8080/aaa/bbb/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/");
-		
+
 		new Verifications() {{
 		    client.target("https://localhost:8080/aaa/bbb/ccc/_test"); times = 0;
 		 }};
 	}
-	
+
 	@Test
 	public void urlWithoutPort() {
 		new Expectations() {{
@@ -152,26 +152,26 @@ public class CloudStoreRestClientTest {
 			client.target("https://cloudstore.codewizards.co/mediathek/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://cloudstore.codewizards.co/mediathek/");
-		
+
 		new Verifications() {{
 		    client.target("https://cloudstore.codewizards.co/mediathek/musik/_test"); times = 0;
 		 }};
 	}
-	
+
 	@Test
 	public void urlWithoutSlashAtTheEnd() {
 		new Expectations() {{
 			cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://cloudstore.codewizards.co/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
-		
+
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://cloudstore.codewizards.co/");
 	}

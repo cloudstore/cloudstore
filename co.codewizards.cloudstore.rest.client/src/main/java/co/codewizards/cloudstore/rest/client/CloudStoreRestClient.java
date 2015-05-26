@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -9,8 +9,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -19,24 +17,18 @@ import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
-import co.codewizards.cloudstore.core.util.StringUtil;
 import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.client.ssl.CallbackDeniedTrustException;
-import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
-import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
 /**
  * Client for executing REST requests.
@@ -61,7 +53,7 @@ public class CloudStoreRestClient {
 	private ClientBuilder clientBuilder;
 
 	private CredentialsProvider credentialsProvider;
-	
+
 	/**
 	 * Get the server's base-URL.
 	 * <p>
@@ -128,14 +120,14 @@ public class CloudStoreRestClient {
 					doNothing();
 				}
 			}
-			
+
 			if (baseURL == null)
 				throw new IllegalStateException("baseURL not found!");
 		} finally {
 			releaseClient();
 		}
 	}
-	
+
 	private List<String> getPathParts(){
 		List<String> pathParts = new ArrayList<String>(Arrays.asList(url.getPath().split("/")));
 		if(pathParts.isEmpty()){
@@ -143,7 +135,7 @@ public class CloudStoreRestClient {
 		}
 		return pathParts;
 	}
-	
+
 	private String getHostUrl(){
 		String hostUrl = url.getProtocol() + "://" + url.getHost();
 		if(url.getPort() != -1){
@@ -244,8 +236,7 @@ public class CloudStoreRestClient {
 	 * @see #releaseClient()
 	 * @see #getClientOrFail()
 	 */
-	private synchronized void acquireClient()
-	{
+	private synchronized void acquireClient(){
 		final ClientRef clientRef = clientThreadLocal.get();
 		if (clientRef != null) {
 			++clientRef.refCount;

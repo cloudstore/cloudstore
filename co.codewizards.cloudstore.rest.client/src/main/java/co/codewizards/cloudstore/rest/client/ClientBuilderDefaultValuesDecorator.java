@@ -1,8 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
@@ -13,7 +11,6 @@ import javax.ws.rs.core.Configuration;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
