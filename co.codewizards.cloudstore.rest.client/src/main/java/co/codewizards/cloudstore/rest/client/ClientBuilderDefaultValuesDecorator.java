@@ -34,21 +34,21 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
 	 */
 	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "socket.readTimeout"; //$NON-NLS-1$
-	
+
 	private final ClientBuilder builder;
-	
+
 	public ClientBuilderDefaultValuesDecorator(){
 		this(ClientBuilder.newBuilder());
 	}
-	
+
 	public ClientBuilderDefaultValuesDecorator(ClientBuilder builder){
 		this.builder = builder;
-		
+
 		final ClientConfig clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
 		final Integer socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 				CONFIG_KEY_SOCKET_READ_TIMEOUT,
 				DEFAULT_SOCKET_READ_TIMEOUT);
-		
+
 		final Integer socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
 				CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
 				DEFAULT_SOCKET_CONNECT_TIMEOUT);
@@ -60,23 +60,25 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 		// when trying to PUT the same way.
 		clientConfig.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
 
-		
+
 		this.builder.withConfig(clientConfig)
 			.register(GZIPReaderInterceptor.class)
 			.register(GZIPWriterInterceptor.class)
 			.hostnameVerifier(new HostnameVerifierAllowingAll());
 	}
-	
+
 	@Override
 	public Client build(){
 		return builder.build();
 	}
-	
+
+	@Override
 	public ClientBuilderDefaultValuesDecorator sslContext(final SSLContext sslContext){
 		builder.sslContext(sslContext);
 		return this;
 	}
-	
+
+	@Override
 	public ClientBuilderDefaultValuesDecorator hostnameVerifier(final HostnameVerifier hostnameVerifier){
 		builder.hostnameVerifier(hostnameVerifier);
 		return this;

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 public class CloudStoreRestClientTest {
 
 	private CloudStoreRestClient cloudstoreClient;
-	@Mocked 
+	@Mocked
 	private ClientBuilder clientBuilder;
 	@Mocked
 	private Client client;
@@ -44,7 +44,7 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
@@ -57,7 +57,7 @@ public class CloudStoreRestClientTest {
 		    client.target("https://localhost:8080/aaa/bbb/_test"); times = 0;
 		}};
 	}
-	
+
 	@Test
 	public void urlIsBaseUrl() {
 		new Expectations() {{
@@ -72,7 +72,7 @@ public class CloudStoreRestClientTest {
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/");
 	}
-	
+
 	@Test
 	public void doubleSlashInUrl() {
 		new Expectations() {{
@@ -95,7 +95,7 @@ public class CloudStoreRestClientTest {
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/");
 	}
-	
+
 	@Test
 	public void successAtTheLastCall() {
 		new Expectations() {{
@@ -116,7 +116,7 @@ public class CloudStoreRestClientTest {
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/ccc/");
 	}
-	
+
 	@Test
 	public void successAtTheMiddleCall() {
 		new Expectations() {{
@@ -146,7 +146,7 @@ public class CloudStoreRestClientTest {
 			cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co/mediathek/musik", clientBuilder);
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
-			
+
 			client.target("https://cloudstore.codewizards.co/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 			client.target("https://cloudstore.codewizards.co/mediathek/_test").request(MediaType.TEXT_PLAIN).get(String.class);

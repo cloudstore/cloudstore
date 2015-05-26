@@ -10,8 +10,6 @@ import java.util.UUID;
 
 import javax.ws.rs.client.ClientBuilder;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +22,6 @@ import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -56,10 +53,7 @@ import co.codewizards.cloudstore.rest.client.request.Move;
 import co.codewizards.cloudstore.rest.client.request.PutFileData;
 import co.codewizards.cloudstore.rest.client.request.RequestRepoConnection;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
-import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
-import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
-import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
@@ -348,7 +342,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		}
 		return pathAfterBaseURL;
 	}
-	
+
 	private ClientBuilder createClientBuilder(){
 		final ClientBuilder builder = new ClientBuilderDefaultValuesDecorator();
 		try {
