@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;
+import javax.ws.rs.client.ClientBuilder;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.TestException;
+import co.codewizards.cloudstore.rest.client.ClientBuilderDefaultValuesDecorator;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.request.TestRequest;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
@@ -35,7 +38,8 @@ import co.codewizards.cloudstore.rest.server.service.TestService;
  */
 public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(CertificateHandlingAndTestServiceIT.class);
-
+	private ClientBuilder clientBuilder;
+	
 	static File getRandomTrustStoreFile() throws IOException {
 		final File dir = createFile(ConfigDir.getInstance().getFile(), "ssl.client");
 		dir.mkdirs();
@@ -43,20 +47,24 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		trustStoreFile.delete(); // It must not exist (reading it fails).
 		return trustStoreFile;
 	}
+	
+	@Before
+	public void setUp(){
+		clientBuilder = new ClientBuilderDefaultValuesDecorator();
+	}
 
 	@Test
 	public void testSuccessWithPermanentTrust() throws Exception {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback1 = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter);
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback1).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback1).build());
+		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
 		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 
-		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
+		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
 		final DynamicX509TrustManagerCallback callback2 = new DynamicX509TrustManagerCallback() {
 			@Override
 			public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
@@ -64,8 +72,8 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 				return null;
 			}
 		};
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback2).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+		clientBuilder = new ClientBuilderDefaultValuesDecorator()
+			.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback2).build());
 		cloudStoreRestClient.execute(new TestRequest(false));
 	}
 
@@ -73,11 +81,10 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	public void testException() throws Exception {
 		final File trustStoreFile = getRandomTrustStoreFile();
 		final long[] handleCertificateExceptionCounter = new long[1];
-		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter);
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
-
+		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
+		
 		try {
 			cloudStoreRestClient.execute(new TestRequest(true));
 			Assert.fail("cloudStoreRESTClient.testException() should have thrown a RemoteException, but it did not!");
@@ -105,7 +112,6 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter) {
 			@Override
 			public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
@@ -114,8 +120,9 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 				return result;
 			}
 		};
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
+		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
+		
 		try {
 			cloudStoreRestClient.execute(new TestRequest(false));
 			Assert.fail("The certificate was trusted - but it should *not* be!!!");
@@ -133,16 +140,16 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final File trustStoreFile = getRandomTrustStoreFile();
 
 		final long[] handleCertificateExceptionCounter = new long[1];
-		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingTemporarily(handleCertificateExceptionCounter);
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
+		CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
 		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(1);
 
-		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl());
-		cloudStoreRestClient.setSslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
-		cloudStoreRestClient.setHostnameVerifier(new HostnameVerifierAllowingAll());
+		clientBuilder = new ClientBuilderDefaultValuesDecorator()
+				.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
+		
+		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
 		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(2);
 	}

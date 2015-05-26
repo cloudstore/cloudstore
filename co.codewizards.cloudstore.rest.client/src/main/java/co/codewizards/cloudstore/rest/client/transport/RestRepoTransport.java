@@ -8,6 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.ws.rs.client.ClientBuilder;
+
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +24,7 @@ import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -31,6 +36,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
 import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.rest.client.ClientBuilderDefaultValuesDecorator;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
 import co.codewizards.cloudstore.rest.client.request.BeginPutFile;
@@ -52,6 +58,8 @@ import co.codewizards.cloudstore.rest.client.request.RequestRepoConnection;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
+import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
+import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
 
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
@@ -281,15 +289,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	protected CloudStoreRestClient getClient() {
 		if (client == null) {
-			final CloudStoreRestClient c = new CloudStoreRestClient(getRemoteRoot());
-			c.setHostnameVerifier(new HostnameVerifierAllowingAll());
-			try {
-				c.setSslContext(SSLContextBuilder.create()
-						.remoteURL(getRemoteRoot())
-						.callback(getDynamicX509TrustManagerCallback()).build());
-			} catch (final GeneralSecurityException e) {
-				throw new RuntimeException(e);
-			}
+			ClientBuilder clientBuilder = createClientBuilder();
+			final CloudStoreRestClient c = new CloudStoreRestClient(getRemoteRoot(), clientBuilder);
 			c.setCredentialsProvider(this);
 			client = c;
 		}
@@ -346,6 +347,18 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			this.pathAfterBaseURL = pathAfterBaseURL = remoteRootString.substring(baseURL.length());
 		}
 		return pathAfterBaseURL;
+	}
+	
+	private ClientBuilder createClientBuilder(){
+		final ClientBuilder builder = new ClientBuilderDefaultValuesDecorator();
+		try {
+			builder.sslContext(SSLContextBuilder.create()
+					.remoteURL(getRemoteRoot())
+					.callback(getDynamicX509TrustManagerCallback()).build());
+		} catch (final GeneralSecurityException e) {
+			throw new RuntimeException(e);
+		}
+		return builder;
 	}
 
 }

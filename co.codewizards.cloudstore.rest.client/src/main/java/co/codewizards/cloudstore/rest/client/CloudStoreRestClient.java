@@ -2,8 +2,12 @@ package co.codewizards.cloudstore.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -49,69 +53,15 @@ public class CloudStoreRestClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreRestClient.class);
 
-	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
-	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
-
-	/**
-	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
-	 * <p>
-	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
-	 */
-	public static final String CONFIG_KEY_SOCKET_CONNECT_TIMEOUT = "socket.connectTimeout"; //$NON-NLS-1$
-
-	/**
-	 * The {@code key} for the read timeout used with {@link Config#getPropertyAsInt(String, int)}.
-	 * <p>
-	 * The configuration can be overridden by a system property - see {@link Config#SYSTEM_PROPERTY_PREFIX}.
-	 */
-	public static final String CONFIG_KEY_SOCKET_READ_TIMEOUT = "socket.readTimeout"; //$NON-NLS-1$
-
-	private Integer socketConnectTimeout;
-
-	private Integer socketReadTimeout;
-
-	private final String url;
+	private final URL url;
 	private String baseURL;
 
 	private final LinkedList<Client> clientCache = new LinkedList<Client>();
 
-	private boolean configFrozen;
-
-	private HostnameVerifier hostnameVerifier;
-	private SSLContext sslContext;
+	private ClientBuilder clientBuilder;
 
 	private CredentialsProvider credentialsProvider;
-
-	public synchronized Integer getSocketConnectTimeout() {
-		if (socketConnectTimeout == null)
-			socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
-					CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
-					DEFAULT_SOCKET_CONNECT_TIMEOUT);
-
-		return socketConnectTimeout;
-	}
-	public synchronized void setSocketConnectTimeout(Integer socketConnectTimeout) {
-		if (socketConnectTimeout != null && socketConnectTimeout < 0)
-			socketConnectTimeout = null;
-
-		this.socketConnectTimeout = socketConnectTimeout;
-	}
-
-	public synchronized Integer getSocketReadTimeout() {
-		if (socketReadTimeout == null)
-			socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
-					CONFIG_KEY_SOCKET_READ_TIMEOUT,
-					DEFAULT_SOCKET_READ_TIMEOUT);
-
-		return socketReadTimeout;
-	}
-	public synchronized void setSocketReadTimeout(Integer socketReadTimeout) {
-		if (socketReadTimeout != null && socketReadTimeout < 0)
-			socketReadTimeout = null;
-
-		this.socketReadTimeout = socketReadTimeout;
-	}
-
+	
 	/**
 	 * Get the server's base-URL.
 	 * <p>
@@ -139,30 +89,34 @@ public class CloudStoreRestClient {
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final URL url) {
-		this(AssertUtil.assertNotNull("url", url).toExternalForm());
+	public CloudStoreRestClient(final URL url, final ClientBuilder clientBuilder) {
+		this.url = AssertUtil.assertNotNull("url", url);
+		this.clientBuilder = AssertUtil.assertNotNull("clientBuilder", clientBuilder);
 	}
-
+	
 	/**
 	 * Create a new client.
 	 * @param url any URL to the server. Must not be <code>null</code>.
 	 * May be the base-URL, any repository's remote-root-URL or any URL within a remote-root-URL.
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
-	public CloudStoreRestClient(final String url) {
-		this.url = AssertUtil.assertNotNull("url", url);
-	}
-
-	private static String appendFinalSlashIfNeeded(final String url) {
-		return url.endsWith("/") ? url : url + "/";
+	public CloudStoreRestClient(final String url, final ClientBuilder clientBuilder) {
+		try{
+			this.url = AssertUtil.assertNotNull("url", new URL(url));
+			this.clientBuilder = clientBuilder;
+		} catch (MalformedURLException e){
+			throw new IllegalStateException("url is invalid", e);
+		}
 	}
 
 	private void determineBaseUrl() {
 		acquireClient();
 		try {
 			final Client client = getClientOrFail();
-			String url = appendFinalSlashIfNeeded(this.url);
-			while (true) {
+			String url = getHostUrl();
+			for(String part : getPathParts()){
+				if(!part.isEmpty()) // part is always empty in first iteration
+					url += part + "/";
 				final String testUrl = url + "_test";
 				try {
 					final String response = client.target(testUrl).request(MediaType.TEXT_PLAIN).get(String.class);
@@ -173,19 +127,29 @@ public class CloudStoreRestClient {
 				} catch (final WebApplicationException wax) {
 					doNothing();
 				}
-
-				if (!url.endsWith("/"))
-					throw new IllegalStateException("url does not end with '/'!");
-
-				final int secondLastSlashIndex = url.lastIndexOf('/', url.length() - 2);
-				url = url.substring(0, secondLastSlashIndex + 1);
-
-				if (StringUtil.getIndexesOf(url, '/').size() < 3)
-					throw new IllegalStateException("baseURL not found!");
 			}
+			
+			if (baseURL == null)
+				throw new IllegalStateException("baseURL not found!");
 		} finally {
 			releaseClient();
 		}
+	}
+	
+	private List<String> getPathParts(){
+		List<String> pathParts = new ArrayList<String>(Arrays.asList(url.getPath().split("/")));
+		if(pathParts.isEmpty()){
+			pathParts.add("");
+		}
+		return pathParts;
+	}
+	
+	private String getHostUrl(){
+		String hostUrl = url.getProtocol() + "://" + url.getHost();
+		if(url.getPort() != -1){
+			hostUrl += ":" + url.getPort();
+		}
+		return hostUrl +  "/";
 	}
 
 	public <R> R execute(final Request<R> request) {
@@ -261,26 +225,6 @@ public class CloudStoreRestClient {
 		return builder;
 	}
 
-	public synchronized HostnameVerifier getHostnameVerifier() {
-		return hostnameVerifier;
-	}
-	public synchronized void setHostnameVerifier(final HostnameVerifier hostnameVerifier) {
-		if (configFrozen)
-			throw new IllegalStateException("Config already frozen! Cannot change hostnameVerifier anymore!");
-
-		this.hostnameVerifier = hostnameVerifier;
-	}
-
-	public synchronized SSLContext getSslContext() {
-		return sslContext;
-	}
-	public synchronized void setSslContext(final SSLContext sslContext) {
-		if (configFrozen)
-			throw new IllegalStateException("Config already frozen! Cannot change sslContext anymore!");
-
-		this.sslContext = sslContext;
-	}
-
 	private final ThreadLocal<ClientRef> clientThreadLocal = new ThreadLocal<ClientRef>();
 
 	private static class ClientRef {
@@ -310,24 +254,6 @@ public class CloudStoreRestClient {
 
 		Client client = clientCache.poll();
 		if (client == null) {
-			final SSLContext sslContext = this.sslContext;
-			final HostnameVerifier hostnameVerifier = this.hostnameVerifier;
-
-			final ClientConfig clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
-			clientConfig.property(ClientProperties.CONNECT_TIMEOUT, getSocketConnectTimeout()); // must be a java.lang.Integer
-			clientConfig.property(ClientProperties.READ_TIMEOUT, getSocketReadTimeout()); // must be a java.lang.Integer
-
-			final ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(clientConfig);
-
-			if (sslContext != null)
-				clientBuilder.sslContext(sslContext);
-
-			if (hostnameVerifier != null)
-				clientBuilder.hostnameVerifier(hostnameVerifier);
-
-			clientBuilder.register(GZIPReaderInterceptor.class);
-			clientBuilder.register(GZIPWriterInterceptor.class);
-
 			client = clientBuilder.build();
 
 			// An authentication is always required. Otherwise Jersey throws an exception.
@@ -335,8 +261,6 @@ public class CloudStoreRestClient {
 			// requests really requiring it.
 			final HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("anonymous", "");
 			client.register(feature);
-
-			configFrozen = true;
 		}
 		clientThreadLocal.set(new ClientRef(client));
 	}
