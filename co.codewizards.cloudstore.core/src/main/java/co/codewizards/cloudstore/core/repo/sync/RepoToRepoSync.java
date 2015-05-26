@@ -533,7 +533,7 @@ public class RepoToRepoSync implements AutoCloseable {
 				toNormalFileDto = createObject(NormalFileDto.class); // dummy (null-object pattern)
 
 			try {
-				toRepoTransport.beginPutFile(path);
+				beginPutFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fromNormalFileDto);
 			} catch (final DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
 				if (logger.isDebugEnabled())
@@ -627,14 +627,28 @@ public class RepoToRepoSync implements AutoCloseable {
 			logger.info("Copied {} dirty file-chunks with together {} bytes in {} ms. path='{}'",
 					fromFileChunkDtosDirty.size(), bytesCopied, System.currentTimeMillis() - copyChunksBeginTimestamp, path);
 
-			toRepoTransport.endPutFile(
-					path, fromNormalFileDto.getLastModified(),
-					fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
+			endPutFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fromNormalFileDto);
 			localRepoTransport.markFileInProgress(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path, false);
 			monitor.worked(6);
 		} finally {
 			monitor.done();
 		}
+	}
+
+	protected void beginPutFile(final RepoTransport fromRepoTransport,
+			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
+			final String path, final NormalFileDto fromNormalFileDto) throws DeleteModificationCollisionException {
+
+		toRepoTransport.beginPutFile(path);
+	}
+
+	protected void endPutFile(final RepoTransport fromRepoTransport,
+			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
+			final String path, final NormalFileDto fromNormalFileDto) {
+
+		toRepoTransport.endPutFile(
+				path, fromNormalFileDto.getLastModified(),
+				fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
 	}
 
 	private String sha1(final byte[] data) {
