@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.util;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
+import java.io.BufferedInputStream;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -834,51 +835,31 @@ public final class IOUtil {
 	 * <code>length</code> are consumed from the streams, no matter if their
 	 * contents are equal or not.
 	 *
-	 * @param in1 the first InputStream
-	 * @param in2 the second InputStream
-	 * @param length how many bytes to read from each InputStream
+	 * @param inputStream1 the first InputStream to compare.
+	 * @param inputStream2 the second InputStream to compare.
 	 * @return true if both InputStreams contain the identical data or false if not
 	 * @throws IOException if an I/O error occurs while reading <code>length</code> bytes
 	 * 		from one of the input streams.
 	 */
-	public static boolean compareInputStreams(final InputStream in1, final InputStream in2, final long length)
+	public static boolean compareInputStreams(final InputStream inputStream1, final InputStream inputStream2)
 	throws IOException
 	{
-		return compareInputStreams(in1, in2, length, length);
-	}
+		assertNotNull("inputStream1", inputStream1);
+		assertNotNull("inputStream2", inputStream2);
 
-	/**
-	 * Compares two InputStreams. This method returns when the first
-	 *
-	 * @param in1 the first InputStream
-	 * @param in2 the second InputStream
-	 * @param compareLength how many bytes to compare before considering the stream
-	 * 		contents as equal.
-	 * @param minimumReadLength how many bytes to read from each InputStream. This amount of
-	 * 		bytes is read from the stream, no matter if contents are equal or not.
-	 * @return true if both InputStreams contain the identical data or false if not
-	 * @throws IOException if an I/O error occurs while reading <code>length</code> bytes
-	 * 		from one of the input streams.
-	 */
-	public static boolean compareInputStreams(final InputStream in1, final InputStream in2, final long compareLength, final long minimumReadLength)
-	throws IOException
-	{
-		boolean identical = true;
-		int read = 0;
-		while(read<compareLength) {
-			final int int1 = in1.read();
-			final int int2 = in2.read();
-			read++;
-			if (int1 != int2) {
-				identical = false;
-				break;
-			}
+		// We use a BufferedInputStream, if the given stream does not support mark. This is, because we assume that it is
+		// already using a buffer, if it does support mark. For example, ByteArrayInputStream and BufferedInputStream do support
+		// mark. Both should not be decorated. FileInputStream does not support mark => it should definitely be decorated.
+		final InputStream in1 = inputStream1.markSupported() ? inputStream1 : new BufferedInputStream(inputStream1);
+		final InputStream in2 = inputStream2.markSupported() ? inputStream2 : new BufferedInputStream(inputStream2);
+
+		int b1;
+		while ((b1 = in1.read()) >= 0) {
+			final int b2 = in2.read();
+			if (b1 != b2)
+				return false;
 		}
-		if(read < minimumReadLength) {
-			in1.skip(minimumReadLength-read);
-			in2.skip(minimumReadLength-read);
-		}
-		return identical;
+		return in2.read() < 0;
 	}
 
 	/**
@@ -900,13 +881,10 @@ public final class IOUtil {
 			return true;
 		if(f1.length() != f2.length())
 			return false;
-		final InputStream in1 = f1.createInputStream();
-		final InputStream in2 = f2.createInputStream();
-		try {
-			return compareInputStreams(in1, in2, f1.length(), 0);
-		} finally {
-			in1.close();
-			in2.close();
+		try (final InputStream in1 = f1.createInputStream();) {
+			try (final InputStream in2 = f2.createInputStream();) {
+				return compareInputStreams(in1, in2);
+			}
 		}
 	}
 
