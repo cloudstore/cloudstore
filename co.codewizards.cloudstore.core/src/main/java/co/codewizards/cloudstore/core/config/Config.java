@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
@@ -119,7 +118,7 @@ public class Config {
 	private static final Object classMutex = Config.class;
 	private final Object instanceMutex;
 
-	private Config(final Config parentConfig, final File file, final File [] propertiesFiles) {
+	protected Config(final Config parentConfig, final File file, final File [] propertiesFiles) {
 		this.parentConfig = parentConfig;
 
 		if (parentConfig == null)

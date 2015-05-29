@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -8,6 +9,9 @@ import java.util.UUID;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.dto.jaxb.DtoIo;
+import co.codewizards.cloudstore.core.oio.File;
 
 public class UidTest {
 
@@ -106,5 +110,23 @@ public class UidTest {
 			assertThat(string2).isEqualTo(string1);
 			assertThat(uid2).isEqualTo(uid1);
 		}
+	}
+
+	@Test
+	public void uidListToXmlAndBack() throws Exception {
+		UidList uidList = new UidList();
+		uidList.add(new Uid());
+		uidList.add(new Uid());
+		uidList.add(new Uid());
+
+		DtoIo<UidList> dtoIo = new DtoIo<UidList>() {
+		};
+
+		File tmpFile = createTempFile("uidList.", ".xml");
+		dtoIo.serialize(uidList, tmpFile);
+
+		UidList uidList2 = dtoIo.deserialize(tmpFile);
+		assertThat(uidList2).isEqualTo(uidList);
+		tmpFile.delete();
 	}
 }

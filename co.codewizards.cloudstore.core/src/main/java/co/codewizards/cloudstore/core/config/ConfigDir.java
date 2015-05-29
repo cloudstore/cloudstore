@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.config;
 
-import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -54,7 +54,7 @@ public class ConfigDir {
 	 * This method cannot and should not be called directly. Instead, {@link #getInstance()} should be
 	 * used to obtain the singleton.
 	 */
-	private ConfigDir() {
+	protected ConfigDir() {
 		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
 		final String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
