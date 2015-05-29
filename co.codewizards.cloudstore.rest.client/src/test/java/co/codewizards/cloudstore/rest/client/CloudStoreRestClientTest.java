@@ -15,8 +15,10 @@ import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import co.codewizards.cloudstore.core.jmockit.BaseJMockitTest;
+
 @RunWith(JMockit.class)
-public class CloudStoreRestClientTest {
+public class CloudStoreRestClientTest extends BaseJMockitTest{
 
 	private CloudStoreRestClient cloudstoreClient;
 	@Mocked

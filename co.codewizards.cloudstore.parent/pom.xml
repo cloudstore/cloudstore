@@ -139,6 +139,13 @@
 			</dependency>
 			<dependency>
 				<groupId>co.codewizards.cloudstore</groupId>
+				<artifactId>co.codewizards.cloudstore.core</artifactId>
+				<type>test-jar</type>
+				<scope>test</scope>
+				<version>${cloudstore.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>co.codewizards.cloudstore</groupId>
 				<artifactId>co.codewizards.cloudstore.core.oio.nio</artifactId>
 				<version>${cloudstore.version}</version>
 			</dependency>
