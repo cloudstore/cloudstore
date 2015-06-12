@@ -1320,6 +1320,9 @@ public final class IOUtil {
 						logger.warn("Variable " + tmpBuf.toString() + " occuring in template is unknown!");
 						stringToWrite = tmpBuf.toString();
 					}
+					else
+						stringToWrite = replaceTemplateVariables(stringToWrite, variables); // recursively resolve variables!
+
 					tmpBuf.setLength(0);
 					break;
 				default:
