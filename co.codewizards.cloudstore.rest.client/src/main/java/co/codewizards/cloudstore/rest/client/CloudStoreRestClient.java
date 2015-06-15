@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,7 +26,6 @@ import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.client.ssl.CallbackDeniedTrustException;
@@ -82,10 +82,10 @@ public class CloudStoreRestClient {
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
 	public CloudStoreRestClient(final URL url, final ClientBuilder clientBuilder) {
-		this.url = AssertUtil.assertNotNull("url", url);
-		this.clientBuilder = AssertUtil.assertNotNull("clientBuilder", clientBuilder);
+		this.url = assertNotNull("url", url);
+		this.clientBuilder = assertNotNull("clientBuilder", clientBuilder);
 	}
-	
+
 	/**
 	 * Create a new client.
 	 * @param url any URL to the server. Must not be <code>null</code>.
@@ -94,11 +94,11 @@ public class CloudStoreRestClient {
 	 */
 	public CloudStoreRestClient(final String url, final ClientBuilder clientBuilder) {
 		try{
-			this.url = AssertUtil.assertNotNull("url", new URL(url));
-			this.clientBuilder = clientBuilder;
+			this.url = assertNotNull("url", new URL(url));
 		} catch (MalformedURLException e){
 			throw new IllegalStateException("url is invalid", e);
 		}
+		this.clientBuilder = assertNotNull("clientBuilder", clientBuilder);
 	}
 
 	private void determineBaseUrl() {
@@ -145,7 +145,7 @@ public class CloudStoreRestClient {
 	}
 
 	public <R> R execute(final Request<R> request) {
-		AssertUtil.assertNotNull("request", request);
+		assertNotNull("request", request);
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
 		while (true) {
@@ -225,7 +225,7 @@ public class CloudStoreRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = AssertUtil.assertNotNull("client", client);
+			this.client = assertNotNull("client", client);
 		}
 	}
 
