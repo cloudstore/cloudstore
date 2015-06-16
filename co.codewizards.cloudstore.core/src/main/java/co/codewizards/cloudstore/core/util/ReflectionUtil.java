@@ -3,17 +3,21 @@ package co.codewizards.cloudstore.core.util;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 public class ReflectionUtil {
 
@@ -227,17 +231,46 @@ public class ReflectionUtil {
 		return null;
 	}
 
-	public static List<Field> getAllDeclaredFields(final Class<?> clazz) {
-		final List<Field> result = new ArrayList<>();
-		Class<?> c = clazz;
-		while (c != null) {
-			final Field[] declaredFields = c.getDeclaredFields();
-			for (Field field : declaredFields)
-				result.add(field);
+	private static final Map<Class<?>, Reference<List<Field>>> class2AllDeclaredFields = Collections.synchronizedMap(
+			new WeakHashMap<Class<?>, Reference<List<Field>>>());
 
-			c = c.getSuperclass();
+	/**
+	 * Gets all fields declared by the given {@code clazz} including its super-classes; starting from the most concrete sub-class
+	 * (i.e. the given {@code clazz}).
+	 * <p>
+	 * Please note that the order of the fields declared by one single class is unspecified according to the Java specification.
+	 * The only guaranteed order is that between fields declared by one class and fields declared by its super-classes: The result
+	 * of this method begins with fields of the most concrete class, followed by its super-class's fields, followed by the
+	 * fields of the super-class' super-class and so on.
+	 * <p>
+	 * For example, consider the following classes: {@code Roadster} <i>extends</i> {@code Car} <i>extends</i> {@code Vehicle}. This
+	 * method would thus return all fields declared by all three classes, starting with the fields of {@code Roadster},
+	 * followed by the fields of {@code Car} and finally followed by the fields of {@code Vehicle}.
+	 *
+	 * @param clazz the class whose fields to obtain.
+	 * @return the list of fields declared by the given class and all its super-classes. Never <code>null</code>, but maybe
+	 * empty.
+	 */
+	public static List<Field> getAllDeclaredFields(final Class<?> clazz) {
+		assertNotNull("clazz", clazz);
+		synchronized(clazz) {
+			final Reference<List<Field>> resultRef = class2AllDeclaredFields.get(clazz);
+			List<Field> result = resultRef == null ? null : resultRef.get();
+			if (result == null) {
+				result = new ArrayList<>();
+				Class<?> c = clazz;
+				while (c != null) {
+					final Field[] declaredFields = c.getDeclaredFields();
+					for (Field field : declaredFields)
+						result.add(field);
+
+					c = c.getSuperclass();
+				}
+				((ArrayList<?>)result).trimToSize();
+				class2AllDeclaredFields.put(clazz, new WeakReference<List<Field>>(result));
+			}
+			return result;
 		}
-		return result;
 	}
 
 	public static Map<Field, Object> getAllDeclaredFieldValues(final Object object) {
@@ -257,8 +290,57 @@ public class ReflectionUtil {
 		return result;
 	}
 
+	public static <V> V getFieldValue(final Object object, final String fieldName) {
+		assertNotNull("object", object);
+		assertNotNull("fieldName", fieldName);
+
+		// TODO pretty inefficient implementation - make better!
+
+		String className = null;
+		String simpleFieldName = fieldName;
+
+		final int lastDotIndex = fieldName.lastIndexOf('.');
+		if (lastDotIndex >= 0) {
+			className = fieldName.substring(0, lastDotIndex);
+			simpleFieldName = fieldName.substring(lastDotIndex + 1);
+		}
+
+		final List<Field> declaredFields = getAllDeclaredFields(object.getClass());
+		for (final Field field : declaredFields) {
+			if (className != null && !className.equals(field.getDeclaringClass().getName()))
+				continue;
+
+			if (!simpleFieldName.equals(field.getName()))
+				continue;
+
+			field.setAccessible(true);
+			try {
+				@SuppressWarnings("unchecked")
+				final V value = (V) field.get(object);
+				return value;
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		throw new IllegalArgumentException(String.format("object's class %s does not have this field: %s", object.getClass(), fieldName));
+	}
+
+	/**
+	 * Sets the {@code object}'s field &#8211; identified by {@code fieldName} &#8211; to the given {@code value}.
+	 * <p>
+	 * The {@code fieldName} can be simple (e.g. "firstName") or fully qualified (e.g. "co.codewizards.bla.Person.firstName").
+	 * If it is simple, the most concrete sub-class' matching field is used.
+	 *
+	 * @param object the object whose field to manipulate. Must not be <code>null</code>.
+	 * @param fieldName the simple or fully qualified field name (fully qualified means prefixed by the class name). Must not be <code>null</code>.
+	 * @param value the value to be assigned. May be <code>null</code>.
+	 */
 	public static void setFieldValue(final Object object, final String fieldName, final Object value) {
-		// TODO very inefficient implementation - make better!
+		assertNotNull("object", object);
+		assertNotNull("fieldName", fieldName);
+
+		// TODO pretty inefficient implementation - make better!
 
 		String className = null;
 		String simpleFieldName = fieldName;
@@ -286,7 +368,7 @@ public class ReflectionUtil {
 			return;
 		}
 
-		throw new IllegalArgumentException("object's class does not have this field: " + fieldName);
+		throw new IllegalArgumentException(String.format("object's class %s does not have this field: %s", object.getClass(), fieldName));
 	}
 
 	public static Set<Class<?>> getAllInterfaces(final Class<?> clazz) {
