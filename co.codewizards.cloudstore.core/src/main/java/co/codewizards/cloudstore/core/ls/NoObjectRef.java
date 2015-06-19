@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.core.invoke;
+package co.codewizards.cloudstore.core.ls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

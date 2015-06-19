@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import co.codewizards.cloudstore.core.ls.NoObjectRef;
+
 public class ForceNonTransientContainer implements Serializable {
 	private static final long serialVersionUID = 1L;
 

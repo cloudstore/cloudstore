@@ -5,6 +5,8 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.io.Serializable;
 import java.util.Set;
 
+import co.codewizards.cloudstore.core.ls.NoObjectRef;
+
 @NoObjectRef
 public class ClassInfo implements Serializable {
 

@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import co.codewizards.cloudstore.core.ls.NoObjectRef;
+
 public class ObjectGraphContainer implements Serializable {
 	private static final long serialVersionUID = 1L;
 
