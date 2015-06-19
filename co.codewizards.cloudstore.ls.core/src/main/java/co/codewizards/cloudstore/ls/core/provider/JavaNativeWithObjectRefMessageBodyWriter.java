@@ -6,6 +6,7 @@ import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -296,6 +297,12 @@ implements MessageBodyWriter<Object>
 
 		private boolean isTypeConsideredLeaf(final Object object) {
 			final Class<?> clazz = object.getClass();
+
+			if (! (object instanceof Serializable))
+				return true;
+
+			if (object instanceof ObjectRef || object instanceof Uid)
+				return true;
 
 			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
 				return false;
