@@ -6,6 +6,7 @@ import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.io.NoCloseOutputStream;
+import co.codewizards.cloudstore.core.ls.NoObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientClassSet;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientContainer;
-import co.codewizards.cloudstore.ls.core.invoke.NoObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectGraphContainer;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
@@ -178,85 +180,96 @@ implements MessageBodyWriter<Object>
 		}
 
 		public void analyse(Object root) {
-			analyse(null, root, new IdentityHashMap<Object, Void>());
+			analyse(new LinkedList<Object>(), null, root, new IdentityHashMap<Object, Void>());
 		}
 
-		private void analyse(final Object parent, final Object object, final IdentityHashMap<Object, Void> processedObjects) {
+		private void analyse(final LinkedList<Object> parentStack, final Object parent, final Object object, final IdentityHashMap<Object, Void> processedObjects) {
 			if (object == null)
 				return;
 
-			if (processedObjects.containsKey(object))
+			if (parentStack.size() >= 10)
 				return;
 
-			logger.debug("analyse: object={}", object);
+			if (parent != null)
+				parentStack.addLast(parent);
 
-			processedObjects.put(object, null);
+			try {
+				if (processedObjects.containsKey(object))
+					return;
 
-			final NoObjectRef noObjectRefVal = object2NoObjectRef.get(object);
-			if (noObjectRefVal == null) {
-				final NoObjectRef noObjectRef = object.getClass().getAnnotation(NoObjectRef.class);
-				if (noObjectRef == null) {
-					final NoObjectRef parentNoObjectRef = parent == null ? NO_OBJECT_REF_FALLBACK : object2NoObjectRef.get(parent);
-					object2NoObjectRef.put(object, parentNoObjectRef);
-				}
-				else
-					object2NoObjectRef.put(object, noObjectRef);
-			}
+				logger.debug("analyse: object={}", object);
 
-			if (isTypeConsideredLeaf(object))
-				return;
+				processedObjects.put(object, null);
 
-			if (object.getClass().isArray()) {
-				// We do not treat children of a simple array, because they are no objects and ObjectOutputStream.replaceObject(...) should thus *not* be called for them.
-				if (Object.class.isAssignableFrom(object.getClass().getComponentType())) {
-					final int length = Array.getLength(object);
-					for (int i = 0; i < length; ++i) {
-						final Object child = Array.get(object, i);
-						analyse(object, child, processedObjects);
-					}
-				}
-			}
-			else if (object instanceof Collection<?>) {
-				final Collection<?> c = (Collection<?>) object;
-				for (final Object child : c)
-					analyse(object, child, processedObjects);
-			}
-			else if (object instanceof Map<?, ?>) {
-				final Map<?, ?> m = (Map<?, ?>) object;
-				for (Map.Entry<?, ?> me : m.entrySet()) {
-					analyse(object, me.getKey(), processedObjects);
-					analyse(object, me.getValue(), processedObjects);
-				}
-			} else {
-				final List<Field> allDeclaredFields = getAllDeclaredFields(object.getClass());
-				final List<Object> children = new ArrayList<Object>(allDeclaredFields.size());
-				for (final Field field : allDeclaredFields) {
-					if ((Modifier.STATIC & field.getModifiers()) != 0)
-						continue;
-
-					if ((Modifier.TRANSIENT & field.getModifiers()) != 0)
-						continue;
-
-					final Object child = getFieldValue(object, field);
-					children.add(child);
-
-					logger.debug("analyse: field={} child=", field, child);
-
-					NoObjectRef noObjectRef = field.getAnnotation(NoObjectRef.class);
-					if (noObjectRef == null)
-						noObjectRef = child == null ? null : child.getClass().getAnnotation(NoObjectRef.class);
-
+				final NoObjectRef noObjectRefVal = object2NoObjectRef.get(object);
+				if (noObjectRefVal == null) {
+					final NoObjectRef noObjectRef = object.getClass().getAnnotation(NoObjectRef.class);
 					if (noObjectRef == null) {
-						final NoObjectRef parentNoObjectRef = object2NoObjectRef.get(object);
-						if (parentNoObjectRef.inheritToObjectGraphChildren())
-							object2NoObjectRef.put(child, parentNoObjectRef);
+						final NoObjectRef parentNoObjectRef = parent == null ? NO_OBJECT_REF_FALLBACK : object2NoObjectRef.get(parent);
+						object2NoObjectRef.put(object, parentNoObjectRef);
 					}
 					else
-						object2NoObjectRef.put(child, noObjectRef);
+						object2NoObjectRef.put(object, noObjectRef);
 				}
 
-				for (final Object child : children)
-					analyse(object, child, processedObjects);
+				if (isTypeConsideredLeaf(object))
+					return;
+
+				if (object.getClass().isArray()) {
+					// We do not treat children of a simple array, because they are no objects and ObjectOutputStream.replaceObject(...) should thus *not* be called for them.
+					if (Object.class.isAssignableFrom(object.getClass().getComponentType())) {
+						final int length = Array.getLength(object);
+						for (int i = 0; i < length; ++i) {
+							final Object child = Array.get(object, i);
+							analyse(parentStack, object, child, processedObjects);
+						}
+					}
+				}
+				else if (object instanceof Collection<?>) {
+					final Collection<?> c = (Collection<?>) object;
+					for (final Object child : c)
+						analyse(parentStack, object, child, processedObjects);
+				}
+				else if (object instanceof Map<?, ?>) {
+					final Map<?, ?> m = (Map<?, ?>) object;
+					for (Map.Entry<?, ?> me : m.entrySet()) {
+						analyse(parentStack, object, me.getKey(), processedObjects);
+						analyse(parentStack, object, me.getValue(), processedObjects);
+					}
+				} else {
+					final List<Field> allDeclaredFields = getAllDeclaredFields(object.getClass());
+					final List<Object> children = new ArrayList<Object>(allDeclaredFields.size());
+					for (final Field field : allDeclaredFields) {
+						if ((Modifier.STATIC & field.getModifiers()) != 0)
+							continue;
+
+						if ((Modifier.TRANSIENT & field.getModifiers()) != 0)
+							continue;
+
+						final Object child = getFieldValue(object, field);
+						children.add(child);
+
+						logger.debug("analyse: field={} child=", field, child);
+
+						NoObjectRef noObjectRef = field.getAnnotation(NoObjectRef.class);
+						if (noObjectRef == null)
+							noObjectRef = child == null ? null : child.getClass().getAnnotation(NoObjectRef.class);
+
+						if (noObjectRef == null) {
+							final NoObjectRef parentNoObjectRef = object2NoObjectRef.get(object);
+							if (parentNoObjectRef.inheritToObjectGraphChildren())
+								object2NoObjectRef.put(child, parentNoObjectRef);
+						}
+						else
+							object2NoObjectRef.put(child, noObjectRef);
+					}
+
+					for (final Object child : children)
+						analyse(parentStack, object, child, processedObjects);
+				}
+			} finally {
+				if (parent != null)
+					parentStack.removeLast();
 			}
 		}
 
@@ -284,6 +297,15 @@ implements MessageBodyWriter<Object>
 
 		private boolean isTypeConsideredLeaf(final Object object) {
 			final Class<?> clazz = object.getClass();
+
+			if (! (object instanceof Serializable))
+				return true;
+
+			if (object instanceof ObjectRef || object instanceof Uid)
+				return true;
+
+			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
+				return false;
 
 			// TODO do not hard-code the following, but use an advisor-service!
 			return !clazz.getName().startsWith("co.codewizards.") && !clazz.getName().startsWith("org.");
