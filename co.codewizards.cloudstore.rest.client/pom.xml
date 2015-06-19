@@ -18,13 +18,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>co.codewizards.cloudstore</groupId>
-			<artifactId>co.codewizards.cloudstore.core</artifactId>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
 		</dependency>

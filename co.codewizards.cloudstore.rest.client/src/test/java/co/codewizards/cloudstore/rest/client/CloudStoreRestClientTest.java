@@ -2,23 +2,25 @@ package co.codewizards.cloudstore.rest.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.MalformedURLException;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 
-import mockit.Expectations;
 import mockit.Mocked;
+import mockit.StrictExpectations;
 import mockit.Verifications;
 import mockit.integration.junit4.JMockit;
+import net.jcip.annotations.NotThreadSafe;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import co.codewizards.cloudstore.core.jmockit.BaseJMockitTest;
-
 @RunWith(JMockit.class)
-public class CloudStoreRestClientTest extends BaseJMockitTest{
+@NotThreadSafe
+public class CloudStoreRestClientTest{
 
 	private CloudStoreRestClient cloudstoreClient;
 	@Mocked
@@ -26,30 +28,32 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 	@Mocked
 	private Client client;
 
+
 	@Test(expected = IllegalStateException.class)
-	public void baseUrlNotFound() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
-			clientBuilder.build(); result = client;
+	public void baseUrlNotFound() throws MalformedURLException {
+		new StrictExpectations() {{
+			clientBuilder.build();
+			result = client;
 			client.register(any); result = client;
 
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = new WebApplicationException();
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
 
 		cloudstoreClient.getBaseUrl();
 	}
 
 	@Test
 	public void successAtTheFirstCall() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb", clientBuilder);
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/");
@@ -58,18 +62,20 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 		    client.target("https://localhost:8080/aaa/_test"); times = 0;
 		    client.target("https://localhost:8080/aaa/bbb/_test"); times = 0;
 		}};
+
 	}
 
 	@Test
 	public void urlIsBaseUrl() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
 			client.target("https://localhost:8080/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/", clientBuilder);
+
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/");
@@ -77,8 +83,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 
 	@Test
 	public void doubleSlashInUrl() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080//aaa//bbb/", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -93,6 +98,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 			client.target("https://localhost:8080/aaa/bbb/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080//aaa//bbb/", clientBuilder);
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/");
@@ -100,8 +106,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 
 	@Test
 	public void successAtTheLastCall() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -114,6 +119,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 			client.target("https://localhost:8080/aaa/bbb/ccc/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/ccc/");
@@ -121,8 +127,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 
 	@Test
 	public void successAtTheMiddleCall() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -133,19 +138,20 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 			client.target("https://localhost:8080/aaa/bbb/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://localhost:8080/aaa/bbb/ccc", clientBuilder);
+
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://localhost:8080/aaa/bbb/");
 
 		new Verifications() {{
 		    client.target("https://localhost:8080/aaa/bbb/ccc/_test"); times = 0;
-		 }};
+		}};
 	}
 
 	@Test
 	public void urlWithoutPort() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co/mediathek/musik", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -154,6 +160,7 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 			client.target("https://cloudstore.codewizards.co/mediathek/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co/mediathek/musik", clientBuilder);
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://cloudstore.codewizards.co/mediathek/");
@@ -165,14 +172,14 @@ public class CloudStoreRestClientTest extends BaseJMockitTest{
 
 	@Test
 	public void urlWithoutSlashAtTheEnd() {
-		new Expectations() {{
-			cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co", clientBuilder);
+		new StrictExpectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
 			client.target("https://cloudstore.codewizards.co/_test").request(MediaType.TEXT_PLAIN).get(String.class);
 			result = "SUCCESS";
 		}};
+		cloudstoreClient = new CloudStoreRestClient("https://cloudstore.codewizards.co", clientBuilder);
 
 		String result = cloudstoreClient.getBaseUrl();
 		assertThat(result).isEqualTo("https://cloudstore.codewizards.co/");
