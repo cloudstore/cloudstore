@@ -187,7 +187,7 @@ implements MessageBodyWriter<Object>
 			if (object == null)
 				return;
 
-			if (parentStack.size() >= 10)
+			if (parentStack.size() >= 4)
 				return;
 
 			if (parent != null)
@@ -301,11 +301,14 @@ implements MessageBodyWriter<Object>
 			if (! (object instanceof Serializable))
 				return true;
 
-			if (object instanceof ObjectRef || object instanceof Uid)
+//			if (object instanceof ObjectRef) // does not work, because ObjectRef.ClassInfo.interfaceNames must not be referenced!
+//				return true;
+
+			if (object instanceof Uid)
 				return true;
 
-			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
-				return false;
+//			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
+//				return false;
 
 			// TODO do not hard-code the following, but use an advisor-service!
 			return !clazz.getName().startsWith("co.codewizards.") && !clazz.getName().startsWith("org.");

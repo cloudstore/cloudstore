@@ -15,6 +15,7 @@ import co.codewizards.cloudstore.ls.client.handler.InverseServiceRequestHandlerT
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfoMap;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
+import co.codewizards.cloudstore.ls.core.invoke.DelayedMethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.IncDecRefCountQueue;
 import co.codewizards.cloudstore.ls.core.invoke.Invoker;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
@@ -27,6 +28,7 @@ import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxyInvocationHandl
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyReader;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeWithObjectRefMessageBodyWriter;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
+import co.codewizards.cloudstore.ls.rest.client.request.GetDelayedMethodInvocationResponse;
 import co.codewizards.cloudstore.ls.rest.client.request.InvokeMethod;
 
 /**
@@ -185,8 +187,16 @@ public class LocalServerClient implements Invoker, Closeable {
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
 		assertNotNull("methodInvocationRequest", methodInvocationRequest);
 
-		final MethodInvocationResponse methodInvocationResponse = getLocalServerRestClient().execute(
+		MethodInvocationResponse methodInvocationResponse = getLocalServerRestClient().execute(
 				new InvokeMethod(methodInvocationRequest));
+
+		while (methodInvocationResponse instanceof DelayedMethodInvocationResponse) {
+			final DelayedMethodInvocationResponse dmir = (DelayedMethodInvocationResponse) methodInvocationResponse;
+			final Uid delayedResponseId = dmir.getDelayedResponseId();
+
+			methodInvocationResponse = getLocalServerRestClient().execute(
+					new GetDelayedMethodInvocationResponse(delayedResponseId));
+		}
 
 		final Object result = methodInvocationResponse.getResult();
 		return cast(result);

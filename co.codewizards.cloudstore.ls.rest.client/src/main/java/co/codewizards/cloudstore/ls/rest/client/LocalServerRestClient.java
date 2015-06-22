@@ -46,8 +46,8 @@ public class LocalServerRestClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalServerRestClient.class);
 
-	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
-	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 60 * 60 * 1000; // TODO should we better switch to a different protocol? a protocol which returns with a busy-message (i.e. an exception) containing a token and allowing the client to re-invoke with the token? thus making sure, we have a short timeout (maybe 5 minutes) and thus quickly find out, if the connection is really dead - while at the same time allowing for really long running operations (basically unlimited).
+	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 30 * 1000; // 30 seconds should really be sufficient to connect to localhost
+	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 3 * 60 * 1000; // 3 minutes is more than enough, because we have DelayedMethodInvocationResponse
 
 	/**
 	 * The {@code key} for the connection timeout used with {@link Config#getPropertyAsInt(String, int)}.
