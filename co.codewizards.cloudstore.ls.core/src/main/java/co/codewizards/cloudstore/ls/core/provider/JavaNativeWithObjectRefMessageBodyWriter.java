@@ -6,7 +6,6 @@ import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -38,6 +37,7 @@ import co.codewizards.cloudstore.core.ls.NoObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientClassSet;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientContainer;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectGraphContainer;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverterFactory;
@@ -298,17 +298,20 @@ implements MessageBodyWriter<Object>
 		private boolean isTypeConsideredLeaf(final Object object) {
 			final Class<?> clazz = object.getClass();
 
-			if (! (object instanceof Serializable))
+			if (ObjectManager.isObjectRefMappingEnabled(object))
 				return true;
 
-//			if (object instanceof ObjectRef) // does not work, because ObjectRef.ClassInfo.interfaceNames must not be referenced!
+//			if (! (object instanceof Serializable))
 //				return true;
-
-			if (object instanceof Uid)
-				return true;
-
-//			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
-//				return false;
+//
+////			if (object instanceof ObjectRef) // does not work, because ObjectRef.ClassInfo.interfaceNames must not be referenced!
+////				return true;
+//
+//			if (object instanceof Uid)
+//				return true;
+//
+////			if (clazz.isArray() || Collection.class.isAssignableFrom(clazz) ||Map.class.isAssignableFrom(clazz))
+////				return false;
 
 			// TODO do not hard-code the following, but use an advisor-service!
 			return !clazz.getName().startsWith("co.codewizards.") && !clazz.getName().startsWith("org.");

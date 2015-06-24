@@ -47,29 +47,48 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 			return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(null));
 		}
 
-		InvocationFilterRegistry.getInstance().assertCanInvoke(
-				new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz));
+		final ExtMethodInvocationRequest extMethodInvocationRequest = new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz);
+		InvocationFilterRegistry.getInstance().assertCanInvoke(extMethodInvocationRequest);
 
 		final String[] argumentTypeNames = methodInvocationRequest.getArgumentTypeNames();
 		final Class<?>[] argumentTypes = argumentTypeNames == null ? null : classManager.getClassesOrFail(argumentTypeNames);
 
 		final Object[] arguments = methodInvocationRequest.getArguments();
 
-		final Object resultObject;
+		Object resultObject = null;
 
 		final InvocationType invocationType = methodInvocationRequest.getInvocationType();
-		switch (invocationType) {
-			case CONSTRUCTOR:
-				resultObject = invokeConstructor(clazz, arguments);
-				break;
-			case OBJECT:
-				resultObject = invoke(object, methodName, argumentTypes, arguments);
-				break;
-			case STATIC:
-				resultObject = invokeStatic(clazz, methodName, arguments);
-				break;
-			default:
-				throw new IllegalStateException("Unknown InvocationType: " + invocationType);
+
+		objectManager.getReferenceCleanerRegistry().preInvoke(extMethodInvocationRequest);
+
+		Throwable error = null;
+		try {
+			switch (invocationType) {
+				case CONSTRUCTOR:
+					resultObject = invokeConstructor(clazz, arguments);
+					break;
+				case OBJECT:
+					resultObject = invoke(object, methodName, argumentTypes, arguments);
+					break;
+				case STATIC:
+					resultObject = invokeStatic(clazz, methodName, arguments);
+					break;
+				default:
+					throw new IllegalStateException("Unknown InvocationType: " + invocationType);
+			}
+		} catch (Throwable x) {
+			error = x;
+		} finally {
+			objectManager.getReferenceCleanerRegistry().postInvoke(extMethodInvocationRequest, resultObject, error);
+		}
+
+		if (error != null) {
+			if (error instanceof RuntimeException)
+				throw (RuntimeException) error;
+			else if (error instanceof Error)
+				throw (Error) error;
+			else
+				throw new RuntimeException(error);
 		}
 
 		return new InverseMethodInvocationResponse(request, MethodInvocationResponse.forInvocation(resultObject));

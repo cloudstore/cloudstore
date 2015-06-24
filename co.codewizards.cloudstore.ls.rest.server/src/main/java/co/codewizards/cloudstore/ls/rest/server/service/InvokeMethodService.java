@@ -84,7 +84,7 @@ public class InvokeMethodService extends AbstractService {
 	}
 
 	@POST
-	public MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) throws Exception {
+	public MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) throws Throwable {
 		assertNotNull("methodInvocationRequest", methodInvocationRequest);
 
 		// *always* acquiring to make sure the lastUseDate is updated - and to make things easy: we have what we need.
@@ -123,9 +123,9 @@ public class InvokeMethodService extends AbstractService {
 			if (methodInvocationResponse != null)
 				return methodInvocationResponse;
 
-			Exception exception = invocationRunnable.getException();
-			if (exception != null)
-				throw exception;
+			Throwable error = invocationRunnable.getError();
+			if (error != null)
+				throw error;
 
 			try {
 				invocationRunnable.wait(45000L);
@@ -137,9 +137,9 @@ public class InvokeMethodService extends AbstractService {
 			if (methodInvocationResponse != null)
 				return methodInvocationResponse;
 
-			exception = invocationRunnable.getException();
-			if (exception != null)
-				throw exception;
+			error = invocationRunnable.getError();
+			if (error != null)
+				throw error;
 
 			final Uid delayedResponseId = invocationRunnable.getDelayedResponseId();
 			assertNotNull("delayedResponseId", delayedResponseId);
@@ -151,7 +151,7 @@ public class InvokeMethodService extends AbstractService {
 
 	@GET
 	@Path("{delayedResponseId}")
-	public MethodInvocationResponse getDelayedMethodInvocationResponse(@PathParam("delayedResponseId") final Uid delayedResponseId) throws Exception {
+	public MethodInvocationResponse getDelayedMethodInvocationResponse(@PathParam("delayedResponseId") final Uid delayedResponseId) throws Throwable {
 		assertNotNull("delayedResponseId", delayedResponseId);
 		long schedEvTiSt = System.currentTimeMillis() + 240000; // scheduled eviction in 4 minutes
 		final InvocationRunnable invocationRunnable = delayedResponseId2InvocationRunnable.get(delayedResponseId);
@@ -160,15 +160,15 @@ public class InvokeMethodService extends AbstractService {
 
 		synchronized (invocationRunnable) {
 			MethodInvocationResponse methodInvocationResponse = invocationRunnable.getMethodInvocationResponse();
-			Exception exception = invocationRunnable.getException();
+			Throwable error = invocationRunnable.getError();
 
 			if (methodInvocationResponse != null) {
 				delayedResponseIdScheduledEvictions.add(new DelayedResponseIdScheduledEviction(schedEvTiSt, delayedResponseId));
 				return methodInvocationResponse;
 			}
-			if (exception != null) {
+			if (error != null) {
 				delayedResponseIdScheduledEvictions.add(new DelayedResponseIdScheduledEviction(schedEvTiSt, delayedResponseId));
-				throw exception;
+				throw error;
 			}
 
 			try {
@@ -184,10 +184,10 @@ public class InvokeMethodService extends AbstractService {
 				delayedResponseIdScheduledEvictions.add(new DelayedResponseIdScheduledEviction(schedEvTiSt, delayedResponseId));
 				return methodInvocationResponse;
 			}
-			exception = invocationRunnable.getException();
-			if (exception != null) {
+			error = invocationRunnable.getError();
+			if (error != null) {
 				delayedResponseIdScheduledEvictions.add(new DelayedResponseIdScheduledEviction(schedEvTiSt, delayedResponseId));
-				throw exception;
+				throw error;
 			}
 
 			return new DelayedMethodInvocationResponse(delayedResponseId);
@@ -199,7 +199,7 @@ public class InvokeMethodService extends AbstractService {
 
 		private final ExtMethodInvocationRequest extMethodInvocationRequest;
 		private MethodInvocationResponse methodInvocationResponse;
-		private Exception exception;
+		private Throwable error;
 		private Uid delayedResponseId;
 
 		public InvocationRunnable(final ExtMethodInvocationRequest extMethodInvocationRequest) {
@@ -208,6 +208,7 @@ public class InvokeMethodService extends AbstractService {
 
 		@Override
 		public void run() {
+			final ObjectManager objectManager = extMethodInvocationRequest.getObjectManager();
 			final MethodInvocationRequest methodInvocationRequest = extMethodInvocationRequest.getMethodInvocationRequest();
 			final ClassManager classManager = extMethodInvocationRequest.getObjectManager().getClassManager();
 			final Class<?> clazz = extMethodInvocationRequest.getTargetClass();
@@ -219,7 +220,10 @@ public class InvokeMethodService extends AbstractService {
 
 			final Object[] arguments = methodInvocationRequest.getArguments();
 
-			Object resultObject;
+			objectManager.getReferenceCleanerRegistry().preInvoke(extMethodInvocationRequest);
+
+			Throwable error = null;
+			Object resultObject = null;
 			try {
 
 				final InvocationType invocationType = methodInvocationRequest.getInvocationType();
@@ -237,16 +241,19 @@ public class InvokeMethodService extends AbstractService {
 						throw new IllegalStateException("Unknown InvocationType: " + invocationType);
 				}
 
-			} catch (final Exception x) {
+			} catch (final Throwable x) {
 				resultObject = null;
+				error = x;
 				synchronized (this) {
-					this.exception = x;
+					this.error = x;
 				}
 				logger.debug("run: " + x, x);
+			} finally {
+				objectManager.getReferenceCleanerRegistry().postInvoke(extMethodInvocationRequest, resultObject, error);
 			}
 
 			synchronized (this) {
-				if (this.exception == null) {
+				if (this.error == null) {
 					methodInvocationResponse = MethodInvocationResponse.forInvocation(resultObject);
 					assertNotNull("methodInvocationResponse", methodInvocationResponse);
 				}
@@ -265,8 +272,8 @@ public class InvokeMethodService extends AbstractService {
 			return methodInvocationResponse;
 		}
 
-		public synchronized Exception getException() {
-			return exception;
+		public synchronized Throwable getError() {
+			return error;
 		}
 
 		public synchronized Uid getDelayedResponseId() {

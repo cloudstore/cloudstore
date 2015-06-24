@@ -19,7 +19,7 @@ public class ClassManagerTest {
 
 	@Before
 	public void before() {
-		classManager = new ClassManager();
+		classManager = new ClassManager(new Uid());
 	}
 
 	@After

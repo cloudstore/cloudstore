@@ -2,8 +2,6 @@ package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,13 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Uid;
-import co.codewizards.cloudstore.core.ls.NoObjectRef;
 
 public class IncDecRefCountQueue {
 
 	private static final Logger logger = LoggerFactory.getLogger(IncDecRefCountQueue.class);
 
-	private static final long INC_DEC_REF_COUNT_PERIOD_MS = 5 * 1000L;
+	/**
+	 * How often to we notify the other side that an object is actually used (by invoking {@link ObjectManager#incRefCount(Object, Uid)}
+	 * on the other side).
+	 * <p>
+	 * For performance reasons, we do not perform one increment-reference-RPC per object, but rather collect them here
+	 * for a while and do one remote-procedure-call for all that occurred during this time period.
+	 * <p>
+	 * This period must be significantly shorter than the corresponding timeout
+	 * {@link ObjectManager#EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS}!
+	 */
+	protected static final long INC_DEC_REF_COUNT_PERIOD_MS = 5 * 1000L;
 
 	private final List<ObjectRefWithRefId> incEntries = Collections.synchronizedList(new LinkedList<ObjectRefWithRefId>());
 	private final List<ObjectRefWithRefId> decEntries = Collections.synchronizedList(new LinkedList<ObjectRefWithRefId>());
@@ -82,19 +89,19 @@ public class IncDecRefCountQueue {
 		decEntries.add(new ObjectRefWithRefId(objectRef, refId));
 	}
 
-	@NoObjectRef(inheritToObjectGraphChildren = false)
-	public static class NoObjectRefArrayList<E> extends ArrayList<E> {
-		private static final long serialVersionUID = 1L;
-
-		public NoObjectRefArrayList() {
-		}
-
-		public NoObjectRefArrayList(Collection<? extends E> c) {
-			super(c);
-		}
-
-		public NoObjectRefArrayList(int initialCapacity) {
-			super(initialCapacity);
-		}
-	}
+//	@NoObjectRef(inheritToObjectGraphChildren = false)
+//	public static class NoObjectRefArrayList<E> extends ArrayList<E> {
+//		private static final long serialVersionUID = 1L;
+//
+//		public NoObjectRefArrayList() {
+//		}
+//
+//		public NoObjectRefArrayList(Collection<? extends E> c) {
+//			super(c);
+//		}
+//
+//		public NoObjectRefArrayList(int initialCapacity) {
+//			super(initialCapacity);
+//		}
+//	}
 }

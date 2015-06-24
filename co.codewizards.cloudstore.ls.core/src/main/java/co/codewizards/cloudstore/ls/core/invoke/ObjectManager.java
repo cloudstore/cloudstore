@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.ls.core.invoke.refclean.ReferenceCleanerRegistry;
 
 public class ObjectManager {
 	/**
@@ -41,11 +44,23 @@ public class ObjectManager {
 	 * to make sure, the long-polling of inverse-service-invocation-requests serves additionally as a keep-alive for
 	 * the server-side {@code ObjectManager}.
 	 */
-	private static final long EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS = 5 * 60 * 1000L; // 5 minutes
-	private static final long EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS = 60 * 1000L;
+	protected static final long EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS = 2 * 60 * 1000L; // 2 minutes
+	protected static final long EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS = 60 * 1000L;
 
-	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS = 30 * 1000L; // 30 seconds
-	private static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS = 5 * 1000L;
+	/**
+	 * The other side must notify us that an object is actually used (by invoking {@link #incRefCount(Object, Uid)})
+	 * within this timeout.
+	 * <p>
+	 * Thus, this timeout must be longer than the maximum time it ever takes to
+	 * (1) transmit the entire object graph from here to the other side and (2) notify in the inverse direction
+	 * (increment reference count).
+	 * <p>
+	 * Note, that the inverse notification is deferred for performance reasons!
+	 * {@link IncDecRefCountQueue#INC_DEC_REF_COUNT_PERIOD_MS} thus must be significantly shorter than this timeout
+	 * here.
+	 */
+	protected static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_TIMEOUT_MS = 30 * 1000L; // 30 seconds
+	protected static final long EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS = 5 * 1000L;
 
 	private static final Logger logger = LoggerFactory.getLogger(ObjectManager.class);
 
@@ -64,7 +79,8 @@ public class ObjectManager {
 	private final Map<ObjectRef, Set<Uid>> objectRef2RefIds = new HashMap<>();
 
 	private final RemoteObjectProxyManager remoteObjectProxyManager = new RemoteObjectProxyManager();
-	private final ClassManager classManager = new ClassManager();
+	private final ClassManager classManager;
+	private final ReferenceCleanerRegistry referenceCleanerRegistry;
 
 	private static final Map<Uid, ObjectManager> clientId2ObjectManager = new HashMap<>();
 
@@ -88,7 +104,10 @@ public class ObjectManager {
 		}
 	};
 	static {
-		timer.schedule(timerTask, 1000L, 1000L);
+		final long period = BigInteger.valueOf(EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS)
+				.gcd(BigInteger.valueOf(EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS)).longValue();
+
+		timer.schedule(timerTask, period, period);
 	}
 
 	public static synchronized ObjectManager getInstance(final Uid clientId) {
@@ -110,23 +129,41 @@ public class ObjectManager {
 		clientId2ObjectManager.clear();
 	}
 
-	private static synchronized void evictOldObjectManagers() {
-		final long now = System.currentTimeMillis();
+	private static void evictOldObjectManagers() {
+		int objectManagerCountTotal = 0;
+		int objectManagerCountNeverEvict = 0;
 
-		if (evictOldObjectManagersLastInvocation >= now - EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS)
-			return;
+		final List<ObjectManager> evictedObjectManagers = new LinkedList<>();
+		synchronized (ObjectManager.class) {
+			final long now = System.currentTimeMillis();
 
-		evictOldObjectManagersLastInvocation = now;
+			if (evictOldObjectManagersLastInvocation > now - EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS)
+				return;
 
-		for (Iterator<ObjectManager> it = clientId2ObjectManager.values().iterator(); it.hasNext();) {
-			final ObjectManager objectManager = it.next();
+			evictOldObjectManagersLastInvocation = now;
 
-			if (objectManager.isNeverEvict())
-				continue;
+			for (Iterator<ObjectManager> it = clientId2ObjectManager.values().iterator(); it.hasNext();) {
+				final ObjectManager objectManager = it.next();
+				++objectManagerCountTotal;
 
-			if (objectManager.getLastUseDate().getTime() < now - EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS)
-				it.remove();
+				if (objectManager.isNeverEvict()) {
+					++objectManagerCountNeverEvict;
+					continue;
+				}
+
+				if (objectManager.getLastUseDate().getTime() < now - EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS) {
+					evictedObjectManagers.add(objectManager);
+					it.remove();
+					logger.debug("evictOldObjectManagers: evicted ObjectManager with clientId={}", objectManager.getClientId());
+				}
+			}
 		}
+
+		for (final ObjectManager objectManager : evictedObjectManagers)
+			objectManager.postEvict();
+
+		logger.debug("evictOldObjectManagers: objectManagerCountTotal={} objectManagerCountNeverEvict={} objectManagerCountEvicted={}",
+				objectManagerCountTotal, objectManagerCountNeverEvict, evictedObjectManagers.size());
 	}
 
 	private static synchronized List<ObjectManager> getObjectManagers() {
@@ -137,7 +174,7 @@ public class ObjectManager {
 	private static void allObjectManagers_evictZeroReferenceObjectRefs() {
 		final long now = System.currentTimeMillis();
 
-		if (evictZeroReferenceObjectRefsLastInvocation >= now - EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS)
+		if (evictZeroReferenceObjectRefsLastInvocation > now - EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS)
 			return;
 
 		evictZeroReferenceObjectRefsLastInvocation = now;
@@ -164,8 +201,10 @@ public class ObjectManager {
 	}
 
 	protected ObjectManager(final Uid clientId) {
-		assertNotNull("clientId", clientId);
-		this.clientId = clientId;
+		this.clientId = assertNotNull("clientId", clientId);
+		classManager = new ClassManager(clientId);
+		referenceCleanerRegistry = new ReferenceCleanerRegistry(this);
+		logger.debug("[{}].<init>: Created ObjectManager.", clientId);
 	}
 
 	protected Date getLastUseDate() {
@@ -221,6 +260,10 @@ public class ObjectManager {
 		ObjectRef objectRef = getObjectRef(object);
 		if (objectRef == null) {
 			objectRef = createObjectRef(object.getClass());
+
+			if (logger.isDebugEnabled())
+				logger.debug("[{}].getObjectRefOrCreate: Created {} for {} ({}).", clientId, objectRef, toIdentityString(object), object);
+
 			objectRef2Object.put(objectRef, object);
 			object2ObjectRef.put(object, objectRef);
 			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
@@ -231,7 +274,8 @@ public class ObjectManager {
 	public synchronized ObjectRef getObjectRefOrFail(final Object object) {
 		final ObjectRef objectRef = getObjectRef(object);
 		if (objectRef == null)
-			throw new IllegalArgumentException("There is no ObjectRef known for this object: " + object);
+			throw new IllegalArgumentException(String.format("ObjectManager[%s] does not have ObjectRef for this object: %s (%s)",
+					clientId, toIdentityString(object), object));
 
 		return objectRef;
 	}
@@ -247,7 +291,8 @@ public class ObjectManager {
 	public synchronized Object getObjectOrFail(final ObjectRef objectRef) {
 		final Object object = getObject(objectRef);
 		if (object == null)
-			throw new IllegalArgumentException("There is no object known for this ObjectRef: " + objectRef);
+			throw new IllegalArgumentException(String.format("ObjectManager[%s] does not have object for this ObjectRef: %s",
+					clientId, objectRef));
 
 		return object;
 	}
@@ -269,38 +314,59 @@ public class ObjectManager {
 		final Object object = objectRef2Object.remove(objectRef);
 		object2ObjectRef.remove(object);
 		updateLastUseDate();
+
+		logger.debug("remove: {}", objectRef);
 	}
 
 	public synchronized void incRefCount(final Object object, final Uid refId) {
 		assertNotNull("object", object);
 		assertNotNull("refId", refId);
+
+		int refCountBefore;
+		int refCountAfter;
+
 		final ObjectRef objectRef = getObjectRefOrFail(object);
 		if (zeroReferenceObjectRef2Timestamp.remove(objectRef) != null) {
 			if (objectRef2RefIds.put(objectRef, new HashSet<Uid>(Collections.singleton(refId))) != null)
 				throw new IllegalStateException("Collision! WTF?!");
+
+			refCountBefore = 0;
+			refCountAfter = 1;
 		}
 		else {
 			final Set<Uid> refIds = objectRef2RefIds.get(objectRef);
+			refCountBefore = refIds.size();
 			assertNotNull("objectRef2RefIds.get(" + objectRef + ")", refIds);
 			refIds.add(refId);
+			refCountAfter = refIds.size();
 		}
 		classManager.setClassIdKnownByRemoteSide(objectRef.getClassId());
+
+		logger.trace("[{}].incRefCount: {} refCountAfter={} refCountBefore={} refId={}",
+				clientId, objectRef, refCountAfter, refCountBefore, refId);
 	}
 
 	public synchronized void decRefCount(final Object object, final Uid refId) {
 		assertNotNull("object", object);
 		assertNotNull("refId", refId);
+
+		int refCountBefore = 0;
+		int refCountAfter = 0;
+
 		final ObjectRef objectRef = getObjectRefOrFail(object);
 		final Set<Uid> refIds = objectRef2RefIds.get(objectRef);
-		if (refIds == null)
-			return;
+		if (refIds != null) {
+			refCountBefore = refIds.size();
+			refIds.remove(refId);
+			refCountAfter = refIds.size();
 
-		refIds.remove(refId);
-
-		if (refIds.isEmpty()) {
-			objectRef2RefIds.remove(objectRef);
-			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+			if (refIds.isEmpty()) {
+				objectRef2RefIds.remove(objectRef);
+				zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+			}
 		}
+		logger.trace("[{}].decRefCount: {} refCountAfter={} refCountBefore={} refId={}",
+				clientId, objectRef, refCountAfter, refCountBefore, refId);
 	}
 
 	private static void assertNotInstanceOfObjectRef(final Object object) {
@@ -316,7 +382,7 @@ public class ObjectManager {
 		return classManager;
 	}
 
-	public boolean isObjectRefMappingEnabled(final Object object) {
+	public static boolean isObjectRefMappingEnabled(final Object object) {
 		if (object == null)
 			return false;
 
@@ -337,11 +403,19 @@ public class ObjectManager {
 		return true;
 	}
 
-	private Class<?> getClassOrArrayComponentType(final Object object) {
+	private static Class<?> getClassOrArrayComponentType(final Object object) {
 		final Class<?> clazz = object.getClass();
 		if (clazz.isArray())
 			return clazz.getComponentType();
 		else
 			return clazz;
+	}
+
+	public ReferenceCleanerRegistry getReferenceCleanerRegistry() {
+		return referenceCleanerRegistry;
+	}
+
+	protected void postEvict() {
+		referenceCleanerRegistry.cleanUp();
 	}
 }
