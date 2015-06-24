@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.bean;
 
 import java.beans.PropertyChangeListener;
 
-public abstract class AbstractBean<P extends PropertyBase> implements Cloneable {
+public abstract class AbstractBean<P extends PropertyBase> implements Bean<P>, Cloneable {
 	private BeanSupport<AbstractBean<P>, P> beanSupport = new BeanSupport<AbstractBean<P>, P>(this);
 
 	protected void setPropertyValue(P property, Object value) {
@@ -13,18 +13,22 @@ public abstract class AbstractBean<P extends PropertyBase> implements Cloneable 
 		return beanSupport.getPropertyValue(property);
 	}
 
+	@Override
 	public void addPropertyChangeListener(PropertyChangeListener listener) {
 		beanSupport.addPropertyChangeListener(listener);
 	}
 
+	@Override
 	public void removePropertyChangeListener(PropertyChangeListener listener) {
 		beanSupport.removePropertyChangeListener(listener);
 	}
 
+	@Override
 	public void addPropertyChangeListener(P property, PropertyChangeListener listener) {
 		beanSupport.addPropertyChangeListener(property, listener);
 	}
 
+	@Override
 	public void removePropertyChangeListener(P property, PropertyChangeListener listener) {
 		beanSupport.removePropertyChangeListener(property, listener);
 	}

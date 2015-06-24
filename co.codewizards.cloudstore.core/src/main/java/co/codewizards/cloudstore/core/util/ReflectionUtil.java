@@ -19,7 +19,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ReflectionUtil {
+
+	private static final Logger logger = LoggerFactory.getLogger(ReflectionUtil.class);
 
 	private ReflectionUtil() { }
 
@@ -97,9 +102,13 @@ public class ReflectionUtil {
 		}
 
 		if (compatibleMethods.size() > 1) {
-			// TODO find + invoke the most suitable instead of throwing this exception!
+			// TODO find + invoke the *most* *suitable* one - instead of logging this warning (and simply invoking the first).
 			final String methodNameWithParameterTypes = createMethodNameWithParameterTypes(methodName, argTypes);
-			throw new IllegalArgumentException(new NoSuchMethodException(String.format("%s and its super-classes declare multiple methods matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes)));
+			final Exception x = new NoSuchMethodException(String.format("%s and its super-classes declare multiple methods matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes));
+			if (logger.isDebugEnabled())
+				logger.warn("invoke: " + x, x);
+			else
+				logger.warn("invoke: {}", x);
 		}
 
 		return invoke(object, compatibleMethods.get(0), args);

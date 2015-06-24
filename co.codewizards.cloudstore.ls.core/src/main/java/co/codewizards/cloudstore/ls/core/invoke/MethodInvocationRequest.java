@@ -18,6 +18,8 @@ public class MethodInvocationRequest implements Serializable {
 
 	private final Object[] arguments;
 
+	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+
 	protected MethodInvocationRequest(final String className, final Object object, final String methodName, final String[] argumentTypeNames, final Object[] arguments) {
 		this.className = className;
 		this.object = object;
@@ -65,7 +67,7 @@ public class MethodInvocationRequest implements Serializable {
 	}
 
 	public Object[] getArguments() {
-		return arguments;
+		return arguments == null ? EMPTY_OBJECT_ARRAY : arguments;
 	}
 
 	public InvocationType getInvocationType() {

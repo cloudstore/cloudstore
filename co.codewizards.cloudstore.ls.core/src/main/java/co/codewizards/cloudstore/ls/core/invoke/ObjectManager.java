@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.Uid;
-import co.codewizards.cloudstore.ls.core.invoke.refclean.ReferenceCleanerRegistry;
+import co.codewizards.cloudstore.ls.core.invoke.refjanitor.ReferenceJanitorRegistry;
 
 public class ObjectManager {
 	/**
@@ -80,7 +80,7 @@ public class ObjectManager {
 
 	private final RemoteObjectProxyManager remoteObjectProxyManager = new RemoteObjectProxyManager();
 	private final ClassManager classManager;
-	private final ReferenceCleanerRegistry referenceCleanerRegistry;
+	private final ReferenceJanitorRegistry referenceJanitorRegistry;
 
 	private static final Map<Uid, ObjectManager> clientId2ObjectManager = new HashMap<>();
 
@@ -203,7 +203,7 @@ public class ObjectManager {
 	protected ObjectManager(final Uid clientId) {
 		this.clientId = assertNotNull("clientId", clientId);
 		classManager = new ClassManager(clientId);
-		referenceCleanerRegistry = new ReferenceCleanerRegistry(this);
+		referenceJanitorRegistry = new ReferenceJanitorRegistry(this);
 		logger.debug("[{}].<init>: Created ObjectManager.", clientId);
 	}
 
@@ -411,11 +411,11 @@ public class ObjectManager {
 			return clazz;
 	}
 
-	public ReferenceCleanerRegistry getReferenceCleanerRegistry() {
-		return referenceCleanerRegistry;
+	public ReferenceJanitorRegistry getReferenceCleanerRegistry() {
+		return referenceJanitorRegistry;
 	}
 
 	protected void postEvict() {
-		referenceCleanerRegistry.cleanUp();
+		referenceJanitorRegistry.cleanUp();
 	}
 }
