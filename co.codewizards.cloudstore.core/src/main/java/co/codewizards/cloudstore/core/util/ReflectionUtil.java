@@ -101,14 +101,12 @@ public class ReflectionUtil {
 			throw new IllegalArgumentException(new NoSuchMethodException(String.format("Neither %s nor one of its super-classes declares the method %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes)));
 		}
 
-		if (compatibleMethods.size() > 1) {
+		if (compatibleMethods.size() > 1 && logger.isDebugEnabled()) {
 			// TODO find + invoke the *most* *suitable* one - instead of logging this warning (and simply invoking the first).
 			final String methodNameWithParameterTypes = createMethodNameWithParameterTypes(methodName, argTypes);
-			final Exception x = new NoSuchMethodException(String.format("%s and its super-classes declare multiple methods matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes));
-			if (logger.isDebugEnabled())
-				logger.warn("invoke: " + x, x);
-			else
-				logger.warn("invoke: {}", x);
+			final String msg = String.format("%s and its super-classes declare multiple methods matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes);
+//			final Exception x = new NoSuchMethodException(msg);
+			logger.warn("invoke: {}", msg);
 		}
 
 		return invoke(object, compatibleMethods.get(0), args);

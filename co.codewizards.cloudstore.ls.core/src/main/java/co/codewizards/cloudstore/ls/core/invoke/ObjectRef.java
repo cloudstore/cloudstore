@@ -33,6 +33,8 @@ public class ObjectRef implements Serializable {
 	 */
 	public static final String VIRTUAL_METHOD_NAME_DEC_REF_COUNT = "*objectRef_decRefCount*";
 
+	public static final String VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER = "*objectManager_close*";
+
 	private final Uid clientId;
 	private final int classId;
 	private final long objectId;

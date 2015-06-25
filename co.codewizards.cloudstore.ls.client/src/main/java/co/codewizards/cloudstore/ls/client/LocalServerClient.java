@@ -256,6 +256,7 @@ public class LocalServerClient implements Invoker, Closeable {
 	@Override
 	public void close() {
 		objectManager.setNeverEvict(false);
+		invokeStatic(ObjectRef.class, ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER, (Class<?>[])null, (Object[]) null);
 
 		final Thread thread = inverseServiceRequestHandlerThread;
 		if (thread != null) {

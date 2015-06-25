@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +134,7 @@ public class ObjectManager {
 		int objectManagerCountTotal = 0;
 		int objectManagerCountNeverEvict = 0;
 
-		final List<ObjectManager> evictedObjectManagers = new LinkedList<>();
+		final List<ObjectManager> objectManagersToClose = new LinkedList<>();
 		synchronized (ObjectManager.class) {
 			final long now = System.currentTimeMillis();
 
@@ -144,8 +143,7 @@ public class ObjectManager {
 
 			evictOldObjectManagersLastInvocation = now;
 
-			for (Iterator<ObjectManager> it = clientId2ObjectManager.values().iterator(); it.hasNext();) {
-				final ObjectManager objectManager = it.next();
+			for (final ObjectManager objectManager : clientId2ObjectManager.values()) {
 				++objectManagerCountTotal;
 
 				if (objectManager.isNeverEvict()) {
@@ -154,18 +152,17 @@ public class ObjectManager {
 				}
 
 				if (objectManager.getLastUseDate().getTime() < now - EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS) {
-					evictedObjectManagers.add(objectManager);
-					it.remove();
-					logger.debug("evictOldObjectManagers: evicted ObjectManager with clientId={}", objectManager.getClientId());
+					objectManagersToClose.add(objectManager);
+					logger.debug("evictOldObjectManagers: evicting ObjectManager with clientId={}", objectManager.getClientId());
 				}
 			}
 		}
 
-		for (final ObjectManager objectManager : evictedObjectManagers)
+		for (final ObjectManager objectManager : objectManagersToClose)
 			objectManager.close();
 
 		logger.debug("evictOldObjectManagers: objectManagerCountTotal={} objectManagerCountNeverEvict={} objectManagerCountEvicted={}",
-				objectManagerCountTotal, objectManagerCountNeverEvict, evictedObjectManagers.size());
+				objectManagerCountTotal, objectManagerCountNeverEvict, objectManagersToClose.size());
 	}
 
 	private static synchronized List<ObjectManager> getObjectManagers() {
@@ -428,12 +425,15 @@ public class ObjectManager {
 			throw new IllegalStateException(String.format("ObjectManager[%s] is closed!", clientId));
 	}
 
-	protected void close() {
+	public void close() {
 		synchronized (this) {
 			if (closed)
 				return;
 
 			closed = true;
+		}
+		synchronized (ObjectManager.class) {
+			clientId2ObjectManager.remove(clientId);
 		}
 		referenceJanitorRegistry.cleanUp();
 	}

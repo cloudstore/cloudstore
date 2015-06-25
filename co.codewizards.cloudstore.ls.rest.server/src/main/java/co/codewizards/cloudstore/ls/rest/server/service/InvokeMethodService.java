@@ -57,6 +57,10 @@ public class InvokeMethodService extends AbstractService {
 
 			return MethodInvocationResponse.forInvocation(null);
 		}
+		else if (ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER.equals(methodName)) {
+			objectManager.close();
+			return MethodInvocationResponse.forInvocation(null);
+		}
 
 		final ExtMethodInvocationRequest extMethodInvocationRequest = new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz);
 		return invokeMethodExecutor.execute(extMethodInvocationRequest);
