@@ -141,9 +141,15 @@ public class LocalServerClientIT extends AbstractIT {
 
 		final List<PropertyChangeListenerInvocation> propertyChangeListenerInvocations = new ArrayList<>();
 
+		final boolean[] slept = new boolean[] { false };
+		final boolean[] sleepEnabled = new boolean[] { true };
 		PropertyChangeListener globalPropertyChangeListener = new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent event) {
+				if (sleepEnabled[0]) {
+					try { Thread.sleep(300_000); } catch (InterruptedException e) { }
+					slept[0] = true;
+				}
 				propertyChangeListenerInvocations.add(new PropertyChangeListenerInvocation(this, event));
 			}
 		};
@@ -151,6 +157,9 @@ public class LocalServerClientIT extends AbstractIT {
 		PropertyChangeListener stringValuePropertyChangeListener = new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent event) {
+//				if (sleepEnabled[0])
+//					try { Thread.sleep(300_000); } catch (InterruptedException e) { }
+
 				propertyChangeListenerInvocations.add(new PropertyChangeListenerInvocation(this, event));
 			}
 		};
@@ -158,9 +167,14 @@ public class LocalServerClientIT extends AbstractIT {
 		exampleService.addPropertyChangeListener(globalPropertyChangeListener);
 		exampleService.addPropertyChangeListener(ExampleService.PropertyEnum.stringValue, stringValuePropertyChangeListener);
 
+		assertThat(slept[0]).isFalse();
 		propertyChangeListenerInvocations.clear();
 		exampleService.setStringValue("aaa");
 		assertThat(propertyChangeListenerInvocations).hasSize(2);
+
+		assertThat(slept[0]).isTrue();
+
+		sleepEnabled[0] = false;
 
 		exampleService.setStringValue("bbb");
 		assertThat(propertyChangeListenerInvocations).hasSize(4);

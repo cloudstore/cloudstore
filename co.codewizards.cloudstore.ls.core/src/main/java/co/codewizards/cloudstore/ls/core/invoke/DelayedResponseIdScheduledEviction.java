@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.ls.rest.server.service;
+package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;

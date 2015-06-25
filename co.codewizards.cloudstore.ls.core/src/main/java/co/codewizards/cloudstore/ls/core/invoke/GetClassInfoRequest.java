@@ -18,4 +18,9 @@ public class GetClassInfoRequest extends AbstractInverseServiceRequest {
 	public int getClassId() {
 		return classId;
 	}
+
+	@Override
+	public boolean isTimeoutDeadly() {
+		return true;
+	}
 }

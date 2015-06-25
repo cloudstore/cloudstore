@@ -71,6 +71,8 @@ public class ObjectManager {
 	private volatile Date lastUseDate;
 	private volatile boolean neverEvict;
 
+	private boolean closed;
+
 	private final Map<ObjectRef, Object> objectRef2Object = new HashMap<>();
 	private final Map<Object, ObjectRef> object2ObjectRef = new IdentityHashMap<>();
 	private final Map<String, Object> contextObjectMap = new HashMap<>();
@@ -160,7 +162,7 @@ public class ObjectManager {
 		}
 
 		for (final ObjectManager objectManager : evictedObjectManagers)
-			objectManager.postEvict();
+			objectManager.close();
 
 		logger.debug("evictOldObjectManagers: objectManagerCountTotal={} objectManagerCountNeverEvict={} objectManagerCountEvicted={}",
 				objectManagerCountTotal, objectManagerCountNeverEvict, evictedObjectManagers.size());
@@ -240,6 +242,8 @@ public class ObjectManager {
 	}
 
 	protected synchronized ObjectRef createObjectRef(Class<?> clazz) {
+		assertNotClosed();
+
 		final int classId = classManager.getClassIdOrCreate(clazz);
 		final ObjectRef objectRef = new ObjectRef(clientId, classId, nextObjectId++);
 
@@ -415,7 +419,22 @@ public class ObjectManager {
 		return referenceJanitorRegistry;
 	}
 
-	protected void postEvict() {
+	public synchronized boolean isClosed() {
+		return closed;
+	}
+
+	protected synchronized void assertNotClosed() {
+		if (closed)
+			throw new IllegalStateException(String.format("ObjectManager[%s] is closed!", clientId));
+	}
+
+	protected void close() {
+		synchronized (this) {
+			if (closed)
+				return;
+
+			closed = true;
+		}
 		referenceJanitorRegistry.cleanUp();
 	}
 }

@@ -11,4 +11,9 @@ public abstract class AbstractInverseServiceRequest implements InverseServiceReq
 	public Uid getRequestId() {
 		return requestId;
 	}
+
+	@Override
+	public boolean isTimeoutDeadly() {
+		return false;
+	}
 }

@@ -25,5 +25,5 @@ public interface InverseServiceRequestHandler<Q extends InverseServiceRequest, A
 
 	void setLocalServerClient(LocalServerClient localServerClient);
 
-	A handle(Q request);
+	A handle(Q request) throws Exception;
 }

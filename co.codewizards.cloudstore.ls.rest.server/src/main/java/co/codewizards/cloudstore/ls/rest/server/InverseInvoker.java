@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.ls.core.dto.NullResponse;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfo;
 import co.codewizards.cloudstore.ls.core.invoke.ClassInfoMap;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
+import co.codewizards.cloudstore.ls.core.invoke.DelayedMethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.invoke.IncDecRefCountQueue;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;
@@ -43,18 +44,24 @@ public class InverseInvoker implements Invoker {
 	 * <i>long polling</i> in order to allow for
 	 * {@linkplain #performInverseServiceRequest(InverseServiceRequest) inverse service invocations}.
 	 * <p>
-	 * This timeout must be (significantly) shorter than {@link ObjectManager#TIMEOUT_EVICT_UNUSED_OBJECT_MANAGER_MS} to make sure, the
+	 * This timeout must be (significantly) shorter than {@link ObjectManager#EVICT_UNUSED_OBJECT_MANAGER_TIMEOUT_MS} to make sure, the
 	 * {@linkplain #pollInverseServiceRequest() polling} serves additionally as a keep-alive for
 	 * the server-side {@code ObjectManager}.
 	 */
-	private static final long POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 10L * 1000L; // 10 seconds
+	private static final long POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 15L * 1000L; // 15 seconds
 
 	/**
 	 * Timeout for {@link #performInverseServiceRequest(InverseServiceRequest)}.
 	 * <p>
 	 * If an inverse service-request does not receive a response within this timeout, a {@link TimeoutException} is thrown.
+	 * <p>
+	 * Please note, that the {@code invoke*} methods (e.g. {@link #invoke(Object, String, Object...)} or
+	 * {@link #invokeConstructor(Class, Object...)}) can take much longer, because the other side will return
+	 * a {@link DelayedMethodInvocationResponse} after a much shorter timeout (a few dozen seconds). This allows
+	 * the actual method to be invoked to take how long it wants (unlimited!) while at the same time detecting very
+	 * quickly, if the other side is dead (this timeout).
 	 */
-	private static final long PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 15L * 60L * 1000L; // 15 minutes
+	private static final long PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS = 3L * 60L * 1000L; // 3 minutes is more than enough, because we have DelayedMethodInvocationResponse
 
 	private final IncDecRefCountQueue incDecRefCountQueue = new IncDecRefCountQueue(this);
 	private final ObjectManager objectManager;
@@ -62,6 +69,8 @@ public class InverseInvoker implements Invoker {
 	private final Set<Uid> requestIdsWaitingForResponse = new HashSet<Uid>(); // synchronized by: requestId2InverseServiceResponse
 	private final Map<Uid, InverseServiceResponse> requestId2InverseServiceResponse = new HashMap<Uid, InverseServiceResponse>();
 	private final ClassInfoMap classInfoMap = new ClassInfoMap();
+
+	private volatile boolean diedOfTimeout;
 
 	public static InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
 		assertNotNull("objectManager", objectManager);
@@ -177,12 +186,24 @@ public class InverseInvoker implements Invoker {
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
 		assertNotNull("methodInvocationRequest", methodInvocationRequest);
 
-		final InverseMethodInvocationResponse inverseMethodInvocationResponse = performInverseServiceRequest(
+		InverseMethodInvocationResponse inverseMethodInvocationResponse = performInverseServiceRequest(
 				new InverseMethodInvocationRequest(methodInvocationRequest));
 
 		assertNotNull("inverseMethodInvocationResponse", inverseMethodInvocationResponse);
 
-		final MethodInvocationResponse methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
+		MethodInvocationResponse methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
+
+		while (methodInvocationResponse instanceof DelayedMethodInvocationResponse) {
+			final DelayedMethodInvocationResponse dmir = (DelayedMethodInvocationResponse) methodInvocationResponse;
+			final Uid delayedResponseId = dmir.getDelayedResponseId();
+
+			inverseMethodInvocationResponse = performInverseServiceRequest(
+					new InverseMethodInvocationRequest(delayedResponseId));
+
+			assertNotNull("inverseMethodInvocationResponse", inverseMethodInvocationResponse);
+
+			methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
+		}
 
 		final Object result = methodInvocationResponse.getResult();
 		return cast(result);
@@ -272,6 +293,9 @@ public class InverseInvoker implements Invoker {
 	public <T extends InverseServiceResponse> T performInverseServiceRequest(final InverseServiceRequest request) throws TimeoutException {
 		assertNotNull("request", request);
 
+		if (diedOfTimeout)
+			throw new IllegalStateException(String.format("InverseInvoker[%s] died of timeout, already!", objectManager.getClientId()));
+
 		final Uid requestId = request.getRequestId();
 		assertNotNull("request.requestId", requestId);
 
@@ -339,7 +363,11 @@ public class InverseInvoker implements Invoker {
 			}
 		}
 
-		throw new TimeoutException(String.format("Timeout waiting for response matching requestId=%s!", requestId));
+		if (request.isTimeoutDeadly())
+			diedOfTimeout = true;
+
+		throw new TimeoutException(String.format("InverseInvoker[%s] encountered timeout while waiting for response matching requestId=%s! diedOfTimeout=%s",
+				objectManager.getClientId(), requestId, diedOfTimeout));
 	}
 
 	public InverseServiceRequest pollInverseServiceRequest() {

@@ -3,7 +3,9 @@ package co.codewizards.cloudstore.ls.core.invoke.refjanitor;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -24,6 +26,12 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	private static final Logger logger = LoggerFactory.getLogger(PropertyChangeListenerJanitor.class);
 
 	private final WeakIdentityHashMap<Object, Map<Object, List<IdentityWeakReference<PropertyChangeListener>>>> bean2Property2ListenerRefs = new WeakIdentityHashMap<>();
+	private final WeakIdentityHashMap<PropertyChangeListener, WeakReference<FaultTolerantPropertyChangeListener>> originalListener2FaultTolerantPropertyChangeListenerRef =
+			new WeakIdentityHashMap<>();
+
+//	// needed to pin the original listener into memory as long as the FaultTolerantPropertyChangeListener is still needed.
+//	private final WeakIdentityHashMap<FaultTolerantPropertyChangeListener, PropertyChangeListener> faultTolerantPropertyChangeListener2OriginalListener =
+//			new WeakIdentityHashMap<>();
 
 	@Override
 	public void preInvoke(final ExtMethodInvocationRequest extMethodInvocationRequest) {
@@ -38,8 +46,10 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 
 		Object property = null;
 		PropertyChangeListener listener = null;
-		if (arguments.length == 1 && arguments[0] instanceof PropertyChangeListener)
+		if (arguments.length == 1 && arguments[0] instanceof PropertyChangeListener) {
 			listener = (PropertyChangeListener) arguments[0];
+			arguments[0] = getFaultTolerantPropertyChangeListenerOrCreate(listener);
+		}
 		else if (arguments.length == 2 && arguments[1] instanceof PropertyChangeListener) {
 			listener = (PropertyChangeListener) arguments[1];
 			if (arguments[0] instanceof PropertyBase)
@@ -48,17 +58,38 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 				property = arguments[0];
 			else
 				return;
+
+			arguments[1] = getFaultTolerantPropertyChangeListenerOrCreate(listener);
 		}
 		else
 			return;
 
-		if (listener == null)
-			return;
+		assertNotNull("listener", listener);
 
 		if ("addPropertyChangeListener".equals(methodName))
 			trackAddPropertyChangeListener(bean, property, listener);
 		else if ("removePropertyChangeListener".equals(methodName))
 			trackRemovePropertyChangeListener(bean, property, listener);
+	}
+
+	private synchronized FaultTolerantPropertyChangeListener getFaultTolerantPropertyChangeListenerOrCreate(final PropertyChangeListener listener) {
+		assertNotNull("listener", listener);
+
+		final WeakReference<FaultTolerantPropertyChangeListener> ref = originalListener2FaultTolerantPropertyChangeListenerRef.get(listener);
+		FaultTolerantPropertyChangeListener faultTolerantListener = ref == null ? null : ref.get();
+		if (faultTolerantListener == null) {
+			faultTolerantListener = new FaultTolerantPropertyChangeListener(listener);
+			originalListener2FaultTolerantPropertyChangeListenerRef.put(listener, new WeakReference<>(faultTolerantListener));
+		}
+		return faultTolerantListener;
+	}
+
+	private synchronized FaultTolerantPropertyChangeListener getFaultTolerantPropertyChangeListener(final PropertyChangeListener listener) {
+		assertNotNull("listener", listener);
+
+		final WeakReference<FaultTolerantPropertyChangeListener> ref = originalListener2FaultTolerantPropertyChangeListenerRef.get(listener);
+		final FaultTolerantPropertyChangeListener faultTolerantListener = ref == null ? null : ref.get();
+		return faultTolerantListener;
 	}
 
 	@Override
@@ -86,15 +117,19 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 		}
 	}
 
-	private static void tryRemovePropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
+	private void tryRemovePropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
 		assertNotNull("bean", bean);
 		assertNotNull("listener", listener);
 
+		final FaultTolerantPropertyChangeListener faultTolerantPropertyChangeListener = getFaultTolerantPropertyChangeListener(listener);
+		if (faultTolerantPropertyChangeListener == null)
+			return;
+
 		try {
 			if (property != null)
-				invoke(bean, "removePropertyChangeListener", property, listener);
+				invoke(bean, "removePropertyChangeListener", property, faultTolerantPropertyChangeListener);
 			else
-				invoke(bean, "removePropertyChangeListener", listener);
+				invoke(bean, "removePropertyChangeListener", faultTolerantPropertyChangeListener);
 		} catch (final Exception x) {
 			logger.error("tryRemovePropertyChangeListener: " + x, x);
 		}
@@ -152,6 +187,31 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 			final IdentityWeakReference<PropertyChangeListener> ref = it.next();
 			if (ref.get() == null)
 				it.remove();
+		}
+	}
+
+	private static class FaultTolerantPropertyChangeListener implements PropertyChangeListener {
+		private static final Logger logger = LoggerFactory.getLogger(PropertyChangeListenerJanitor.FaultTolerantPropertyChangeListener.class);
+
+		private final PropertyChangeListener delegate;
+
+		public FaultTolerantPropertyChangeListener(final PropertyChangeListener delegate) {
+			this.delegate = assertNotNull("delegate", delegate);
+		}
+
+		@Override
+		public void propertyChange(final PropertyChangeEvent event) {
+			try {
+				delegate.propertyChange(event);
+			} catch (final Exception x) {
+				logger.error("propertyChange: " + x, x);
+			}
+		}
+
+		@Override
+		protected void finalize() throws Throwable {
+			logger.debug("finalize: entered.");
+			super.finalize();
 		}
 	}
 }
