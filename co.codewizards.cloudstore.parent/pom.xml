@@ -263,6 +263,14 @@
 				<groupId>org.glassfish.jersey.core</groupId>
 				<artifactId>jersey-common</artifactId>
 				<version>${jersey.version}</version>
+				<exclusions>
+<!--					<exclusion> At least the Jersey server essentially requires ASM. We don't need a Jersey server on Android (we can avoid using LS [LocalServer] and instead directly access objects in the same JVM). Let's deal with this problem when focusing on Android.
+						<groupId>org.glassfish.hk2.external</groupId> <artifactId>asm-all-repackaged</artifactId>
+					</exclusion> -->
+<!--					<exclusion> Jersey crashes without cglib being present :-( But maybe this is no problem as I just read that the newest cglib supports Android. Have to deal with this problem, later - if it really still is a problem on android.
+						<groupId>org.glassfish.hk2.external</groupId> <artifactId>cglib</artifactId>
+					</exclusion>  -->
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>javax.servlet</groupId>
