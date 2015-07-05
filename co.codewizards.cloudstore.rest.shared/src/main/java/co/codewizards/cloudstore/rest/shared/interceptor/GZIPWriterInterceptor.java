@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.shared;
+package co.codewizards.cloudstore.rest.shared.interceptor;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,7 +13,7 @@ public class GZIPWriterInterceptor implements WriterInterceptor {
 	@Override
     public void aroundWriteTo(WriterInterceptorContext context)
                     throws IOException, WebApplicationException {
-        final OutputStream outputStream = context.getOutputStream();
+		final OutputStream outputStream = context.getOutputStream();
         context.setOutputStream(new GZIPOutputStream(outputStream));
         context.proceed();
     }

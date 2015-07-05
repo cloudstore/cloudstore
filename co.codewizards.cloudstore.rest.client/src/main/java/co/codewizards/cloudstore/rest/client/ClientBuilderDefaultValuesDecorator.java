@@ -14,8 +14,9 @@ import org.glassfish.jersey.client.ClientProperties;
 
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
-import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
-import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
+import co.codewizards.cloudstore.rest.shared.filter.GZIPClientRequestFilter;
+import co.codewizards.cloudstore.rest.shared.interceptor.GZIPReaderInterceptor;
+import co.codewizards.cloudstore.rest.shared.interceptor.GZIPWriterInterceptor;
 
 public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
@@ -63,6 +64,7 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 
 		this.builder.withConfig(clientConfig)
 			.register(GZIPReaderInterceptor.class)
+			.register(GZIPClientRequestFilter.class)
 			.register(GZIPWriterInterceptor.class)
 			.hostnameVerifier(new HostnameVerifierAllowingAll());
 	}

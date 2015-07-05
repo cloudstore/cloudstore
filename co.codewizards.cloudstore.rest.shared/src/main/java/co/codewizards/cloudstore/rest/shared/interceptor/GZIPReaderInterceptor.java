@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.rest.shared;
+package co.codewizards.cloudstore.rest.shared.interceptor;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -16,9 +16,9 @@ public class GZIPReaderInterceptor implements ReaderInterceptor {
 	private static final Logger logger = LoggerFactory.getLogger(GZIPReaderInterceptor.class);
 
 	@Override
-    public Object aroundReadFrom(ReaderInterceptorContext context)
-                    throws IOException, WebApplicationException {
-        InputStream originalInputStream = context.getInputStream();
+    public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
+		System.out.println(getClass().getSimpleName());
+		InputStream originalInputStream = context.getInputStream();
 
         if (!originalInputStream.markSupported())
         	originalInputStream = new BufferedInputStream(originalInputStream);
@@ -34,8 +34,7 @@ public class GZIPReaderInterceptor implements ReaderInterceptor {
         	context.setInputStream(originalInputStream); // We might have wrapped it with our BufferedInputStream!
         	logger.debug("aroundReadFrom: originalInputStream is empty! Skipping GZIP.");
         }
-
         return context.proceed();
-    }
+	}
 
 }

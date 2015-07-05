@@ -21,8 +21,9 @@ import co.codewizards.cloudstore.rest.server.service.RepositoryDtoService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 import co.codewizards.cloudstore.rest.server.service.WebDavService;
-import co.codewizards.cloudstore.rest.shared.GZIPReaderInterceptor;
-import co.codewizards.cloudstore.rest.shared.GZIPWriterInterceptor;
+import co.codewizards.cloudstore.rest.shared.filter.GZIPContainerRequestFilter;
+import co.codewizards.cloudstore.rest.shared.interceptor.GZIPConditionalReaderInterceptor;
+import co.codewizards.cloudstore.rest.shared.interceptor.GZIPConditionalWriterInterceptor;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
@@ -62,8 +63,9 @@ public class CloudStoreRest extends ResourceConfig {
 
 				// BEGIN providers
 				// providers are not services (they are infrastructure), but they are registered the same way.
-				GZIPReaderInterceptor.class,
-				GZIPWriterInterceptor.class,
+				GZIPConditionalReaderInterceptor.class,
+				GZIPConditionalWriterInterceptor.class,
+				GZIPContainerRequestFilter.class,
 				CloudStoreJaxbContextResolver.class,
 				DefaultExceptionMapper.class
 				// END providers
