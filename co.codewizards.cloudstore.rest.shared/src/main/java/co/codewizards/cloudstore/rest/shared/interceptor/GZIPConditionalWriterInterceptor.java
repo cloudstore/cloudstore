@@ -17,6 +17,8 @@ public class GZIPConditionalWriterInterceptor extends GZIPWriterInterceptor{
 	public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
 		if(GZIPUtil.isRequestCompressedWithGzip(context)){
 			super.aroundWriteTo(context);
+		} else {
+			context.proceed();
 		}
 	}
 }
