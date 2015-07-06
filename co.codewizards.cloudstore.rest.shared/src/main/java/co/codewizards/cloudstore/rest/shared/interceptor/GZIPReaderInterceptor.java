@@ -17,7 +17,6 @@ public class GZIPReaderInterceptor implements ReaderInterceptor {
 
 	@Override
     public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
-		System.out.println(getClass().getSimpleName());
 		InputStream originalInputStream = context.getInputStream();
 
         if (!originalInputStream.markSupported())
