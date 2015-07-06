@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
+import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.server.webdav.COPY;
@@ -48,7 +51,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 			@QueryParam("length") @DefaultValue("-1") final int length)
 	{
 		AssertUtil.assertNotNull("path", path);
-		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
+		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport()) {
 			path = repoTransport.unprefixPath(path);
 			return repoTransport.getFileData(path, offset, length);
 		}
@@ -74,7 +77,7 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@Path("{path:.*}")
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public void putFileData(@PathParam("path") String path, @QueryParam("offset") final long offset, final byte[] fileData) {
-		AssertUtil.assertNotNull("path", path);
+		assertNotNull("path", path);
 		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.putFileData(path, offset, fileData);
@@ -90,11 +93,15 @@ public class WebDavService extends AbstractServiceWithRepoToRepoAuth {
 	@GET
 	@Path("{path:.*}")
 	@Produces(MediaType.TEXT_HTML)
-	public String browse(@PathParam("path") final String path) {
-		AssertUtil.assertNotNull("path", path);
-		authenticateAndReturnUserName();
-		return "<html><body>" + path + "</body></html>";
+	public String browse(@PathParam("path") String path){
+		assertNotNull("path", path);
+		try (final RepoTransport repoTransport = authenticateWithLdap()) {
+			path = repoTransport.unprefixPath(path);
+			RepoFileDto dto = repoTransport.getRepoFileDto(path);
+			return "<html><body>" + dto.toString() + "</body></html>";
+		}
 	}
+
 
 	@COPY
 	@Path("{path:.*}")

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Sebastian Schefczyk
@@ -35,6 +36,14 @@ public final class AssertUtil {
 				throw new IllegalArgumentException(String.format("%s[%s] == null", name, i));
 		}
 		return collection;
+	}
+
+	public static final <T> List<T> assertNotEmpty(final String name, final List<T> list){
+		assertNotNull(name, list);
+		if(list.isEmpty()){
+			throw new IllegalArgumentException(String.format("%s == empty", name));
+		}
+		return list;
 	}
 
 }

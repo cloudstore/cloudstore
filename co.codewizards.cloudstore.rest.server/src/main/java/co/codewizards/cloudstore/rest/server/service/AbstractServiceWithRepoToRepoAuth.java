@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
@@ -39,6 +39,7 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
+import co.codewizards.cloudstore.rest.server.ldap.LdapClientProvider;
 
 public abstract class AbstractServiceWithRepoToRepoAuth {
 
@@ -196,9 +197,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 				return auth.getUserName();
 			else
 				throw newUnauthorizedException();
+		} else{
+			return LdapClientProvider.getInstance().getClient().authenticate(auth);
 		}
-
-		throw newUnauthorizedException();
 	}
 
 	protected UUID getClientRepositoryIdFromUserName(final String userName) {
@@ -232,6 +233,20 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		return repoTransport;
 	}
 
+	protected RepoTransport authenticateWithLdap(){
+		authenticateAndReturnUserName();
+		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
+		URL localRootURL;
+		try {
+			localRootURL = localRoot.toURI().toURL();
+			localRootURL = appendEmptyPathPrefix(localRootURL);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactoryOrFail(localRootURL);
+		return repoTransportFactory.createRepoTransport(localRootURL, null);
+	}
+
 	protected URL authenticateAndGetLocalRootURL() {
 		final String userName = authenticateAndReturnUserName();
 		final UUID clientRepositoryId = getClientRepositoryIdFromUserNameOrFail(userName);
@@ -257,5 +272,9 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 		} finally {
 			localRepoManager.close();
 		}
+	}
+
+	private URL appendEmptyPathPrefix(URL localRoot){
+		return UrlUtil. appendNonEncodedPath(localRoot, "");
 	}
 }
