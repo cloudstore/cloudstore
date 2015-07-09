@@ -28,7 +28,9 @@ not be detected.
 $H$H$H$H Global configuration
 
 The global configuration is named *cloudstore.properties* and it is normally located in
-*\$\{user.home\}/.cloudstore/* but this path might be overridden using the system property *cloudstore.configDir*.
+*\$\{user.home\}/.cloudstore/* but this path might be overridden using the system property *cloudstore.configDir*
+or the environment variable *cloudstore_configDir*. The system property has higher priority and thus overrides
+the environment variable (if both are set).
 
 $H$H$H$H Configuration per directory or per file
 
