@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,6 +88,9 @@ public class Config {
 	 * you can pass the system property "cloudstore.deferrableExecutor.timeout" to the JVM. If the
 	 * system property exists, the configuration is not consulted, but the system property value is
 	 * used as shortcut.
+	 * <p>
+	 * Additionally, it is possible to override configuration entries via OS environment variables.
+	 * Since an env var's name must not contain a dot ("."), all dots are replaced by underscores ("_").
 	 */
 	public static final String SYSTEM_PROPERTY_PREFIX = "cloudstore.";
 
@@ -317,6 +322,14 @@ public class Config {
 			logger.debug("getProperty: System property with key='{}' and value='{}' overrides config (config is not queried).", sysPropKey, sysPropVal);
 			return sysPropVal;
 		}
+
+		final String envVarKey = systemPropertyToEnvironmentVariable(sysPropKey);
+		final String envVarVal = System.getenv(envVarKey);
+		if (envVarVal != null) {
+			logger.debug("getProperty: Environment variable with key='{}' and value='{}' overrides config (config is not queried).", envVarKey, envVarVal);
+			return envVarVal;
+		}
+
 		logger.debug("getProperty: System property with key='{}' is not set (config is queried next).", sysPropKey);
 
 		synchronized (instanceMutex) {
@@ -337,6 +350,9 @@ public class Config {
 	 * {@link #getPropertyAsLong(String, long)} and all other {@code getPropertyAs...(...)}
 	 * methods.
 	 * <p>
+	 * The same rules apply to the fall-back-strategy from system property to environment variable and
+	 * finally config files.
+	 * <p>
 	 * Every property can be overwritten by a system property prefixed with {@value #SYSTEM_PROPERTY_PREFIX}.
 	 * If - for example - the key "updater.force" is to be read and a system property
 	 * named "cloudstore.updater.force" is set, this system property is returned instead!
@@ -352,21 +368,25 @@ public class Config {
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
-		final String sysPropVal = System.getProperty(sysPropKey);
-		if (sysPropVal != null) {
+		final String sysPropVal = trim(System.getProperty(sysPropKey));
+		if (! isEmpty(sysPropVal)) {
 			logger.debug("getPropertyAsNonEmptyTrimmedString: System property with key='{}' and value='{}' overrides config (config is not queried).", sysPropKey, sysPropVal);
 			return sysPropVal;
 		}
+
+		final String envVarKey = systemPropertyToEnvironmentVariable(sysPropKey);
+		final String envVarVal = trim(System.getenv(envVarKey));
+		if (! isEmpty(envVarVal)) {
+			logger.debug("getPropertyAsNonEmptyTrimmedString: Environment variable with key='{}' and value='{}' overrides config (config is not queried).", envVarKey, envVarVal);
+			return envVarVal;
+		}
+
 		logger.debug("getPropertyAsNonEmptyTrimmedString: System property with key='{}' is not set (config is queried next).", sysPropKey);
 
 		synchronized (instanceMutex) {
 			readIfNeeded();
-			String sval = properties.getProperty(key);
-			if (sval == null)
-				return defaultValue;
-
-			sval = sval.trim();
-			if (sval.isEmpty())
+			String sval = trim(properties.getProperty(key));
+			if (isEmpty(sval))
 				return defaultValue;
 
 			return sval;
