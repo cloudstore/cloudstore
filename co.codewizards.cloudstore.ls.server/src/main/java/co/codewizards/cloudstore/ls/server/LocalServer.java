@@ -31,6 +31,7 @@ import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
+import co.codewizards.cloudstore.ls.core.LsConfig;
 import co.codewizards.cloudstore.ls.rest.server.LocalServerRest;
 import co.codewizards.cloudstore.ls.rest.server.auth.AuthManager;
 
@@ -71,6 +72,9 @@ public class LocalServer {
 	 * @throws RuntimeException in case starting the server fails for an unexpected reason.
 	 */
 	public boolean start() {
+		if (! LsConfig.isLocalServerEnabled())
+			return false;
+
 		LockFile _localServerRunningLockFile = null;
 		try {
 			final Server s;

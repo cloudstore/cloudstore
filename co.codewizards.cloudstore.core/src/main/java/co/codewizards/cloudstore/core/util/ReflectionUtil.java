@@ -43,7 +43,7 @@ public class ReflectionUtil {
 //
 //	}
 
-	public static <T> T invokeConstructor(final Class<?> clazz, final Object ... args) {
+	public static <T> T invokeConstructor(final Class<T> clazz, final Object ... args) {
 		assertNotNull("clazz", clazz);
 
 		final Class<?>[] argTypes = getArgumentTypes(args);
@@ -59,19 +59,31 @@ public class ReflectionUtil {
 			throw new IllegalArgumentException(new NoSuchMethodException(String.format("None of the constructors of %s matches %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes)));
 		}
 
-		if (compatibleConstructors.size() > 1) {
-			// TODO find + invoke the most suitable instead of throwing this exception!
+		if (compatibleConstructors.size() > 1 && logger.isDebugEnabled()) {
+			// TODO find + invoke the *most* *suitable* one - instead of logging this warning (and simply invoking the first).
 			final String methodNameWithParameterTypes = createMethodNameWithParameterTypes(clazz.getSimpleName(), argTypes);
-			throw new IllegalArgumentException(new NoSuchMethodException(String.format("%s declare multiple constructors matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes)));
+			final String msg = String.format("%s declare multiple constructors matching %s (or an equivalent using super-types of these parameter-types)!", clazz.getName(), methodNameWithParameterTypes);
+//			throw new IllegalArgumentException(new NoSuchMethodException(msg));
+			logger.warn("invokeConstructor: {}", msg);
 		}
 
 		return cast(invoke(compatibleConstructors.get(0), args));
+	}
+
+	public static <T> T invokeConstructor(final Class<T> clazz, Class<?>[] parameterTypes, final Object ... args) {
+		final Constructor<T> constructor = getDeclaredConstructorOrFail(clazz, parameterTypes);
+		return invoke(constructor, args);
 	}
 
 	public static <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... args) {
 		assertNotNull("clazz", clazz);
 		assertNotNull("methodName", methodName);
 		return invoke(clazz, (Object)null, methodName, args);
+	}
+
+	public static <T> T invokeStatic(final Class<?> clazz, final String methodName, Class<?>[] parameterTypes, final Object ... args) {
+		final Method method = getDeclaredMethodOrFail(clazz, methodName, parameterTypes);
+		return invoke((Object)null, method, args);
 	}
 
 	public static <T> T invoke(final Object object, final String methodName, final Object ... args) {
@@ -202,6 +214,17 @@ public class ReflectionUtil {
 		}
 
 		return result;
+	}
+
+	public static <T> Constructor<T> getDeclaredConstructorOrFail(final Class<T> clazz, final Class<?>[] parameterTypes) {
+		final Constructor<T> constructor;
+		try {
+			constructor = clazz.getDeclaredConstructor(parameterTypes);
+		} catch (NoSuchMethodException | SecurityException e) {
+			final String methodNameWithParameterTypes = createMethodNameWithParameterTypes(clazz.getName(), parameterTypes);
+			throw new IllegalArgumentException(new NoSuchMethodException(String.format("%s does not declare the method %s!", clazz.getName(), methodNameWithParameterTypes)).initCause(e));
+		}
+		return constructor;
 	}
 
 	public static Method getDeclaredMethodOrFail(final Class<?> clazz, final String name, final Class<?>[] parameterTypes) {

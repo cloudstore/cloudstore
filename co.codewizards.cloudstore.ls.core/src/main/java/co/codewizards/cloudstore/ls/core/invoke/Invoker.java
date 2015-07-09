@@ -84,7 +84,7 @@ public interface Invoker {
 	 * @see #invokeConstructor(String, String[], Object...)
 	 * @see #invoke(Object, String, String[], Object...)
 	 */
-	<T> T invokeConstructor(Class<?> clazz, Object... arguments);
+	<T> T invokeConstructor(Class<T> clazz, Object... arguments);
 
 	/**
 	 * Invoke a constructor from the {@code LocalServerClient} in the {@code LocalServer} or vice-versa.
@@ -98,7 +98,7 @@ public interface Invoker {
 	 */
 	<T> T invokeConstructor(String className, Object... arguments);
 
-	<T> T invokeConstructor(Class<?> clazz, Class<?>[] argumentTypes, Object... arguments);
+	<T> T invokeConstructor(Class<T> clazz, Class<?>[] argumentTypes, Object... arguments);
 
 	<T> T invokeConstructor(String className, String[] argumentTypeNames, Object... arguments);
 

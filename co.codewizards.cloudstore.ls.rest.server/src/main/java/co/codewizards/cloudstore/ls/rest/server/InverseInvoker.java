@@ -127,7 +127,7 @@ public class InverseInvoker implements Invoker {
 	}
 
 	@Override
-	public <T> T invokeConstructor(final Class<?> clazz, final Object ... arguments) {
+	public <T> T invokeConstructor(final Class<T> clazz, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
 		return invokeConstructor(clazz.getName(), (String[]) null, arguments);
 	}
@@ -139,7 +139,7 @@ public class InverseInvoker implements Invoker {
 	}
 
 	@Override
-	public <T> T invokeConstructor(final Class<?> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
+	public <T> T invokeConstructor(final Class<T> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
 		assertNotNull("clazz", clazz);
 		return invokeConstructor(clazz.getName(), toClassNames(argumentTypes), arguments);
 	}
