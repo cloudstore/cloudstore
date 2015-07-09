@@ -1,7 +1,13 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
+
+import java.util.Iterator;
+import java.util.ServiceLoader;
+
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -17,7 +23,10 @@ public class ConfigDir {
 	/**
 	 * System property controlling the location of the central configuration directory.
 	 * <p>
-	 * If this system property is not set, it defaults to: <code>&#36;{user.home}/.cloudstore</code>
+	 * Also, the {@link #ENV_VAR_CONFIG_DIR} is checked, if the system property is not present. The system
+	 * property thus overrides the OS environment variable.
+	 * <p>
+	 * If neither system property nor env var is set, it defaults to: <code>&#36;{user.home}/.cloudstore</code>
 	 * <p>
 	 * Note that this property is always set during runtime. If it is not set by the caller (via a <code>-D</code> JVM argument)
 	 * from the outside, then it is set by the code inside the running application. Therefore, this property
@@ -26,6 +35,11 @@ public class ConfigDir {
 	 * @see #getFile()
 	 */
 	public static final String SYSTEM_PROPERTY_CONFIG_DIR = "cloudstore.configDir";
+
+	/**
+	 * Environment variable equivalent to {@link #SYSTEM_PROPERTY_CONFIG_DIR}.
+	 */
+	public static final String ENV_VAR_CONFIG_DIR = systemPropertyToEnvironmentVariable(SYSTEM_PROPERTY_CONFIG_DIR);
 
 	/**
 	 * System property controlling the location of the log directory.
@@ -55,7 +69,32 @@ public class ConfigDir {
 	 * used to obtain the singleton.
 	 */
 	protected ConfigDir() {
-		value = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR, "${user.home}/.cloudstore");
+		String v = System.getProperty(SYSTEM_PROPERTY_CONFIG_DIR);
+
+		if (v == null)
+			v = System.getenv(ENV_VAR_CONFIG_DIR);
+
+		if (v == null) {
+			String lastProviderClassName = null;
+			int lastPriority = Integer.MIN_VALUE;
+			final Iterator<ConfigDirDefaultValueProvider> it = ServiceLoader.load(ConfigDirDefaultValueProvider.class).iterator();
+			while (it.hasNext()) {
+				final ConfigDirDefaultValueProvider provider = it.next();
+				if (lastProviderClassName == null
+						|| provider.getPriority() > lastPriority
+						|| provider.getClass().getName().compareTo(lastProviderClassName) < 0) {
+
+					v = assertNotNull(provider.getClass().getName() + ".getConfigDir()", provider.getConfigDir());
+					lastProviderClassName = provider.getClass().getName();
+					lastPriority = provider.getPriority();
+				}
+			}
+
+			if (v == null)
+				throw new IllegalStateException("No ConfigDirDefaultValueProvider found!");
+		}
+
+		value = v;
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);
 		final String resolvedValue = IOUtil.replaceTemplateVariables(value, System.getProperties());
 		file = createFile(resolvedValue).getAbsoluteFile();

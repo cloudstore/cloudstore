@@ -431,4 +431,39 @@ public final class PropertiesUtil
 			return defaultValue;
 		}
 	}
+
+	/**
+	 * Converts a system property key to an OS environment variable name.
+	 * <p>
+	 * OS env vars cannot contain a "." and they have a few more restrictions. Most of the restrictions
+	 * (e.g. depending on the shell, the name must not start with a digit) are no problem, because our
+	 * system properties don't infringe on them. But the "." is commonly used in most of our system properties.
+	 * <p>
+	 * Therefore, this method throws an {@link IllegalArgumentException}, if any unexpected property key
+	 * infringes on a known env var restriction (e.g. starting with a digit). Dots (".") are converted to
+	 * underscores ("_").
+	 * <p>
+	 * Thus, e.g. the system property "cloudstore.configDir" is equivalent to the env var "cloudstore_configDir".
+	 * Please note, that they are case sensitive and the case is not modified!
+	 *
+	 * @param key the system property key to be converted to an env var name. Must not be <code>null</code>.
+	 * @return the env var name. Never <code>null</code>.
+	 */
+	public static String systemPropertyToEnvironmentVariable(final String key) {
+		assertNotNull("key", key);
+
+		if (key.isEmpty())
+			throw new IllegalArgumentException("key is an empty string! At least one character is required!");
+
+		if (!validSystemPropertyKeyPattern.matcher(key).matches()) {
+			if (Character.isDigit(key.charAt(0))) // be kind: give more precise exception ;-)
+				throw new IllegalArgumentException("key must not start with a digit: " + key);
+
+			throw new IllegalArgumentException("key is not valid according to pattern: " + key);
+		}
+
+		return key.replace('.', '_');
+	}
+
+	private static final Pattern validSystemPropertyKeyPattern = Pattern.compile("[a-zA-Z_]+[a-zA-Z0-9_\\.]*");
 }
