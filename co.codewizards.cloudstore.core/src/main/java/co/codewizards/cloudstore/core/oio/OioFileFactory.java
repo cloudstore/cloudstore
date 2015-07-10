@@ -79,4 +79,8 @@ public class OioFileFactory {
 	public static File createTempFile(final String prefix, final String suffix, final File dir) throws IOException {
 		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix, dir);
 	}
+
+	public static File[] listRoots() {
+		return OioRegistry.getInstance().getFileFactory().listRoots();
+	}
 }

@@ -5,6 +5,7 @@ import java.net.URI;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.FileFactory;
+import co.codewizards.cloudstore.core.oio.IoFileUtil;
 
 /**
  * @author Sebastian Schefczyk
@@ -58,4 +59,8 @@ public class NioFileFactory implements FileFactory {
 		return NioFileUtil.createTempFile(prefix, suffix, parentDir);
 	}
 
+	@Override
+	public File[] listRoots() {
+		return IoFileUtil.listRoots(); // IoFileUtil delegates to the OioFileFactory and thus creates NioFile objects, too, in this case ;-)
+	}
 }

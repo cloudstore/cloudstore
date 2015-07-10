@@ -63,4 +63,8 @@ public class IoFileFactory implements FileFactory {
 		return IoFileUtil.createTempFile(prefix, suffix, parentDir);
 	}
 
+	@Override
+	public File[] listRoots() {
+		return IoFileUtil.listRoots();
+	}
 }

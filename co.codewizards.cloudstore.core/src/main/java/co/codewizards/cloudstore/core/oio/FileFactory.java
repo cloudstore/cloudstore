@@ -6,6 +6,7 @@ import java.util.ServiceLoader;
 
 /**
  * @author Sebastian Schefczyk
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public interface FileFactory {
 
@@ -29,4 +30,6 @@ public interface FileFactory {
 	File createTempFile(String prefix, String suffix) throws IOException;
 
 	File createTempFile(String prefix, String suffix, File parentDir) throws IOException;
+
+	File[] listRoots();
 }
