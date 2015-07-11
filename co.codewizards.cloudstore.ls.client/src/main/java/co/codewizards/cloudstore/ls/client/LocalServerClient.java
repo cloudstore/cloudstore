@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.ReflectionUtil;
@@ -37,6 +40,8 @@ import co.codewizards.cloudstore.ls.rest.client.request.InvokeMethod;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class LocalServerClient implements Invoker, Closeable {
+
+	private static final Logger logger = LoggerFactory.getLogger(LocalServerClient.class);
 
 	private volatile InverseServiceRequestHandlerThread inverseServiceRequestHandlerThread;
 
@@ -314,8 +319,13 @@ public class LocalServerClient implements Invoker, Closeable {
 	public void close() {
 		objectManager.setNeverEvict(false);
 
-		if (LsConfig.isLocalServerEnabled())
-			invokeStatic(ObjectRef.class, ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER, (Class<?>[])null, (Object[]) null);
+		if (LsConfig.isLocalServerEnabled()) {
+			try {
+				invokeStatic(ObjectRef.class, ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER, (Class<?>[])null, (Object[]) null);
+			} catch (Exception x) {
+				logger.error("close: " + x, x);
+			}
+		}
 
 		final Thread thread = inverseServiceRequestHandlerThread;
 		if (thread != null) {

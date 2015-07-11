@@ -238,6 +238,9 @@ public class ReflectionUtil {
 
 	private static String createMethodNameWithParameterTypes(final String name, final Class<?>[] parameterTypes) {
 		final StringBuilder sb = new StringBuilder();
+		if (parameterTypes == null)
+			return name + "(...)";
+
 		for (Class<?> parameterType : parameterTypes) {
 			if (sb.length() > 0)
 				sb.append(", ");
