@@ -21,6 +21,16 @@ public class AllowJavaInvocationFilter extends AbstractInvocationFilter {
 		if (System.class.equals(targetClass) && "currentTimeMillis".equals(methodName))
 			return true;
 
+		final Object[] arguments = extMethodInvocationRequest.getMethodInvocationRequest().getArguments();
+		if ("hashCode".equals(methodName) && (arguments == null || arguments.length == 0))
+			return true;
+
+		if ("equals".equals(methodName) && arguments != null && arguments.length == 1)
+			return true;
+
+		if ("toString".equals(methodName) && (arguments == null || arguments.length == 0))
+			return true;
+
 		return null;
 	}
 
