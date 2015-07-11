@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.oio;
 
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -22,6 +21,7 @@ public interface File extends Serializable {
 	String[] list();
 	String[] list(FilenameFilter filenameFilter);
 	File[] listFiles();
+	File[] listFiles(java.io.FileFilter fileFilter);
 	File[] listFiles(FileFilter fileFilter);
 	File[] listFiles(FilenameFilter fileFilter);
 
@@ -60,7 +60,7 @@ public interface File extends Serializable {
 	boolean isRegularFileNoFollowLinks();
 	boolean mkdir();
 	boolean isDirectory();
-	boolean isDirectoryFileNoFollowSymLinks();
+	boolean isDirectoryNoFollowSymLinks();
 	boolean isDirectoryFollowSymLinks();
 	long getUsableSpace();
 	long length();

@@ -31,5 +31,5 @@ public interface FileFactory {
 
 	File createTempFile(String prefix, String suffix, File parentDir) throws IOException;
 
-	File[] listRoots();
+	File[] listRootFiles();
 }

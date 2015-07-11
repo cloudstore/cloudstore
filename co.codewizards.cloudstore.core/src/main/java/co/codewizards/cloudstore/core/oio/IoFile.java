@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.oio;
 
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -74,8 +73,14 @@ public class IoFile implements File {
 	}
 
 	@Override
-	public File[] listFiles(final FileFilter fileFilter) {
+	public File[] listFiles(final java.io.FileFilter fileFilter) {
 		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(fileFilter);
+		return IoFileUtil.convert(ioFilesListFiles);
+	}
+
+	@Override
+	public File[] listFiles(final FileFilter fileFilter) {
+		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(new FileFilterWrapper(fileFilter));
 		return IoFileUtil.convert(ioFilesListFiles);
 	}
 
@@ -202,7 +207,7 @@ public class IoFile implements File {
 	}
 
 	@Override
-	public boolean isDirectoryFileNoFollowSymLinks() {
+	public boolean isDirectoryNoFollowSymLinks() {
 		return this.ioFile.isDirectory();
 	}
 

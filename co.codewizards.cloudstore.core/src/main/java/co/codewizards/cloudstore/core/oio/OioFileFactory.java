@@ -80,7 +80,11 @@ public class OioFileFactory {
 		return OioRegistry.getInstance().getFileFactory().createTempFile(prefix, suffix, dir);
 	}
 
-	public static File[] listRoots() {
-		return OioRegistry.getInstance().getFileFactory().listRoots();
+	/**
+	 * Lists the file system roots (wraps {@link java.io.File#listRoots()}).
+	 * @return the file system roots. Never <code>null</code>.
+	 */
+	public static File[] listRootFiles() {
+		return OioRegistry.getInstance().getFileFactory().listRootFiles();
 	}
 }

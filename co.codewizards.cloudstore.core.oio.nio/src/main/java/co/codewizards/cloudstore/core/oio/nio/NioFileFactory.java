@@ -60,7 +60,7 @@ public class NioFileFactory implements FileFactory {
 	}
 
 	@Override
-	public File[] listRoots() {
+	public File[] listRootFiles() {
 		return IoFileUtil.listRoots(); // IoFileUtil delegates to the OioFileFactory and thus creates NioFile objects, too, in this case ;-)
 	}
 }

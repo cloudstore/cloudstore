@@ -115,7 +115,7 @@ public class NioFile extends IoFile implements File {
 	}
 
 	@Override
-	public boolean isDirectoryFileNoFollowSymLinks() {
+	public boolean isDirectoryNoFollowSymLinks() {
 		return Files.isDirectory(ioFile.toPath(), LinkOption.NOFOLLOW_LINKS);
 	}
 

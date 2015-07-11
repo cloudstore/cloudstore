@@ -64,7 +64,7 @@ public class IoFileFactory implements FileFactory {
 	}
 
 	@Override
-	public File[] listRoots() {
+	public File[] listRootFiles() {
 		return IoFileUtil.listRoots();
 	}
 }
