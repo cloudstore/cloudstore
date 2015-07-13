@@ -440,11 +440,12 @@ public final class PropertiesUtil
 	 * system properties don't infringe on them. But the "." is commonly used in most of our system properties.
 	 * <p>
 	 * Therefore, this method throws an {@link IllegalArgumentException}, if any unexpected property key
-	 * infringes on a known env var restriction (e.g. starting with a digit). Dots (".") are converted to
-	 * underscores ("_").
+	 * infringes on a known env var restriction (e.g. starting with a digit). Dots (".") and index-brackets
+	 * ("[" and "]") are all converted to underscores ("_").
 	 * <p>
-	 * Thus, e.g. the system property "cloudstore.configDir" is equivalent to the env var "cloudstore_configDir".
-	 * Please note, that they are case sensitive and the case is not modified!
+	 * Thus, e.g. the system property "cloudstore.configDir" is equivalent to the env var "cloudstore_configDir"
+	 * and the system property "cloudstore.ldap.bindDnTemplate[index]" is equivalent to the env var
+	 * "cloudstore_ldap_bindDnTemplate_index_". Please note, that they are case sensitive and the case is not modified!
 	 *
 	 * @param key the system property key to be converted to an env var name. Must not be <code>null</code>.
 	 * @return the env var name. Never <code>null</code>.
@@ -462,8 +463,8 @@ public final class PropertiesUtil
 			throw new IllegalArgumentException("key is not valid according to pattern: " + key);
 		}
 
-		return key.replace('.', '_');
+		return key.replace('.', '_').replace('[', '_').replace(']', '_');
 	}
 
-	private static final Pattern validSystemPropertyKeyPattern = Pattern.compile("[a-zA-Z_]+[a-zA-Z0-9_\\.]*");
+	private static final Pattern validSystemPropertyKeyPattern = Pattern.compile("[a-zA-Z_]+[a-zA-Z0-9_\\.\\[\\]]*");
 }
