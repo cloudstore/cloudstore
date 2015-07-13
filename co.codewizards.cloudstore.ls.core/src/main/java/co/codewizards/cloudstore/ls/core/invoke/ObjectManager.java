@@ -269,6 +269,12 @@ public class ObjectManager {
 			object2ObjectRef.put(object, objectRef);
 			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
 		}
+		else {
+			// Must refresh timestamp to guarantee enough time for reference handling.
+			// Otherwise it might be released after maybe only a few millis!
+			if (zeroReferenceObjectRef2Timestamp.containsKey(objectRef))
+				zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+		}
 		return objectRef;
 	}
 
