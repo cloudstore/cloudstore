@@ -317,16 +317,6 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public void close() {
-		objectManager.setNeverEvict(false);
-
-		if (LsConfig.isLocalServerEnabled()) {
-			try {
-				invokeStatic(ObjectRef.class, ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER, (Class<?>[])null, (Object[]) null);
-			} catch (Exception x) {
-				logger.error("close: " + x, x);
-			}
-		}
-
 		final Thread thread = inverseServiceRequestHandlerThread;
 		if (thread != null) {
 			inverseServiceRequestHandlerThread = null;
@@ -335,6 +325,16 @@ public class LocalServerClient implements Invoker, Closeable {
 				thread.join();
 			} catch (InterruptedException e) {
 				doNothing();
+			}
+		}
+
+		objectManager.setNeverEvict(false);
+
+		if (LsConfig.isLocalServerEnabled()) {
+			try {
+				invokeStatic(ObjectRef.class, ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER, (Class<?>[])null, (Object[]) null);
+			} catch (Exception x) {
+				logger.error("close: " + x, x);
 			}
 		}
 	}
