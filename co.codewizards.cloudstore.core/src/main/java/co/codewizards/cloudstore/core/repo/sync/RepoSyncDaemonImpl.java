@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.Severity;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -29,7 +31,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	private Set<RepoSyncQueueItem> syncQueue = new LinkedHashSet<>();
 	private Map<UUID, RepoSyncRunner> repositoryId2SyncRunner = new HashMap<>();
 	private final ExecutorService executorService;
-	private Map<UUID, List<RepoSyncError>> repositoryId2SyncErrors = new HashMap<>();
+	private Map<UUID, List<RepoSyncState>> repositoryId2SyncStates = new HashMap<>();
 
 	private static final class Holder {
 		public static final RepoSyncDaemonImpl instance = new RepoSyncDaemonImpl();
@@ -100,9 +102,10 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 		public void run() {
 			try {
 				repoSyncRunner.run();
+				registerSyncSuccess(repoSyncRunner);
 			} catch (final Throwable x) {
 				logger.error("run: " + x, x);
-				registerSyncError(repositoryId, x);
+				registerSyncError(repoSyncRunner, x);
 			}
 			synchronized (RepoSyncDaemonImpl.this) {
 				final RepoSyncRunner removed = repositoryId2SyncRunner.remove(repositoryId);
@@ -114,16 +117,48 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 		}
 	}
 
-	private synchronized void registerSyncError(final UUID repositoryId, final Throwable exception) {
-		assertNotNull("repositoryId", repositoryId);
-		assertNotNull("exception", exception);
+	private synchronized void registerSyncSuccess(final RepoSyncRunner repoSyncRunner) {
+		assertNotNull("repoSyncRunner", repoSyncRunner);
 
-		List<RepoSyncError> list = repositoryId2SyncErrors.get(repositoryId);
+		final UUID localRepositoryId = repoSyncRunner.getSyncQueueItem().repositoryId;
+		List<RepoSyncState> list = repositoryId2SyncStates.get(localRepositoryId);
 		if (list == null) {
 			list = new ArrayList<>(1);
-			repositoryId2SyncErrors.put(repositoryId, list);
+			repositoryId2SyncStates.put(localRepositoryId, list);
 		}
-		list.add(new RepoSyncError(repositoryId, new Error(exception)));
+		final File localRoot = repoSyncRunner.getSyncQueueItem().localRoot;
+		for (final Map.Entry<UUID, URL> me : repoSyncRunner.getRemoteRepositoryId2RemoteRootMap().entrySet()) {
+			final UUID remoteRepositoryId = me.getKey();
+			final URL remoteRoot = me.getValue();
+			list.add(new RepoSyncState(localRepositoryId, remoteRepositoryId, localRoot, remoteRoot,
+					Severity.INFO, "Sync OK.", null));
+		}
+	}
+
+	private synchronized void registerSyncError(final RepoSyncRunner repoSyncRunner, final Throwable exception) {
+		assertNotNull("repoSyncRunner", repoSyncRunner);
+		assertNotNull("exception", exception);
+
+		final UUID localRepositoryId = repoSyncRunner.getSyncQueueItem().repositoryId;
+		List<RepoSyncState> list = repositoryId2SyncStates.get(localRepositoryId);
+		if (list == null) {
+			list = new ArrayList<>(1);
+			repositoryId2SyncStates.put(localRepositoryId, list);
+		}
+		final File localRoot = repoSyncRunner.getSyncQueueItem().localRoot;
+		UUID remoteRepositoryId = repoSyncRunner.getRemoteRepositoryId();
+		URL remoteRoot = repoSyncRunner.getRemoteRoot();
+		if (remoteRepositoryId != null && remoteRoot != null)
+			list.add(new RepoSyncState(localRepositoryId, remoteRepositoryId, localRoot, remoteRoot,
+					Severity.ERROR, exception.getMessage(), new Error(exception)));
+		else {
+			for (Map.Entry<UUID, URL> me : repoSyncRunner.getRemoteRepositoryId2RemoteRootMap().entrySet()) {
+				remoteRepositoryId = me.getKey();
+				remoteRoot = me.getValue();
+				list.add(new RepoSyncState(localRepositoryId, remoteRepositoryId, localRoot, remoteRoot,
+						Severity.ERROR, exception.getMessage(), new Error(exception)));
+			}
+		}
 	}
 
 	private synchronized RepoSyncQueueItem pollSyncQueueItem(UUID repositoryId) {
@@ -139,9 +174,9 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	@Override
-	public synchronized List<RepoSyncError> getSyncErrors(final UUID repositoryId) {
-		assertNotNull("repositoryId", repositoryId);
-		final List<RepoSyncError> list = repositoryId2SyncErrors.get(repositoryId);
+	public synchronized List<RepoSyncState> getSyncStates(final UUID localRepositoryId) {
+		assertNotNull("repositoryId", localRepositoryId);
+		final List<RepoSyncState> list = repositoryId2SyncStates.get(localRepositoryId);
 		if (list == null)
 			return Collections.emptyList();
 		else
@@ -149,13 +184,13 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	@Override
-	public synchronized void removeSyncErrors(final Collection<RepoSyncError> repoSyncErrors) {
-		assertNotNull("syncErrors", repoSyncErrors);
-		for (final RepoSyncError repoSyncError : repoSyncErrors) {
-			final UUID repositoryId = repoSyncError.getRepositoryId();
-			final List<RepoSyncError> list = repositoryId2SyncErrors.get(repositoryId);
+	public synchronized void removeSyncStates(final Collection<RepoSyncState> repoSyncStates) {
+		assertNotNull("repoSyncStates", repoSyncStates);
+		for (final RepoSyncState repoSyncState : repoSyncStates) {
+			final UUID repositoryId = repoSyncState.getLocalRepositoryId();
+			final List<RepoSyncState> list = repositoryId2SyncStates.get(repositoryId);
 			if (list != null)
-				list.remove(repoSyncError);
+				list.remove(repoSyncState);
 		}
 	}
 

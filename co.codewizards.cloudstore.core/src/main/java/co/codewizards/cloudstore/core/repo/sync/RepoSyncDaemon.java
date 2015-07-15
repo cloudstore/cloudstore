@@ -14,8 +14,8 @@ public interface RepoSyncDaemon {
 
 	void shutdownNow();
 
-	List<RepoSyncError> getSyncErrors(UUID repositoryId);
+	List<RepoSyncState> getSyncStates(UUID localRepositoryId);
 
-	void removeSyncErrors(Collection<RepoSyncError> repoSyncErrors);
+	void removeSyncStates(Collection<RepoSyncState> repoSyncStates);
 
 }

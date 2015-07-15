@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
 
 import java.io.IOException;
@@ -803,8 +804,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public void putRemoteRepository(final UUID repositoryId, final URL remoteRoot, final byte[] publicKey, final String localPathPrefix) {
-		AssertUtil.assertNotNull("entityID", repositoryId);
-		AssertUtil.assertNotNull("publicKey", publicKey);
+		assertNotNull("repositoryId", repositoryId);
+		assertNotNull("publicKey", publicKey);
 		final LocalRepoTransactionImpl transaction = beginWriteTransaction();
 		try {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);

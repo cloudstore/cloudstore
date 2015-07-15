@@ -66,13 +66,13 @@ public class RepoToRepoSync implements AutoCloseable {
 	 */
 	private static final boolean TEST_INVERSE = false;
 
-	private final File localRoot;
-	private final URL remoteRoot;
-	private final LocalRepoManager localRepoManager;
-	private final LocalRepoTransport localRepoTransport;
-	private final RepoTransport remoteRepoTransport;
-	private final UUID localRepositoryId;
-	private final UUID remoteRepositoryId;
+	protected final File localRoot;
+	protected final URL remoteRoot;
+	protected final LocalRepoManager localRepoManager;
+	protected final LocalRepoTransport localRepoTransport;
+	protected final RepoTransport remoteRepoTransport;
+	protected final UUID localRepositoryId;
+	protected final UUID remoteRepositoryId;
 
 	private ExecutorService localSyncExecutor;
 	private Future<Void> localSyncFuture;
@@ -213,7 +213,7 @@ public class RepoToRepoSync implements AutoCloseable {
 		return repoTransportFactory.createRepoTransport(remoteRoot, clientRepositoryId);
 	}
 
-	private void sync(final RepoTransport fromRepoTransport, final boolean fromRepoLocalSync, final RepoTransport toRepoTransport, final ProgressMonitor monitor) {
+	protected void sync(final RepoTransport fromRepoTransport, final boolean fromRepoLocalSync, final RepoTransport toRepoTransport, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
 			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync);
@@ -230,7 +230,7 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
-	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+	protected void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final ChangeSetDto changeSetDto, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 3 * changeSetDto.getRepoFileDtos().size() + 1);
 		try {
@@ -260,7 +260,7 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
-	private void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+	protected void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final RepoFileDtoTreeNode repoFileDtoTree,
 			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl, final boolean filesInProgressOnly,
 			final ProgressMonitor monitor) {

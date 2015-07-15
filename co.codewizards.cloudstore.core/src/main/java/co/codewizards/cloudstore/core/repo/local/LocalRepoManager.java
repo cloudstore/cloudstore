@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.core.repo.local;
 
 import java.lang.reflect.InvocationHandler;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
