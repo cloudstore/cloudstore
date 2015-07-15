@@ -4,12 +4,10 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotEmpty;
 import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
 
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
 import javax.naming.AuthenticationException;
-import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.ws.rs.WebApplicationException;
@@ -31,8 +29,6 @@ import co.codewizards.cloudstore.rest.server.auth.Auth;
  */
 public class SimpleLdapClient implements LdapClient{
 
-	private static final String CONTEXT_FACTORY_DEFAULT = "com.sun.jndi.ldap.LdapCtxFactory";
-	private static final String AUTHENTICATION_DEFAULT = "simple";
 	private static final String TEMPLATE_VARIABLE = "login";
 
 	private final List<String> templates;
@@ -45,22 +41,18 @@ public class SimpleLdapClient implements LdapClient{
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public String authenticate(final Auth auth){
-		final Hashtable env = basicLdapConfig();
-
-		env.put(Context.SECURITY_CREDENTIALS, auth.getPassword());
 		for(String template : templates){
-			env.put(Context.SECURITY_PRINCIPAL, convertTemplate(template, auth.getUserName()));
-			if(tryAuthenticate(env)){
+			String userNameTemplate = convertTemplate(template, auth.getUserName());
+			LdapConfig config = new LdapConfig(url, userNameTemplate, auth.getPassword());
+			if(tryAuthenticate(config)){
 				return auth.getUserName();
 			}
 		}
 		throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
 	}
 
-	@SuppressWarnings("rawtypes")
-	private boolean tryAuthenticate(Hashtable env){
+	private boolean tryAuthenticate(LdapConfig env){
 		try {
 			new InitialDirContext(env);
 			return true;
@@ -70,7 +62,6 @@ public class SimpleLdapClient implements LdapClient{
 			throw new RuntimeException(e);
 		}
 	}
-
 
 	private String convertTemplate(final String template, final String username){
 		final Map<String, String> map = new HashMap<String, String>(1);
@@ -84,15 +75,6 @@ public class SimpleLdapClient implements LdapClient{
 			if(!template.contains(variable))
 				throw new IllegalArgumentException("every template has to contain " + variable);
 		}
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Hashtable basicLdapConfig(){
-		final Hashtable env = new Hashtable();
-		env.put(Context.INITIAL_CONTEXT_FACTORY, CONTEXT_FACTORY_DEFAULT);
-		env.put(Context.PROVIDER_URL, url);
-		env.put(Context.SECURITY_AUTHENTICATION, AUTHENTICATION_DEFAULT);
-		return env;
 	}
 
 }

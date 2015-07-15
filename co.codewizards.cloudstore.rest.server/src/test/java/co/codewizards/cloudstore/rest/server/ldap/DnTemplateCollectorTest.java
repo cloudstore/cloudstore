@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 @NotThreadSafe
-public class DnTemplateFetcherTest {
+public class DnTemplateCollectorTest {
 
 	private DnTemplateCollector fetcher;
 	private DnTemplatePropertyHelper helper;

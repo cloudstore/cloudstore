@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
 
 import java.io.IOException;
 import java.security.KeyStore;
@@ -51,6 +51,7 @@ public class CloudStoreClient {
 				RepoInfoSubCommand.class,
 				RepoListSubCommand.class,
 				RequestRepoConnectionSubCommand.class,
+				ChangeLdapPasswordSubCommand.class,
 				SyncSubCommand.class,
 				VersionSubCommand.class
 				);
