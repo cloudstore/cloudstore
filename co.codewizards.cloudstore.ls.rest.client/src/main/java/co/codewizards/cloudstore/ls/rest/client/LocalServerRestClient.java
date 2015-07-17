@@ -154,8 +154,9 @@ public class LocalServerRestClient {
 
 	public <R> R execute(final Request<R> request) {
 		AssertUtil.assertNotNull("request", request);
+		RuntimeException firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
-		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
+		final int retryMax = 1; // *re*-try: 1 retries means 2 invocations in total
 		while (true) {
 			acquireClient();
 			try {
@@ -176,6 +177,9 @@ public class LocalServerRestClient {
 
 					return result;
 				} catch (final RuntimeException x) {
+					if (firstException == null)
+						firstException = x;
+
 					final String oldBaseUrl = getBaseUrl();
 					baseURL = null;
 					if (!oldBaseUrl.equals(getBaseUrl())) {
@@ -186,8 +190,8 @@ public class LocalServerRestClient {
 					markClientBroken(); // make sure we do not reuse this client
 					if (++retryCounter > retryMax || !retryExecuteAfterException(x)) {
 						logger.warn("execute: invocation failed (will NOT retry): " + x, x);
-						handleAndRethrowException(x);
-						throw x;
+						handleAndRethrowException(firstException); // TODO maybe we should make a MultiCauseException?!
+						throw firstException;
 					}
 					logger.warn("execute: invocation failed (will retry): " + x, x);
 
