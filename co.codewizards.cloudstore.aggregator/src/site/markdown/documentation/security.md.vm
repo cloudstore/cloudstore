@@ -77,3 +77,6 @@ Again, RSA is used for this purpose: Every repository has its own 4096 bit RSA k
 (private key + certificate). When you connect two repositories as just described, the certificates
 (a.k.a. public keys) are exchanged. Again, you have to verify carefully that their fingerprints really
 are the same on client- and server-side!
+
+If you want to access your files inside a web browser, you need to configure LDAP-based authentication.
+You can read more about it on [LDAP-based authentication](./ldap.html) page.

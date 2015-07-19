@@ -210,3 +210,37 @@ $H$H$H$H server.securePort
 
 TODO document this!
 
+
+$H$H$H$H ldap.url
+
+URL of a server used for LDAP-based authentication. 
+
+The default value is \"ldap://localhost:10389/\".
+
+
+$H$H$H$H ldap.bindDnTemplate[${index}]
+
+${index} inside the name of the property is just an integer, which tells in which order templates should be used.
+First index has to be 0, and all templates have to have consecutive indexes.
+
+Every template should contain one or more of ${login} template variables, which will be replaced with userName, provided by
+user during authentication. See also [LDAP First variant](./ldap.html#First_variant).
+
+Example template:
+ldap.bindDnTemplate[0] = cn=${login}+sn=secret,ou=users,dc=example,dc=com
+
+
+$H$H$H$H ldap.query
+
+TODO document this!
+
+
+$H$H$H$H ldap.queryDn
+
+TODO document this!
+
+
+$H$H$H$H ldap.adminDn
+
+TODO document this!
+

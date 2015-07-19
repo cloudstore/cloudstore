@@ -1,0 +1,25 @@
+<head><title>LDAP-based authentication</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+LDAP-based authentication
+-------
+
+LDAP-based authentication has to be configured in order to access files inside web browser. There are currently two variants
+of LDAP authentication algorithm. The choice of the algorithm is based on ldap.query parameter. If this parameter
+is not provided then the first variant will be chosen, otherwise the second one. Both variants use ldap.url property
+as an URL of LDAP server.
+
+$H$H$H First variant
+
+To configure this variant you need to provide ldap.bindDnTemplate[${index}] property/properties. 
+
+Every template should contain one or more of ${login} template variables, which will be replaced with userName, provided by
+user during authentication. After this replacement, the template will be used as DN in a bind operation (along with password provided by user).  
+All templates will be used as DNs, in specified order, until authentication is successful with one of them, or 
+all templates were already used.
+
+
+$H$H$H Second variant
+
+TODO

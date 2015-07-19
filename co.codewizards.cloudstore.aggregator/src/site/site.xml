@@ -37,6 +37,7 @@
 			<item name="Wiki" href="../wiki" />
 			<item name="FAQ" href="./documentation/faq.html" />
 			<item name="Security" href="./documentation/security.html" />
+			<item name="Authentication using LDAP" href="./documentation/ldap.html" />
 			<item name="Configuration" href="./documentation/config.html" />
 			<item name="Development" href="./documentation/development.html" />
 			<item name="Javadoc" href="./apidocs/index.html" />
