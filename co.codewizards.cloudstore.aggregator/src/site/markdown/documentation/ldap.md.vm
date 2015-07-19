@@ -10,6 +10,9 @@ of LDAP authentication algorithm. The choice of the algorithm is based on ldap.q
 is not provided then the first variant will be chosen, otherwise the second one. Both variants use ldap.url property
 as an URL of LDAP server.
 
+After changing any of the properties or admin's password with a CLI command, you should restart the server since
+LDAP configuration is only loaded once at the first usage. 
+
 $H$H$H First variant
 
 To configure this variant you need to provide ldap.bindDnTemplate[${index}] property/properties. 
@@ -22,4 +25,18 @@ all templates were already used.
 
 $H$H$H Second variant
 
-TODO
+To configure this variant you need to provide ldap.query, ldap.queryDn, ldap.adminDn properties.
+Also you need to set admin's password. You can do it with command:
+
+<div><pre>~/cloudstore/bin/cloudstore changeLdapPassword {password}</pre></div>
+
+You can change it at anytime with the same command.
+
+Authentication is composed of a few steps:
+
+* DirContext is created based on credentials of admin user - ldap.adminDn property and admin password, which was set with CLI command.
+* Search method is executed on this context, using ldap.query as filter and ldap.queryDn as name.
+* If this search doesn't return any results then authentication is not successful. 
+* If there are results, then DN of every one of them is tried to be bound to the context (along with password provided by user),
+ until one of these operations is successful. If none is successful, then authentication isn't successful either. 
+
