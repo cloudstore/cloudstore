@@ -5,13 +5,19 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-noteboo
 LDAP-based authentication
 -------
 
-LDAP-based authentication has to be configured in order to access files inside web browser. There are currently two variants
-of LDAP authentication algorithm. The choice of the algorithm is based on ldap.query parameter. If this parameter
-is not provided then the first variant will be chosen, otherwise the second one. Both variants use ldap.url property
-as an URL of LDAP server.
+When synchronising two repositories, they authenticate to each other using a public-private-key-based
+mechanism. This is extremely secure and therefore the only authentication mechanism supported for
+repository-to-repository-authentication.
+
+This type of authentication, however, cannot be used when accessing a repository via an ordinary web-browser. 
+
+In order to access files via a web-browser, LDAP-based authentication must be configured. There are currently two variants
+of LDAP authentication algorithm. The choice of the algorithm is based on the *ldap.query* configuration property. If this
+setting is not provided, then the first variant will be chosen, otherwise the second one. Both variants use the *ldap.url* property
+to know the LDAP server's URL.
 
 After changing any of the properties or admin's password with a CLI command, you should restart the server since
-LDAP configuration is only loaded once at the first usage. 
+LDAP configuration is only loaded once at the first usage.
 
 $H$H$H First variant
 
@@ -39,4 +45,3 @@ Authentication is composed of a few steps:
 * If this search doesn't return any results then authentication is not successful. 
 * If there are results, then DN of every one of them is tried to be bound to the context (along with password provided by user),
  until one of these operations is successful. If none is successful, then authentication isn't successful either. 
-
