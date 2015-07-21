@@ -53,6 +53,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoMetaData;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -108,6 +109,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private Timer closeDeferredTimer;
 	private TimerTask closeDeferredTimerTask;
 	private final Lock lock = new ReentrantLock();
+
+	private LocalRepoMetaDataImpl localRepoMetaDataImpl;
 
 	private final Timer deleteExpiredRemoteRepositoryRequestsTimer = new Timer("deleteExpiredRemoteRepositoryRequestsTimer-" + id, true);
 	private final TimerTask deleteExpiredRemoteRepositoryRequestsTimeTask = new TimerTask() {
@@ -916,4 +919,17 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		super.finalize();
 	}
 
+	@Override
+	public LocalRepoMetaData getLocalRepoMetaData() {
+		lock.lock();
+		try {
+			if (localRepoMetaDataImpl == null) {
+				localRepoMetaDataImpl = createObject(LocalRepoMetaDataImpl.class);
+				localRepoMetaDataImpl.setLocalRepoManager(this);
+			}
+			return localRepoMetaDataImpl;
+		} finally {
+			lock.unlock();
+		}
+	}
 }

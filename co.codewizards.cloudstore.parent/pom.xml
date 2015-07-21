@@ -531,7 +531,11 @@
 					scp:/nightly@eagle.nighthost.de/srv/www/nightly/vestigo.nightlabs.com/htdocs/0.1.1/download/stand-alone
 					Downgrading to the beta-3 instead. Marco :-)
 					-->
+					<!-- 
 					<version>3.0-beta-3</version>
+					Switched to 3.3 because of https://java.net/jira/browse/PINEAPPLE-563
+					-->
+					<version>3.3</version>
 					<configuration>
 						<locales>en,de</locales>
 						<inputencoding>UTF-8</inputencoding>

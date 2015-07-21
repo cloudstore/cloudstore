@@ -62,6 +62,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 		return Collections.unmodifiableSet(new HashSet<File>(localRoot2LocalRepoManagerImpl.keySet()));
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public synchronized LocalRepoManager createLocalRepoManagerForExistingRepository(File localRoot) throws LocalRepoManagerException {
 		localRoot = canonicalize(localRoot);
@@ -87,6 +88,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 		return createProxy(localRepoManagerImpl);
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public synchronized LocalRepoManager createLocalRepoManagerForNewRepository(File localRoot) throws LocalRepoManagerException {
 		localRoot = canonicalize(localRoot);
