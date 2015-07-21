@@ -10,12 +10,10 @@ import java.util.Map;
 import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
+import co.codewizards.cloudstore.rest.server.auth.NotAuthorizedException;
 
 /**
  * Simple implementation of LdapClient.
@@ -49,7 +47,7 @@ public class SimpleLdapClient implements LdapClient{
 				return auth.getUserName();
 			}
 		}
-		throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
+		throw new NotAuthorizedException();
 	}
 
 	private boolean tryAuthenticate(LdapConfig env){

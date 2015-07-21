@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.otp.LdapPasswordOneTimePadRegistry;
 import co.codewizards.cloudstore.core.otp.OneTimePadRegistry;
-import co.codewizards.cloudstore.core.otp.OneTimePadRegistryFactory;
 import co.codewizards.cloudstore.core.util.StringUtil;
 
 /**
@@ -27,7 +27,7 @@ public class LdapClientProvider {
 	public static final String LDAP_TEMPLATE_PATTERN = "ldap.bindDnTemplate[%d]";
 
 	public static final String LDAP_URL = "ldap.url";
-	private static final String LDAP_URL_DEFAULT = "ldap://localhost:10389/";
+	private static final String LDAP_URL_DEFAULT = "ldap://localhost:389";
 
 	public static final String LDAP_QUERY = "ldap.query";
 	public static final String LDAP_ADMIN_DN = "ldap.adminDn";
@@ -36,7 +36,7 @@ public class LdapClientProvider {
 	private LdapClient ldapClient;
 
 	protected LdapClientProvider(){
-		this(OneTimePadRegistryFactory.forLdapAdminCredentials());
+		this(new LdapPasswordOneTimePadRegistry());
 	}
 
 	protected LdapClientProvider(OneTimePadRegistry adminPasswordRegistry){

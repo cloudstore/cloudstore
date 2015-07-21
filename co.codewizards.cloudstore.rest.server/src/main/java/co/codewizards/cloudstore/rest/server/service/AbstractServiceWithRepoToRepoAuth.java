@@ -38,6 +38,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistr
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
+import co.codewizards.cloudstore.rest.server.auth.NotAuthorizedException;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 import co.codewizards.cloudstore.rest.server.ldap.LdapClientProvider;
 
@@ -221,7 +222,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 	private WebApplicationException newUnauthorizedException() {
 		// TODO maybe better throw a new javax.ws.rs.NotAuthorizedException?
-		return new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
+		return new NotAuthorizedException();
 	}
 
 	protected RepoTransport authenticateAndCreateLocalRepoTransport() {

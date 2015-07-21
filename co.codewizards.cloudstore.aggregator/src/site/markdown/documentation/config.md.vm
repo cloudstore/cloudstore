@@ -215,7 +215,7 @@ $H$H$H$H ldap.url
 
 URL of a server used for LDAP-based authentication. 
 
-The default value is \"ldap://localhost:10389/\".
+The default value is ldap://localhost:389.
 
 
 $H$H$H$H ldap.bindDnTemplate[${index}]
@@ -235,8 +235,8 @@ $H$H$H$H ldap.query
 LDAP search filter. 
 Every query should contain one or more of ${login} template variables, which will be replaced with userName, provided by
 user during authentication.
-Queries are executed as a call to method [DixContext#search](http://docs.oracle.com/javase/7/docs/api/javax/naming/directory/DirContext.html#search(javax.naming.Name,%20java.lang.String,%20javax.naming.directory.SearchControls)).
-During this call ldap.query is used as a \"filter\" parameter, ldap.queryDn as \"name\" and [SUBTREE_SCOPE](http://docs.oracle.com/javase/7/docs/api/javax/naming/directory/SearchControls.html#SUBTREE_SCOPE) 
+Queries are executed as a call to method [DirContext#search](http://docs.oracle.com/javase/7/docs/api/javax/naming/directory/DirContext.html#search\(javax.naming.Name,%20java.lang.String,%20javax.naming.directory.SearchControls\)).
+During this call ldap.query is used as \"filter\" parameter, ldap.queryDn as \"name\" and [SUBTREE_SCOPE](http://docs.oracle.com/javase/7/docs/api/javax/naming/directory/SearchControls.html#SUBTREE_SCOPE) 
 is added to SearchControls.
 See also [LDAP Second variant](./ldap.html#Second_variant).
 

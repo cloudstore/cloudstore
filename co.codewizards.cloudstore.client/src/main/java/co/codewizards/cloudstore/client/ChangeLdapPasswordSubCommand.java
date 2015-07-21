@@ -2,8 +2,8 @@ package co.codewizards.cloudstore.client;
 
 import org.kohsuke.args4j.Argument;
 
+import co.codewizards.cloudstore.core.otp.LdapPasswordOneTimePadRegistry;
 import co.codewizards.cloudstore.core.otp.OneTimePadRegistry;
-import co.codewizards.cloudstore.core.otp.OneTimePadRegistryFactory;
 /**
  * {@link SubCommand} implementation for changing LDAP admin password.
  * @author wilk
@@ -20,7 +20,7 @@ public class ChangeLdapPasswordSubCommand extends SubCommand{
 
 	@Override
 	public void run() throws Exception {
-		OneTimePadRegistry registry = OneTimePadRegistryFactory.forLdapAdminCredentials();
+		OneTimePadRegistry registry = new LdapPasswordOneTimePadRegistry();
 		registry.encryptAndStorePassword(password.toCharArray());
 		System.out.println("LDAP admin password changed successfully.");
 	}

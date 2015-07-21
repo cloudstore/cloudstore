@@ -28,15 +28,15 @@ public class OneTimePadRegistry {
 	public static final String PASSWORD_FILE_SUFFIX = "Password";
 	public static final String RANDOM_KEY_FILE_SUFFIX = "RandomKey";
 
-	private String fileNamePrefix;
+	private final String fileNamePrefix;
 	private final OneTimePadEncryptor encryptor = new OneTimePadEncryptor();
 
-	public OneTimePadRegistry(String fileNamePrefix){
+	public OneTimePadRegistry(final String fileNamePrefix){
 		this.fileNamePrefix = fileNamePrefix;
 	}
 
 	public void encryptAndStorePassword(final char[] password){
-		Result result = encryptor.encrypt(toBytes(password));
+		final Result result = encryptor.encrypt(toBytes(password));
 		try {
 			writeToFile(result.getEncryptedMessage(), PASSWORD_FILE_SUFFIX);
 			writeToFile(result.getRandomKey(), RANDOM_KEY_FILE_SUFFIX);
@@ -47,9 +47,9 @@ public class OneTimePadRegistry {
 
 	public char[] readFromFileAndDecrypt(){
 		try {
-			byte[] encryptedPassword = readFromFile(PASSWORD_FILE_SUFFIX);
-			byte[] randomKey = readFromFile(RANDOM_KEY_FILE_SUFFIX);
-			byte[] decryptedPassword = encryptor.decrypt(encryptedPassword, randomKey);
+			final byte[] encryptedPassword = readFromFile(PASSWORD_FILE_SUFFIX);
+			final byte[] randomKey = readFromFile(RANDOM_KEY_FILE_SUFFIX);
+			final byte[] decryptedPassword = encryptor.decrypt(encryptedPassword, randomKey);
 			return toChars(decryptedPassword);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -57,12 +57,14 @@ public class OneTimePadRegistry {
 	}
 
 	private byte[] readFromFile(String fileNameSuffix) throws IOException {
-		return IOUtil.getBytesFromFile(createFile(ConfigDir.getInstance().getFile(), fileNamePrefix + fileNameSuffix));
+		final String fileName = fileNamePrefix + fileNameSuffix;
+		final File file =  createFile(ConfigDir.getInstance().getFile(), fileName);
+		return IOUtil.getBytesFromFile(file);
 	}
 
 	private void writeToFile(byte[] bytes, String fileNameSuffix) throws IOException{
-		File file = createFile(ConfigDir.getInstance().getFile(), fileNamePrefix + fileNameSuffix);
-		try(OutputStream os = file.createOutputStream()){
+		final File file = createFile(ConfigDir.getInstance().getFile(), fileNamePrefix + fileNameSuffix);
+		try(final OutputStream os = file.createOutputStream()){
 			os.write(bytes);
 		}
 	}
@@ -70,25 +72,25 @@ public class OneTimePadRegistry {
 	/**
 	 * based on @link <a href="http://stackoverflow.com/questions/5513144/converting-char-to-byte#answer-9670279">this answer</a>
 	 */
-	private byte[] toBytes(char[] chars) {
-	    CharBuffer charBuffer = CharBuffer.wrap(chars);
-	    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
-	    byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
+	private byte[] toBytes(final char[] chars) {
+	    final CharBuffer charBuffer = CharBuffer.wrap(chars);
+	    final ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
+	    final byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
 	            byteBuffer.position(), byteBuffer.limit());
 	    clearSensitiveData(charBuffer.array(), byteBuffer.array());
 	    return bytes;
 	}
 
-	private char[] toChars(byte[] bytes){
-		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-		CharBuffer charBuffer = StandardCharsets.UTF_8.decode(byteBuffer);
-		char[] chars = Arrays.copyOfRange(charBuffer.array(),
+	private char[] toChars(final byte[] bytes){
+		final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+		final CharBuffer charBuffer = StandardCharsets.UTF_8.decode(byteBuffer);
+		final char[] chars = Arrays.copyOfRange(charBuffer.array(),
 				charBuffer.position(), charBuffer.limit());
 		clearSensitiveData(charBuffer.array(), byteBuffer.array());
 	    return chars;
 	}
 
-	private void clearSensitiveData(char[] chars, byte[] bytes){
+	private void clearSensitiveData(final char[] chars, final byte[] bytes){
 		Arrays.fill(chars, '\u0000');
 		Arrays.fill(bytes, (byte) 0);
 	}

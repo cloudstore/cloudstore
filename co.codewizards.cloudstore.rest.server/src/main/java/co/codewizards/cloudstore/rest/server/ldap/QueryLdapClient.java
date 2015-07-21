@@ -15,12 +15,10 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.rest.server.auth.Auth;
+import co.codewizards.cloudstore.rest.server.auth.NotAuthorizedException;
 /**
  * Authentication flow used by this client:
  * At first DirContext is created, based on provided url, adminDn and adminPassword.
@@ -69,7 +67,7 @@ public class QueryLdapClient implements LdapClient{
 		}catch(NamingException e){
 			throw new RuntimeException(e);
 		}
-		throw new WebApplicationException(Response.status(Status.UNAUTHORIZED).header("WWW-Authenticate", "Basic realm=\"CloudStoreServer\"").build());
+		throw new NotAuthorizedException();
 	}
 
 	private List<String> findAllUsersThatMatchQuery(final DirContext context, final Auth auth) throws NamingException{
