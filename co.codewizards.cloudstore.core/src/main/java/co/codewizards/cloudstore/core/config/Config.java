@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
@@ -270,7 +271,7 @@ public class Config {
 				for (int i = 0; i < propertiesFiles.length; i++) {
 					final File propertiesFile = propertiesFiles[i];
 					logger.debug("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
-					final long lastModified = propertiesFile.lastModified(); // is 0 for non-existing file
+					final long lastModified = getLastModifiedAndWaitIfNeeded(propertiesFile);
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
 						try ( LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); ) { // TODO maybe system property for timeout?
 							final InputStream in = lockFile.createInputStream();
@@ -288,6 +289,52 @@ public class Config {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	/**
+	 * Gets the {@link File#lastModified() lastModified} timestamp of the given {@code file}
+	 * and waits if needed.
+	 * <p>
+	 * Waiting is needed, if the modification's age is shorter than the file system's time granularity.
+	 * Since we do not know the file system's time granularity, we assume 2 seconds. Thus, if the file
+	 * was changed e.g. 600 ms before invoking this method, the method will wait for 1400 ms to make sure
+	 * the modification is at least as old as the assumed file system's temporal granularity.
+	 * <p>
+	 * This waiting strategy makes sure that a future modification of the file, after the file was read,
+	 * is reliably detected - causing the file to be read again.
+	 * @param file the file whose {@link File#lastModified() lastModified} timestamp to obtain. Must not be <code>null</code>.
+	 * @return the {@link File#lastModified() lastModified} timestamp. 0, if the specified {@code file}
+	 * does not exist.
+	 */
+	private long getLastModifiedAndWaitIfNeeded(final File file) {
+		assertNotNull("file", file);
+		long lastModified = file.lastModified(); // is 0 for non-existing file
+		final long now = System.currentTimeMillis();
+
+		// Check and handle timestamp in the future.
+		if (lastModified > now) {
+			file.setLastModified(now);
+			logger.warn("getLastModifiedAndWaitIfNeeded: lastModified of '{}' was in the future! Changed it to now!", file.getAbsolutePath());
+
+			lastModified = file.lastModified();
+			if (lastModified > now) {
+				logger.error("getLastModifiedAndWaitIfNeeded: lastModified of '{}' is in the future! Changing it FAILED! Permissions?!", file.getAbsolutePath());
+				return lastModified;
+			}
+		}
+
+		// Wait, if the modification is not yet older than the file system's (assumed!) granularity.
+		// No file system should have a granularity worse than 2 seconds. Waiting max. 2 seconds in this use-case
+		// in this rare situation is acceptable. After all, this is a config file which isn't changed often.
+		final long fileSystemTemporalGranularity = 2000; // TODO maybe make this configurable?! Warning: we are in the config here - accessing the config is thus not so easy (=> recursion).
+		final long modificationAge = now - lastModified;
+		final long waitPeriod = fileSystemTemporalGranularity - modificationAge;
+		if (waitPeriod > 0) {
+			logger.info("getLastModifiedAndWaitIfNeeded: Waiting {} ms.", waitPeriod);
+			try { Thread.sleep(waitPeriod); } catch (InterruptedException e) { }
+		}
+
+		return lastModified;
 	}
 
 	/**
