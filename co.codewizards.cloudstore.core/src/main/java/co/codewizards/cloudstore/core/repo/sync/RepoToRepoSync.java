@@ -618,7 +618,7 @@ public class RepoToRepoSync implements AutoCloseable {
 					logger.trace("Writing data for dirty FileChunkDto ({} of {}). path='{}' offset={}",
 							fileChunkIndex + 1, fromFileChunkDtosDirty.size(), path, fileChunkDto.getOffset());
 				}
-				toRepoTransport.putFileData(path, fileChunkDto.getOffset(), fileData);
+				putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
 				bytesCopied += fileData.length;
 				subMonitor.worked(1);
 			}
@@ -633,6 +633,14 @@ public class RepoToRepoSync implements AutoCloseable {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	protected void putFileData(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDtoTreeNode repoFileDtoTreeNode,
+			final String path, final FileChunkDto fileChunkDto,
+			final byte[] fileData) {
+
+		toRepoTransport.putFileData(path, fileChunkDto.getOffset(), fileData);
 	}
 
 	protected void beginPutFile(final RepoTransport fromRepoTransport,

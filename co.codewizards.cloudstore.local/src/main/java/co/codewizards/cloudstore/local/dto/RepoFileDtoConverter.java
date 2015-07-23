@@ -39,6 +39,7 @@ public class RepoFileDtoConverter {
 	private final LocalRepoTransaction transaction;
 	private final RepoFileDao repoFileDao;
 	private boolean excludeLocalIds;
+	private boolean excludeMutableData;
 
 	public static RepoFileDtoConverter create(final LocalRepoTransaction transaction) {
 		return ObjectFactoryUtil.createObject(RepoFileDtoConverter.class, transaction);
@@ -58,8 +59,12 @@ public class RepoFileDtoConverter {
 			final NormalFile normalFile = (NormalFile) repoFile;
 			final NormalFileDto normalFileDto;
 			repoFileDto = normalFileDto = createObject(NormalFileDto.class);
-			normalFileDto.setLength(normalFile.getLength());
-			normalFileDto.setSha1(normalFile.getSha1());
+			if (isExcludeMutableData())
+				normalFileDto.setLength(-1);
+			else {
+				normalFileDto.setLength(normalFile.getLength());
+				normalFileDto.setSha1(normalFile.getSha1());
+			}
 			if (depth > 0) {
 				// TODO this should actually be a SortedSet, but for whatever reason, I started
 				// getting ClassCastExceptions and had to switch to a normal Set :-(
@@ -95,7 +100,8 @@ public class RepoFileDtoConverter {
 			final Symlink symlink = (Symlink) repoFile;
 			final SymlinkDto symlinkDto;
 			repoFileDto = symlinkDto = createObject(SymlinkDto.class);
-			symlinkDto.setTarget(symlink.getTarget());
+			if (! isExcludeMutableData())
+				symlinkDto.setTarget(symlink.getTarget());
 		}
 		else
 			throw new UnsupportedOperationException("RepoFile type not yet supported: " + repoFile);
@@ -124,5 +130,12 @@ public class RepoFileDtoConverter {
 	}
 	public void setExcludeLocalIds(final boolean excludeLocalIds) {
 		this.excludeLocalIds = excludeLocalIds;
+	}
+
+	public boolean isExcludeMutableData() {
+		return excludeMutableData;
+	}
+	public void setExcludeMutableData(boolean excludeMutableData) {
+		this.excludeMutableData = excludeMutableData;
 	}
 }
