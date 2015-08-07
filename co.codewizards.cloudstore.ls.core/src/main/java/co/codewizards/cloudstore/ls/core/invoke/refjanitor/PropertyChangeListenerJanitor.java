@@ -150,6 +150,8 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 			listenerRefs = new LinkedList<>();
 			property2ListenerRefs.put(property, listenerRefs);
 		}
+		else
+			expunge(listenerRefs);
 
 		// PropertyChangeSupport.addPropertyChangeListener(...) causes the same listener to be added multiple times.
 		// Hence, we do the same here: Add it once for each invocation.
