@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helper class merging a given source-{@code List} into a given destination-{@code List}.
+ * Helper {@linkplain #merge(List, List) merging} a given source-{@code List} into a given destination-{@code List}.
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  *
@@ -25,6 +25,17 @@ public abstract class ListMerger<E, K> {
 	private Map<K, List<E>> sourceKey2elements;
 	private Map<K, List<E>> destKey2elements;
 
+	/**
+	 * Merge the given source into the given destination.
+	 * <p>
+	 * After this operation, both lists are semantically equal. This does not mean that their
+	 * {@code equals(...)} method returns true, though! This is, because the lists are merged
+	 * based on a key which might be wrapped by the elements. The elements are not required
+	 * to correctly implement {@code equals(...)}.
+	 *
+	 * @param source the source from which to copy. Must not be <code>null</code>.
+	 * @param dest the destination into which to write. Must not be <code>null</code>.
+	 */
 	public void merge(final List<E> source, final List<E> dest) {
 		this.source = assertNotNull("source", source);
 		this.dest = assertNotNull("dest", dest);
