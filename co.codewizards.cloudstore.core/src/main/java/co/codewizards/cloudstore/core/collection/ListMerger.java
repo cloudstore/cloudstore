@@ -97,7 +97,30 @@ public abstract class ListMerger<E, K> {
 		dest.add(index, element);
 	}
 
+	/**
+	 * Get the key from the given {@code element}.
+	 * <p>
+	 * If the element is the same as the key, this method should return the given {@code element}.
+	 * @param element the element from which to extract the key. May be <code>null</code>, if the
+	 * source or the destination {@code List} contains <code>null</code> elements.
+	 * @return the key. May be <code>null</code>.
+	 */
 	protected abstract K getKey(E element);
+
+	/**
+	 * Merge the given {@code sourceElement} into the given {@code destElement} or replace it altogether.
+	 * <p>
+	 * Depending on whether the elements wrap the actual information in a mutable way, or whether they
+	 * are immutable, this method may either copy the data from the {@code sourceElement} into the {@code destElement}
+	 * or instead invoke {@link List#set(int, Object) dest.set(index, sourceElement)}.
+	 *
+	 * @param dest the destination {@code List}. Never <code>null</code>.
+	 * @param index the index in {@code dest} addressing the element to be replaced.
+	 * @param sourceElement the source from which to copy. May be <code>null</code>, if the source contains
+	 * <code>null</code> elements.
+	 * @param destElement the destination into which to write. May be <code>null</code>, if the destination contains
+	 * <code>null</code> elements.
+	 */
 	protected abstract void merge(List<E> dest, int index, E sourceElement, E destElement);
 
 	protected void populateSourceKey2element() {
