@@ -5,7 +5,6 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +14,8 @@ import java.util.Map;
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  *
- * @param <E>
- * @param <K>
+ * @param <E> the element type.
+ * @param <K> the key type (either the same as the element or a key contained in each list element).
  */
 public abstract class ListMerger<E, K> {
 
@@ -53,27 +52,16 @@ public abstract class ListMerger<E, K> {
 		for (final E e : destElementsToRemove)
 			dest.remove(e);
 
-//		populateSourceKey2element(); // no need to re-create, because it should be correctly updated, before
-//		populateDestKey2element();
-
 		int index = -1;
 		for (final E sourceElement : source) {
 			++index;
 			final K sourceKey = getKey(sourceElement);
-//			final List<E> sourceElements = nullToEmptyList(sourceKey2elements.get(sourceKey));
 			final List<E> destElements = nullToEmptyList(destKey2elements.get(sourceKey));
-
-//			if (sourceElements.size() == destElements.size()) {
-//				mergeElementsWithSameKey(sourceKey, sourceElements, destElements);
-//				sourceElements.clear();
-//				destElements.clear();
-//				continue;
-//			}
 
 			E destElement = dest.size() <= index ? null : dest.get(index);
 			K destKey = destElement == null ? null : getKey(destElement);
 			if (equal(sourceKey, destKey)) {
-				merge(sourceElement, destElement);
+				merge(dest, index, sourceElement, destElement);
 				destElements.remove(destElement);
 				continue;
 			}
@@ -81,9 +69,10 @@ public abstract class ListMerger<E, K> {
 
 			if (! destElements.isEmpty()) {
 				destElement = destElements.remove(0);
-				dest.remove(destElement);
+				final int lastIndexOf = dest.lastIndexOf(destElement);
+				dest.remove(lastIndexOf);
 				dest.add(index, destElement);
-				merge(sourceElement, destElement);
+				merge(dest, index, sourceElement, destElement);
 				continue;
 			}
 
@@ -95,29 +84,21 @@ public abstract class ListMerger<E, K> {
 		return list == null ? Collections.<T>emptyList() : list;
 	}
 
-	protected void add(List<E> dest, int index, E element) {
+	/**
+	 * Add the given {@code element} to the given destination-{@code List} {@code dest} at the specified {@code index}.
+	 * <p>
+	 * The default implementation simply calls: {@code dest.add(index, element);}
+	 *
+	 * @param dest the destination. Never <code>null</code>.
+	 * @param index the index at which the new element should be added.
+	 * @param element the element to be added.
+	 */
+	protected void add(final List<E> dest, final int index, final E element) {
 		dest.add(index, element);
 	}
 
-	protected void mergeElementsWithSameKey(final K key, List<E> sourceElements, List<E> destElements) {
-		final Iterator<E> s = sourceElements.iterator();
-		final Iterator<E> d = destElements.iterator();
-
-		while (s.hasNext()) {
-			if (! d.hasNext())
-				throw new IllegalStateException("destElements contains less elements than sourceElements!");
-
-			final E sourceElement = s.next();
-			final E destElement = d.next();
-			merge(sourceElement, destElement);
-		}
-
-		if (d.hasNext())
-			throw new IllegalStateException("destElements contains more elements than sourceElements!");
-	}
-
 	protected abstract K getKey(E element);
-	protected abstract void merge(E sourceElement, E destElement);
+	protected abstract void merge(List<E> dest, int index, E sourceElement, E destElement);
 
 	protected void populateSourceKey2element() {
 		sourceKey2elements = new HashMap<>();

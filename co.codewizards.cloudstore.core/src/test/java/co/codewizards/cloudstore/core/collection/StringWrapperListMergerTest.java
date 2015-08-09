@@ -8,11 +8,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class ListMergerTest {
+public class StringWrapperListMergerTest {
 
 	private static final class StringWrapper {
 		public String string;
-		public StringWrapper() { }
 		public StringWrapper(String string) {
 			this.string = string;
 		}
@@ -48,7 +47,7 @@ public class ListMergerTest {
 		}
 
 		@Override
-		protected void merge(StringWrapper sourceElement, StringWrapper destElement) {
+		protected void merge(List<StringWrapper> dest, int index, StringWrapper sourceElement, StringWrapper destElement) {
 			destElement.string = sourceElement.string;
 		}
 	};
