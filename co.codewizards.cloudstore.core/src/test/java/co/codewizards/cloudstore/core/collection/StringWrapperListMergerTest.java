@@ -47,7 +47,7 @@ public class StringWrapperListMergerTest {
 		}
 
 		@Override
-		protected void merge(List<StringWrapper> dest, int index, StringWrapper sourceElement, StringWrapper destElement) {
+		protected void update(List<StringWrapper> dest, int index, StringWrapper sourceElement, StringWrapper destElement) {
 			destElement.string = sourceElement.string;
 		}
 	};

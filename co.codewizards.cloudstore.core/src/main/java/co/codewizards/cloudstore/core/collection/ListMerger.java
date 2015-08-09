@@ -72,7 +72,7 @@ public abstract class ListMerger<E, K> {
 			E destElement = dest.size() <= index ? null : dest.get(index);
 			K destKey = destElement == null ? null : getKey(destElement);
 			if (equal(sourceKey, destKey)) {
-				merge(dest, index, sourceElement, destElement);
+				update(dest, index, sourceElement, destElement);
 				destElements.remove(destElement);
 				continue;
 			}
@@ -83,7 +83,7 @@ public abstract class ListMerger<E, K> {
 				final int lastIndexOf = dest.lastIndexOf(destElement);
 				dest.remove(lastIndexOf);
 				dest.add(index, destElement);
-				merge(dest, index, sourceElement, destElement);
+				update(dest, index, sourceElement, destElement);
 				continue;
 			}
 
@@ -119,11 +119,14 @@ public abstract class ListMerger<E, K> {
 	protected abstract K getKey(E element);
 
 	/**
-	 * Merge the given {@code sourceElement} into the given {@code destElement} or replace it altogether.
+	 * Update the the given {@code destElement} with the data from {@code sourceElement}; or replace it altogether.
 	 * <p>
 	 * Depending on whether the elements wrap the actual information in a mutable way, or whether they
 	 * are immutable, this method may either copy the data from the {@code sourceElement} into the {@code destElement}
 	 * or instead invoke {@link List#set(int, Object) dest.set(index, sourceElement)}.
+	 * <p>
+	 * <b>Important:</b> This method is only invoked, if the {@link #getKey(Object) key} of both
+	 * {@code sourceElement} and {@code destElement} is the same!
 	 *
 	 * @param dest the destination {@code List}. Never <code>null</code>.
 	 * @param index the index in {@code dest} addressing the element to be replaced.
@@ -132,7 +135,7 @@ public abstract class ListMerger<E, K> {
 	 * @param destElement the destination into which to write. May be <code>null</code>, if the destination contains
 	 * <code>null</code> elements.
 	 */
-	protected abstract void merge(List<E> dest, int index, E sourceElement, E destElement);
+	protected abstract void update(List<E> dest, int index, E sourceElement, E destElement);
 
 	protected void populateSourceKey2element() {
 		sourceKey2elements = new HashMap<>();

@@ -19,7 +19,7 @@ public class StringListMergerTest {
 		}
 
 		@Override
-		protected void merge(List<String> dest, int index, String sourceElement, String destElement) {
+		protected void update(List<String> dest, int index, String sourceElement, String destElement) {
 			dest.set(index, sourceElement);
 		}
 	};
