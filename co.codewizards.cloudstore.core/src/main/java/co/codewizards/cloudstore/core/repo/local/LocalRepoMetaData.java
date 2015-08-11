@@ -8,6 +8,8 @@ public interface LocalRepoMetaData {
 
 	RepoFileDto getRepoFileDto(String path, int depth);
 
+	RepoFileDto getRepoFileDto(long repoFileId, int depth);
+
 	List<RepoFileDto> getChildRepoFileDtos(String path, int depth);
 
 	List<RepoFileDto> getChildRepoFileDtos(long repoFileId, int depth);

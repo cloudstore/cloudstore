@@ -74,6 +74,24 @@ public class LocalRepoMetaDataImpl implements LocalRepoMetaData {
 	}
 
 	@Override
+	public RepoFileDto getRepoFileDto(long repoFileId, int depth) {
+		final RepoFileDto result;
+		try (final LocalRepoTransaction tx = beginReadTransaction();) {
+			final RepoFileDtoConverter converter = RepoFileDtoConverter.create(tx);
+
+			final RepoFile repoFile = tx.getDao(RepoFileDao.class).getObjectByIdOrNull(repoFileId);
+
+			if (repoFile == null)
+				result = null;
+			else
+				result = converter.toRepoFileDto(repoFile, depth);
+
+			tx.commit();
+		}
+		return result;
+	}
+
+	@Override
 	public List<RepoFileDto> getChildRepoFileDtos(final long repoFileId, final int depth) {
 		final List<RepoFileDto> result;
 		try (final LocalRepoTransaction tx = beginReadTransaction();) {
