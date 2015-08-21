@@ -45,6 +45,7 @@ import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
+import co.codewizards.cloudstore.core.repo.local.CreateRepositoryContext;
 import co.codewizards.cloudstore.core.repo.local.FileAlreadyRepositoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoDirectoryException;
 import co.codewizards.cloudstore.core.repo.local.FileNoRepositoryException;
@@ -146,8 +147,11 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			// TODO Make this more robust: If we have a power-outage between directory creation and the finally block,
 			// we end in an inconsistent state. We can avoid this by tracking the creation process in a properties
 			// file later (somehow making this really transactional).
-			if (createRepository)
-				repositoryId = UUID.randomUUID();
+			if (createRepository) {
+				repositoryId = CreateRepositoryContext.repositoryIdThreadLocal.get();
+				if (repositoryId == null)
+					repositoryId = UUID.randomUUID();
+			}
 
 			initMetaDir(createRepository);
 
