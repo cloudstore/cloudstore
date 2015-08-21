@@ -5,6 +5,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
@@ -38,6 +39,10 @@ public class LocalRepository extends Repository {
 	private Set<String> aliases;
 
 	public LocalRepository() { }
+
+	public LocalRepository(UUID repositoryId) {
+		super(repositoryId);
+	}
 
 	/**
 	 * Get the root directory of this repository.

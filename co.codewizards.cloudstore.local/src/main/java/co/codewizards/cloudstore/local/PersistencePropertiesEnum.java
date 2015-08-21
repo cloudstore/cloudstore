@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public enum PersistencePropertiesEnum {
@@ -8,12 +7,12 @@ public enum PersistencePropertiesEnum {
 
 	CONNECTION_URL("javax.jdo.option.ConnectionURL"),
 
-	/**
-	 * The connection-URL is modified, if the DB needs to be created. This property keeps
-	 * the original connection-URL. However, this URL, too, is resolved (i.e. variables
-	 * are replaced by values).
-	 */
-	CONNECTION_URL_ORIGINAL("_ORIGINAL_javax.jdo.option.ConnectionURL"),
+//	/**
+//	 * The connection-URL is modified, if the DB needs to be created. This property keeps
+//	 * the original connection-URL. However, this URL, too, is resolved (i.e. variables
+//	 * are replaced by values).
+//	 */
+//	CONNECTION_URL_ORIGINAL("_ORIGINAL_javax.jdo.option.ConnectionURL"),
 
 	CONNECTION_USER_NAME("javax.jdo.option.ConnectionUserName"),
 

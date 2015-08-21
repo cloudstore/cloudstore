@@ -1,12 +1,17 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
 
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
 import javax.jdo.PersistenceManagerFactory;
 
@@ -14,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Factory creating JDBC connections to the repository's derby database.
@@ -37,7 +41,7 @@ public class JdbcConnectionFactory {
 	private String connectionPassword;
 
 	public JdbcConnectionFactory(final File localRoot) {
-		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
+		this.localRoot = assertNotNull("localRoot", localRoot);
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 
@@ -45,13 +49,36 @@ public class JdbcConnectionFactory {
 		initDriverClass();
 	}
 
+	private UUID readRepositoryIdFromRepositoryPropertiesFile() {
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		try {
+			final Properties repositoryProperties = new Properties();
+			try (InputStream in = repositoryPropertiesFile.createInputStream();) {
+				repositoryProperties.load(in);
+			}
+			final String repositoryIdStr = repositoryProperties.getProperty(PROP_REPOSITORY_ID);
+			if (isEmpty(repositoryIdStr))
+				throw new IllegalStateException("repositoryProperties.getProperty(PROP_REPOSITORY_ID) is empty!");
+
+			final UUID repositoryId = UUID.fromString(repositoryIdStr);
+			return repositoryId;
+		} catch (Exception x) {
+			throw new RuntimeException("Reading readRepositoryId from '" + repositoryPropertiesFile.getAbsolutePath() + "' failed: " + x, x);
+		}
+	}
+
 	private void initProperties() {
-		Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(false);
+		UUID repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
+		Map<String, String> persistenceProperties = new PersistencePropertiesProvider(repositoryId, localRoot).getPersistenceProperties();
 		connectionDriverName = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_DRIVER_NAME.key);
 		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL.key);
 		connectionUserName = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_USER_NAME.key);
 		connectionPassword = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_PASSWORD.key);
 	};
+
+	protected File getMetaDir() {
+		return createFile(localRoot, META_DIR_NAME);
+	}
 
 	private void initDriverClass() {
 		if (isEmpty(connectionDriverName))

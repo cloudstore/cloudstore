@@ -4,8 +4,10 @@ import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -61,6 +63,8 @@ import co.codewizards.cloudstore.core.repo.local.RepositoryCorruptException;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
+import co.codewizards.cloudstore.local.db.DatabaseAdapter;
+import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
@@ -142,7 +146,14 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			// TODO Make this more robust: If we have a power-outage between directory creation and the finally block,
 			// we end in an inconsistent state. We can avoid this by tracking the creation process in a properties
 			// file later (somehow making this really transactional).
+			if (createRepository)
+				repositoryId = UUID.randomUUID();
+
 			initMetaDir(createRepository);
+
+			if (repositoryId == null)
+				repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
+
 			initPersistenceManagerFactory(createRepository);
 			deleteExpiredRemoteRepositoryRequests();
 			syncWithLocalRepoRegistry();
@@ -158,6 +169,24 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 //				if (repositoryId != null) // TODO should be removed - will be evicted after some time, anyway, but
 //					LocalRepoRegistry.getInstance().removeRepository(repositoryId);
 			}
+		}
+	}
+
+	private UUID readRepositoryIdFromRepositoryPropertiesFile() {
+		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
+		try {
+			final Properties repositoryProperties = new Properties();
+			try (InputStream in = repositoryPropertiesFile.createInputStream();) {
+				repositoryProperties.load(in);
+			}
+			final String repositoryIdStr = repositoryProperties.getProperty(PROP_REPOSITORY_ID);
+			if (isEmpty(repositoryIdStr))
+				throw new IllegalStateException("repositoryProperties.getProperty(PROP_REPOSITORY_ID) is empty!");
+
+			final UUID repositoryId = UUID.fromString(repositoryIdStr);
+			return repositoryId;
+		} catch (Exception x) {
+			throw new RuntimeException("Reading readRepositoryId from '" + repositoryPropertiesFile.getAbsolutePath() + "' failed: " + x, x);
 		}
 	}
 
@@ -225,10 +254,15 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			initLockFile();
 			createRepositoryPropertiesFile();
+
 			try {
-				IOUtil.copyResource(LocalRepoManagerImpl.class, "/" + PERSISTENCE_PROPERTIES_FILE_NAME, createFile(metaDir, PERSISTENCE_PROPERTIES_FILE_NAME));
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
+				try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter();) {
+					databaseAdapter.setRepositoryId(assertNotNull("repositoryId", repositoryId));
+					databaseAdapter.setLocalRoot(assertNotNull("localRoot", localRoot));
+					databaseAdapter.createPersistencePropertiesFileAndDatabase();
+				}
+			} catch (Exception x) {
+				throw new LocalRepoManagerException(x);
 			}
 		}
 		else {
@@ -260,7 +294,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			repositoryProperties = new Properties();
-			repositoryProperties.put(PROP_VERSION, Integer.valueOf(version).toString());
+			repositoryProperties.setProperty(PROP_REPOSITORY_ID, assertNotNull("repositoryId", repositoryId).toString());
+			repositoryProperties.setProperty(PROP_VERSION, Integer.valueOf(version).toString());
 			PropertiesUtil.store(repositoryPropertiesFile, repositoryProperties, null);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
@@ -476,7 +511,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void createAndPersistLocalRepository(final PersistenceManager pm) {
-		LocalRepository localRepository = createObject(LocalRepository.class);
+		LocalRepository localRepository = createObject(LocalRepository.class, assertNotNull("repositoryId", repositoryId));
 		final Directory root = createObject(Directory.class);
 		root.setName("");
 		root.setLastModified(new Date(localRoot.lastModified()));
@@ -488,10 +523,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void readRepositoryMainProperties(final LocalRepository localRepository) {
-		AssertUtil.assertNotNull("localRepository", localRepository);
-		repositoryId = AssertUtil.assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
-		publicKey = AssertUtil.assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
-		privateKey = AssertUtil.assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
+		assertNotNull("localRepository", localRepository);
+		repositoryId = assertNotNull("localRepository.repositoryId", localRepository.getRepositoryId());
+		publicKey = assertNotNull("localRepository.publicKey", localRepository.getPublicKey());
+		privateKey = assertNotNull("localRepository.privateKey", localRepository.getPrivateKey());
 	}
 
 	private static final String KEY_STORE_PASSWORD_STRING = "CloudStore-key-store";
@@ -521,8 +556,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private Map<String, String> getPersistenceProperties(final boolean createRepository) {
-		final Map<String, String> persistenceProperties = new PersistencePropertiesProvider(localRoot).getPersistenceProperties(createRepository);
-		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL_ORIGINAL.key);
+		final Map<String, String> persistenceProperties = new PersistencePropertiesProvider(repositoryId, localRoot).getPersistenceProperties();
+//		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL_ORIGINAL.key);
+		connectionURL = persistenceProperties.get(PersistencePropertiesEnum.CONNECTION_URL.key);
 		return persistenceProperties;
 	}
 

@@ -34,6 +34,7 @@ public interface LocalRepoManager extends AutoCloseable {
 
 	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
 
+	String VAR_REPOSITORY_ID = "repository.id";
 	String VAR_LOCAL_ROOT = "repository.localRoot";
 	String VAR_META_DIR = "repository.metaDir";
 
