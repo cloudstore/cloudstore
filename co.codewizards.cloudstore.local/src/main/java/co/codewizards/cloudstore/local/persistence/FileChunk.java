@@ -27,6 +27,7 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 
 	private int length;
 
+	@Persistent(nullValue=NullValue.EXCEPTION)
 	private String sha1;
 
 	public NormalFile getNormalFile() {

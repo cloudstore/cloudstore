@@ -22,6 +22,7 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.dto.FileChunkDto;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
@@ -554,7 +555,6 @@ public class LocalRepoSync {
 			final MessageDigest mdChunk = MessageDigest.getInstance(HashUtil.HASH_ALGORITHM_SHA);
 
 			final int bufLength = 32 * 1024;
-			final int chunkLength = 32 * bufLength; // 1,048,576 Bytes = 1 MiB chunk size
 
 			long offset = 0;
 			final InputStream in = file.createInputStream();
@@ -580,7 +580,7 @@ public class LocalRepoSync {
 						fileChunk.setLength(fileChunk.getLength() + bytesRead);
 					}
 
-					if (bytesRead < 0 || fileChunk.getLength() >= chunkLength) {
+					if (bytesRead < 0 || fileChunk.getLength() >= FileChunkDto.MAX_LENGTH) {
 						fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
 						fileChunk.makeReadOnly();
 						normalFile.getFileChunks().add(fileChunk);

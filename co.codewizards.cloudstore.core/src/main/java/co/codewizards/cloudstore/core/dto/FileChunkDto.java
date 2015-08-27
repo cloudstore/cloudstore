@@ -5,6 +5,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class FileChunkDto {
 
+	/**
+	 * All chunks normally have the same length: 1 MiB. The last chunk, however, might be shorter, hence
+	 * there's the {@link #getLength() length} property, too.
+	 */
+	public static final int MAX_LENGTH = 1024 * 1024;
+
 	private long offset;
 
 	private int length;
