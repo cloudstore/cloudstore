@@ -10,13 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
-import co.codewizards.cloudstore.core.dto.FileChunkDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
-import co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -35,6 +33,7 @@ public class RepoFileDtoConverter {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFileDtoConverter.class);
 
 	private final TempChunkFileManager tempChunkFileManager = TempChunkFileManager.getInstance();
+	private final FileChunkDtoConverter fileChunkDtoConverter = FileChunkDtoConverter.create();
 	private final LocalRepoManager localRepoManager;
 	private final LocalRepoTransaction transaction;
 	private final RepoFileDao repoFileDao;
@@ -42,7 +41,7 @@ public class RepoFileDtoConverter {
 	private boolean excludeMutableData;
 
 	public static RepoFileDtoConverter create(final LocalRepoTransaction transaction) {
-		return ObjectFactoryUtil.createObject(RepoFileDtoConverter.class, transaction);
+		return createObject(RepoFileDtoConverter.class, transaction);
 	}
 
 	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
@@ -71,7 +70,7 @@ public class RepoFileDtoConverter {
 				final List<FileChunk> fileChunks = new ArrayList<>(normalFile.getFileChunks());
 				Collections.sort(fileChunks);
 				for (final FileChunk fileChunk : fileChunks) {
-					normalFileDto.getFileChunkDtos().add(toFileChunkDto(fileChunk));
+					normalFileDto.getFileChunkDtos().add(fileChunkDtoConverter.toFileChunkDto(fileChunk));
 				}
 			}
 			if (depth > 1) {
@@ -115,14 +114,6 @@ public class RepoFileDtoConverter {
 		repoFileDto.setLastModified(repoFile.getLastModified());
 
 		return repoFileDto;
-	}
-
-	private FileChunkDto toFileChunkDto(final FileChunk fileChunk) { // TODO there should be a separate FileChunkDtoConverter!
-		final FileChunkDto fileChunkDto = new FileChunkDto();
-		fileChunkDto.setOffset(fileChunk.getOffset());
-		fileChunkDto.setLength(fileChunk.getLength());
-		fileChunkDto.setSha1(fileChunk.getSha1());
-		return fileChunkDto;
 	}
 
 	public boolean isExcludeLocalIds() {

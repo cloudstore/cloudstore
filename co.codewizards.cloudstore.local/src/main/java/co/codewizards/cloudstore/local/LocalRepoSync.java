@@ -545,7 +545,7 @@ public class LocalRepoSync {
 		return sha1 + ':' + length;
 	}
 
-	private void sha(final NormalFile normalFile, final File file, final ProgressMonitor monitor) {
+	protected void sha(final NormalFile normalFile, final File file, final ProgressMonitor monitor) {
 		monitor.beginTask("Local sync...", (int)Math.min(file.length(), Integer.MAX_VALUE));
 		try {
 			normalFile.getFileChunks().clear();
@@ -564,7 +564,7 @@ public class LocalRepoSync {
 				final byte[] buf = new byte[bufLength];
 				while (true) {
 					if (fileChunk == null) {
-						fileChunk = new FileChunk();
+						fileChunk = createObject(FileChunk.class);
 						fileChunk.setRepoFile(normalFile);
 						fileChunk.setOffset(offset);
 						fileChunk.setLength(0);

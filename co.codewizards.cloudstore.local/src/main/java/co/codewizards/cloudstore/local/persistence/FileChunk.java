@@ -68,6 +68,10 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 		writable = false;
 	}
 
+	protected void makeWritable() {
+		writable = true;
+	}
+
 	@Override
 	public void jdoPreStore() {
 		makeReadOnly();

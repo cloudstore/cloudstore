@@ -11,6 +11,9 @@ public class FileChunkDto {
 	 */
 	public static final int MAX_LENGTH = 1024 * 1024;
 
+	public FileChunkDto() {
+	}
+
 	private long offset;
 
 	private int length;
@@ -37,5 +40,4 @@ public class FileChunkDto {
 	public void setSha1(String sha1) {
 		this.sha1 = sha1;
 	}
-
 }

@@ -3,13 +3,11 @@ package co.codewizards.cloudstore.core.repo.sync;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,7 +48,6 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
-import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 /**
@@ -461,7 +458,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			final String path = repoFileDtoTreeNode.getPath();
 			logger.info("syncDirectory: path='{}'", path);
 			try {
-				toRepoTransport.makeDirectory(path, directoryDto.getLastModified());
+				makeDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, directoryDto);
 			} catch (final DeleteModificationCollisionException x) {
 				logger.info("DeleteModificationCollisionException during makeDirectory: {}", path);
 				if (logger.isDebugEnabled())
@@ -472,6 +469,11 @@ public class RepoToRepoSync implements AutoCloseable {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	protected void makeDirectory(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDtoTreeNode repoFileDtoTreeNode, final String path, final DirectoryDto directoryDto) {
+		toRepoTransport.makeDirectory(path, directoryDto.getLastModified());
 	}
 
 	private void syncSymlink(
@@ -604,9 +606,9 @@ public class RepoToRepoSync implements AutoCloseable {
 					logger.trace("Reading data for dirty FileChunkDto (index {} of {}). path='{}' offset={}",
 							fileChunkIndex, fromFileChunkDtosDirty.size(), path, fileChunkDto.getOffset());
 				}
-				final byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDto.getOffset(), fileChunkDto.getLength());
+				final byte[] fileData = getFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto);
 
-				if (fileData == null || fileData.length != fileChunkDto.getLength() || !sha1(fileData).equals(fileChunkDto.getSha1())) {
+				if (fileData == null) {
 					logger.warn("Source file was modified or deleted during sync: {}", path);
 					// The file is left in state 'inProgress'. Thus it should definitely not be synced back in the opposite
 					// direction. The file should be synced again in the correct direction in the next run (after the source
@@ -635,6 +637,20 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
+	protected byte[] getFileData(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final RepoFileDtoTreeNode repoFileDtoTreeNode,
+			final String path, final FileChunkDto fileChunkDto) {
+
+		final byte[] fileData = fromRepoTransport.getFileData(path, fileChunkDto.getOffset(), fileChunkDto.getLength());
+		if (fileData == null)
+			return null; // file was deleted
+
+		if (fileData.length != fileChunkDto.getLength() || !sha1(fileData).equals(fileChunkDto.getSha1()))
+			return null; // file was modified
+
+		return fileData;
+	}
+
 	protected void putFileData(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final RepoFileDtoTreeNode repoFileDtoTreeNode,
 			final String path, final FileChunkDto fileChunkDto,
@@ -657,18 +673,6 @@ public class RepoToRepoSync implements AutoCloseable {
 		toRepoTransport.endPutFile(
 				path, fromNormalFileDto.getLastModified(),
 				fromNormalFileDto.getLength(), fromNormalFileDto.getSha1());
-	}
-
-	private String sha1(final byte[] data) {
-		assertNotNull("data", data);
-		try {
-			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
-			return HashUtil.encodeHexStr(hash);
-		} catch (final NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	private boolean areFilesExistingAndEqual(final RepoFileDto fromRepoFileDto, final RepoFileDto toRepoFileDto) {
