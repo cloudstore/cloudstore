@@ -582,6 +582,7 @@ public class LocalRepoSync {
 
 					if (bytesRead < 0 || fileChunk.getLength() >= FileChunkDto.MAX_LENGTH) {
 						fileChunk.setSha1(HashUtil.encodeHexStr(mdChunk.digest()));
+						onFinalizeFileChunk(fileChunk);
 						fileChunk.makeReadOnly();
 						normalFile.getFileChunks().add(fileChunk);
 						fileChunk = null;
@@ -612,5 +613,9 @@ public class LocalRepoSync {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	protected void onFinalizeFileChunk(FileChunk fileChunk) {
+		// can be extended by sub-classes to handle FileChunk-subclasses specifically.
 	}
 }
