@@ -1,7 +1,14 @@
 package co.codewizards.cloudstore.core.repo.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
@@ -35,4 +42,30 @@ public final class LocalRepoHelper {
 		return null;
 	}
 
+	public static Collection<File> getLocalRootsContainedInDirectory(File directory) {
+		assertNotNull("directory", directory);
+		directory = directory.getAbsoluteFile();
+
+		if (! directory.isDirectory())
+			return Collections.emptyList();
+
+		final String containerPath = directory.getPath() + java.io.File.separator;
+
+		final List<File> result = new ArrayList<File>();
+		final LocalRepoRegistry localRepoRegistry = LocalRepoRegistryImpl.getInstance();
+		for (final UUID repositoryId : localRepoRegistry.getRepositoryIds()) {
+			final File localRoot = localRepoRegistry.getLocalRoot(repositoryId);
+			if (localRoot == null)
+				continue;
+
+			if (directory.equals(localRoot))
+				result.add(localRoot);
+			else {
+				final String localRootPath = localRoot.getAbsolutePath();
+				if (localRootPath.startsWith(containerPath))
+					result.add(localRoot);
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
 }

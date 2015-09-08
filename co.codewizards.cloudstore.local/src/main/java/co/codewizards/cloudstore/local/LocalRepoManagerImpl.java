@@ -237,12 +237,23 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			throw new FileNoDirectoryException(localRoot);
 
 		assertNotInsideOtherRepository(localRoot);
+		assertNotContainingOtherRepository(localRoot);
 		return localRoot;
 	}
 
 	private void assertNotInsideOtherRepository(final File localRoot) {
 		final File localRootFound = LocalRepoHelper.getLocalRootContainingFile(localRoot);
 		if (localRootFound != null && !localRootFound.equals(localRoot))
+			throw new FileAlreadyRepositoryException(localRoot);
+	}
+
+	private void assertNotContainingOtherRepository(final File localRoot) {
+		final File localRootFound = LocalRepoHelper.getLocalRootContainingFile(localRoot);
+		if (localRootFound != null && localRootFound.equals(localRoot))
+			return;
+
+		final Collection<File> localRootsFound = LocalRepoHelper.getLocalRootsContainedInDirectory(localRoot);
+		if (! localRootsFound.isEmpty())
 			throw new FileAlreadyRepositoryException(localRoot);
 	}
 

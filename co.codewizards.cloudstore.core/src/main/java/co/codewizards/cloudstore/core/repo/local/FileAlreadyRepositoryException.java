@@ -9,6 +9,8 @@ import co.codewizards.cloudstore.core.oio.File;
  * from a simple file.
  * <p>
  * Note, that this exception is thrown for simple files or directories inside a repository, too.
+ * <p>
+ * The same applies, if the directory in question contains at least one other repository.
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public class FileAlreadyRepositoryException extends LocalRepoManagerException {
