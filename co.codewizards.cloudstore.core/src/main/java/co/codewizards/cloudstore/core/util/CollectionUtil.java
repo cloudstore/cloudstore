@@ -3,6 +3,9 @@ package co.codewizards.cloudstore.core.util;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -77,5 +80,21 @@ public final class CollectionUtil {
 			current.add(element);
 		}
 		return result;
+	}
+
+	public static <E> List<E> nullToEmpty(final List<E> list) {
+		return list == null ? Collections.<E> emptyList() : list;
+	}
+
+	public static <E> Set<E> nullToEmpty(final Set<E> set) {
+		return set == null ? Collections.<E> emptySet() : set;
+	}
+
+	public static <E> Collection<E> nullToEmpty(final Collection<E> collection) {
+		return collection == null ? Collections.<E> emptyList() : collection;
+	}
+
+	public static <E> Iterator<E> nullToEmpty(final Iterator<E> iterator) {
+		return iterator == null ? Collections.<E> emptyList().iterator() : iterator;
 	}
 }
