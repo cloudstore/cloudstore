@@ -565,7 +565,7 @@ public class LocalRepoSync {
 				while (true) {
 					if (fileChunk == null) {
 						fileChunk = createObject(FileChunk.class);
-						fileChunk.setRepoFile(normalFile);
+						fileChunk.setNormalFile(normalFile);
 						fileChunk.setOffset(offset);
 						fileChunk.setLength(0);
 						mdChunk.reset();

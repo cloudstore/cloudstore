@@ -33,7 +33,7 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 	public NormalFile getNormalFile() {
 		return normalFile;
 	}
-	public void setRepoFile(final NormalFile normalFile) {
+	public void setNormalFile(final NormalFile normalFile) {
 		assertWritable();
 		this.normalFile = normalFile;
 	}
