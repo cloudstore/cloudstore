@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.test;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Timer;
@@ -38,7 +40,7 @@ public class CloudStoreServerTestSupport {
 	/**
 	 * @return <code>true</code>, if this is the first invocation. <code>false</code> afterwards.
 	 */
-	public boolean beforeClass() {
+	public boolean beforeClass() throws Exception {
 		synchronized (cloudStoreServerMutex) {
 			final boolean first = testInstanceCounter++ == 0;
 
@@ -50,7 +52,8 @@ public class CloudStoreServerTestSupport {
 			if (cloudStoreServer == null) {
 				IOUtil.deleteDirectoryRecursively(ConfigDir.getInstance().getFile());
 
-				securePort = 1024 + 1 + random.nextInt(10240);
+//				securePort = 1024 + 1 + random.nextInt(10240);
+				securePort = getRandomAvailableServerPort();
 				cloudStoreServer = createCloudStoreServer();
 				cloudStoreServer.setSecurePort(securePort);
 				cloudStoreServerThread = new Thread(cloudStoreServer);
@@ -62,6 +65,13 @@ public class CloudStoreServerTestSupport {
 
 			return first;
 		}
+	}
+
+	private int getRandomAvailableServerPort() throws IOException {
+		final ServerSocket serverSocket = new ServerSocket(0);
+		final int port = serverSocket.getLocalPort();
+		serverSocket.close();
+		return port;
 	}
 
 	protected CloudStoreServer createCloudStoreServer() {

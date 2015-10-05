@@ -67,7 +67,7 @@ public abstract class AbstractIT {
 	}
 
 	@BeforeClass
-	public static void abstractIT_beforeClass() {
+	public static void abstractIT_beforeClass() throws Exception {
 		if (cloudStoreServerTestSupport.beforeClass()) {
 			// *IMPORTANT* We run *all* tests in parallel in the same JVM. Therefore, we must - in this entire project - *not*
 			// set any other dynamicX509TrustManagerCallbackClass!!! This setting is JVM-wide!
@@ -77,7 +77,7 @@ public abstract class AbstractIT {
 	}
 
 	@AfterClass
-	public static void abstractIT_afterClass() {
+	public static void abstractIT_afterClass() throws Exception {
 		if (cloudStoreServerTestSupport.afterClass()) {
 			restRepoTransportFactory.setDynamicX509TrustManagerCallbackClass(null);
 			restRepoTransportFactory = null;
