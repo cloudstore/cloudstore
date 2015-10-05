@@ -79,7 +79,7 @@ public class CloudStoreServerTestSupport {
 	}
 
 	private void waitForServerToOpenSecurePort() {
-		final long timeoutMillis = 60000L;
+		final long timeoutMillis = 3 * 60_000L;
 		final long begin = System.currentTimeMillis();
 		while (true) {
 			try {
