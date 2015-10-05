@@ -1,13 +1,9 @@
 package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
-
-import java.util.Iterator;
-import java.util.ServiceLoader;
-
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -74,25 +70,8 @@ public class ConfigDir {
 		if (v == null)
 			v = System.getenv(ENV_VAR_CONFIG_DIR);
 
-		if (v == null) {
-			String lastProviderClassName = null;
-			int lastPriority = Integer.MIN_VALUE;
-			final Iterator<ConfigDirDefaultValueProvider> it = ServiceLoader.load(ConfigDirDefaultValueProvider.class).iterator();
-			while (it.hasNext()) {
-				final ConfigDirDefaultValueProvider provider = it.next();
-				if (lastProviderClassName == null
-						|| provider.getPriority() > lastPriority
-						|| provider.getClass().getName().compareTo(lastProviderClassName) < 0) {
-
-					v = assertNotNull(provider.getClass().getName() + ".getConfigDir()", provider.getConfigDir());
-					lastProviderClassName = provider.getClass().getName();
-					lastPriority = provider.getPriority();
-				}
-			}
-
-			if (v == null)
-				throw new IllegalStateException("No ConfigDirDefaultValueProvider found!");
-		}
+		if (v == null)
+			v = "${user.home}/." + AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
 
 		value = v;
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);

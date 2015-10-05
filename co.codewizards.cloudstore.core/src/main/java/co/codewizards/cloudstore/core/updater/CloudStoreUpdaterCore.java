@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.BufferedReader;
 import java.io.FileFilter;
@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.DateTime;
@@ -40,8 +41,10 @@ public class CloudStoreUpdaterCore {
 	public static final String INSTALLATION_PROPERTIES_FILE_NAME = "installation.properties";
 	public static final String INSTALLATION_PROPERTIES_ARTIFACT_ID = "artifactId";
 	public static final String INSTALLATION_PROPERTIES_VERSION = "version";
-	public static final String remoteVersionURL = "http://cloudstore.codewizards.co/update/${artifactId}/version";
-	public static final String remoteUpdatePropertiesURL = "http://cloudstore.codewizards.co/update/${artifactId}/update.properties";
+	public static final String remoteVersionURL = // "http://cloudstore.codewizards.co/update/${artifactId}/version";
+			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/version";
+	public static final String remoteUpdatePropertiesURL = // "http://cloudstore.codewizards.co/update/${artifactId}/update.properties";
+			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/update.properties";
 
 	/**
 	 * Configuration property key controlling whether we do a downgrade. By default, only an upgrade is done. If this
@@ -112,7 +115,7 @@ public class CloudStoreUpdaterCore {
 			else {
 				final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 				// cannot use resolve(...), because it invokes this method ;-)
-				AssertUtil.assertNotNull("artifactId", artifactId);
+				assertNotNull("artifactId", artifactId);
 				final Map<String, Object> variables = new HashMap<>(1);
 				variables.put("artifactId", artifactId);
 				final String resolvedRemoteVersionURL = IOUtil.replaceTemplateVariables(remoteVersionURL, variables);
@@ -188,9 +191,9 @@ public class CloudStoreUpdaterCore {
 	 * @return
 	 */
 	protected String resolve(final String template) {
-		AssertUtil.assertNotNull("template", template);
+		assertNotNull("template", template);
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
-		AssertUtil.assertNotNull("artifactId", artifactId);
+		assertNotNull("artifactId", artifactId);
 
 		final Version remoteVersion = getRemoteVersion();
 
@@ -247,7 +250,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File createFileFromFileURL(final URL url) {
-		AssertUtil.assertNotNull("url", url);
+		assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
@@ -260,7 +263,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private URL removePrefixAndSuffixFromJarURL(final URL url) {
-		AssertUtil.assertNotNull("url", url);
+		assertNotNull("url", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
 			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
 
