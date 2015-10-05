@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.server;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class CloudStoreServer implements Runnable {
 		return cloudStoreServerClass;
 	}
 	protected static void setCloudStoreServerClass(final Class<? extends CloudStoreServer> cloudStoreServerClass) {
-		AssertUtil.assertNotNull("cloudStoreServerClass", cloudStoreServerClass);
+		assertNotNull("cloudStoreServerClass", cloudStoreServerClass);
 		CloudStoreServer.cloudStoreServerClass = cloudStoreServerClass;
 	}
 

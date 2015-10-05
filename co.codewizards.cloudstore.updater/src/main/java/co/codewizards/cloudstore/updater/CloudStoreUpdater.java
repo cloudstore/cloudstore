@@ -1,12 +1,15 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +35,8 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdater.class);
 
+	private static Class<? extends CloudStoreUpdater> cloudStoreUpdaterClass = CloudStoreUpdater.class;
+
 	private final String[] args;
 	private boolean throwException = true;
 
@@ -45,12 +50,32 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	public static void main(final String[] args) throws Exception {
 		initLogging();
 		try {
-			final int programExitStatus = new CloudStoreUpdater(args).throwException(false).execute();
+			final int programExitStatus = createCloudStoreUpdater(args).throwException(false).execute();
 			System.exit(programExitStatus);
 		} catch (final Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
 		}
+	}
+
+	protected static Constructor<? extends CloudStoreUpdater> getCloudStoreUpdaterConstructor() throws NoSuchMethodException, SecurityException {
+		final Class<? extends CloudStoreUpdater> clazz = getCloudStoreUpdaterClass();
+		final Constructor<? extends CloudStoreUpdater> constructor = clazz.getConstructor(String[].class);
+		return constructor;
+	}
+
+	protected static CloudStoreUpdater createCloudStoreUpdater(final String[] args) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		final Constructor<? extends CloudStoreUpdater> constructor = getCloudStoreUpdaterConstructor();
+		final CloudStoreUpdater cloudStoreUpdater = constructor.newInstance(new Object[] { args });
+		return cloudStoreUpdater;
+	}
+
+	protected static Class<? extends CloudStoreUpdater> getCloudStoreUpdaterClass() {
+		return cloudStoreUpdaterClass;
+	}
+	protected static void setCloudStoreUpdaterClass(final Class<? extends CloudStoreUpdater> cloudStoreUpdaterClass) {
+		assertNotNull("cloudStoreUpdaterClass", cloudStoreUpdaterClass);
+		CloudStoreUpdater.cloudStoreUpdaterClass = cloudStoreUpdaterClass;
 	}
 
 	public CloudStoreUpdater(final String[] args) {
