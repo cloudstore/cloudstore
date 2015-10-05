@@ -98,7 +98,7 @@ public class CloudStoreServerTestSupport {
 	/**
 	 * @return <code>true</code>, if this is the last invocation. <code>false</code> before.
 	 */
-	public boolean afterClass() {
+	public boolean afterClass() throws Exception {
 		synchronized (cloudStoreServerMutex) {
 			if (--testInstanceCounter > 0)
 				return false;
