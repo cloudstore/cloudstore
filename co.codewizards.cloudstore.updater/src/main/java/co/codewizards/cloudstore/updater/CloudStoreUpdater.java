@@ -255,7 +255,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		private final Collection<File> files;
 
 		public FileFilterTrackingExtractedFiles(final Collection<File> files) {
-			this.files = AssertUtil.assertNotNull("files", files);
+			this.files = assertNotNull("files", files);
 		}
 
 		@Override
@@ -330,6 +330,9 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				logger.debug("downloadURLViaRemoteUpdateProperties: contentLength={} url='{}'", contentLength, url);
 				checkAvailableDiskSpace(tempDownloadDir, Math.max(1024 * 1024, contentLength * 3 / 2));
 			}
+			int logLastPercentage = -100; // We start with this negative value, because we want the '0%' to be printed ;-)
+			final int logStepPercentageDiff = 5;
+			long downloadedLength = 0;
 
 			final String path = url.getPath();
 			final int lastSlashIndex = path.lastIndexOf('/');
@@ -344,9 +347,25 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			try {
 				final OutputStream out = downloadFile.createOutputStream();
 				try {
-					IOUtil.transferStreamData(in, out);
+
+					final byte[] buf = new byte[65535];
+					int bytesRead;
+					while ((bytesRead = in.read(buf)) >= 0) {
+						out.write(buf, 0, bytesRead);
+						downloadedLength += bytesRead;
+
+						if (contentLength > 0) {
+							int percentage = (int) (downloadedLength * 100 / contentLength);
+							if (logStepPercentageDiff <= percentage - logLastPercentage) {
+								logLastPercentage = percentage;
+								System.out.printf(" ... %d%%", percentage);
+							}
+						}
+					}
+
 				} finally {
 					out.close();
+					System.out.println();
 				}
 				successful = true;
 			} finally {
