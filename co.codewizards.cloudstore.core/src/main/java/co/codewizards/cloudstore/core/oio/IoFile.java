@@ -401,9 +401,11 @@ public class IoFile implements File {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if ( !(obj instanceof IoFile) ) return false;
-		final IoFile nioFile = (IoFile) obj;
-		return this.ioFile.equals(nioFile.ioFile);
+		if ( !(obj instanceof IoFile) )
+			return false;
+
+		final IoFile ioFile = (IoFile) obj;
+		return this.ioFile.equals(ioFile.ioFile);
 	}
 
 	@Override

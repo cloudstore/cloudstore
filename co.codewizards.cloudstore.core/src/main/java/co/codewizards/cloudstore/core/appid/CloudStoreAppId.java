@@ -18,6 +18,11 @@ public class CloudStoreAppId implements AppId {
 	}
 
 	@Override
+	public String getName() {
+		return "CloudStore"; //$NON-NLS-1$
+	}
+
+	@Override
 	public String getWebSiteBaseUrl() {
 		return "http://cloudstore.codewizards.co/"; //$NON-NLS-1$
 	}
