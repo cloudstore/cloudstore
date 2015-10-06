@@ -100,7 +100,7 @@ public class CloudStoreUpdaterCore {
 
 	public CloudStoreUpdaterCore() { }
 
-	protected Version getRemoteVersion() {
+	public Version getRemoteVersion() {
 		Version remoteVersion = this.remoteVersion;
 		if (remoteVersion == null) {
 			final RemoteVersionCache remoteVersionCache = readRemoteVersionCacheFromProperties();
@@ -146,7 +146,7 @@ public class CloudStoreUpdaterCore {
 		return remoteVersion;
 	}
 
-	protected Version getLocalVersion() {
+	public Version getLocalVersion() {
 		if (localVersion == null) {
 			final String value = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_VERSION);
 			if (value == null || value.isEmpty())
@@ -407,8 +407,11 @@ public class CloudStoreUpdaterCore {
 	 * <p>
 	 * This method does not throw any exception. In case of an exception, it is only logged and this
 	 * method returns normally.
+	 * @return <code>true</code>, if an update is needed and about to be done; <code>false</code> otherwise.
+	 * Note: If an update is needed, but cannot be done for any reason (e.g. because the directory is not writable),
+	 * <code>false</code> is returned.
 	 */
-	public void createUpdaterDirIfUpdateNeeded() {
+	public boolean createUpdaterDirIfUpdateNeeded() {
 		File updaterDir = null;
 		try {
 			if (!isEnabled()) {
@@ -417,7 +420,7 @@ public class CloudStoreUpdaterCore {
 				else
 					logger.info("createUpdaterDirIfUpdateNeeded: Updater is *not* enabled! Skipping! See configuration key '{}'.", CONFIG_KEY_ENABLED);
 
-				return;
+				return false;
 			}
 
 			updaterDir = getUpdaterDir();
@@ -427,11 +430,12 @@ public class CloudStoreUpdaterCore {
 				if (!canWriteAll(getInstallationDir())) {
 					logger.error("Installation directory '{}' is not writable or contains sub-directories/files that are not writable! Cannot perform auto-update to new version {}! Please update manually! Your local version is {}.",
 							getInstallationDir(), getRemoteVersion(), getLocalVersion());
-					return;
+					return false;
 				}
 
 				copyInstallationDirectoryForUpdater();
 				logger.debug("createUpdaterDirIfUpdateNeeded: updaterDir='{}'", updaterDir);
+				return true;
 			}
 		} catch (final Exception x) {
 			logger.error("createUpdaterDirIfUpdateNeeded: " + x, x);
@@ -443,6 +447,7 @@ public class CloudStoreUpdaterCore {
 				}
 			}
 		}
+		return false;
 	}
 
 	private boolean canWriteAll(final File fileOrDir) {
@@ -459,7 +464,7 @@ public class CloudStoreUpdaterCore {
 		return true;
 	}
 
-	protected File getUpdaterDir() {
+	public File getUpdaterDir() {
 		if (updaterDir == null)
 			updaterDir = createFile(getInstallationDir(), "updater");
 

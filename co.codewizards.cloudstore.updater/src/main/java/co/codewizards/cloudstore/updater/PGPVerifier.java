@@ -1,23 +1,21 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPObjectFactory;
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureList;
 import org.bouncycastle.openpgp.PGPUtil;
+import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
+import org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class PGPVerifier {
 	private PGPPublicKeyRingCollection publicKeyRingWithTrustedKeys;
-	private final BouncyCastleProvider provider = new BouncyCastleProvider();
 
 	/**
 	 * Verify the specified {@code file}.
@@ -38,7 +36,7 @@ public class PGPVerifier {
 		for (int index = 0; index < sl.size(); ++index) {
 			try {
 				final PGPSignature signature = sl.get(index);
-				signature.initVerify(publicKeyRing.getPublicKey(signature.getKeyID()), provider);
+				signature.init(new BcPGPContentVerifierBuilderProvider(), publicKeyRing.getPublicKey(signature.getKeyID()));
 
 				final InputStream contentIn = file.createInputStream();
 				try {
@@ -69,7 +67,8 @@ public class PGPVerifier {
 				// Currently only one single trusted key ;-)
 				final InputStream publicKeyIn = new BufferedInputStream(PGPVerifier.class.getResourceAsStream("/0x4AB0FBC1.asc"));
 				try {
-					ring = new PGPPublicKeyRingCollection(PGPUtil.getDecoderStream(publicKeyIn));
+					ring = new PGPPublicKeyRingCollection(
+							PGPUtil.getDecoderStream(publicKeyIn), new BcKeyFingerprintCalculator());
 				} finally {
 					publicKeyIn.close();
 				}
@@ -91,7 +90,8 @@ public class PGPVerifier {
 		try {
 			final InputStream in = new BufferedInputStream(signatureFile.createInputStream());
 			try {
-				final PGPObjectFactory objectFactory = new PGPObjectFactory(PGPUtil.getDecoderStream(in));
+				final PGPObjectFactory objectFactory = new PGPObjectFactory(
+						PGPUtil.getDecoderStream(in), new BcKeyFingerprintCalculator());
 				final PGPSignatureList sl = (PGPSignatureList) objectFactory.nextObject();
 				return sl;
 			} finally {
