@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.CHARSET_NAME_UTF_8;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -10,7 +11,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class AbstractRepoTransport implements RepoTransport {
@@ -35,7 +35,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public void setRepoTransportFactory(final RepoTransportFactory repoTransportFactory) {
-		this.repoTransportFactory = AssertUtil.assertNotNull("repoTransportFactory", repoTransportFactory);
+		this.repoTransportFactory = assertNotNull("repoTransportFactory", repoTransportFactory);
 	}
 
 	@Override
@@ -122,7 +122,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String prefixPath(final String path) {
-		AssertUtil.assertNotNull("path", path);
+		assertNotNull("path", path);
 		if ("".equals(path) || SLASH.equals(path))
 			return getPathPrefix();
 		if (path.startsWith(SLASH))
@@ -133,7 +133,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String unprefixPath(String path) {
-		AssertUtil.assertNotNull("path", path);
+		assertNotNull("path", path);
 		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return path;
@@ -152,7 +152,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	}
 
 	protected boolean isPathUnderPathPrefix(final String path) {
-		AssertUtil.assertNotNull("path", path);
+		assertNotNull("path", path);
 		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return true;
