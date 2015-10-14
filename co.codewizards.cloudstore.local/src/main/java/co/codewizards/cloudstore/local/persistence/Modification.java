@@ -22,6 +22,17 @@ import javax.jdo.annotations.Query;
 	@Query(name="getModificationsAfter_remoteRepository_localRevision", value="SELECT WHERE this.remoteRepository == :remoteRepository && this.localRevision > :localRevision"),
 	@Query(name="getModificationsBeforeOrEqual_remoteRepository_localRevision", value="SELECT WHERE this.remoteRepository == :remoteRepository && this.localRevision <= :localRevision")
 })
+/**
+ * @deprecated Storing one Modification per remote-repository is highly inefficient and not necessary. We should replace
+ * Modification (and its subclasses) by a new class (with appropriate sub-classes) that is *not* remote-repository-dependent!
+ * We could call it 'Modification2' or better simply 'Mod' (with 'DeleteMod' and 'CopyMod' etc.).
+ * A 'Mod' can be deleted, if it was replicated to all remote-repositories. We can track this easily: It is the case, if
+ * for all remote-repositories, the condition 'Mod.localRevision <= LastCryptoKeySyncToRemoteRepo.localRepositoryRevisionSynced' is met.
+ * Note, that the ChangeSet should only contain a 'Mod', if 'Mod.localRevision > LastCryptoKeySyncToRemoteRepo.localRepositoryRevisionSynced',
+ * just like it is done for RepoFiles.
+ * TODO Refactor per-remote-repo 'Modification' to global 'Mod'! Keep downward-compatibility!!! Upgrading existing repos should work fine!
+ */
+@Deprecated
 public abstract class Modification extends Entity implements AutoTrackLocalRevision {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)

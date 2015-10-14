@@ -183,6 +183,11 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	@Override
+	public void prepareForChangeSetDto(ChangeSetDto changeSetDto) {
+		// nothing to do here.
+	}
+
+	@Override
 	public void makeDirectory(String path, final Date lastModified) {
 		path = prefixPath(path);
 		final File file = getFile(path);

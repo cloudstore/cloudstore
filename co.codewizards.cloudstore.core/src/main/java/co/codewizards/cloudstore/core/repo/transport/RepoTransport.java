@@ -224,6 +224,12 @@ public interface RepoTransport extends AutoCloseable {
 	ChangeSetDto getChangeSetDto(boolean localSync);
 
 	/**
+	 * Notifies the destination repository that this change-set is about to be synced into it.
+	 * @param changeSetDto the change-set from the other RepoTransport (the source of the sync). Never <code>null</code>.
+	 */
+	void prepareForChangeSetDto(ChangeSetDto changeSetDto);
+
+	/**
 	 * Creates the specified directory (including all parent-directories as needed).
 	 * <p>
 	 * If the directory already exists, this is a noop.

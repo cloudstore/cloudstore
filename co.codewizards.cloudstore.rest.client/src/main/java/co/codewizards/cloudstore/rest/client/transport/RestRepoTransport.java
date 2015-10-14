@@ -134,6 +134,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
+	public void prepareForChangeSetDto(ChangeSetDto changeSetDto) {
+		// nothing to do here.
+	}
+
+	@Override
 	public void makeDirectory(String path, final Date lastModified) {
 		path = prefixPath(path);
 		getClient().execute(new MakeDirectory(getRepositoryId().toString(), path, lastModified));

@@ -217,6 +217,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			monitor.worked(8);
 
 			waitForAndCheckLocalSyncFutureIfExists();
+			toRepoTransport.prepareForChangeSetDto(changeSetDto);
 			sync(fromRepoTransport, toRepoTransport, changeSetDto, new SubProgressMonitor(monitor, 90));
 
 			fromRepoTransport.endSyncFromRepository();

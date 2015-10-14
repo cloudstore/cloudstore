@@ -391,7 +391,7 @@ public class LocalRepoSync {
 		return 11;
 	}
 
-	private void createCopyModificationsIfPossible(final NormalFile newNormalFile) {
+	protected void createCopyModificationsIfPossible(final NormalFile newNormalFile) {
 		// A CopyModification is not necessary for an empty file. And since this method is called
 		// during RepoTransport.beginPutFile(...), we easily filter out this unwanted case already.
 		// Changed to dynamic limit of CopyModifications depending on file size.
@@ -519,7 +519,7 @@ public class LocalRepoSync {
 		return remoteRepositories;
 	}
 
-	private void deleteRepoFileWithAllChildrenRecursively(final RepoFile repoFile) {
+	protected void deleteRepoFileWithAllChildrenRecursively(final RepoFile repoFile) {
 		assertNotNull("repoFile", repoFile);
 		for (final RepoFile childRepoFile : repoFileDao.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
@@ -528,7 +528,7 @@ public class LocalRepoSync {
 		repoFileDao.deletePersistent(repoFile);
 	}
 
-	private void putIntoSha1AndLength2PathsIfNormalFile(final RepoFile repoFile) {
+	protected void putIntoSha1AndLength2PathsIfNormalFile(final RepoFile repoFile) {
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
 			final String sha1AndLength = getSha1AndLength(normalFile.getSha1(), normalFile.getLength());
