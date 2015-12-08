@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.config;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
+import co.codewizards.cloudstore.core.appid.AppId;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
@@ -16,6 +17,8 @@ import co.codewizards.cloudstore.core.util.IOUtil;
  */
 public class ConfigDir {
 
+	private static final String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
+
 	/**
 	 * System property controlling the location of the central configuration directory.
 	 * <p>
@@ -27,10 +30,12 @@ public class ConfigDir {
 	 * Note that this property is always set during runtime. If it is not set by the caller (via a <code>-D</code> JVM argument)
 	 * from the outside, then it is set by the code inside the running application. Therefore, this property
 	 * can be referenced in all configuration files where system properties are resolved (e.g. in the logback configuration).
+	 * <p>
+	 * Note that "cloudstore" might be replaced by another identifier using the {@link AppId}.
 	 * @see #getValue()
 	 * @see #getFile()
 	 */
-	public static final String SYSTEM_PROPERTY_CONFIG_DIR = "cloudstore.configDir";
+	public static final String SYSTEM_PROPERTY_CONFIG_DIR = APP_ID_SIMPLE_ID + ".configDir";
 
 	/**
 	 * Environment variable equivalent to {@link #SYSTEM_PROPERTY_CONFIG_DIR}.
@@ -48,7 +53,7 @@ public class ConfigDir {
 	 * can be referenced in all configuration files where system properties are resolved (e.g. in the logback configuration).
 	 * @see #getLogDir()
 	 */
-	public static final String SYSTEM_PROPERTY_LOG_DIR = "cloudstore.logDir";
+	public static final String SYSTEM_PROPERTY_LOG_DIR = APP_ID_SIMPLE_ID + ".logDir";
 
 	private static final class ConfigDirHolder {
 		public static ConfigDir instance = new ConfigDir();
@@ -71,7 +76,7 @@ public class ConfigDir {
 			v = System.getenv(ENV_VAR_CONFIG_DIR);
 
 		if (v == null)
-			v = "${user.home}/." + AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
+			v = "${user.home}/." + APP_ID_SIMPLE_ID;
 
 		value = v;
 		System.setProperty(SYSTEM_PROPERTY_CONFIG_DIR, value);

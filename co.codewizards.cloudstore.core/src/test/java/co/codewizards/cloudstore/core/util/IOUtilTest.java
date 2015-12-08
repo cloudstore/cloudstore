@@ -6,6 +6,8 @@ import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import org.junit.Test;
@@ -97,6 +99,17 @@ public class IOUtilTest {
 			final byte[] bytes2 = intToBytes(l);
 			assertThat(bytes2).isEqualTo(bytes);
 		}
+	}
+
+	@Test
+	public void replaceTemplateVariables_nested() {
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("appId.simpleId", "blabla");
+
+		String template = "trallalitrallala = ${${appId.simpleId}.xxx}.oink";
+		String resolved = IOUtil.replaceTemplateVariables(template, variables);
+
+		assertThat(resolved).isEqualTo("trallalitrallala = ${blabla.xxx}.oink");
 	}
 
 }

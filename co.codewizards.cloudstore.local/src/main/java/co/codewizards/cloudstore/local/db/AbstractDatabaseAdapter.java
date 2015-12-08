@@ -9,10 +9,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import co.codewizards.cloudstore.core.appid.AppId;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
+	/**
+	 * The template for the name of the persistence-properties-file.
+	 * <p>
+	 * The variables (most importantly "${databaseAdapter.name}") are replaced by the coordinates of the
+	 * actual database being used (e.g. databaseAdapter.name = "derby") and the file then copied from the JAR
+	 * {@code co.codewizards.cloudstore.local} using the class-loader (e.g. resource "/cloudstore-persistence.derby.properties").
+	 * Since the class-loader is used, the file might exist in another JAR, too.
+	 * <p>
+	 * <b>Important:</b> This name is independent from the {@link AppId}, because obviously the resource in the JAR
+	 * always has the same name - no matter in which application it is packaged!
+	 * <p>
+	 * <b>Important 2:</> The name of the generated file in the application's config directory is dependent on the {@code AppId}!
+	 */
 	private static final String PERSISTENCE_PROPERTIES_TEMPLATE_FILE_NAME = "cloudstore-persistence.${databaseAdapter.name}.properties";
 
 	private AbstractDatabaseAdapterFactory factory;

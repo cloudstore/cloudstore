@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.client;
 
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
 import java.security.KeyStore;
@@ -21,13 +21,13 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
-import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
@@ -288,7 +288,8 @@ public class CloudStoreClient {
 		final String logbackXmlName = "logback.client.xml";
 		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
 		if (!logbackXmlFile.exists()) {
-			IOUtil.copyResource(CloudStoreClient.class, logbackXmlName, logbackXmlFile);
+			AppIdRegistry.getInstance().copyResourceResolvingAppId(
+					CloudStoreClient.class, logbackXmlName, logbackXmlFile);
 		}
 
 		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();

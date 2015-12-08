@@ -6,22 +6,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
 public interface LocalRepoManager extends AutoCloseable {
+	String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
 
-	String SYSTEM_PROPERTY_KEY_SIZE = "cloudstore.repository.asymmetricKey.size";
+	String SYSTEM_PROPERTY_KEY_SIZE = APP_ID_SIMPLE_ID + ".repository.asymmetricKey.size";
 	int DEFAULT_KEY_SIZE = 4096;
 
-	String SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS = "cloudstore.localRepoManager.closeDeferredMillis";
+	String SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS = APP_ID_SIMPLE_ID + ".localRepoManager.closeDeferredMillis";
 	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20000;
 
-	String META_DIR_NAME = ".cloudstore-repo";
-	String TEMP_DIR_NAME = ".cloudstore-tmp";
-	String TEMP_NEW_FILE_PREFIX = ".cloudstore-new_";
+	String META_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-repo";
+	String TEMP_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-tmp";
+	String TEMP_NEW_FILE_PREFIX = "." + APP_ID_SIMPLE_ID + "-new_";
 
-	String REPOSITORY_PROPERTIES_FILE_NAME = "cloudstore-repository.properties";
+	String REPOSITORY_PROPERTIES_FILE_NAME = APP_ID_SIMPLE_ID + "-repository.properties";
 	String PROP_REPOSITORY_ID = "repository.id";
 	String PROP_VERSION = "repository.version";
 	/**
@@ -32,7 +34,7 @@ public interface LocalRepoManager extends AutoCloseable {
 	 */
 	String PROP_REPOSITORY_ALIASES = "repository.aliases";
 
-	String PERSISTENCE_PROPERTIES_FILE_NAME = "cloudstore-persistence.properties";
+	String PERSISTENCE_PROPERTIES_FILE_NAME = APP_ID_SIMPLE_ID + "-persistence.properties";
 
 	String VAR_REPOSITORY_ID = "repository.id";
 	String VAR_LOCAL_ROOT = "repository.localRoot";

@@ -19,12 +19,12 @@ import java.util.WeakHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.util.AssertUtil;
-import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -67,14 +67,18 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 public class Config {
 	private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
+	private static final String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
+
 	private static final long fileRefsCleanPeriod = 60000L;
 	private static long fileRefsCleanLastTimestamp;
 
-	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN = ".cloudstore.properties";
-	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE = "cloudstore.properties";
+	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN = '.' + APP_ID_SIMPLE_ID + ".properties";
+	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE = APP_ID_SIMPLE_ID + ".properties";
 
-	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN = ".%s.cloudstore.properties";
-	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE = "%s.cloudstore.properties";
+	private static final String PROPERTIES_TEMPLATE_FILE_NAME = "cloudstore.properties"; // *NOT* dependent on AppId!
+
+	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN = ".%s." + APP_ID_SIMPLE_ID + ".properties";
+	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE = "%s." + APP_ID_SIMPLE_ID + ".properties";
 
 	private static final String TRUE_STRING = Boolean.TRUE.toString();
 	private static final String FALSE_STRING = Boolean.FALSE.toString();
@@ -93,7 +97,7 @@ public class Config {
 	 * Additionally, it is possible to override configuration entries via OS environment variables.
 	 * Since an env var's name must not contain a dot ("."), all dots are replaced by underscores ("_").
 	 */
-	public static final String SYSTEM_PROPERTY_PREFIX = "cloudstore.";
+	public static final String SYSTEM_PROPERTY_PREFIX = APP_ID_SIMPLE_ID + '.';
 
 	private static final LinkedHashSet<File> fileHardRefs = new LinkedHashSet<>();
 	private static final int fileHardRefsMaxSize = 30;
@@ -140,7 +144,8 @@ public class Config {
 		// Create the default global configuration (it's an empty template with some comments).
 		if (parentConfig == null && !propertiesFiles[0].exists()) {
 			try {
-				IOUtil.copyResource(Config.class, "/" + PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE, propertiesFiles[0]);
+				AppIdRegistry.getInstance().copyResourceResolvingAppId(
+						Config.class, "/" + PROPERTIES_TEMPLATE_FILE_NAME, propertiesFiles[0]);
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
