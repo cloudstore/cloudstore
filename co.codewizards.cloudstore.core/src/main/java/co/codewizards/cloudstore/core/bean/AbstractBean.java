@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.bean;
 
 import java.beans.PropertyChangeListener;
 
-public abstract class AbstractBean<P extends PropertyBase> implements Bean<P>, Cloneable {
+public abstract class AbstractBean<P extends PropertyBase> implements CloneableBean<P>, Cloneable {
 	private BeanSupport<AbstractBean<P>, P> beanSupport = new BeanSupport<AbstractBean<P>, P>(this);
 
 	protected void setPropertyValue(P property, Object value) {

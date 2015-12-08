@@ -3,6 +3,7 @@ package co.codewizards.cloudstore.core.repo.sync;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,8 @@ class RepoSyncRunner implements Runnable {
 	private Map<UUID, URL> remoteRepositoryId2RemoteRootMap = new HashMap<>(0);
 	private UUID remoteRepositoryId;
 	private URL remoteRoot;
+	private Date syncStarted;
+	private Date syncFinished;
 
 	public RepoSyncRunner(final RepoSyncQueueItem repoSyncQueueItem) {
 		this.repoSyncQueueItem = assertNotNull("repoSyncQueueItem", repoSyncQueueItem);
@@ -33,21 +36,26 @@ class RepoSyncRunner implements Runnable {
 
 	@Override
 	public void run() {
-		remoteRepositoryId = null;
-		remoteRoot = null;
-		try (final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(repoSyncQueueItem.localRoot);) {
-			remoteRepositoryId2RemoteRootMap = new HashMap<>(localRepoManager.getRemoteRepositoryId2RemoteRootMap());
-		}
-
-		for (Map.Entry<UUID, URL> me : remoteRepositoryId2RemoteRootMap.entrySet()) {
-			remoteRepositoryId = me.getKey();
-			remoteRoot = me.getValue();
-			try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(repoSyncQueueItem.localRoot, remoteRoot);) {
-				repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+		syncStarted = new Date();
+		try {
+			remoteRepositoryId = null;
+			remoteRoot = null;
+			try (final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(repoSyncQueueItem.localRoot);) {
+				remoteRepositoryId2RemoteRootMap = new HashMap<>(localRepoManager.getRemoteRepositoryId2RemoteRootMap());
 			}
+
+			for (Map.Entry<UUID, URL> me : remoteRepositoryId2RemoteRootMap.entrySet()) {
+				remoteRepositoryId = me.getKey();
+				remoteRoot = me.getValue();
+				try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(repoSyncQueueItem.localRoot, remoteRoot);) {
+					repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+				}
+			}
+			remoteRepositoryId = null;
+			remoteRoot = null;
+		} finally {
+			syncFinished = new Date();
 		}
-		remoteRepositoryId = null;
-		remoteRoot = null;
 	}
 
 	public UUID getRemoteRepositoryId() {
@@ -71,5 +79,13 @@ class RepoSyncRunner implements Runnable {
 	 */
 	public Map<UUID, URL> getRemoteRepositoryId2RemoteRootMap() {
 		return remoteRepositoryId2RemoteRootMap;
+	}
+
+	public Date getSyncStarted() {
+		return syncStarted;
+	}
+
+	public Date getSyncFinished() {
+		return syncFinished;
 	}
 }

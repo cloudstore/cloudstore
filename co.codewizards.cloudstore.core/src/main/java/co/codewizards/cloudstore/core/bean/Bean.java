@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.bean;
 
 import java.beans.PropertyChangeListener;
 
-public interface Bean<P extends PropertyBase> extends Cloneable {
+public interface Bean<P extends PropertyBase> {
 
 	void addPropertyChangeListener(PropertyChangeListener listener);
 
@@ -11,6 +11,4 @@ public interface Bean<P extends PropertyBase> extends Cloneable {
 	void addPropertyChangeListener(P property, PropertyChangeListener listener);
 
 	void removePropertyChangeListener(P property, PropertyChangeListener listener);
-
-	Object clone();
 }
