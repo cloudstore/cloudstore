@@ -51,8 +51,8 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
@@ -196,7 +196,7 @@ public class CloudStoreServer implements Runnable {
 
 	public synchronized int getSecurePort() {
 		if (securePort <= 0) {
-			securePort = Config.getInstance().getPropertyAsInt(CONFIG_KEY_SECURE_PORT, DEFAULT_SECURE_PORT);
+			securePort = ConfigImpl.getInstance().getPropertyAsInt(CONFIG_KEY_SECURE_PORT, DEFAULT_SECURE_PORT);
 			if (securePort < 1 || securePort > 65535) {
 				logger.warn("Config key '{}' is set to the value '{}' which is out of range for a port number. Falling back to default port {}.",
 						CONFIG_KEY_SECURE_PORT, securePort, DEFAULT_SECURE_PORT);

@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -14,7 +12,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class SignedAuthTokenEncrypter {
@@ -76,7 +74,7 @@ public class SignedAuthTokenEncrypter {
 	}
 
 	protected int getKeySize() {
-		final int keySize = Config.getInstance().getPropertyAsInt(CONFIG_KEY_KEY_SIZE, DEFAULT_KEY_SIZE);
+		final int keySize = ConfigImpl.getInstance().getPropertyAsInt(CONFIG_KEY_KEY_SIZE, DEFAULT_KEY_SIZE);
 		if (keySize < 64) {
 			logger.warn("Config key '{}': keySize {} is out of range! Using default {} instead!", CONFIG_KEY_KEY_SIZE, keySize, DEFAULT_KEY_SIZE);
 			return DEFAULT_KEY_SIZE;

@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.util.EventObject;
 
 import co.codewizards.cloudstore.core.util.AssertUtil;

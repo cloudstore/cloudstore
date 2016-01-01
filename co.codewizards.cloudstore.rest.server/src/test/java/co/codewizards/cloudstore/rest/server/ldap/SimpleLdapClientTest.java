@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.ldap;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 

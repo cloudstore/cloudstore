@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.Severity;
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
@@ -216,7 +217,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 		assertNotNull("localRepositoryId", localRepositoryId);
 		assertNotNull("localRoot", localRoot);
 		final List<RepoSyncState> evicted = new ArrayList<RepoSyncState>();
-		final Config config = Config.getInstanceForDirectory(localRoot);
+		final Config config = ConfigImpl.getInstanceForDirectory(localRoot);
 		final int syncStatesMaxSize = config.getPropertyAsPositiveOrZeroInt(CONFIG_KEY_SYNC_STATES_MAX_SIZE, DEFAULT_SYNC_STATES_MAX_SIZE);
 		final List<RepoSyncState> list = repositoryId2SyncStates.get(localRepositoryId);
 		if (list != null) {

@@ -29,7 +29,7 @@ public class ConfigTest extends AbstractTest {
 	@Test
 	public void testGlobalConfigFileName() throws Exception {
 		synchronized (mutex) {
-			final Config globalConfig = Config.getInstance();
+			final ConfigImpl globalConfig = (ConfigImpl) ConfigImpl.getInstance();
 			assertThat(globalConfig.propertiesFiles.length).isEqualTo(1);
 			assertThat(globalConfig.propertiesFiles[0]).isNotNull();
 			assertThat(globalConfig.propertiesFiles[0].getName()).isEqualTo("cloudstore.properties");
@@ -41,7 +41,7 @@ public class ConfigTest extends AbstractTest {
 	@Test
 	public void testGlobalConfigFileModification() throws Exception {
 		synchronized (mutex) {
-			final Config globalConfig = Config.getInstance();
+			final Config globalConfig = ConfigImpl.getInstance();
 			final String testKey = "testKey0";
 			String value = globalConfig.getProperty(testKey, null);
 			assertThat(value).isNull();
@@ -78,7 +78,7 @@ public class ConfigTest extends AbstractTest {
 
 				final File child_1 = createFile(localRoot, "1_" + random.nextInt(10000));
 				assertThat(child_1.exists()).isFalse();
-				final Config config_1 = Config.getInstanceForDirectory(child_1);
+				final Config config_1 = ConfigImpl.getInstanceForDirectory(child_1);
 				assertThat(config_1.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isNull();
 				createDirectory(child_1);
 				assertThat(child_1.isDirectory()).isTrue();
@@ -95,7 +95,7 @@ public class ConfigTest extends AbstractTest {
 				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
 
 				final File child_1_a = createFile(child_1, "a");
-				final Config config_1_a = Config.getInstanceForFile(child_1_a);
+				final Config config_1_a = ConfigImpl.getInstanceForFile(child_1_a);
 
 				assertThat(config_1_a.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
 				assertThat(config_1_a.getPropertyAsNonEmptyTrimmedString(testKey1, null)).isEqualTo("testValueBBB");
@@ -128,7 +128,7 @@ public class ConfigTest extends AbstractTest {
 				final File child_1_2_aaa = createFile(child_1_2, "aaa");
 				createFileWithRandomContent(child_1_2_aaa);
 
-				final Config config_1_2_aaa = Config.getInstanceForFile(child_1_2_aaa);
+				final Config config_1_2_aaa = ConfigImpl.getInstanceForFile(child_1_2_aaa);
 				assertThat(config_1_2_aaa.getPropertyAsNonEmptyTrimmedString(testKey1, "xxxyyyzzz")).isEqualTo("testValueBBB");
 
 				setProperty(createFile(child_1_2_aaa.getParentFile(), ".cloudstore.properties"), testKey1, "val_1_2_hidden");
@@ -174,7 +174,7 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private void deleteMainConfigFiles() {
-		for (final File file : Config.getInstance().propertiesFiles) {
+		for (final File file : ((ConfigImpl) ConfigImpl.getInstance()).propertiesFiles) {
 			file.delete();
 			assertThat(file.exists()).isFalse();
 		}
@@ -194,7 +194,7 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private static void setGlobalProperty(final String key, final String value) throws IOException {
-		setProperty(Config.getInstance().propertiesFiles[0], key, value);
+		setProperty(((ConfigImpl) ConfigImpl.getInstance()).propertiesFiles[0], key, value);
 	}
 
 	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {

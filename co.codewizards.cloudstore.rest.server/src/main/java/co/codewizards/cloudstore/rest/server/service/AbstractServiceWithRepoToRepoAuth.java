@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayReader;

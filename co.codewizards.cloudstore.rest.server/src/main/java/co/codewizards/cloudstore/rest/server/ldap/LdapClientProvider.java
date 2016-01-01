@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.otp.LdapPasswordOneTimePadRegistry;
 import co.codewizards.cloudstore.core.otp.OneTimePadRegistry;
 import co.codewizards.cloudstore.core.util.StringUtil;
@@ -41,8 +41,8 @@ public class LdapClientProvider {
 
 	protected LdapClientProvider(OneTimePadRegistry adminPasswordRegistry){
 		try{
-			final String url = Config.getInstance().getProperty(LDAP_URL, LDAP_URL_DEFAULT);
-			final String query = Config.getInstance().getProperty(LDAP_QUERY, "");
+			final String url = ConfigImpl.getInstance().getProperty(LDAP_URL, LDAP_URL_DEFAULT);
+			final String query = ConfigImpl.getInstance().getProperty(LDAP_QUERY, "");
 			if(StringUtil.isEmpty(query)){
 				ldapClient = createSimpleLdapClient(url);
 			} else{
@@ -77,8 +77,8 @@ public class LdapClientProvider {
 	private QueryLdapClient createQueryLdapClient(final OneTimePadRegistry adminPasswordRegistry,
 			final String query, final String url){
 		final char[] password = adminPasswordRegistry.readFromFileAndDecrypt();
-		final String queryDn = Config.getInstance().getProperty(LDAP_QUERY_DN, null);
-		final String adminDn = Config.getInstance().getProperty(LDAP_ADMIN_DN, null);
+		final String queryDn = ConfigImpl.getInstance().getProperty(LDAP_QUERY_DN, null);
+		final String adminDn = ConfigImpl.getInstance().getProperty(LDAP_ADMIN_DN, null);
 		return new QueryLdapClient(query, queryDn, url, adminDn, password);
 	}
 }

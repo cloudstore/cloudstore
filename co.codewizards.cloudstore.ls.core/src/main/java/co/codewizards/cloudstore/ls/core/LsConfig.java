@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class LsConfig {
 
@@ -11,7 +11,7 @@ public class LsConfig {
 	}
 
 	public static boolean isLocalServerEnabled() {
-		return Config.getInstance().getPropertyAsBoolean(
+		return ConfigImpl.getInstance().getPropertyAsBoolean(
 				CONFIG_KEY_LOCAL_SERVER_ENABLED,
 				DEFAULT_LOCAL_SERVER_ENABLED);
 	}

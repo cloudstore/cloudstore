@@ -12,7 +12,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.auth.AuthToken;
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.PasswordUtil;
@@ -136,7 +136,7 @@ public class TransientRepoPasswordManager {
 
 	protected int getValidityPeriod() {
 		if (validityPeriod == Integer.MIN_VALUE) {
-			validityPeriod = Config.getInstance().getPropertyAsInt(
+			validityPeriod = ConfigImpl.getInstance().getPropertyAsInt(
 					CONFIG_KEY_VALIDITIY_PERIOD, DEFAULT_VALIDITIY_PERIOD);
 		}
 		return validityPeriod;
@@ -144,7 +144,7 @@ public class TransientRepoPasswordManager {
 
 	protected int getRenewalPeriod() {
 		if (renewalPeriod == Integer.MIN_VALUE) {
-			renewalPeriod = Config.getInstance().getPropertyAsInt(
+			renewalPeriod = ConfigImpl.getInstance().getPropertyAsInt(
 					CONFIG_KEY_RENEWAL_PERIOD, DEFAULT_RENEWAL_PERIOD);
 		}
 		return renewalPeriod;
@@ -152,7 +152,7 @@ public class TransientRepoPasswordManager {
 
 	protected int getEarlyRenewalPeriod() {
 		if (earlyRenewalPeriod == Integer.MIN_VALUE) {
-			earlyRenewalPeriod = Config.getInstance().getPropertyAsInt(
+			earlyRenewalPeriod = ConfigImpl.getInstance().getPropertyAsInt(
 					CONFIG_KEY_EARLY_RENEWAL_PERIOD, DEFAULT_EARLY_RENEWAL_PERIOD);
 		}
 		return earlyRenewalPeriod;
@@ -160,7 +160,7 @@ public class TransientRepoPasswordManager {
 
 	protected int getExpiryTimerPeriod() {
 		if (expiryTimerPeriod == Integer.MIN_VALUE) {
-			expiryTimerPeriod = Config.getInstance().getPropertyAsInt(
+			expiryTimerPeriod = ConfigImpl.getInstance().getPropertyAsInt(
 					CONFIG_KEY_EXPIRY_TIMER_PERIOD, DEFAULT_EXPIRY_TIMER_PERIOD);
 		}
 		return expiryTimerPeriod;

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
@@ -285,19 +286,19 @@ public class CloudStoreUpdaterCore {
 	 * @return the value of the configuration property {@link #CONFIG_KEY_DOWNGRADE}.
 	 */
 	private boolean isDowngrade() {
-		return Config.getInstance().getPropertyAsBoolean(CONFIG_KEY_DOWNGRADE, Boolean.FALSE);
+		return ConfigImpl.getInstance().getPropertyAsBoolean(CONFIG_KEY_DOWNGRADE, Boolean.FALSE);
 	}
 
 	private boolean isForce() {
-		return Config.getInstance().getPropertyAsBoolean(CONFIG_KEY_FORCE, Boolean.FALSE);
+		return ConfigImpl.getInstance().getPropertyAsBoolean(CONFIG_KEY_FORCE, Boolean.FALSE);
 	}
 
 	private boolean isEnabled() {
-		return Config.getInstance().getPropertyAsBoolean(CONFIG_KEY_ENABLED, Boolean.TRUE);
+		return ConfigImpl.getInstance().getPropertyAsBoolean(CONFIG_KEY_ENABLED, Boolean.TRUE);
 	}
 
 	private long getRemoteVersionCacheValidityPeriod() {
-		return Config.getInstance().getPropertyAsPositiveOrZeroLong(CONFIG_KEY_REMOTE_VERSION_CACHE_VALIDITY_PERIOD, DEFAULT_REMOTE_VERSION_CACHE_VALIDITY_PERIOD);
+		return ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(CONFIG_KEY_REMOTE_VERSION_CACHE_VALIDITY_PERIOD, DEFAULT_REMOTE_VERSION_CACHE_VALIDITY_PERIOD);
 	}
 
 	private File getUpdaterPropertiesFile() {

@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -213,7 +213,7 @@ public class LocalServer {
 	public int getPort() {
 		synchronized (localServerRunningFile2LocalServer_running) {
 			if (port < 0) {
-				port = Config.getInstance().getPropertyAsInt(CONFIG_KEY_PORT, DEFAULT_PORT);
+				port = ConfigImpl.getInstance().getPropertyAsInt(CONFIG_KEY_PORT, DEFAULT_PORT);
 				if (port < 0 || port > 65535) {
 					logger.warn("Config key '{}' is set to the value '{}' which is out of range for a port number. Falling back to default port {} ({} meaning a random port).",
 							CONFIG_KEY_PORT, port, DEFAULT_PORT, RANDOM_PORT);

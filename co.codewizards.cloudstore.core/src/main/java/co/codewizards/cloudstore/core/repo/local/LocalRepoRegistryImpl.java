@@ -26,8 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.collection.LazyUnmodifiableList;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
@@ -438,7 +438,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 	 * and removes them.
 	 */
 	private boolean evictDeadEntriesPeriodically() {
-		final Long period = Config.getInstance().getPropertyAsLong(CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD, DEFAULT_EVICT_DEAD_ENTRIES_PERIOD);
+		final Long period = ConfigImpl.getInstance().getPropertyAsLong(CONFIG_KEY_EVICT_DEAD_ENTRIES_PERIOD, DEFAULT_EVICT_DEAD_ENTRIES_PERIOD);
 		removeProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD);
 		final Date last = getPropertyAsDate(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP);
 		if (last != null) {

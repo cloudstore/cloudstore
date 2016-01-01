@@ -11,7 +11,7 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class DatabaseAdapterFactoryRegistry {
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseAdapterFactoryRegistry.class);
@@ -50,7 +50,7 @@ public class DatabaseAdapterFactoryRegistry {
 	protected DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail() {
 		DatabaseAdapterFactory databaseAdapterFactory = this.databaseAdapterFactory;
 		if (databaseAdapterFactory == null) {
-			final String databaseAdaptorName = Config.getInstance().getPropertyAsNonEmptyTrimmedString(
+			final String databaseAdaptorName = ConfigImpl.getInstance().getPropertyAsNonEmptyTrimmedString(
 					CONFIG_KEY_DATABASE_ADAPTER_NAME, DEFAULT_DATABASE_ADAPTER_NAME);
 
 			final SortedMap<String, DatabaseAdapterFactory> name2DatabaseAdapter = getName2DatabaseAdapterFactory();

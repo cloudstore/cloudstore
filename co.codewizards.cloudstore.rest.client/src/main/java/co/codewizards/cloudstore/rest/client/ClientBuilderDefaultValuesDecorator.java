@@ -13,6 +13,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.shared.filter.GZIPClientRequestFilter;
 import co.codewizards.cloudstore.rest.shared.interceptor.GZIPReaderInterceptor;
@@ -46,11 +47,11 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 		this.builder = builder;
 
 		final ClientConfig clientConfig = new ClientConfig(CloudStoreJaxbContextResolver.class);
-		final Integer socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
+		final Integer socketReadTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(
 				CONFIG_KEY_SOCKET_READ_TIMEOUT,
 				DEFAULT_SOCKET_READ_TIMEOUT);
 
-		final Integer socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
+		final Integer socketConnectTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(
 				CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
 				DEFAULT_SOCKET_CONNECT_TIMEOUT);
 

@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.rest.server.ldap;
 import java.util.ArrayList;
 import java.util.List;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.util.StringUtil;
 
 /**
@@ -28,7 +28,7 @@ class DnTemplateCollector{
 	}
 
 	private String getNextTemplate(){
-		return Config.getInstance().getProperty(getNextProperty(), null);
+		return ConfigImpl.getInstance().getProperty(getNextProperty(), null);
 	}
 
 	private String getNextProperty(){

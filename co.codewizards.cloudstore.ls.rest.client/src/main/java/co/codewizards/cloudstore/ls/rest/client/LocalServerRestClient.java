@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
@@ -85,7 +86,7 @@ public class LocalServerRestClient {
 
 	public synchronized Integer getSocketConnectTimeout() {
 		if (socketConnectTimeout == null)
-			socketConnectTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
+			socketConnectTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_CONNECT_TIMEOUT,
 					DEFAULT_SOCKET_CONNECT_TIMEOUT);
 
@@ -100,7 +101,7 @@ public class LocalServerRestClient {
 
 	public synchronized Integer getSocketReadTimeout() {
 		if (socketReadTimeout == null)
-			socketReadTimeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(
+			socketReadTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(
 					CONFIG_KEY_SOCKET_READ_TIMEOUT,
 					DEFAULT_SOCKET_READ_TIMEOUT);
 

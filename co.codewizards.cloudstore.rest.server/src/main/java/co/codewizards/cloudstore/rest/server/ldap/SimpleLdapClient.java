@@ -1,7 +1,6 @@
 package co.codewizards.cloudstore.rest.server.ldap;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotEmpty;
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.util.HashMap;
 import java.util.List;

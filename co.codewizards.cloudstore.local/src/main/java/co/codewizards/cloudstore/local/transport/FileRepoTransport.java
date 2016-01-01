@@ -27,7 +27,7 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
@@ -966,7 +966,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		synchronized (file2FileWriteStrategy) {
 			FileWriteStrategy fileWriteStrategy = file2FileWriteStrategy.get(file);
 			if (fileWriteStrategy == null) {
-				fileWriteStrategy = Config.getInstanceForFile(file).getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.CONFIG_DEFAULT_VALUE);
+				fileWriteStrategy = ConfigImpl.getInstanceForFile(file).getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.CONFIG_DEFAULT_VALUE);
 				file2FileWriteStrategy.put(file, fileWriteStrategy);
 			}
 			return fileWriteStrategy;

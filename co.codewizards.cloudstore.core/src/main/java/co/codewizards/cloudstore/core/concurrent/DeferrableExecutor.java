@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.core.concurrent;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Date;
@@ -23,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class DeferrableExecutor {
@@ -71,7 +70,7 @@ public class DeferrableExecutor {
 		AssertUtil.assertNotNull("callIdentifier", callIdentifier);
 		AssertUtil.assertNotNull("callableProvider", callableProvider);
 
-		final int timeout = Config.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_TIMEOUT, DEFAULT_TIMEOUT);
+		final int timeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_TIMEOUT, DEFAULT_TIMEOUT);
 
 		cleanUpExpiredEntries();
 		callIdentifier = canonicalizeCallIdentifier(callIdentifier);
@@ -180,6 +179,6 @@ public class DeferrableExecutor {
 	}
 
 	private int getExpiryPeriod() {
-		return Config.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_EXPIRY_PERIOD, DEFAULT_EXPIRY_PERIOD);
+		return ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_EXPIRY_PERIOD, DEFAULT_EXPIRY_PERIOD);
 	}
 }
