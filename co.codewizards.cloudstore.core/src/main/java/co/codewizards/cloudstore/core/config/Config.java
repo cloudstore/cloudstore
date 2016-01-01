@@ -50,6 +50,10 @@ import co.codewizards.cloudstore.core.appid.AppIdRegistry;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public interface Config {
+	String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
+
+	String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local.properties";
+
 	/**
 	 * Prefix used for system properties overriding configuration entries.
 	 * <p>
@@ -64,7 +68,7 @@ public interface Config {
 	 * Additionally, it is possible to override configuration entries via OS environment variables.
 	 * Since an env var's name must not contain a dot ("."), all dots are replaced by underscores ("_").
 	 */
-	String SYSTEM_PROPERTY_PREFIX = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId() + '.';
+	String SYSTEM_PROPERTY_PREFIX = APP_ID_SIMPLE_ID + '.';
 
 	/**
 	 * Gets the property identified by the given key.

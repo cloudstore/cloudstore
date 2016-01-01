@@ -37,17 +37,26 @@ import co.codewizards.cloudstore.core.util.AssertUtil;
 public class ConfigImpl implements Config {
 	private static final Logger logger = LoggerFactory.getLogger(ConfigImpl.class);
 
-	private static final String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
-
 	private static final long fileRefsCleanPeriod = 60000L;
 	private static long fileRefsCleanLastTimestamp;
 
+	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local.properties";
+
 	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN = '.' + APP_ID_SIMPLE_ID + ".properties";
+	/**
+	 * @deprecated We should only support one of these files - this is unnecessary!
+	 */
+	@Deprecated
 	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE = APP_ID_SIMPLE_ID + ".properties";
 
 	private static final String PROPERTIES_TEMPLATE_FILE_NAME = "cloudstore.properties"; // *NOT* dependent on AppId!
 
 	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_HIDDEN = ".%s." + APP_ID_SIMPLE_ID + ".properties";
+
+	/**
+	 * @deprecated We should only support one of these files - this is unnecessary!
+	 */
+	@Deprecated
 	private static final String PROPERTIES_FILE_FORMAT_FOR_FILE_VISIBLE = "%s." + APP_ID_SIMPLE_ID + ".properties";
 
 	private static final String TRUE_STRING = Boolean.TRUE.toString();
@@ -193,7 +202,8 @@ public class ConfigImpl implements Config {
 		if (isDirectory) {
 			return new File[] {
 				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE)
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE),
+				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL) // overrides the settings of the shared file!
 			};
 		}
 		else {
@@ -292,8 +302,8 @@ public class ConfigImpl implements Config {
 			}
 		}
 
-		if (result == null) // none in use, yet => choose the .* one (the first)
-			result = propertiesFiles[0];
+//		if (result == null) // none in use, yet => choose the .* one (the first)
+//			result = propertiesFiles[0]; // now using the local file by default (the last)
 
 		return result;
 	}

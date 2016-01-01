@@ -39,7 +39,7 @@ public class TimePeriod {
 					} catch (NumberFormatException x) {
 						throw new ParseException(
 								String.format("The text '%s' at position %d (0-based) of the input '%s' is not a valid integer!",
-										numberAndTimeUnit[0], offset, string),
+										isEmpty(numberAndTimeUnit[0]) ? tok : numberAndTimeUnit[0], offset, string),
 								offset);
 					}
 
