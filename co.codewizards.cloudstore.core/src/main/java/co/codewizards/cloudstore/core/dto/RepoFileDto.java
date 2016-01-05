@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -9,8 +10,9 @@ import co.codewizards.cloudstore.core.oio.File;
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
+@SuppressWarnings("serial")
 @XmlRootElement
-public class RepoFileDto {
+public class RepoFileDto implements Serializable {
 	private long id = -1;
 
 	private Long parentId;

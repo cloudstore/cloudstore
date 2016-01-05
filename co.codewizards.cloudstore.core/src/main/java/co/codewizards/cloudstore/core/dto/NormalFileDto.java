@@ -7,6 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import co.codewizards.cloudstore.core.oio.File;
 
+@SuppressWarnings("serial")
 @XmlRootElement
 public class NormalFileDto extends RepoFileDto {
 
