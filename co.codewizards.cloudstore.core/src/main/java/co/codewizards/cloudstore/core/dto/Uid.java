@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -44,6 +46,16 @@ import co.codewizards.cloudstore.core.util.Base64Url;
  */
 @XmlJavaTypeAdapter(type=Uid.class, value=UidXmlAdapter.class)
 public class Uid implements Comparable<Uid>, Serializable {
+	/**
+	 * Gets the length of an {@code Uid} in {@link #toBytes() bytes}.
+	 */
+	public static final int LENGTH_BYTES = 16;
+
+	/**
+	 * Gets the length of an {@code Uid} in its {@link #toString() String representation}.
+	 */
+	public static final int LENGTH_STRING = 22;
+
 	private static final long serialVersionUID = 1L;
 	private static final String CHARSET_ASCII = "ASCII";
 
@@ -80,8 +92,8 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	public Uid(final byte[] bytes) {
-		if (AssertUtil.assertNotNull("bytes", bytes).length != 16)
-			throw new IllegalArgumentException("bytes.length != 16");
+		if (assertNotNull("bytes", bytes).length != LENGTH_BYTES)
+			throw new IllegalArgumentException("bytes.length != " + LENGTH_BYTES);
 
 		long hi = 0;
 		long lo = 0;
@@ -97,8 +109,8 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	private static final String assertValidUidString(final String uidString) {
-		if (AssertUtil.assertNotNull("uidString", uidString).length() != 22)
-			throw new IllegalArgumentException("uidString.length != 22");
+		if (assertNotNull("uidString", uidString).length() != LENGTH_STRING)
+			throw new IllegalArgumentException("uidString.length != " + LENGTH_STRING);
 
 		return uidString;
 	}
@@ -126,7 +138,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	public byte[] toBytes() {
-		final byte[] bytes = new byte[16];
+		final byte[] bytes = new byte[LENGTH_BYTES];
 
 		int idx = -1;
 		for (int i = 7; i >= 0; --i)
@@ -185,6 +197,10 @@ public class Uid implements Comparable<Uid>, Serializable {
 		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
+
+		if (s.length() != LENGTH_STRING) // sanity check
+			throw new IllegalStateException("uidString.length != " + LENGTH_STRING);
+
 		toString = new WeakReference<String>(s);
 		return s;
 	}
