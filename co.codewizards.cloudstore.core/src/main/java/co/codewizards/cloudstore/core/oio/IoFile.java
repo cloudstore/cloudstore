@@ -418,6 +418,11 @@ public class IoFile implements File {
 		return this.ioFile.toString();
 	}
 
+	@Override
+	public File createFile(String ... children) {
+		return OioFileFactory.createFile(this, children);
+	}
+
 //	private void writeObject(ObjectOutputStream out) throws IOException {
 //		if (!ioFile.isAbsolute())
 //			logger.warn("File is not absolute! This may cause w");

@@ -25,6 +25,17 @@ public interface File extends Serializable {
 	File[] listFiles(FileFilter fileFilter);
 	File[] listFiles(FilenameFilter fileFilter);
 
+	/**
+	 * Create a child-{@code File}.
+	 * <p>
+	 * This method appends sub-path-elements. It is synonymous to
+	 * {@link OioFileFactory#createFile(File, String...) createFile(thisFile, children)}
+	 * and more intuitive.
+	 * @param children the children to be appended. May be <code>null</code> or empty.
+	 * @return the new {@link File}. Never <code>null</code>.
+	 */
+	File createFile(String ... children);
+
 	File getAbsoluteFile();
 	File getParentFile();
 
