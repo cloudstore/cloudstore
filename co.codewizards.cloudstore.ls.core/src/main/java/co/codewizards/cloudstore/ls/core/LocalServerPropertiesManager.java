@@ -45,13 +45,15 @@ public class LocalServerPropertiesManager {
 	}
 
 	protected Properties getLocalServerProperties() {
-		if (localServerProperties == null) {
-			final Properties properties = new Properties();
+		Properties properties = localServerProperties;
+		if (properties == null) {
+			properties = new Properties();
 
 			try (final LockFile lockFile = LockFileFactory.getInstance().acquire(getLocalServerPropertiesFile(), 30000);) {
 				try (InputStream in = lockFile.createInputStream();) {
-					if (localServerProperties != null)
-						return localServerProperties;
+					final Properties p = localServerProperties;
+					if (p != null)
+						return p;
 
 					properties.load(in);
 					localServerProperties = properties;
@@ -60,7 +62,7 @@ public class LocalServerPropertiesManager {
 				throw new RuntimeException(x);
 			}
 		}
-		return localServerProperties;
+		return properties;
 	}
 
 	public void writeLocalServerProperties() {
@@ -96,6 +98,15 @@ public class LocalServerPropertiesManager {
 		getLocalServerProperties().setProperty(PROPERTY_KEY_PORT, Integer.toString(port));
 	}
 
+	public String getBaseUrl() {
+		final int port = LocalServerPropertiesManager.getInstance().getPort();
+		if (port < 0)
+			return null;
+
+		final String baseUrl = "http://127.0.0.1:" + port + '/';
+		return baseUrl;
+	}
+
 	public String getPassword() {
 		return getLocalServerProperties().getProperty(PROPERTY_KEY_PASSWORD);
 	}
@@ -103,5 +114,9 @@ public class LocalServerPropertiesManager {
 	public void setPassword(final String password) {
 		assertNotNull("password", password);
 		getLocalServerProperties().setProperty(PROPERTY_KEY_PASSWORD, password);
+	}
+
+	public void clear() {
+		localServerProperties = null;
 	}
 }

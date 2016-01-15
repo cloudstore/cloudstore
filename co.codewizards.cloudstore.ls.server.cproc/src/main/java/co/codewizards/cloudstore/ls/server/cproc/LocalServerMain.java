@@ -1,32 +1,89 @@
 package co.codewizards.cloudstore.ls.server.cproc;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
+import co.codewizards.cloudstore.core.appid.AppIdRegistry;
+import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.DerbyUtil;
+import co.codewizards.cloudstore.core.util.MainArgsUtil;
+import co.codewizards.cloudstore.ls.server.LocalServer;
 
 public class LocalServerMain {
+	private static Class<? extends LocalServer> localServerClass = LocalServer.class;
+
+	private static final Logger logger = LoggerFactory.getLogger(LocalServerMain.class);
+
 	protected LocalServerMain() {
 	}
 
 	public static void main(String[] args) throws Exception {
-		File simpleLogFile = new File("/tmp/localServer.log");
-		for (int i = 0; i < 600; ++i) {
-			try (OutputStream out = new FileOutputStream(simpleLogFile, true);
-					OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8);) {
-				w.write(new Date().toString());
-				w.write('\n');
-			}
+		initLogging();
 
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				doNothing();
-			}
+		try {
+			args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
+			createLocalServer().start();
+		} catch (final Throwable x) {
+			logger.error(x.toString(), x);
+			System.exit(999);
 		}
+	}
+
+	public static Class<? extends LocalServer> getLocalServerClass() {
+		return localServerClass;
+	}
+	public static void setLocalServerClass(final Class<? extends LocalServer> localServerClass) {
+		LocalServerMain.localServerClass = assertNotNull("localServerClass", localServerClass);
+	}
+
+	protected static Constructor<? extends LocalServer> getLocalServerConstructor() throws NoSuchMethodException, SecurityException {
+		final Class<? extends LocalServer> clazz = getLocalServerClass();
+		final Constructor<? extends LocalServer> constructor = clazz.getConstructor();
+		return constructor;
+	}
+
+	protected static LocalServer createLocalServer() throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		final Constructor<? extends LocalServer> constructor = getLocalServerConstructor();
+		final LocalServer cloudStoreServer = constructor.newInstance();
+		return cloudStoreServer;
+	}
+
+	private static void initLogging() throws IOException, JoranException {
+		final File logDir = ConfigDir.getInstance().getLogDir();
+		DerbyUtil.setLogFile(createFile(logDir, "derby.log"));
+
+		final String logbackXmlName = "logback.localserver.xml";
+		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
+		if (!logbackXmlFile.exists()) {
+			AppIdRegistry.getInstance().copyResourceResolvingAppId(
+					LocalServerMain.class, logbackXmlName, logbackXmlFile);
+		}
+
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+	    try {
+	      final JoranConfigurator configurator = new JoranConfigurator();
+	      configurator.setContext(context);
+	      // Call context.reset() to clear any previous configuration, e.g. default
+	      // configuration. For multi-step configuration, omit calling context.reset().
+	      context.reset();
+	      configurator.doConfigure(logbackXmlFile.createInputStream());
+	    } catch (final JoranException je) {
+	    	// StatusPrinter will handle this
+	    	doNothing();
+	    }
+	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 	}
 }

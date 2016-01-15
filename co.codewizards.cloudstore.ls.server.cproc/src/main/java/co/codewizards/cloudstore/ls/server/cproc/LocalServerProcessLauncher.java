@@ -2,44 +2,211 @@ package co.codewizards.cloudstore.ls.server.cproc;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
+import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
+import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 
 public class LocalServerProcessLauncher {
+	private static final Logger logger = LoggerFactory.getLogger(LocalServerProcessLauncher.class);
+	private static final String JAR_URL_PROTOCOL = "jar";
+	private static final String JAR_URL_PREFIX = JAR_URL_PROTOCOL + ':';
+	private static final String JAR_URL_CONTENT_PATH_SEPARATOR = "!/";
+	private static final String FILE_PROTOCOL = "file";
+
+	private static final String CONFIG_KEY_START_TIMEOUT = "LocalServerProcess.startTimeout";
+	private static final long DEFAULT_START_TIMEOUT = 120000L;
 
 	public LocalServerProcessLauncher() {
 	}
 
-	public static void main(String[] args) throws Exception {
-		new LocalServerProcessLauncher().start();
+	public void start() throws IOException {
+		final File javaExecutableFile = getJavaExecutableFile();
+		if (javaExecutableFile == null)
+			return;
+
+		final File thisJarFile = getThisJarFile();
+		if (thisJarFile == null)
+			return;
+
+		final ProcessBuilder pb = new ProcessBuilder(
+				javaExecutableFile.getPath(), "-jar", thisJarFile.getPath());
+
+		final File processRedirectInputFile = getProcessRedirectInputFile();
+		final File processRedirectOutputFile = getProcessRedirectOutputFile();
+		processRedirectInputFile.createNewFile(); // 0-byte-file
+
+		pb.redirectInput(processRedirectInputFile.getIoFile());
+		pb.redirectOutput(processRedirectOutputFile.getIoFile());
+		pb.redirectError(processRedirectOutputFile.getIoFile());
+
+		final Process process = pb.start();
+		if (process == null) {
+			logger.warn("start: process=null");
+			return;
+		}
+
+		waitUntilServerOnline();
 	}
 
-	public void start() throws IOException {
-		String javaHome = System.getProperty("java.home");
+	private void waitUntilServerOnline() {
+		final Config config = ConfigImpl.getInstance();
+		final long startTimestamp = System.currentTimeMillis();
+		while (true) {
+			final long timeoutMs = config.getPropertyAsPositiveOrZeroLong(CONFIG_KEY_START_TIMEOUT, DEFAULT_START_TIMEOUT);
+			final boolean timeout = System.currentTimeMillis() - startTimestamp > timeoutMs;
+
+			LocalServerPropertiesManager.getInstance().clear();
+			final String baseUrlString = LocalServerPropertiesManager.getInstance().getBaseUrl();
+			if (baseUrlString != null) {
+				final URL baseUrl;
+				try {
+					baseUrl = new URL(baseUrlString);
+				} catch (MalformedURLException e) {
+					throw new RuntimeException(e);
+				}
+
+				int port = baseUrl.getPort();
+				if (port < 0)
+					port = baseUrl.getDefaultPort();
+
+				if (port < 0)
+					port = 443;
+
+				try {
+					Socket socket = new Socket(baseUrl.getHost(), port);
+					socket.close();
+					logger.info("waitUntilServerOnline: Connecting to " + baseUrl + " succeeded!");
+					return;
+				} catch (IOException e) {
+					if (timeout)
+						logger.error("waitUntilServerOnline: Connecting to " + baseUrl + " failed (fatal): " + e, e);
+					else
+						logger.warn("waitUntilServerOnline: Connecting to " + baseUrl + " failed (retrying): " + e);
+				}
+			}
+
+			if (timeout)
+				throw new TimeoutException("LocalServer did not come online within timeout!");
+
+			try { Thread.sleep(500); } catch (InterruptedException e) { doNothing(); }
+		}
+	}
+
+	/**
+	 * Gets the source file for system-in of the new process.
+	 * <p>
+	 * This file is created (with size 0) instead of the default behaviour {@link Redirect#PIPE PIPE},
+	 * because we don't want the child-process to be linked with the current process.
+	 *
+	 * @return the source file for system-in of the new process. Never <code>null</code>.
+	 */
+	private File getProcessRedirectInputFile() {
+		final File tempDir = getTempDir();
+		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
+		final String now = df.format(new Date());
+		final File file = tempDir.createFile(String.format("LocalServer.%s.in", now)).getAbsoluteFile();
+		logger.debug("getProcessRedirectInputFile: file='{}'", file);
+		return file;
+	}
+
+	/**
+	 * Gets the destination file for system-out and system-error of the new process.
+	 * @return the destination file for system-out and system-error of the new process. Never <code>null</code>.
+	 */
+	private File getProcessRedirectOutputFile() {
+		final File tempDir = getTempDir();
+		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
+		final String now = df.format(new Date());
+		final File file = tempDir.createFile(String.format("LocalServer.%s.out", now)).getAbsoluteFile();
+		logger.debug("getProcessRedirectOutputFile: file='{}'", file);
+		return file;
+	}
+
+	private File getJavaExecutableFile() {
+		final String javaHome = System.getProperty("java.home");
 		assertNotNull("javaHome", javaHome);
 
-		File javaExecutableFile = createFile(javaHome, "bin", "java");
-
-//		ProcessBuilder builder = new ProcessBuilder(
-//				javaExecutableFile.getAbsolutePath(), "-jar", "org.subshare.ls.server-0.9.0-SNAPSHOT.jar");
-
-		ProcessBuilder builder = new ProcessBuilder(
-				javaExecutableFile.getAbsolutePath(),
-				"-cp", "/home/mn/workspace/subshare.2/org.subshare/org.subshare.ls.server/bin",
-				"org.subshare.ls.server.LocalServerMain");
-
-		builder.redirectError(new java.io.File("/tmp/LocalServer.out"));
-		builder.redirectOutput(new java.io.File("/tmp/LocalServer.out"));
-
-		Process process = builder.start();
-
-		try {
-			Thread.sleep(60000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		File file = createFile(javaHome, "bin", "java").getAbsoluteFile();
+		if (file.isFile()) {
+			logger.debug("getJavaExecutableFile: file='{}'", file);
+			return file;
 		}
+
+		file = createFile(javaHome, "bin", "java.exe").getAbsoluteFile();
+		if (file.isFile()) {
+			logger.debug("getJavaExecutableFile: file='{}'", file);
+			return file;
+		}
+
+		logger.warn("getJavaExecutableFile: Could not locate 'java' executable!");
+		return null;
+	}
+
+	/**
+	 * Gets the JAR file containing this object's class.
+	 * @return the JAR file containing this object's class. <code>null</code>, if this class is not contained in a JAR.
+	 */
+	private File getThisJarFile() {
+		// Should return an URL like this:
+		// jar:file:/home/mn/.../co.codewizards.cloudstore.ls.server.cproc-0.9.7-SNAPSHOT.jar!/co/codewizards/cloudstore/ls/server/cproc/
+		final URL url = this.getClass().getResource("");
+		assertNotNull("url", url);
+
+		final String urlString = url.toString();
+		logger.debug("getThisJarFile: url='{}'", urlString);
+
+		if (! urlString.startsWith(JAR_URL_PREFIX)) {
+			logger.warn("getThisJarFile: This class ({}) is not located in a JAR file! url='{}'",
+					this.getClass().getName(), urlString);
+
+			return null;
+		}
+
+		final int indexOfContentPathSeparator = urlString.indexOf(JAR_URL_CONTENT_PATH_SEPARATOR);
+		if (indexOfContentPathSeparator < 0)
+			throw new IllegalStateException(String.format("JAR-URL '%s' does not contain separator '%s'!",
+					urlString, JAR_URL_CONTENT_PATH_SEPARATOR));
+
+		final String jarUrlString = urlString.substring(JAR_URL_PREFIX.length(), indexOfContentPathSeparator);
+		logger.debug("getThisJarFile: url='{}'", urlString);
+
+		final URL jarUrl;
+		try {
+			jarUrl = new URL(jarUrlString);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+
+		if (! FILE_PROTOCOL.equals(jarUrl.getProtocol()))
+			throw new IllegalStateException(String.format("Illegal protocol ('%s' expected): %s",
+					FILE_PROTOCOL, jarUrlString));
+
+		java.io.File f;
+		try {
+			f = new java.io.File(jarUrl.toURI());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+
+		logger.debug("getThisJarFile: file='{}'", f);
+		return createFile(f);
 	}
 }

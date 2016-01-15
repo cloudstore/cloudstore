@@ -13,6 +13,12 @@
 
 	<dependencies>
 		<dependency>
+<!--
+This dependency is AFAIK not *yet* needed. However, in the future, the server should
+be able to sync its repositories with other servers, too. Then, it needs the REST-client.
+Until then, this dependency does not hurt, either, because we package the entire client,
+anyway - see below.
+-->
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.rest.client</artifactId>
 		</dependency>

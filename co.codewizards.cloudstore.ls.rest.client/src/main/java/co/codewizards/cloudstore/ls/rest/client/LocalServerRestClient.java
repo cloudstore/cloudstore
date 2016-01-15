@@ -68,11 +68,9 @@ public class LocalServerRestClient {
 
 	private Integer socketReadTimeout;
 
-	private String baseURL;
+	private String baseUrl;
 
 	private final LinkedList<Client> clientCache = new LinkedList<Client>();
-
-	private boolean configFrozen;
 
 	private CredentialsProvider credentialsProvider;
 
@@ -122,11 +120,10 @@ public class LocalServerRestClient {
 	 * @return the base-URL. This URL always ends with "/".
 	 */
 	public synchronized String getBaseUrl() {
-		if (baseURL == null) {
-			final int port = LocalServerPropertiesManager.getInstance().getPort();
-			baseURL = "http://127.0.0.1:" + port + '/';
-		}
-		return baseURL;
+		if (baseUrl == null)
+			baseUrl = LocalServerPropertiesManager.getInstance().getBaseUrl();
+
+		return baseUrl;
 	}
 
 	/**
@@ -182,7 +179,7 @@ public class LocalServerRestClient {
 						firstException = x;
 
 					final String oldBaseUrl = getBaseUrl();
-					baseURL = null;
+					baseUrl = null;
 					if (!oldBaseUrl.equals(getBaseUrl())) {
 						retryCounter = 0; // reset to make sure we really try again with the new URL
 						clearClientCache();
@@ -289,7 +286,7 @@ public class LocalServerRestClient {
 			final HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("anonymous", "");
 			client.register(feature);
 
-			configFrozen = true;
+//			configFrozen = true;
 		}
 		clientThreadLocal.set(new ClientRef(client));
 	}
