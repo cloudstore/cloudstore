@@ -11,6 +11,13 @@
 		<relativePath>../co.codewizards.cloudstore.parent</relativePath>
 	</parent>
 
+	<description>
+		Server component of the local server to be embedded in an existing JVM (no separate process).
+
+		"ls" means "local server", which is a server running locally on the same computer
+		as its client.
+	</description>
+
 	<dependencies>
 		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
