@@ -29,8 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.DirectoryDto;
+import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
@@ -217,7 +220,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 
 				if (file.exists() && !file.isSymbolicLink())
-					file.renameTo(IOUtil.createCollisionFile(file));
+					handleFileTypeCollision(transaction, clientRepositoryId, file, SymlinkDto.class);
+//					file.renameTo(IOUtil.createCollisionFile(file));
 
 				if (file.exists() && !file.isSymbolicLink())
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
@@ -233,12 +237,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 						currentTargetEqualsNewTarget = currentTarget.equals(target);
 						if (!currentTargetEqualsNewTarget) {
 							final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
-							if (repoFile == null) {
-								final File collisionFile = IOUtil.createCollisionFile(file);
-								file.renameTo(collisionFile);
-								if (file.exists())
-									throw new IllegalStateException("Could not rename file to resolve collision: " + file);
-							}
+							if (repoFile == null) // it's new - just created
+								handleFileCollision(transaction, clientRepositoryId, file);
 							else
 								detectAndHandleFileCollision(transaction, clientRepositoryId, parentFile, repoFile);
 
@@ -441,12 +441,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	private void delete(final LocalRepoTransaction transaction, final LocalRepoSync localRepoSync, final UUID fromRepositoryId, final File file) {
-		if (detectFileCollisionRecursively(transaction, fromRepositoryId, file)) {
-			file.renameTo(IOUtil.createCollisionFile(file));
-
-			if (file.exists())
-				throw new IllegalStateException("Renaming file failed: " + file);
-		}
+		if (detectFileCollisionRecursively(transaction, fromRepositoryId, file))
+			handleFileCollision(transaction, fromRepositoryId, file);
 
 		if (!IOUtil.deleteDirectoryRecursively(file)) {
 			throw new IllegalStateException("Deleting file or directory failed: " + file);
@@ -583,7 +579,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			}
 
 			if (file.exists() && !file.isDirectory())
-				file.renameTo(IOUtil.createCollisionFile(file));
+				handleFileTypeCollision(transaction, clientRepositoryId, file, DirectoryDto.class);
 
 			if (file.exists() && !file.isDirectory())
 				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
@@ -673,14 +669,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) { // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
-					logger.info("beginPutFile: Collision: Destination file already exists and is a symlink or a directory! file='{}'", file.getAbsolutePath());
-					final File collisionFile = IOUtil.createCollisionFile(file);
-					file.renameTo(collisionFile);
-					LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor(), true); // recursiveChildren==true, because the colliding thing might be a directory.
-				}
+				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
+					handleFileTypeCollision(transaction, clientRepositoryId, parentFile, NormalFileDto.class);
 
-				if (file.isSymbolicLink() || (file.exists() && !file.isFile()))
+				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) // the default implementation of handleFileTypeCollision(...) moves the file away.
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				final File localRoot = getLocalRepoManager().getLocalRoot();
@@ -729,6 +721,38 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	/**
+	 * Handle a file-type-collision, which was already detected.
+	 * <p>
+	 * This method does not analyse whether there is a collision - this is already sure.
+	 * It only handles the collision by logging and delegating to {@link #handleFileCollision(LocalRepoTransaction, UUID, File)}.
+	 * @param transaction the DB transaction. Must not be <code>null</code>.
+	 * @param fromRepositoryId the ID of the source repository from which the file is about to be copied. Must not be <code>null</code>.
+	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>. This may be a directory or a symlink, too!
+	 */
+	protected void handleFileTypeCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final Class<? extends RepoFileDto> fromFileType) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("fromRepositoryId", fromRepositoryId);
+		assertNotNull("file", file);
+		assertNotNull("fromFileType", fromFileType);
+
+		Class<? extends RepoFileDto> toFileType;
+		if (file.isSymbolicLink())
+			toFileType = SymlinkDto.class;
+		else if (file.isFile())
+			toFileType = NormalFileDto.class;
+		else if (file.isDirectory())
+			toFileType = DirectoryDto.class;
+		else
+			throw new IllegalStateException("file has unknown type: " + file);
+
+		logger.info("handleFileTypeCollision: Collision: Destination file already exists, is modified and has a different type! toFileType={} fromFileType={} file='{}'",
+				toFileType.getSimpleName(), fromFileType.getSimpleName(), file.getAbsolutePath());
+
+		final File collisionFile = handleFileCollision(transaction, fromRepositoryId, file);
+		LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor(), true); // recursiveChildren==true, because the colliding thing might be a directory.
+	}
+
+	/**
 	 * Detect if the file to be copied has been modified locally (or copied from another repository) after the last
 	 * sync from the repository identified by {@code fromRepositoryId}.
 	 * <p>
@@ -754,11 +778,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param normalFileOrSymlink the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
 	protected void detectAndHandleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("fromRepositoryId", fromRepositoryId);
+		assertNotNull("file", file);
+		assertNotNull("normalFileOrSymlink", normalFileOrSymlink);
 		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
-			final File collisionFile = IOUtil.createCollisionFile(file);
-			file.renameTo(collisionFile);
-			if (file.exists())
-				throw new IllegalStateException("Could not rename file to resolve collision: " + file);
+			final File collisionFile = handleFileCollision(transaction, fromRepositoryId, file);
 
 			try {
 				collisionFile.copyToCopyAttributes(file);
@@ -768,6 +793,18 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			LocalRepoSync.create(transaction).sync(collisionFile, new NullProgressMonitor(), true); // TODO sub-progress-monitor!
 		}
+	}
+
+	protected File handleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("fromRepositoryId", fromRepositoryId);
+		assertNotNull("file", file);
+		final File collisionFile = IOUtil.createCollisionFile(file);
+		file.renameTo(collisionFile);
+		if (file.exists())
+			throw new IllegalStateException("Could not rename file to resolve collision: " + file);
+
+		return collisionFile;
 	}
 
 	protected boolean detectFileCollisionRecursively(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File fileOrDirectory) {
