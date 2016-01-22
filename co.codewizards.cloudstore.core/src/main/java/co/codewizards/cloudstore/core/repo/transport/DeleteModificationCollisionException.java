@@ -1,10 +1,11 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-public class DeleteModificationCollisionException extends RuntimeException {
+public class DeleteModificationCollisionException extends CollisionException {
 
 	private static final long serialVersionUID = 1L;
 
-	public DeleteModificationCollisionException() { }
+	public DeleteModificationCollisionException() {
+	}
 
 	public DeleteModificationCollisionException(String message) {
 		super(message);

@@ -42,7 +42,7 @@ import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
+import co.codewizards.cloudstore.core.repo.transport.CollisionException;
 import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
@@ -460,8 +460,8 @@ public class RepoToRepoSync implements AutoCloseable {
 			logger.info("syncDirectory: path='{}'", path);
 			try {
 				makeDirectory(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, directoryDto);
-			} catch (final DeleteModificationCollisionException x) {
-				logger.info("DeleteModificationCollisionException during makeDirectory: {}", path);
+			} catch (final CollisionException x) {
+				logger.info("CollisionException during makeDirectory: {}", path);
 				if (logger.isDebugEnabled())
 					logger.debug(x.toString(), x);
 
@@ -485,8 +485,8 @@ public class RepoToRepoSync implements AutoCloseable {
 			final String path = repoFileDtoTreeNode.getPath();
 			try {
 				toRepoTransport.makeSymlink(path, symlinkDto.getTarget(), symlinkDto.getLastModified());
-			} catch (final DeleteModificationCollisionException x) {
-				logger.info("DeleteModificationCollisionException during makeSymlink: {}", path);
+			} catch (final CollisionException x) {
+				logger.info("CollisionException during makeSymlink: {}", path);
 				if (logger.isDebugEnabled())
 					logger.debug(x.toString(), x);
 
@@ -537,8 +537,8 @@ public class RepoToRepoSync implements AutoCloseable {
 
 			try {
 				beginPutFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fromNormalFileDto);
-			} catch (final DeleteModificationCollisionException x) {
-				logger.info("DeleteModificationCollisionException during beginPutFile: {}", path);
+			} catch (final CollisionException x) {
+				logger.info("CollisionException during beginPutFile: {}", path);
 				if (logger.isDebugEnabled())
 					logger.debug(x.toString(), x);
 
@@ -662,7 +662,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	protected void beginPutFile(final RepoTransport fromRepoTransport,
 			final RepoTransport toRepoTransport, final RepoFileDtoTreeNode repoFileDtoTreeNode,
-			final String path, final NormalFileDto fromNormalFileDto) throws DeleteModificationCollisionException {
+			final String path, final NormalFileDto fromNormalFileDto) throws CollisionException {
 
 		toRepoTransport.beginPutFile(path);
 	}

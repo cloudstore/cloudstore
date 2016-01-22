@@ -44,6 +44,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
+import co.codewizards.cloudstore.core.repo.transport.CollisionException;
 import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollisionException;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
 import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
@@ -286,7 +287,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		}
 	}
 
-	protected void assertNoDeleteModificationCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, String path) throws DeleteModificationCollisionException {
+	protected void assertNoDeleteModificationCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, String path) throws CollisionException {
 		final RemoteRepository fromRemoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(fromRepositoryId);
 		final long lastSyncFromRemoteRepositoryLocalRevision = fromRemoteRepository.getLocalRevision();
 
