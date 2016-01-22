@@ -256,7 +256,7 @@ public class NioFile extends IoFile implements File {
 
 	@Override
 	public String relativize(final File target) {
-		return ioFile.toPath().relativize(target.getIoFile().toPath()).toString();
+		return ioFile.getAbsoluteFile().toPath().relativize(target.getIoFile().getAbsoluteFile().toPath()).toString();
 	}
 
 }
