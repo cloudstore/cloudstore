@@ -1,8 +1,11 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +55,25 @@ public final class MainArgsUtil {
 				System.setProperty(kv, "");
 			}
 		}
+		applyLocaleIfNeeded();
 		return otherArgs;
+	}
+
+	/**
+	 * (Re)Applies the {@linkplain Locale#setDefault(Locale) default locale}, if the
+	 * system properties passed as normal program arguments cause a change.
+	 * <p>
+	 * Since the {@code Locale.default} property is already initialised (really early!),
+	 * when {@link #extractAndApplySystemPropertiesReturnOthers(String[])} is called, the
+	 * newly set system properties don't have any effect on the default {@code Locale}.
+	 * Therefore, we must check the default {@code Locale}, now, and change it if needed.
+	 */
+	private static void applyLocaleIfNeeded() {
+		final String userLanguage = System.getProperty("user.language");
+		final String userCountry = System.getProperty("user.country");
+		Locale locale = Locale.getDefault();
+		if (! (equal(userLanguage, locale.getLanguage()) && equal(userCountry, locale.getCountry()))) {
+			Locale.setDefault(new Locale(userLanguage, userCountry));
+		}
 	}
 }
