@@ -36,4 +36,8 @@ public interface LocalRepoTransaction extends AutoCloseable, DaoProvider, Extens
 	LocalRepoManager getLocalRepoManager();
 
 	void flush();
+
+	void addPreCloseListener(LocalRepoTransactionPreCloseListener listener);
+
+	void addPostCloseListener(LocalRepoTransactionPostCloseListener listener);
 }

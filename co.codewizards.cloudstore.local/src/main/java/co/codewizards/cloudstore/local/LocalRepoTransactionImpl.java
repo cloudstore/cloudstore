@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 
 import javax.jdo.PersistenceManager;
@@ -15,6 +16,10 @@ import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListenerRegistry;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPostCloseEvent;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPostCloseListener;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPreCloseEvent;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPreCloseListener;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
@@ -33,6 +38,9 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final ExtensibleContextSupport extensibleContextSupport = new ExtensibleContextSupport();
 
 	private final LocalRepoTransactionListenerRegistry listenerRegistry = new LocalRepoTransactionListenerRegistry(this);
+
+	private final CopyOnWriteArrayList<LocalRepoTransactionPreCloseListener> preCloseListeners = new CopyOnWriteArrayList<>();
+	private final CopyOnWriteArrayList<LocalRepoTransactionPostCloseListener> postCloseListeners = new CopyOnWriteArrayList<>();
 
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
 		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
@@ -77,6 +85,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 				throw new IllegalStateException("Transaction is not active!");
 
 			listenerRegistry.onCommit();
+			firePreCloseListeners(true);
 			daoClass2Dao.clear();
 			jdoTransaction.commit();
 			persistenceManager.close();
@@ -88,6 +97,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 		} finally {
 			lock.unlock();
 		}
+		firePostCloseListeners(true);
 	}
 
 	@Override
@@ -102,12 +112,35 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public void rollback() {
+		_rollback();
+		firePostCloseListeners(false);
+	}
+
+	@Override
+	public void rollbackIfActive() {
+		boolean active;
+		lock.lock();
+		try {
+			active = isActive();
+			if (active) {
+				_rollback();
+			}
+		} finally {
+			lock.unlock();
+		}
+		if (active) {
+			firePostCloseListeners(false);
+		}
+	}
+
+	protected void _rollback() {
 		lock.lock();
 		try {
 			if (!isActive())
 				throw new IllegalStateException("Transaction is not active!");
 
 			listenerRegistry.onRollback();
+			firePreCloseListeners(false);
 			daoClass2Dao.clear();
 			jdoTransaction.rollback();
 			persistenceManager.close();
@@ -116,17 +149,6 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 			localRevision = -1;
 
 			unlockIfWrite();
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	@Override
-	public void rollbackIfActive() {
-		lock.lock();
-		try {
-			if (isActive())
-				rollback();
 		} finally {
 			lock.unlock();
 		}
@@ -218,5 +240,39 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	@Override
 	public void removeContextObject(Class<?> clazz) {
 		extensibleContextSupport.removeContextObject(clazz);
+	}
+
+	@Override
+	public void addPreCloseListener(LocalRepoTransactionPreCloseListener listener) {
+		preCloseListeners.add(assertNotNull("listener", listener));
+	}
+	@Override
+	public void addPostCloseListener(LocalRepoTransactionPostCloseListener listener) {
+		postCloseListeners.add(assertNotNull("listener", listener));
+	}
+
+	protected void firePreCloseListeners(final boolean commit) {
+		LocalRepoTransactionPreCloseEvent event = null;
+		for (final LocalRepoTransactionPreCloseListener listener : preCloseListeners) {
+			if (event == null)
+				event = new LocalRepoTransactionPreCloseEvent(this);
+
+			if (commit)
+				listener.preCommit(event);
+			else
+				listener.preRollback(event);
+		}
+	}
+	protected void firePostCloseListeners(final boolean commit) {
+		LocalRepoTransactionPostCloseEvent event = null;
+		for (final LocalRepoTransactionPostCloseListener listener : postCloseListeners) {
+			if (event == null)
+				event = new LocalRepoTransactionPostCloseEvent(this);
+
+			if (commit)
+				listener.postCommit(event);
+			else
+				listener.postRollback(event);
+		}
 	}
 }
