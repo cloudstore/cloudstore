@@ -1237,6 +1237,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
 			fileInProgressMarkerDao.deleteFileInProgressMarkers(getRepositoryId(), clientRepositoryId);
 
+			logger.info("endSyncFromRepository: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={}",
+					getRepositoryId(), toRemoteRepository.getRepositoryId(),
+					lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+
 			transaction.commit();
 		}
 	}
@@ -1255,6 +1259,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			final FileInProgressMarkerDao fileInProgressMarkerDao = transaction.getDao(FileInProgressMarkerDao.class);
 			fileInProgressMarkerDao.deleteFileInProgressMarkers(clientRepositoryId, getRepositoryId());
+
+			logger.info("endSyncToRepository: localRepositoryId={} remoteRepositoryId={} transaction.localRevision={} remoteFromLocalRevision={}",
+					getRepositoryId(), clientRepositoryId,
+					transaction.getLocalRevision(), fromLocalRevision);
 
 			transaction.commit();
 		}

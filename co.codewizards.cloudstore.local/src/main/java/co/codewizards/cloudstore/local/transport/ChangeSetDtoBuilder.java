@@ -88,7 +88,11 @@ public class ChangeSetDtoBuilder {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
 		}
 		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
-		lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
+		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
+		logger.info("buildChangeSetDto: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={} localRepositoryRevisionInProgress={}",
+				localRepository.getRepositoryId(), toRemoteRepository.getRepositoryId(),
+				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
+				lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
 
 		((LocalRepoTransactionImpl)transaction).getPersistenceManager().getFetchPlan().setGroup(FetchPlan.ALL);
 		final Collection<Modification> modifications = modificationDao.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());

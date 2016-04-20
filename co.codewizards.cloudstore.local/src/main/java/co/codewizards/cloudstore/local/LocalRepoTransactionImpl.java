@@ -11,6 +11,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Transaction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.context.ExtensibleContextSupport;
 import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -26,6 +29,7 @@ import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 
 public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWithLocalRepoManager, ContextWithPersistenceManager {
+	private static final Logger logger = LoggerFactory.getLogger(LocalRepoTransactionImpl.class);
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
@@ -254,25 +258,33 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	protected void firePreCloseListeners(final boolean commit) {
 		LocalRepoTransactionPreCloseEvent event = null;
 		for (final LocalRepoTransactionPreCloseListener listener : preCloseListeners) {
-			if (event == null)
-				event = new LocalRepoTransactionPreCloseEvent(this);
+			try {
+				if (event == null)
+					event = new LocalRepoTransactionPreCloseEvent(this);
 
-			if (commit)
-				listener.preCommit(event);
-			else
-				listener.preRollback(event);
+				if (commit)
+					listener.preCommit(event);
+				else
+					listener.preRollback(event);
+			} catch (Exception x) {
+				logger.error("firePreCloseListeners: " + x, x);
+			}
 		}
 	}
 	protected void firePostCloseListeners(final boolean commit) {
 		LocalRepoTransactionPostCloseEvent event = null;
 		for (final LocalRepoTransactionPostCloseListener listener : postCloseListeners) {
-			if (event == null)
-				event = new LocalRepoTransactionPostCloseEvent(this);
+			try {
+				if (event == null)
+					event = new LocalRepoTransactionPostCloseEvent(this);
 
-			if (commit)
-				listener.postCommit(event);
-			else
-				listener.postRollback(event);
+				if (commit)
+					listener.postCommit(event);
+				else
+					listener.postRollback(event);
+			} catch (Exception x) {
+				logger.error("firePostCloseListeners: " + x, x);
+			}
 		}
 	}
 }
