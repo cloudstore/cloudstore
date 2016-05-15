@@ -6,7 +6,7 @@ import java.lang.reflect.Type;
 /**
  * Abstract base-class for the much easier implementation of a {@link ClassExtension}.
  * <p>
- * It is highly recommended not to implement the interface {@code ClassExtension} directly. Instead,
+ * It is highly recommended <i>not</i> to implement the interface {@code ClassExtension} directly. Instead,
  * implementors should always extend this abstract base-class.
  * <p>
  * In most cases, an implementation of a {@code ClassExtension} looks simply like this example:
