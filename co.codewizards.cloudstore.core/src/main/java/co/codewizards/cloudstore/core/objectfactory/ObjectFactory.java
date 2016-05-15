@@ -11,6 +11,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+/**
+ * Factory for objects.
+ * <p>
+ * Instead of invoking {@code new MySomething()}, devs can import {@link ObjectFactoryUtil}<code>.*</code>
+ * statically and then invoke {@link ObjectFactoryUtil#createObject(Class) createObject(MySomething.class)}.
+ * Thus allowing downstream projects to extend the system by providing a replacement-class. For example, if the
+ * replacement-class {@code MyOther} was registered for {@code MySomething}, the method
+ * {@code createObject(MySomething.class)} would return an instance of {@code MyOther} instead of
+ * {@code MySomething}.
+ * <p>
+ * However, it is urgently recommended <i>not</i> to use this approach, whenever it is possible to use a better solution,
+ * preferably a well-defined service (=&gt; {@link ServiceLoader}). There are situations, e.g. data-model-classes
+ * (a.k.a. entities), where services are not possible and the {@code ObjectFactory} is the perfect solution.
+ * <p>
+ * In order to register a sub-class as replacement for a certain base-class, implementors have to provide a
+ * {@link ClassExtension} and register it using the {@link ServiceLoader}-mechanism.
+ * <p>
+ * Important: You should usually <i>not</i> need to access this class directly! Use {@link ObjectFactoryUtil} instead
+ * (statically import its methods).
+ *
+ * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
+ */
 public class ObjectFactory {
 
 	private final Map<Class<?>, ClassExtension<?>> baseClass2ClassExtension;
@@ -21,6 +43,13 @@ public class ObjectFactory {
 		public static final ObjectFactory instance = new ObjectFactory();
 	}
 
+	/**
+	 * Gets the singleton instance of this {@code ObjectFactory}.
+	 * <p>
+	 * <b>Important:</b> You should normally <i>not</i> invoke this method directly, but use {@link ObjectFactoryUtil}
+	 * instead.
+	 * @return the {@code ObjectFactory} instance; never <code>null</code>.
+	 */
 	public static ObjectFactory getInstance() {
 		return Holder.instance;
 	}
@@ -51,15 +80,16 @@ public class ObjectFactory {
 		return (ClassExtension<T>) baseClass2ClassExtension.get(clazz);
 	}
 
-	public <T> T create(final Class<T> clazz) {
-		return create(clazz, (Class<?>[]) null, (Object[]) null);
+	public <T> T createObject(final Class<T> clazz) {
+		return createObject(clazz, (Class<?>[]) null, (Object[]) null);
 	}
 
-	public <T> T create(final Class<T> clazz, final Object ... parameters) {
-		return create(clazz, (Class<?>[]) null, parameters);
+	public <T> T createObject(final Class<T> clazz, final Object ... parameters) {
+		return createObject(clazz, (Class<?>[]) null, parameters);
 	}
 
-	public <T> T create(final Class<T> clazz, Class<?>[] parameterTypes, final Object ... parameters) {
+	public <T> T createObject(final Class<T> clazz, Class<?>[] parameterTypes, final Object ... parameters) {
+		assertNotNull("clazz", clazz);
 		if (parameterTypes != null && parameters != null) {
 			if (parameterTypes.length != parameters.length)
 				throw new IllegalArgumentException(String.format(
