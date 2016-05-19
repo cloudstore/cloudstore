@@ -448,6 +448,18 @@ public class RepoToRepoSync implements AutoCloseable {
 		assertNotNull("toRepoTransport", toRepoTransport);
 		assertNotNull("deleteModificationDto", deleteModificationDto);
 
+		try {
+			delete(fromRepoTransport, toRepoTransport, deleteModificationDto);
+		} catch (final CollisionException x) { // Note: This cannot happen in CloudStore! But in can happen in downstream projects with different RepoTransport implementations!
+			logger.info("CollisionException during delete: {}", deleteModificationDto.getPath());
+			if (logger.isDebugEnabled())
+				logger.debug(x.toString(), x);
+
+			return;
+		}
+	}
+
+	protected void delete(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final DeleteModificationDto deleteModificationDto) {
 		toRepoTransport.delete(deleteModificationDto.getPath());
 	}
 
