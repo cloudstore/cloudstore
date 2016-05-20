@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
 import javax.jdo.annotations.NotPersistent;
@@ -35,28 +37,36 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 	}
 	public void setNormalFile(final NormalFile normalFile) {
 		assertWritable();
-		this.normalFile = normalFile;
+
+		if (! equal(this.normalFile, normalFile))
+			this.normalFile = normalFile;
 	}
 	public long getOffset() {
 		return offset;
 	}
 	public void setOffset(final long offset) {
 		assertWritable();
-		this.offset = offset;
+
+		if (! equal(this.offset, offset))
+			this.offset = offset;
 	}
 	public int getLength() {
 		return length;
 	}
 	public void setLength(final int length) {
 		assertWritable();
-		this.length = length;
+
+		if (! equal(this.length, length))
+			this.length = length;
 	}
 	public String getSha1() {
 		return sha1;
 	}
 	public void setSha1(final String sha1) {
 		assertWritable();
-		this.sha1 = sha1;
+
+		if (! equal(this.sha1, sha1))
+			this.sha1 = sha1;
 	}
 
 	protected void assertWritable() {

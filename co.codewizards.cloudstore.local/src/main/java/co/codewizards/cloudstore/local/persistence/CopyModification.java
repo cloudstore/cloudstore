@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
@@ -14,8 +16,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
@@ -63,7 +63,11 @@ public class CopyModification extends Modification {
 		return fromPath;
 	}
 	public void setFromPath(final String fromPath) {
-		AssertUtil.assertNotNull("fromPath", fromPath);
+		assertNotNull("fromPath", fromPath);
+
+		if (equal(this.fromPath, fromPath))
+			return;
+
 		if (fromPath.isEmpty())
 			throw new IllegalArgumentException("fromPath is empty! fromPath must start with '/' and thus has a minimum length of 1 char!");
 
@@ -78,7 +82,11 @@ public class CopyModification extends Modification {
 		return toPath;
 	}
 	public void setToPath(final String toPath) {
-		AssertUtil.assertNotNull("toPath", toPath);
+		assertNotNull("toPath", toPath);
+
+		if (equal(this.toPath, toPath))
+			return;
+
 		if (toPath.isEmpty())
 			throw new IllegalArgumentException("toPath is empty! toPath must start with '/' and thus has a minimum length of 1 char!");
 
@@ -93,13 +101,15 @@ public class CopyModification extends Modification {
 		return length;
 	}
 	public void setLength(final long length) {
-		this.length = length;
+		if (! equal(this.length, length))
+			this.length = length;
 	}
 	public String getSha1() {
 		return sha1;
 	}
 	public void setSha1(final String sha1) {
-		this.sha1 = sha1;
+		if (! equal(this.sha1, sha1))
+			this.sha1 = sha1;
 	}
 
 }

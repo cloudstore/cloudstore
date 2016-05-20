@@ -1,6 +1,8 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.URL;
 import java.util.UUID;
@@ -20,7 +22,6 @@ import javax.jdo.annotations.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @PersistenceCapable
@@ -56,6 +57,9 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 	}
 
 	public void setRemoteRoot(URL remoteRoot) {
+		if (equal(this.getRemoteRoot(), remoteRoot))
+			return;
+
 		remoteRoot = UrlUtil.canonicalizeURL(remoteRoot);
 		this.remoteRoot = remoteRoot;
 		this.remoteRootSha1 = remoteRoot == null ? null : sha1(remoteRoot.toExternalForm());
@@ -71,7 +75,7 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 	}
 	@Override
 	public void setLocalRevision(final long localRevision) {
-		if (this.localRevision != localRevision) {
+		if (! equal(this.localRevision, localRevision)) {
 			if (logger.isDebugEnabled())
 				logger.debug("setLocalRevision: repositoryId={} old={} new={}", getRepositoryId(), this.localRevision, localRevision);
 
@@ -83,10 +87,12 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 		return localPathPrefix;
 	}
 	public void setLocalPathPrefix(final String localPathPrefix) {
-		AssertUtil.assertNotNull("localPathPrefix", localPathPrefix);
+		assertNotNull("localPathPrefix", localPathPrefix);
+
 		if (!localPathPrefix.isEmpty() && !localPathPrefix.startsWith("/"))
 			throw new IllegalArgumentException("localPathPrefix must start with '/' but does not: " + localPathPrefix);
 
-		this.localPathPrefix = localPathPrefix;
+		if (! equal(this.localPathPrefix, localPathPrefix))
+			this.localPathPrefix = localPathPrefix;
 	}
 }

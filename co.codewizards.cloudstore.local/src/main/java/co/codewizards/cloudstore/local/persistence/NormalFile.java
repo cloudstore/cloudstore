@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,8 +51,9 @@ public class NormalFile extends RepoFile {
 	public long getLength() {
 		return length;
 	}
-	public void setLength(final long size) {
-		this.length = size;
+	public void setLength(final long length) {
+		if (! equal(this.length, length))
+			this.length = length;
 	}
 	/**
 	 * Gets the <a href="http://en.wikipedia.org/wiki/SHA-1">SHA-1</a> of the file.
@@ -60,7 +63,8 @@ public class NormalFile extends RepoFile {
 		return sha1;
 	}
 	public void setSha1(final String sha) {
-		this.sha1 = sha;
+		if (! equal(this.sha1, sha))
+			this.sha1 = sha;
 	}
 
 	/**
@@ -76,7 +80,8 @@ public class NormalFile extends RepoFile {
 		return inProgress;
 	}
 	public void setInProgress(final boolean inProgress) {
-		this.inProgress = inProgress;
+		if (! equal(this.inProgress, inProgress))
+			this.inProgress = inProgress;
 	}
 
 	public Set<FileChunk> getFileChunks() {

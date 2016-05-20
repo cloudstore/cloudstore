@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Inheritance;
@@ -22,7 +24,8 @@ public class Symlink extends RepoFile {
 		return target;
 	}
 	public void setTarget(final String target) {
-		this.target = target;
+		if (! equal(this.target, target))
+				this.target = target;
 	}
 
 }

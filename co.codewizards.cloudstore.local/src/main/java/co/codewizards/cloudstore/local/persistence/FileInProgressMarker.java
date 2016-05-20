@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.UUID;
 
@@ -60,7 +61,8 @@ public class FileInProgressMarker extends Entity {
 	}
 
 	public void setFromRepositoryId(final UUID fromRepositoryId) {
-		this.fromRepositoryId = FileInProgressMarkerDao.convertToString(fromRepositoryId);
+		if (! equal(this.getFromRepositoryId(), fromRepositoryId))
+			this.fromRepositoryId = FileInProgressMarkerDao.convertToString(fromRepositoryId);
 	}
 
 	public UUID getToRepositoryId() {
@@ -68,7 +70,8 @@ public class FileInProgressMarker extends Entity {
 	}
 
 	public void setToRepositoryId(final UUID toRepositoryId) {
-		this.toRepositoryId = FileInProgressMarkerDao.convertToString(toRepositoryId);
+		if (! equal(this.getToRepositoryId(), toRepositoryId))
+			this.toRepositoryId = FileInProgressMarkerDao.convertToString(toRepositoryId);
 	}
 
 	public String getPath() {

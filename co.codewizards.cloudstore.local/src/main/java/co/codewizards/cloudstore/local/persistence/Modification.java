@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Index;
@@ -49,7 +51,8 @@ public abstract class Modification extends Entity implements AutoTrackLocalRevis
 	}
 
 	public void setRemoteRepository(RemoteRepository remoteRepository) {
-		this.remoteRepository = remoteRepository;
+		if (! equal(this.remoteRepository, remoteRepository))
+			this.remoteRepository = remoteRepository;
 	}
 
 	@Override
@@ -58,6 +61,7 @@ public abstract class Modification extends Entity implements AutoTrackLocalRevis
 	}
 	@Override
 	public void setLocalRevision(long revision) {
-		this.localRevision = revision;
+		if (! equal(this.localRevision, revision))
+			this.localRevision = revision;
 	}
 }

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,7 +53,8 @@ public class LocalRepository extends Repository {
 		return root;
 	}
 	public void setRoot(final Directory root) {
-		this.root = root;
+		if (! equal(this.root, root))
+			this.root = root;
 	}
 
 	public byte[] getPrivateKey() {
@@ -60,7 +62,8 @@ public class LocalRepository extends Repository {
 	}
 
 	public void setPrivateKey(final byte[] privateKey) {
-		this.privateKey = privateKey;
+		if (! equal(this.privateKey, privateKey))
+			this.privateKey = privateKey;
 	}
 
 	public Set<String> getAliases() {

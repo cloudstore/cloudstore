@@ -65,7 +65,7 @@ public class FileInProgressMarkerDao extends Dao<FileInProgressMarker, FileInPro
 	}
 
 	static UUID convertToUuid(final String repositoryId) {
-		return UUID.fromString(repositoryId);
+		return repositoryId == null ? null : UUID.fromString(repositoryId);
 	}
 
 	static String convertToString(final UUID repositoryId) {

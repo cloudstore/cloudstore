@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.util.UUID;
 
 import javax.jdo.annotations.Discriminator;
@@ -57,7 +59,8 @@ public abstract class Repository extends Entity implements StoreCallback
 		return revision;
 	}
 	public void setRevision(final long revision) {
-		this.revision = revision;
+		if (! equal(this.revision, revision))
+			this.revision = revision;
 	}
 
 	public byte[] getPublicKey() {
@@ -65,7 +68,8 @@ public abstract class Repository extends Entity implements StoreCallback
 	}
 
 	public void setPublicKey(final byte[] publicKey) {
-		this.publicKey = publicKey;
+		if (! equal(this.publicKey, publicKey))
+			this.publicKey = publicKey;
 	}
 
 	@Override

@@ -20,7 +20,7 @@ public final class Util {
 		return System.getProperty("user.name"); //$NON-NLS-1$
 	}
 
-	public static final boolean equal(final Object one, final Object two) {
+	public static final <T, S extends T> boolean equal(final S one, final T two) {
 		return one == null ? two == null : one.equals(two);
 	}
 
@@ -49,7 +49,7 @@ public final class Util {
 	}
 
 
-	public static final boolean equal(final Object[] one, final Object[] two) {
+	public static final <T, S extends T> boolean equal(final S[] one, final T[] two) {
 		return Arrays.equals(one, two);
 	}
 
@@ -78,7 +78,7 @@ public final class Util {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T cast(final Object o) {
+	public static final <T> T cast(final Object o) {
 		return (T) o;
 	}
 
@@ -99,7 +99,7 @@ public final class Util {
 	 * @param object the object for which to obtain the {@code String}-representation. May be <code>null</code>.
 	 * @return the {@code String}-representation. Never <code>null</code>.
 	 */
-	public static String toIdentityString(final Object object) {
+	public static final String toIdentityString(final Object object) {
 		if (object == null)
 			return String.valueOf(object); // result: "null"
 

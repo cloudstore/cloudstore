@@ -292,7 +292,7 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 
 	private void setProperty(final String key, final String value) {
 		final Object oldValue = repoRegistryProperties.setProperty(assertNotNull("key", key), assertNotNull("value", value));
-		if (!equal(oldValue, value))
+		if (!equal(oldValue, (Object) value))
 			repoRegistryPropertiesDirty = true;
 	}
 

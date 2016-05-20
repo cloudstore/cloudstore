@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.Collections;
 import java.util.Date;
@@ -66,14 +67,16 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		return parent;
 	}
 	public void setParent(final RepoFile parent) {
-		this.parent = parent;
+		if (! equal(this.parent, parent))
+			this.parent = parent;
 	}
 
 	public String getName() {
 		return name;
 	}
 	public void setName(final String name) {
-		this.name = name;
+		if (! equal(this.name, name))
+			this.name = name;
 	}
 
 	/**
@@ -88,7 +91,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	}
 	@Override
 	public void setLocalRevision(final long localRevision) {
-		if (this.localRevision != localRevision) {
+		if (! equal(this.localRevision, localRevision)) {
 			if (logger.isDebugEnabled()) {
 				final LocalRepository localRepository = new LocalRepositoryDao().persistenceManager(JDOHelper.getPersistenceManager(this)).getLocalRepositoryOrFail();
 				logger.debug("setLocalRevision: localRepositoryId={} path='{}' old={} new={}", localRepository.getRepositoryId(), getPath(), this.localRevision, localRevision);
@@ -160,13 +163,15 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 		return lastModified;
 	}
 	public void setLastModified(final Date lastModified) {
-		this.lastModified = lastModified;
+		if (! equal(this.lastModified, lastModified))
+			this.lastModified = lastModified;
 	}
 
 	public UUID getLastSyncFromRepositoryId() {
 		return lastSyncFromRepositoryId == null ? null : UUID.fromString(lastSyncFromRepositoryId);
 	}
 	public void setLastSyncFromRepositoryId(final UUID repositoryId) {
-		this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
+		if (! equal(this.getLastSyncFromRepositoryId(), repositoryId))
+			this.lastSyncFromRepositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 }

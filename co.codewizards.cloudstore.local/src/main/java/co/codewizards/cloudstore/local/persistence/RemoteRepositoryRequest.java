@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.Util.*;
+
 import java.util.UUID;
 
 import javax.jdo.annotations.NullValue;
@@ -32,7 +34,8 @@ public class RemoteRepositoryRequest extends Entity {
 		return repositoryId == null ? null : UUID.fromString(repositoryId);
 	}
 	public void setRepositoryId(UUID repositoryId) {
-		this.repositoryId = repositoryId == null ? null : repositoryId.toString();
+		if (! equal(this.getRepositoryId(), repositoryId))
+			this.repositoryId = repositoryId == null ? null : repositoryId.toString();
 	}
 
 	public byte[] getPublicKey() {
@@ -40,13 +43,15 @@ public class RemoteRepositoryRequest extends Entity {
 	}
 
 	public void setPublicKey(byte[] publicKey) {
-		this.publicKey = publicKey;
+		if (! equal(this.publicKey, publicKey))
+			this.publicKey = publicKey;
 	}
 
 	public String getLocalPathPrefix() {
 		return localPathPrefix;
 	}
 	public void setLocalPathPrefix(String localPathPrefix) {
-		this.localPathPrefix = localPathPrefix;
+		if (! equal(this.localPathPrefix, localPathPrefix))
+			this.localPathPrefix = localPathPrefix;
 	}
 }
