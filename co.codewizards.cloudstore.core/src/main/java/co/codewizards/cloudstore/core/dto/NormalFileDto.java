@@ -63,4 +63,16 @@ public class NormalFileDto extends RepoFileDto {
 	public void setTempFileChunkDtos(final List<FileChunkDto> tempFileChunkDtos) {
 		this.tempFileChunkDtos = tempFileChunkDtos;
 	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[id=" + getId()
+				+ ", name=" + getName()
+				+ ", parentId=" + getParentId()
+				+ ", localRevision=" + getLocalRevision()
+				+ ", lastModified=" + getLastModified()
+				+ ", length=" + length
+				+ ", sha1=" + sha1
+				+ "]";
+	}
 }

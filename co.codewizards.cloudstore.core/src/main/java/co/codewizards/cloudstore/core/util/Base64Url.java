@@ -1,5 +1,8 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.nio.charset.StandardCharsets.*;
+
 /**
  * Standard
  * <a href="http://en.wikipedia.org/wiki/Base64">base64url</a>
@@ -152,6 +155,11 @@ public class Base64Url {
     	return out;
     }
 
+    public static String encodeBase64ToString(final byte[] binaryData) {
+    	assertNotNull("binaryData", binaryData);
+    	return new String(encodeBase64(binaryData), US_ASCII);
+    }
+
     /**
      * Encodes binary data using the base64url algorithm.
      *
@@ -159,6 +167,7 @@ public class Base64Url {
      * @return Base64-encoded data.
      */
     public static byte[] encodeBase64(final byte[] binaryData) {
+    	assertNotNull("binaryData", binaryData);
         final int lengthDataBits = binaryData.length * EIGHTBIT;
         final int fewerThan24bits = lengthDataBits % TWENTYFOURBITGROUP;
         final int numberTriplets = lengthDataBits / TWENTYFOURBITGROUP;
@@ -249,6 +258,11 @@ public class Base64Url {
         return discardPaddingIfNeeded(encodedData);
     }
 
+    public static byte[] decodeBase64FromString(final String base64String) {
+    	final byte[] base64Data = assertNotNull("base64String", base64String).getBytes(US_ASCII);
+    	return decodeBase64(base64Data);
+    }
+
     /**
      * Decodes Base64 data into octects
      *
@@ -256,6 +270,7 @@ public class Base64Url {
      * @return Array containing decoded data.
      */
     public static byte[] decodeBase64(final byte[] base64Data) {
+    	assertNotNull("base64Data", base64Data);
     	// RFC 2045 requires that we discard ALL non-Base64 characters
         return _decodeBase64(appendPaddingIfNeeded(discardNonBase64(base64Data)));
     }

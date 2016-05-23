@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import co.codewizards.cloudstore.core.util.Base64Url;
+
 /**
  * Dto for {@code LocalRepository} and {@code RemoteRepository}.
  * <p>
@@ -42,5 +44,13 @@ public class RepositoryDto {
 	}
 	public void setRevision(long revision) {
 		this.revision = revision;
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[repositoryId=" + repositoryId
+				+ ", publicKey=" + (publicKey == null ? null : Base64Url.encodeBase64ToString(publicKey))
+				+ ", revision=" + revision
+				+ "]";
 	}
 }

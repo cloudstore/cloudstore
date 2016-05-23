@@ -156,13 +156,13 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	protected void syncUp(final ProgressMonitor monitor) {
-		logger.info("sync: up: fromID={} from='{}' toID={} to='{}'",
+		logger.info("syncUp: fromID={} from='{}' toID={} to='{}'",
 				localRepositoryId, localRoot, remoteRepositoryId, remoteRoot);
 		sync(localRepoTransport, false, remoteRepoTransport, monitor);
 	}
 
 	protected void syncDown(final boolean fromRepoLocalSync, final ProgressMonitor monitor) {
-		logger.info("sync: down: fromID={} from='{}' toID={} to='{}', fromRepoLocalSync={}",
+		logger.info("syncDown: fromID={} from='{}' toID={} to='{}', fromRepoLocalSync={}",
 				remoteRepositoryId, remoteRoot, localRepositoryId, localRoot, fromRepoLocalSync);
 		sync(remoteRepoTransport, fromRepoLocalSync, localRepoTransport, monitor);
 	}
@@ -633,7 +633,17 @@ public class RepoToRepoSync implements AutoCloseable {
 					logger.trace("Writing data for dirty FileChunkDto ({} of {}). path='{}' offset={}",
 							fileChunkIndex + 1, fromFileChunkDtosDirty.size(), path, fileChunkDto.getOffset());
 				}
-				putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
+
+				try {
+					putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
+				} catch (final CollisionException x) { // Never happens in CloudStore, but in down-stream-projects. Important: They must handle this properly themselves!
+					logger.info("CollisionException during putFileData: {}", path);
+					if (logger.isDebugEnabled())
+						logger.debug(x.toString(), x);
+
+					return;
+				}
+
 				bytesCopied += fileData.length;
 				subMonitor.worked(1);
 			}

@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.core.dto;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.security.SecureRandom;
 import java.util.UUID;
@@ -11,7 +10,6 @@ import java.util.UUID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import co.codewizards.cloudstore.core.dto.jaxb.UidXmlAdapter;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.Base64Url;
 
 /**
@@ -57,7 +55,6 @@ public class Uid implements Comparable<Uid>, Serializable {
 	public static final int LENGTH_STRING = 22;
 
 	private static final long serialVersionUID = 1L;
-	private static final String CHARSET_ASCII = "ASCII";
 
 	private final long hi;
 	private final long lo;
@@ -130,11 +127,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	private static byte[] uidStringToByteArray(final String uidString) {
-		try {
-			return Base64Url.decodeBase64(assertValidUidString(uidString).getBytes(CHARSET_ASCII));
-		} catch (final UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		return Base64Url.decodeBase64FromString(assertValidUidString(uidString));
 	}
 
 	public byte[] toBytes() {
@@ -192,11 +185,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 		if (s != null)
 			return s;
 
-		try {
-			s = new String(Base64Url.encodeBase64(toBytes()), CHARSET_ASCII);
-		} catch (final UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		s = Base64Url.encodeBase64ToString(toBytes());
 
 		if (s.length() != LENGTH_STRING) // sanity check
 			throw new IllegalStateException("uidString.length != " + LENGTH_STRING);
@@ -207,7 +196,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 
 	@Override
 	public int compareTo(final Uid other) {
-		AssertUtil.assertNotNull("other", other);
+		assertNotNull("other", other);
 		// Same semantics as for normal numbers.
 		return (this.hi < other.hi ? -1 :
 				(this.hi > other.hi ? 1 :

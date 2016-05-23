@@ -23,4 +23,12 @@ public class CopyModificationDto extends ModificationDto {
 		this.toPath = toPath;
 	}
 
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[id=" + getId()
+				+ ", localRevision=" + getLocalRevision()
+				+ ", fromPath=" + fromPath
+				+ ", toPath=" + toPath
+				+ "]";
+	}
 }

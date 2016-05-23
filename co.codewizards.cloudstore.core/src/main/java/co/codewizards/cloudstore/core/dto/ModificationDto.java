@@ -22,4 +22,10 @@ public class ModificationDto {
 		this.localRevision = localRevision;
 	}
 
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[id=" + id
+				+ ", localRevision=" + localRevision
+				+ "]";
+	}
 }

@@ -37,4 +37,12 @@ public class ChangeSetDto {
 	public void setRepoFileDtos(List<RepoFileDto> repoFileDtos) {
 		this.repoFileDtos = repoFileDtos;
 	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[repositoryDto=" + repositoryDto
+				+ ", repoFileDtos=" + repoFileDtos
+				+ ", modificationDtos=" + modificationDtos
+				+ "]";
+	}
 }

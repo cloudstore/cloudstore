@@ -14,4 +14,11 @@ public class DeleteModificationDto extends ModificationDto {
 		this.path = path;
 	}
 
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[id=" + getId()
+				+ ", localRevision=" + getLocalRevision()
+				+ ", path=" + path
+				+ "]";
+	}
 }
