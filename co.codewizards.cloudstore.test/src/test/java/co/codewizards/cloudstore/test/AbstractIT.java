@@ -104,12 +104,12 @@ public abstract class AbstractIT {
 	}
 
 	@Before
-	public void before() {
+	public void before() throws Exception {
 		localRoot2FilesInRepo.clear();
 	}
 
 	@After
-	public void after() {
+	public void after() throws Exception {
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {

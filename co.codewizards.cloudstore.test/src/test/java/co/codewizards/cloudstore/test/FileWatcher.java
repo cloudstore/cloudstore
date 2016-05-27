@@ -95,12 +95,12 @@ public class FileWatcher {
 				watchTaskTempDirCreationFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
 
 			final Future<Void> watchTaskFirstWrittenFuture = threadExecutor.submit(new WatchTaskFirstWrittenChunk());
-			
+
 			if (HACKY_CREATION_OF_TEMP_DIR) {
 				Thread.sleep(200);
 				threadExecutor.submit(syncTask);
 			}
-			
+
 			watchTaskFirstWrittenFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
 		} catch (final InterruptedException e) {
 			// This exception is thrown if the child thread is interrupted.
@@ -125,7 +125,7 @@ public class FileWatcher {
 	}
 
 	/**
-	 * Return after a the defined number of chunk creations and deletions (used after
+	 * Return after a defined number of chunk creations and deletions (used after
 	 * {@link #syncOneChunk(RepoToRepoSync, LoggerProgressMonitor)}, where one chunk was already created) and the setup
 	 * of the tempDir already happened!
 	 *
@@ -160,8 +160,7 @@ public class FileWatcher {
 			// further chunks, which must not be created, and assert the correct
 			// amount at the end.
 			syncTaskFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
-			Thread.sleep(500); // wait for the last I/O operations from syncTask (sometimes deletion of chunks was not
-								// yet counted)
+			Thread.sleep(1000); // wait for the last I/O operations from syncTask (sometimes deletion of chunks was not yet counted)
 			final boolean hasCorrectAmountOfCreationsDeletions = watchTaskCreatedDeleted
 					.hasCorrectAmountOfCreationsDeletions();
 			assertThat(hasCorrectAmountOfCreationsDeletions).isTrue();
@@ -210,7 +209,7 @@ public class FileWatcher {
 	private void doHackyCreationOfTempDir() throws IOException {
 		tempDir = parentDir.resolve(CLOUDSTORE_TMP);
 		watcherTempDir = tempDir.getFileSystem().newWatchService();
-		
+
 		assertThat(tempDir.toFile()).doesNotExist();
 		tempDir.toFile().mkdir();
 		tempDir.register(watcherTempDir, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE,
@@ -254,7 +253,7 @@ public class FileWatcher {
 				doHackyCreationOfTempDir();
 				return null;
 			}
-			
+
 			tempDir = parentDir.resolve(CLOUDSTORE_TMP);
 			watcherTempDir = tempDir.getFileSystem().newWatchService();
 

@@ -35,7 +35,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 	private final List<Exception> errors = Collections.synchronizedList(new ArrayList<Exception>());
 
 	@Override
-	public void before() {
+	public void before() throws Exception {
 		super.before();
 		errors.clear();
 
@@ -62,7 +62,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public void after() {
+	public void after() throws Exception {
 		if (client != null) {
 			client.close();
 			client = null;
