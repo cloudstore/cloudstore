@@ -13,8 +13,11 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
+import org.junit.Before;
 
+import co.codewizards.cloudstore.client.CloudStoreClient;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
@@ -23,7 +26,7 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
  * @author Sebastian Schefczyk
  *
  */
-abstract class AbstractRepoAwareIT extends AbstractIT {
+public abstract class AbstractRepoAwareIT extends AbstractIT {
 
 	public static final int BUF_LENGTH = 32 * 1024;
 	public static final int CHUNK_SIZE = 32 * BUF_LENGTH; // 1,048,576 bytes = 1 MiB chunk size
@@ -34,6 +37,14 @@ abstract class AbstractRepoAwareIT extends AbstractIT {
 	protected String localPathPrefix;
 	protected String remotePathPrefix;
 	protected URL remoteRootURLWithPathPrefix;
+
+	@Override
+	@Before
+	public void before() throws Exception {
+		super.before();
+		localPathPrefix = "";
+		remotePathPrefix = "";
+	}
 
 	protected File getLocalRootWithPathPrefix() {
 		if (localPathPrefix.isEmpty())
@@ -98,5 +109,32 @@ abstract class AbstractRepoAwareIT extends AbstractIT {
 		final List<File> collisions = searchCollisions(localRoot);
 		if (!collisions.isEmpty())
 			Assert.fail("Collision: " + collisions.get(0));
+	}
+
+	protected void createLocalAndRemoteRepo() throws Exception {
+		localRoot = newTestRepositoryLocalRoot("local");
+		assertThat(localRoot.exists()).isFalse();
+		localRoot.mkdirs();
+		assertThat(localRoot.isDirectory()).isTrue();
+
+		remoteRoot = newTestRepositoryLocalRoot("remote");
+		assertThat(remoteRoot.exists()).isFalse();
+		remoteRoot.mkdirs();
+		assertThat(remoteRoot.isDirectory()).isTrue();
+
+		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		assertThat(localRepoManagerLocal).isNotNull();
+
+		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		assertThat(localRepoManagerRemote).isNotNull();
+
+		final UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
+		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
+
+		new CloudStoreClient("requestRepoConnection", getLocalRootWithPathPrefix().getPath(), remoteRootURLWithPathPrefix.toExternalForm()).execute();
+		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
+
+		localRepoManagerLocal.close();
+		localRepoManagerRemote.close();
 	}
 }

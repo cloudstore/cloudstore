@@ -526,15 +526,17 @@
 						<parallel>methods</parallel>
 						-->
 
-						<!-- This works and thus we use it as long as we can ;-) -->
+						<!-- This is more error-prone and does not seem to be faster than forking.
 						<parallel>all</parallel>
 						<threadCount>4</threadCount>
 						<perCoreThreadCount>true</perCoreThreadCount>
+						-->
 
-						<!-- Less efficient, because we do not have so many test classes => running all (classes, methods) in parallel.
+						<!-- We do not have so many test classes => running all (classes, methods) in parallel.
+						WRONG! This seems to be faster (though I do not know why).
+						-->
 						<forkCount>2.0C</forkCount>
 						<reuseForks>false</reuseForks>
-						-->
 
 						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
 						<useSystemClassLoader>true</useSystemClassLoader>
