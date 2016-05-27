@@ -112,13 +112,21 @@
 							<artifactId>maven-failsafe-plugin</artifactId>
 							<!-- by default, failsafe will include these patterns:
 								"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
-							 -->
+							-->
+							 
+							<!--
 							<configuration>
 								<includes>
 									<include>**/IT*.java</include>
 									<include>**/*IT.java</include>
 									<include>**/*ITCase.java</include>
-									<include>**/*LRT.java</include><!-- LRT: "LongRunningTest" -->
+									<include>**/*LRT.java</include><!- LRT: "LongRunningTest" ->
+								</includes>
+							</configuration>
+							--> 
+							<configuration>
+								<includes>
+									<include>SyncAbortIT.java</include>
 								</includes>
 							</configuration>
 						</plugin>
@@ -145,13 +153,7 @@
 						<artifactId>maven-failsafe-plugin</artifactId>
 						<!-- by default, failsafe will include these patterns:
 							"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
-						 -->
-
-						<configuration>
-							<includes>
-								<include>SyncAbortIT.java</include>
-							</includes>
-						</configuration>
+						-->
 					</plugin>
 
 					<plugin>
