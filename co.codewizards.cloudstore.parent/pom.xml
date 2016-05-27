@@ -486,11 +486,18 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>2.17</version>
 					<configuration>
-						<!-- TODO still buggy (e.g. ConfigTest and SyncAbortIT)
+						<!--
+						Multi-threading tests (no matter whether 'classes', 'methods' or 'all') within
+						the same JVM do not work: LocalServerClientGarbageCollectionIT and other ITs fail!
+						They use global settings like e.g. the config directory. 
+
 						<parallel>methods</parallel>
-						<parallel>all</parallel>
-						<threadCount>4</threadCount>
+						<threadCount>2</threadCount>
+						<perCoreThreadCount>true</perCoreThreadCount>
 						-->
+
+						<forkCount>4.0C</forkCount>
+
 						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
 						<useSystemClassLoader>true</useSystemClassLoader>
 					</configuration>
@@ -514,10 +521,19 @@
 					<version>2.18</version>
 					<configuration>
 						<!--
-						<parallel>methods</parallel>
-						-->
+						<parallel>classes</parallel>
 						<parallel>all</parallel>
+						-->
+
+						<!-- This works and thus we use it as long as we can ;-) -->
+						<parallel>methods</parallel>
 						<threadCount>4</threadCount>
+						<perCoreThreadCount>true</perCoreThreadCount>
+
+						<!-- Less efficient, because we do not have so many test classes => running methods in parallel.
+						<forkCount>4.0C</forkCount>
+						-->
+
 						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
 						<useSystemClassLoader>true</useSystemClassLoader>
 					</configuration>

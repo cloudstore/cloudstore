@@ -19,6 +19,7 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.IoFile;
 import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
@@ -34,9 +35,16 @@ import co.codewizards.cloudstore.local.persistence.Symlink;
 
 public abstract class AbstractTest {
 
+	protected static String jvmInstanceDir;
+
 	static {
-		System.setProperty(ConfigDir.SYSTEM_PROPERTY_CONFIG_DIR, "target/.cloudstore");
+		final Uid jvmInstanceId = new Uid(); // for parallel test execution ;-)
+		jvmInstanceDir = "target/jvm/" + jvmInstanceId;
+		final String configDirString = jvmInstanceDir + "/.cloudstore";
+		System.setProperty(ConfigDir.SYSTEM_PROPERTY_CONFIG_DIR, configDirString);
 		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_KEY_SIZE, "1024");
+
+		createFile(configDirString).mkdirs();
 	}
 
 	protected static final Random random = new Random();

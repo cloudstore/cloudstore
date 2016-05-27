@@ -9,8 +9,10 @@ import java.util.List;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,7 @@ import co.codewizards.cloudstore.test.model.ExampleServiceImpl;
 import co.codewizards.cloudstore.test.model.ExampleServiceRegistry;
 import co.codewizards.cloudstore.test.model.ExampleServiceRegistryImpl;
 
+@RunWith(JMockit.class)
 public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalServerClientGarbageCollectionIT.class);
