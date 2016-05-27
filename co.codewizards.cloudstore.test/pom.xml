@@ -126,7 +126,7 @@
 							--> 
 							<configuration>
 								<includes>
-									<include>SyncAbortIT.java</include>
+									<include>**/SyncAbortIT.java</include>
 								</includes>
 							</configuration>
 						</plugin>
