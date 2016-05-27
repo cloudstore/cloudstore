@@ -554,8 +554,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //	}
 
 
-
-	private void mkDir(final LocalRepoTransaction transaction, final UUID clientRepositoryId, final File file, final Date lastModified) {
+	protected void mkDir(final LocalRepoTransaction transaction, final UUID clientRepositoryId, final File file, final Date lastModified) {
 		AssertUtil.assertNotNull("transaction", transaction);
 		AssertUtil.assertNotNull("file", file);
 
