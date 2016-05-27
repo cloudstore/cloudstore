@@ -160,7 +160,7 @@ public class FileWatcher {
 			// further chunks, which must not be created, and assert the correct
 			// amount at the end.
 			syncTaskFuture.get(TIMEOUT_SYNC, TimeUnit.SECONDS);
-			Thread.sleep(1000); // wait for the last I/O operations from syncTask (sometimes deletion of chunks was not yet counted)
+			Thread.sleep(500); // wait for the last I/O operations from syncTask (sometimes deletion of chunks was not yet counted)
 			final boolean hasCorrectAmountOfCreationsDeletions = watchTaskCreatedDeleted
 					.hasCorrectAmountOfCreationsDeletions();
 			assertThat(hasCorrectAmountOfCreationsDeletions).isTrue();

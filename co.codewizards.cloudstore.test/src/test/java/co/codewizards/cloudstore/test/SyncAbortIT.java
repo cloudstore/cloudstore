@@ -60,9 +60,6 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		new MockUp<ObjectFactory>() {
 			@Mock
 			<T> T createObject(Invocation invocation, Class<T> clazz, Class<?>[] parameterTypes, Object ... parameters) {
-//				if (RepoToRepoSync.class.isAssignableFrom(clazz)) {
-//					return clazz.cast(new MockRepoToRepoSync((File) parameters[0], (URL) parameters[1]));
-//				}
 				if (TempChunkFileManager.class.isAssignableFrom(clazz)) {
 					return clazz.cast(new MockTempChunkFileManager());
 				}
@@ -100,29 +97,6 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		assertNoFilesInProgress();
 	}
 
-//	/**
-//	 * Special RepoToRepoSync slowing down operations in order to make watching them asynchronously
-//	 * more reliable.
-//	 * <p>
-//	 * I had a few times the situation that tests worked fine on one machine and didn't on another.
-//	 * This seemed to be depending on CPU and disk as the tests here are heavily relying on multi-threading.
-//	 */
-//	private static class MockRepoToRepoSync extends RepoToRepoSync {
-//		protected MockRepoToRepoSync(File localRoot, URL remoteRoot) {
-//			super(localRoot, remoteRoot);
-//			System.err.println("MockRepoToRepoSync instantiated.");
-//		}
-//
-//		@Override
-//		protected void putFileData(RepoTransport fromRepoTransport, RepoTransport toRepoTransport,
-//				RepoFileDtoTreeNode repoFileDtoTreeNode, String path, FileChunkDto fileChunkDto, byte[] fileData) {
-//
-//			super.putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
-//
-//			sleep(300);
-//		}
-//	}
-
 	/**
 	 * Special TempChunkFileManager slowing down operations in order to make watching them asynchronously
 	 * more reliable.
@@ -140,7 +114,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 			File result = super.createTempChunkFile(destFile, offset, createNewFile);
 			System.err.println("createTempChunkFile: " + destFile.getName() + "; createNewFile=" + createNewFile);
 			if (createNewFile)
-				sleep(500);
+				sleep(100);
 
 			return result;
 		}
@@ -149,14 +123,14 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		protected void moveOrFail(File oldFile, File newFile) throws IOException {
 			super.moveOrFail(oldFile, newFile);
 			System.err.println("moveOrFail: " + oldFile.getName() + " => " + newFile.getName());
-			sleep(500);
+			sleep(100);
 		}
 
 		@Override
 		protected void deleteOrFail(File file) throws IOException {
 			super.deleteOrFail(file);
 			System.err.println("deleteOrFail: " + file.getName());
-			sleep(500);
+			sleep(100);
 		}
 	}
 
