@@ -53,7 +53,7 @@ public class FileWatcher {
 	 * Observation on desktop PC: If executed iteratively, 10s was enough; if executed in parallel with mvn 15s was
 	 * needed.
 	 */
-	private static final int TIMEOUT_SYNC = 20;
+	private static final int TIMEOUT_SYNC = 60;
 
 	private WatchService watcherParentDir;
 	private WatchService watcherTempDir;

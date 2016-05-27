@@ -279,6 +279,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
 
+			} catch (IOException x) {
+				throw new RuntimeException(x);
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}
@@ -1120,6 +1122,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 							sha1, normalFile.getSha1(), file);
 				}
 
+			} catch (IOException x) {
+				throw new RuntimeException(x);
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 			}

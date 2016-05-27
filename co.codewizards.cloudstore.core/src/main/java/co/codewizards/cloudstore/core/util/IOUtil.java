@@ -1384,10 +1384,10 @@ public final class IOUtil {
 		return s == null ? "" : s;
 	}
 
-	public static void deleteOrFail(final File file) {
+	public static void deleteOrFail(final File file) throws IOException {
 		file.delete();
 		if (file.isSymbolicLink() || file.exists())
-			throw new IllegalStateException("Could not delete file (it still exists after deletion): " + file);
+			throw new IOException("Could not delete file (it still exists after deletion): " + file);
 	}
 
 	public static int readOrFail(final InputStream in) throws IOException {

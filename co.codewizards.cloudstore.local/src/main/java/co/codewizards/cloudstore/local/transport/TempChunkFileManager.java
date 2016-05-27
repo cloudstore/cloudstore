@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,6 +22,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
+import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class TempChunkFileManager {
 
@@ -31,10 +32,10 @@ public class TempChunkFileManager {
 	private static final String TEMP_CHUNK_FILE_Dto_FILE_SUFFIX = ".xml";
 
 	private static final class Holder {
-		static final TempChunkFileManager instance = new TempChunkFileManager();
+		static final TempChunkFileManager instance = createObject(TempChunkFileManager.class);
 	}
 
-	private TempChunkFileManager() { }
+	protected TempChunkFileManager() { }
 
 	public static TempChunkFileManager getInstance() {
 		return Holder.instance;
@@ -67,13 +68,21 @@ public class TempChunkFileManager {
 		}
 	}
 
+	protected void deleteOrFail(File file) throws IOException {
+		IOUtil.deleteOrFail(file);
+	}
+
 	public void deleteTempChunkFilesWithoutDtoFile(final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles) {
 		for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
 			final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
 			if (tempChunkFileDtoFile == null || !tempChunkFileDtoFile.exists()) {
 				final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile();
 				logger.warn("deleteTempChunkFilesWithoutDtoFile: No Dto-file for temporary chunk-file '{}'! DELETING this temporary file!", tempChunkFile.getAbsolutePath());
-				deleteOrFail(tempChunkFile);
+				try {
+					deleteOrFail(tempChunkFile);
+				} catch (IOException x) {
+					throw new RuntimeException(x);
+				}
 				continue;
 			}
 		}
@@ -159,7 +168,7 @@ public class TempChunkFileManager {
 	public synchronized File createTempChunkFile(final File destFile, final long offset) {
 		return createTempChunkFile(destFile, offset, true);
 	}
-	private synchronized File createTempChunkFile(final File destFile, final long offset, final boolean createNewFile) {
+	protected synchronized File createTempChunkFile(final File destFile, final long offset, final boolean createNewFile) {
 		final File tempDir = getTempDir(destFile);
 		tempDir.mkdir();
 		if (!tempDir.isDirectory())
@@ -185,17 +194,24 @@ public class TempChunkFileManager {
 			final TempChunkFileWithDtoFile tempChunkFileWithDtoFile = entry.getValue();
 			final File oldTempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile();
 			final File newTempChunkFile = createTempChunkFile(newDestFile, offset, false);
-			final File tempChunkFileDtoFile = getTempChunkFileDtoFile(oldTempChunkFile);
+			final File oldTempChunkFileDtoFile = getTempChunkFileDtoFile(oldTempChunkFile);
 			final File newTempChunkFileDtoFile = getTempChunkFileDtoFile(newTempChunkFile);
 			try {
-				tempChunkFileDtoFile.move(newTempChunkFileDtoFile);
-				logger.info("Moved chunkDto from {} to {}", tempChunkFileDtoFile, newTempChunkFileDtoFile);
-				oldTempChunkFile.move(newTempChunkFile);
+//				oldTempChunkFileDtoFile.move(newTempChunkFileDtoFile);
+				moveOrFail(oldTempChunkFileDtoFile, newTempChunkFileDtoFile);
+				logger.info("Moved chunkDto from {} to {}", oldTempChunkFileDtoFile, newTempChunkFileDtoFile);
+//				oldTempChunkFile.move(newTempChunkFile);
+				moveOrFail(oldTempChunkFile, newTempChunkFile);
 				logger.info("Moved chunk from {} to {}", oldTempChunkFile, newTempChunkFile);
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	protected void moveOrFail(File oldFile, File newFile) throws IOException {
+		oldFile.move(newFile);
+
 	}
 
 	/**
@@ -252,11 +268,15 @@ public class TempChunkFileManager {
 			final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile(); // tempChunkFile may be null!!!
 			final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
 
-			if (tempChunkFile != null && tempChunkFile.exists())
-				deleteOrFail(tempChunkFile);
+			try {
+				if (tempChunkFile != null && tempChunkFile.exists())
+					deleteOrFail(tempChunkFile);
 
-			if (tempChunkFileDtoFile != null && tempChunkFileDtoFile.exists())
-				deleteOrFail(tempChunkFileDtoFile);
+				if (tempChunkFileDtoFile != null && tempChunkFileDtoFile.exists())
+					deleteOrFail(tempChunkFileDtoFile);
+			} catch (IOException x) {
+				throw new RuntimeException(x);
+			}
 		}
 	}
 

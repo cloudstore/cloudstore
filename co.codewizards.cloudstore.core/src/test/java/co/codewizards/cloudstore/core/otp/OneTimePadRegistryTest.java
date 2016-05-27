@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.otp;
 
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
-import static org.assertj.core.api.Assertions.assertThat;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
 
@@ -19,12 +19,12 @@ public class OneTimePadRegistryTest {
 	private OneTimePadRegistry registry;
 
 	@Before
-	public void setUp(){
+	public void setUp() throws Exception {
 		registry = new OneTimePadRegistry(fileName);
 	}
 
 	@After
-	public void tearDown(){
+	public void tearDown() throws Exception {
 		IOUtil.deleteOrFail(createFile(ConfigDir.getInstance().getFile(), fileName + OneTimePadRegistry.PASSWORD_FILE_SUFFIX));
 		IOUtil.deleteOrFail(createFile(ConfigDir.getInstance().getFile(), fileName + OneTimePadRegistry.RANDOM_KEY_FILE_SUFFIX));
 	}
