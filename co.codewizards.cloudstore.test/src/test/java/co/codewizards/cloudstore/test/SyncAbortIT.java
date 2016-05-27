@@ -55,6 +55,8 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 	public void before() throws Exception {
 		super.before();
 
+		// I tried to directly mock the RepoToRepoSync in a downstream project and was not able to do so. Mocking the
+		// object factory works well, though => mocking here the ObjectFactory instead to return our actual mock.
 		new MockUp<ObjectFactory>() {
 			@Mock
 			<T> T createObject(Invocation invocation, Class<T> clazz, Class<?>[] parameterTypes, Object ... parameters) {
