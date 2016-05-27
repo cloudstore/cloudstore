@@ -11,6 +11,7 @@ import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
+import net.jcip.annotations.NotThreadSafe;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
  * @author Sebastian Schefczyk
  */
 @RunWith(JMockit.class)
+@NotThreadSafe // seems to be necessary because mocking of ObjectFactory otherwise does not work :-(
 public class SyncAbortIT extends AbstractRepoAwareIT {
 
 	private static final Logger logger = LoggerFactory.getLogger(SyncAbortIT.class);
