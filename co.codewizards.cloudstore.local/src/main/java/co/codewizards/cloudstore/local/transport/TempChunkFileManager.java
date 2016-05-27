@@ -211,7 +211,6 @@ public class TempChunkFileManager {
 
 	protected void moveOrFail(File oldFile, File newFile) throws IOException {
 		oldFile.move(newFile);
-
 	}
 
 	/**

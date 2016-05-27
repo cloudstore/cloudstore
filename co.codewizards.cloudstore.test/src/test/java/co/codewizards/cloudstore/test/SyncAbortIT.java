@@ -136,7 +136,6 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		protected synchronized File createTempChunkFile(File destFile, long offset, boolean createNewFile) {
 			File result = super.createTempChunkFile(destFile, offset, createNewFile);
 			System.err.println("createTempChunkFile: " + destFile.getName() + "; createNewFile=" + createNewFile);
-
 			if (createNewFile)
 				sleep(500);
 
