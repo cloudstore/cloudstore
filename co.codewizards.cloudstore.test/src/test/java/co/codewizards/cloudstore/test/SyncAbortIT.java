@@ -10,9 +10,11 @@ import java.util.UUID;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
  *
  * @author Sebastian Schefczyk
  */
+@RunWith(JMockit.class)
 public class SyncAbortIT extends AbstractRepoAwareIT {
 
 	private static final Logger logger = LoggerFactory.getLogger(SyncAbortIT.class);

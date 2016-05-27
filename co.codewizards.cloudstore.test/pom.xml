@@ -146,6 +146,12 @@
 						<!-- by default, failsafe will include these patterns:
 							"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
 						 -->
+
+						<configuration>
+							<includes>
+								<include>SyncAbortIT.java</include>
+							</includes>
+						</configuration>
 					</plugin>
 
 					<plugin>
