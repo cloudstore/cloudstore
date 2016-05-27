@@ -496,7 +496,8 @@
 						<perCoreThreadCount>true</perCoreThreadCount>
 						-->
 
-						<forkCount>4.0C</forkCount>
+						<forkCount>2.0C</forkCount>
+						<reuseForks>false</reuseForks>
 
 						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
 						<useSystemClassLoader>true</useSystemClassLoader>
@@ -522,16 +523,17 @@
 					<configuration>
 						<!--
 						<parallel>classes</parallel>
-						<parallel>all</parallel>
+						<parallel>methods</parallel>
 						-->
 
 						<!-- This works and thus we use it as long as we can ;-) -->
-						<parallel>methods</parallel>
+						<parallel>all</parallel>
 						<threadCount>4</threadCount>
 						<perCoreThreadCount>true</perCoreThreadCount>
 
-						<!-- Less efficient, because we do not have so many test classes => running methods in parallel.
-						<forkCount>4.0C</forkCount>
+						<!-- Less efficient, because we do not have so many test classes => running all (classes, methods) in parallel.
+						<forkCount>2.0C</forkCount>
+						<reuseForks>false</reuseForks>
 						-->
 
 						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
