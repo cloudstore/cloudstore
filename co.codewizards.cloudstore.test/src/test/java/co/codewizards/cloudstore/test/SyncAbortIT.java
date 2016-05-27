@@ -114,7 +114,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 			File result = super.createTempChunkFile(destFile, offset, createNewFile);
 			System.err.println("createTempChunkFile: " + destFile.getName() + "; createNewFile=" + createNewFile);
 			if (createNewFile)
-				sleep(100);
+				sleep(200);
 
 			return result;
 		}
@@ -123,14 +123,14 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		protected void moveOrFail(File oldFile, File newFile) throws IOException {
 			super.moveOrFail(oldFile, newFile);
 			System.err.println("moveOrFail: " + oldFile.getName() + " => " + newFile.getName());
-			sleep(100);
+			sleep(200);
 		}
 
 		@Override
 		protected void deleteOrFail(File file) throws IOException {
 			super.deleteOrFail(file);
 			System.err.println("deleteOrFail: " + file.getName());
-			sleep(100);
+			sleep(200);
 		}
 	}
 
@@ -162,8 +162,7 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 
 		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
-			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger), 1,
-					2);
+			fileWatcher.createDeleteChunks(repoToRepoSync, localRepoManagerLocal, new LoggerProgressMonitor(logger), 1, 2);
 		}
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);

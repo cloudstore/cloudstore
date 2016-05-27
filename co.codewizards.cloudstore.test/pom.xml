@@ -114,21 +114,21 @@
 								"**/IT*.java" "**/*IT.java", "**/*ITCase.java"
 							-->
 							 
-							<!--
 							<configuration>
 								<includes>
 									<include>**/IT*.java</include>
 									<include>**/*IT.java</include>
 									<include>**/*ITCase.java</include>
-									<include>**/*LRT.java</include><!- LRT: "LongRunningTest" ->
+									<include>**/*LRT.java</include><!--  LRT: "LongRunningTest" -->
 								</includes>
 							</configuration>
-							--> 
+							<!--
 							<configuration>
 								<includes>
 									<include>**/SyncAbortIT.java</include>
 								</includes>
 							</configuration>
+							--> 
 						</plugin>
 
 						<plugin>

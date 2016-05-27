@@ -122,12 +122,14 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin> <!-- temporarily disabled! -->
+			<!--
+			<plugin> <!- temporarily disabled! ->
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 
