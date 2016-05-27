@@ -491,6 +491,8 @@
 						<parallel>all</parallel>
 						<threadCount>4</threadCount>
 						-->
+						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
+						<useSystemClassLoader>true</useSystemClassLoader>
 					</configuration>
 					<executions>
 						<execution>
