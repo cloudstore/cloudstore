@@ -4,7 +4,6 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -18,17 +17,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.client.CloudStoreClient;
-import co.codewizards.cloudstore.core.dto.FileChunkDto;
-import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
 import co.codewizards.cloudstore.core.objectfactory.ObjectFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
-import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
 import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
+import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
 
 /**
  * TODO rewrite this entire test! It is currently based on pretty fragile multi-threading. It might be better to use a different approach. Marco :-)
@@ -60,8 +57,11 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		new MockUp<ObjectFactory>() {
 			@Mock
 			<T> T createObject(Invocation invocation, Class<T> clazz, Class<?>[] parameterTypes, Object ... parameters) {
-				if (RepoToRepoSync.class.isAssignableFrom(clazz)) {
-					return clazz.cast(new MockRepoToRepoSync((File) parameters[0], (URL) parameters[1]));
+//				if (RepoToRepoSync.class.isAssignableFrom(clazz)) {
+//					return clazz.cast(new MockRepoToRepoSync((File) parameters[0], (URL) parameters[1]));
+//				}
+				if (TempChunkFileManager.class.isAssignableFrom(clazz)) {
+					return clazz.cast(new MockTempChunkFileManager());
 				}
 				return invocation.proceed();
 			}
@@ -93,37 +93,67 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 				remoteRootURLWithPathPrefix.toExternalForm()).execute();
 		new CloudStoreClient("acceptRepoConnection", getRemoteRootWithPathPrefix().getPath()).execute();
 
-		// initially there should be not files in progress!
+		// initially there should be no files in progress!
 		assertNoFilesInProgress();
 	}
 
+//	/**
+//	 * Special RepoToRepoSync slowing down operations in order to make watching them asynchronously
+//	 * more reliable.
+//	 * <p>
+//	 * I had a few times the situation that tests worked fine on one machine and didn't on another.
+//	 * This seemed to be depending on CPU and disk as the tests here are heavily relying on multi-threading.
+//	 */
+//	private static class MockRepoToRepoSync extends RepoToRepoSync {
+//		protected MockRepoToRepoSync(File localRoot, URL remoteRoot) {
+//			super(localRoot, remoteRoot);
+//			System.err.println("MockRepoToRepoSync instantiated.");
+//		}
+//
+//		@Override
+//		protected void putFileData(RepoTransport fromRepoTransport, RepoTransport toRepoTransport,
+//				RepoFileDtoTreeNode repoFileDtoTreeNode, String path, FileChunkDto fileChunkDto, byte[] fileData) {
+//
+//			super.putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
+//
+//			sleep(300);
+//		}
+//	}
+
 	/**
-	 * Special RepoToRepoSync slowing down operations in order to make watching them asynchronously
+	 * Special TempChunkFileManager slowing down operations in order to make watching them asynchronously
 	 * more reliable.
 	 * <p>
 	 * I had a few times the situation that tests worked fine on one machine and didn't on another.
 	 * This seemed to be depending on CPU and disk as the tests here are heavily relying on multi-threading.
 	 */
-	private static class MockRepoToRepoSync extends RepoToRepoSync {
-
-		private static final Logger logger = LoggerFactory.getLogger(SyncAbortIT.MockRepoToRepoSync.class);
-
-		protected MockRepoToRepoSync(File localRoot, URL remoteRoot) {
-			super(localRoot, remoteRoot);
-			System.err.println("MockRepoToRepoSync instantiated.");
+	private static class MockTempChunkFileManager extends TempChunkFileManager {
+		protected MockTempChunkFileManager() {
+			System.err.println("MockTempChunkFileManager instantiated.");
 		}
 
 		@Override
-		protected void putFileData(RepoTransport fromRepoTransport, RepoTransport toRepoTransport,
-				RepoFileDtoTreeNode repoFileDtoTreeNode, String path, FileChunkDto fileChunkDto, byte[] fileData) {
+		protected synchronized File createTempChunkFile(File destFile, long offset, boolean createNewFile) {
+			File result = super.createTempChunkFile(destFile, offset, createNewFile);
 
-			super.putFileData(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fileChunkDto, fileData);
+			sleep(500);
 
-			try {
-				Thread.sleep(300);
-			} catch (InterruptedException e) {
-				logger.warn("putFileData: sleep interrupted: " + e, e);
-			}
+			return result;
+		}
+
+		@Override
+		protected void deleteOrFail(File file) {
+			super.deleteOrFail(file);
+
+			sleep(500);
+		}
+	}
+
+	private static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {
+			logger.warn("sleep: " + e, e);
 		}
 	}
 
