@@ -259,7 +259,15 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new RuntimeException(e);
 				}
 
-				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // it's a symlink and *not* a directory - recursiveChildren has thus no effect
+				final RepoFile repoFile = syncRepoFile(transaction, file);
+
+				if (repoFile == null)
+					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
+
+				if (!(repoFile instanceof Symlink))
+					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a Symlink for file: " + file);
+
+				repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
 
 				final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles = tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values();
 				for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
@@ -269,16 +277,6 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					if (tempChunkFileWithDtoFile.getTempChunkFile() != null)
 						deleteOrFail(tempChunkFileWithDtoFile.getTempChunkFile());
 				}
-
-				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
-				if (repoFile == null)
-					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
-
-				if (!(repoFile instanceof Symlink))
-					throw new IllegalStateException("LocalRepoSync.sync(...) created an instance of " + repoFile.getClass().getName() + " instead  of a Symlink for file: " + file);
-
-				repoFile.setLastSyncFromRepositoryId(clientRepositoryId);
-
 			} catch (IOException x) {
 				throw new RuntimeException(x);
 			} finally {
@@ -592,16 +590,16 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			if (!file.isDirectory())
 				throw new IllegalStateException("Could not create directory (permissions?!): " + file);
 
-			RepoFile repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(localRoot, file);
-			if (repoFile != null && !(repoFile instanceof Directory)) {
-				transaction.getDao(RepoFileDao.class).deletePersistent(repoFile);
-				repoFile = null;
-			}
+//			RepoFile repoFile = transaction.getDao(RepoFileDao.class).getRepoFile(localRoot, file);
+//			if (repoFile != null && !(repoFile instanceof Directory)) {
+//				transaction.getDao(RepoFileDao.class).deletePersistent(repoFile);
+//				repoFile = null;
+//			}
 
 			if (lastModified != null)
 				file.setLastModified(lastModified.getTime());
 
-			repoFile = LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
+			RepoFile repoFile = syncRepoFile(transaction, file);
 			if (repoFile == null)
 				throw new IllegalStateException("Just created directory, but corresponding RepoFile still does not exist after local sync: " + file);
 
@@ -613,6 +611,18 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			if (parentFile != null)
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(parentFile);
 		}
+	}
+
+	/**
+	 * Syncs the single file/directory/symlink passed as {@code file} into the database non-recursively.
+	 * @param transaction the current transaction. Must not be <code>null</code>.
+	 * @param file the file (every type, i.e. might be a directory or symlink, too) to be synced.
+	 * @return the {@link RepoFile} that was created/updated for the given {@code file}.
+	 */
+	protected RepoFile syncRepoFile(final LocalRepoTransaction transaction, final File file) {
+		assertNotNull("transaction", transaction);
+		assertNotNull("file", file);
+		return LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
 	}
 
 	/**
@@ -696,12 +706,12 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				// A complete sync run might take very long. Therefore, we better update our local meta-data
 				// *immediately* before beginning the sync of this file and before detecting a collision.
 				// Furthermore, maybe the file is new and there's no meta-data, yet, hence we must do this anyway.
-				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
-				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren has no effect on simple files, anyway (it's no directory).
+//				final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+//				LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren has no effect on simple files, anyway (it's no directory).
 
 				tempChunkFileManager.deleteTempChunkFilesWithoutDtoFile(tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values());
 
-				final RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
+				final RepoFile repoFile = syncRepoFile(transaction, file);
 				if (repoFile == null)
 					throw new IllegalStateException("LocalRepoSync.sync(...) did not create the RepoFile for file: " + file);
 

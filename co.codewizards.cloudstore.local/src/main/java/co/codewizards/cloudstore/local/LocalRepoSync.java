@@ -195,7 +195,7 @@ public class LocalRepoSync {
 	 * @return <code>true</code>, if both types correspond to each other; <code>false</code> otherwise. If
 	 * the file does not exist (anymore) in the file system, <code>false</code> is returned, too.
 	 */
-	private boolean isRepoFileTypeCorrect(final RepoFile repoFile, final File file) {
+	public boolean isRepoFileTypeCorrect(final RepoFile repoFile, final File file) {
 		assertNotNull("repoFile", repoFile);
 		assertNotNull("file", file);
 
