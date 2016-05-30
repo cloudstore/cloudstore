@@ -23,13 +23,18 @@ public class MakeDirectory extends VoidRequest {
 
 	@Override
 	protected Response _execute() {
-//			WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlash(path));
+		final WebTarget webTarget = createMakeDirectoryWebTarget();
+		return assignCredentials(webTarget.request()).post(null);
+	}
+
+	protected WebTarget createMakeDirectoryWebTarget() {
+//		WebTarget webTarget = client.target(getBaseURL()).path(repositoryName).path(removeLeadingAndTrailingSlash(path));
 //
-//			if (lastModified != null)
-//				webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
+//		if (lastModified != null)
+//			webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
 //
-//			Response response = webTarget.request().method("MKCOL");
-//			assertResponseIndicatesSuccess(response);
+//		Response response = webTarget.request().method("MKCOL");
+//		assertResponseIndicatesSuccess(response);
 
 		// The HTTP verb "MKCOL" is not yet supported by Jersey (and not even the unterlying HTTP client)
 		// by default. We first have to add this. This will be done later (for the WebDAV support). For
@@ -40,7 +45,6 @@ public class MakeDirectory extends VoidRequest {
 		if (lastModified != null)
 			webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
 
-		return assignCredentials(webTarget.request()).post(null);
+		return webTarget;
 	}
-
 }

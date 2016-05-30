@@ -25,13 +25,17 @@ public class MakeSymlink extends VoidRequest {
 
 	@Override
 	protected Response _execute() {
+		final WebTarget webTarget = createMakeSymlinkWebTarget();
+		return assignCredentials(webTarget.request()).post(null);
+	}
+
+	protected WebTarget createMakeSymlinkWebTarget() {
 		WebTarget webTarget = createWebTarget("_makeSymlink", urlEncode(repositoryName), encodePath(path))
 				.queryParam("target", encodePath(target));
 
 		if (lastModified != null)
 			webTarget = webTarget.queryParam("lastModified", new DateTime(lastModified));
 
-		return assignCredentials(webTarget.request()).post(null);
+		return webTarget;
 	}
-
 }

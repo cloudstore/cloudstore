@@ -672,7 +672,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
 				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) // exists() and isFile() both resolve symlinks! Their result depends on where the symlink points to.
-					handleFileTypeCollision(transaction, clientRepositoryId, parentFile, NormalFileDto.class);
+					handleFileTypeCollision(transaction, clientRepositoryId, file, NormalFileDto.class);
 
 				if (file.isSymbolicLink() || (file.exists() && !file.isFile())) // the default implementation of handleFileTypeCollision(...) moves the file away.
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);

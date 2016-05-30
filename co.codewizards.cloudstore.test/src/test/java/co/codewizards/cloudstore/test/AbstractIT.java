@@ -191,7 +191,7 @@ public abstract class AbstractIT {
 
 	/** TODO Remove duplicate code: AbstractIT.java and AbstractTest.java */
 	protected File createRelativeSymlink(final File symlink, final File target) throws IOException {
-		assertThat(symlink.exists()).isFalse();
+		assertThat(symlink.existsNoFollow()).isFalse();
 		final File symlinkParent = symlink.getParentFile();
 
 		final String relativeTargetString = symlinkParent.relativize(target);
