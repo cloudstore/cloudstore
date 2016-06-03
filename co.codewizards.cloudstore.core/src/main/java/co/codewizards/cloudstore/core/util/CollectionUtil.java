@@ -83,18 +83,32 @@ public final class CollectionUtil {
 	}
 
 	public static <E> List<E> nullToEmpty(final List<E> list) {
-		return list == null ? Collections.<E> emptyList() : list;
+		return list == null ? Collections.<E>emptyList() : list;
 	}
 
 	public static <E> Set<E> nullToEmpty(final Set<E> set) {
-		return set == null ? Collections.<E> emptySet() : set;
+		return set == null ? Collections.<E>emptySet() : set;
 	}
 
 	public static <E> Collection<E> nullToEmpty(final Collection<E> collection) {
-		return collection == null ? Collections.<E> emptyList() : collection;
+		return collection == null ? Collections.<E>emptyList() : collection;
 	}
 
 	public static <E> Iterator<E> nullToEmpty(final Iterator<E> iterator) {
-		return iterator == null ? Collections.<E> emptyList().iterator() : iterator;
+		return iterator == null ? Collections.<E>emptyList().iterator() : iterator;
+	}
+
+	@SafeVarargs
+	public static <E> List<E> asListWithoutNullElements(final E... elements) {
+		if (elements == null)
+			return Collections.emptyList();
+
+		final ArrayList<E> result = new ArrayList<>(elements.length);
+		for (final E element : elements) {
+			if (element != null)
+				result.add(element);
+		}
+		result.trimToSize();
+		return Collections.unmodifiableList(result);
 	}
 }
