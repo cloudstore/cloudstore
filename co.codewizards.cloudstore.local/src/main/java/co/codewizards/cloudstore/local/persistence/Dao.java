@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,21 +50,22 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	 * before you can use the Dao. This is already done when using the {@code LocalRepoTransaction}'s factory method.
 	 */
 	public Dao() {
-		final ParameterizedType superclass = (ParameterizedType) getClass().getGenericSuperclass();
-		final Type[] actualTypeArguments = superclass.getActualTypeArguments();
-		if (actualTypeArguments == null || actualTypeArguments.length < 2)
-			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
+		final Type[] actualTypeArguments = resolveActualTypeArguments(Dao.class, this);
+
+		if (! (actualTypeArguments[0] instanceof Class<?>))
+			throw new IllegalStateException("Subclass " + getClass().getName() + " misses generic type info for 'E'!");
 
 		@SuppressWarnings("unchecked")
-		final
-		Class<E> c = (Class<E>) actualTypeArguments[0];
+		final Class<E> c = (Class<E>) actualTypeArguments[0];
 		this.entityClass = c;
 		if (this.entityClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 
+		if (! (actualTypeArguments[1] instanceof Class<?>))
+			throw new IllegalStateException("Subclass " + getClass().getName() + " misses generic type info for 'D'!");
+
 		@SuppressWarnings("unchecked")
-		final
-		Class<D> k = (Class<D>) actualTypeArguments[1];
+		final Class<D> k = (Class<D>) actualTypeArguments[1];
 		this.daoClass = k;
 		if (this.daoClass == null)
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
