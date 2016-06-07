@@ -27,27 +27,39 @@ public class IoFile implements File {
 
 	protected final java.io.File ioFile;
 
-
 	protected IoFile(final String pathname) {
 		this.ioFile = new java.io.File(pathname);
+//		_debug_assert_NioFile();
 	}
 
 	protected IoFile(final File parent, final String child) {
 		final java.io.File ioParent = parent.getIoFile();
 		this.ioFile = new java.io.File(ioParent, child);
+//		_debug_assert_NioFile();
 	}
 
 	protected IoFile(final String parent, final String child) {
 		this.ioFile = new java.io.File(parent, child);
+//		_debug_assert_NioFile();
 	}
 
 	protected IoFile(final URI uri) {
 		this.ioFile = new java.io.File(uri);
+//		_debug_assert_NioFile();
 	}
 
 	protected IoFile(final java.io.File ioFile) {
 		this.ioFile = ioFile;
+//		_debug_assert_NioFile();
 	}
+
+//	private final void _debug_assert_NioFile() {
+//		if (this.getClass() == IoFile.class)
+//			throw new IllegalStateException("This should not be an instance of IoFile! " + ioFile);
+//
+//		if (! this.getClass().getSimpleName().equals("NioFile"))
+//			throw new IllegalStateException("This should be an instance of NioFile! " + ioFile);
+//	}
 
 
 	@Override
@@ -68,26 +80,26 @@ public class IoFile implements File {
 
 	@Override
 	public File[] listFiles() {
-		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles();
-		return IoFileUtil.convert(ioFilesListFiles);
+		final java.io.File[] ioFiles = this.ioFile.listFiles();
+		return IoFileUtil.convert(ioFiles);
 	}
 
 	@Override
 	public File[] listFiles(final java.io.FileFilter fileFilter) {
-		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(fileFilter);
-		return IoFileUtil.convert(ioFilesListFiles);
+		final java.io.File[] ioFiles = this.ioFile.listFiles(fileFilter);
+		return IoFileUtil.convert(ioFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FileFilter fileFilter) {
-		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(new FileFilterWrapper(fileFilter));
-		return IoFileUtil.convert(ioFilesListFiles);
+		final java.io.File[] ioFiles = this.ioFile.listFiles(new FileFilterWrapper(fileFilter));
+		return IoFileUtil.convert(ioFiles);
 	}
 
 	@Override
 	public File[] listFiles(final FilenameFilter fileFilter) {
-		final java.io.File[] ioFilesListFiles = this.ioFile.listFiles(fileFilter);
-		return IoFileUtil.convert(ioFilesListFiles);
+		final java.io.File[] ioFiles = this.ioFile.listFiles(fileFilter);
+		return IoFileUtil.convert(ioFiles);
 	}
 
 	@Override

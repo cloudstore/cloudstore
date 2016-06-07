@@ -39,23 +39,23 @@ public class NioFile extends IoFile implements File {
 	private static final Logger logger = LoggerFactory.getLogger(NioFile.class);
 
 
-	NioFile(final String pathname) {
+	protected NioFile(final String pathname) {
 		super(pathname);
 	}
 
-	NioFile(final File parent, final String child) {
+	protected NioFile(final File parent, final String child) {
 		super(parent, child);
 	}
 
-	NioFile(final String parent, final String child) {
+	protected NioFile(final String parent, final String child) {
 		super(parent, child);
 	}
 
-	NioFile(final URI uri) {
+	protected NioFile(final URI uri) {
 		super(uri);
 	}
 
-	NioFile(final java.io.File ioFile) {
+	protected NioFile(final java.io.File ioFile) {
 		super(ioFile);
 	}
 

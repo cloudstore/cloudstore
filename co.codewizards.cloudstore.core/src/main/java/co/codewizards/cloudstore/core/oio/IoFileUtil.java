@@ -69,9 +69,9 @@ public class IoFileUtil {
 	static File[] convert(final java.io.File[] ioFilesListFiles) {
 		if (ioFilesListFiles == null)
 			return null;
-		final File[] listFiles = new IoFile[ioFilesListFiles.length];
+		final File[] listFiles = new File[ioFilesListFiles.length];
 		for (int i = 0; i < ioFilesListFiles.length; i++) {
-			listFiles[i] = new IoFile(ioFilesListFiles[i]);
+			listFiles[i] = createFile(ioFilesListFiles[i]);
 		}
 		return listFiles;
 	}
