@@ -55,7 +55,7 @@
 		<datanucleus-rdbms.version>4.0.3</datanucleus-rdbms.version>
 		<datanucleus.javadoc.version>4.0</datanucleus.javadoc.version>
 		<apache.directory.server.version>2.0.0-M20</apache.directory.server.version>
-		<jmockit.version>1.23</jmockit.version>
+		<jmockit.version>1.24</jmockit.version>
 	</properties>
 
 	<repositories>
@@ -295,7 +295,7 @@
 			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
-				<version>4.11</version>
+				<version>4.12</version>
 				<scope>test</scope>
 			</dependency>
 			
@@ -309,7 +309,8 @@
 			<dependency>
 				<groupId>org.assertj</groupId>
 				<artifactId>assertj-core</artifactId>
-				<version>1.5.0</version>
+				<!-- 3.4.1 requires Java 8 - using the newest one that works with Java 7. -->
+				<version>2.4.1</version>
 				<scope>test</scope>
 			</dependency>
 
