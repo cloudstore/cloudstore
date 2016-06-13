@@ -107,7 +107,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 
 	private static final String assertValidUidString(final String uidString) {
 		if (assertNotNull("uidString", uidString).length() != LENGTH_STRING)
-			throw new IllegalArgumentException("uidString.length != " + LENGTH_STRING);
+			throw new IllegalArgumentException("uidString.length != " + LENGTH_STRING + " :: '" + uidString + "'");
 
 		return uidString;
 	}
