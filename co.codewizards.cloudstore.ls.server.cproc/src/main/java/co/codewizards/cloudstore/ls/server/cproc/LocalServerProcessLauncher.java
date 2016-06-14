@@ -13,7 +13,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +49,15 @@ public class LocalServerProcessLauncher {
 		if (thisJarFile == null)
 			return;
 
-		final ProcessBuilder pb = new ProcessBuilder(
-				javaExecutableFile.getPath(), "-jar", thisJarFile.getPath());
+		final List<String> command = new ArrayList<>();
+		command.add(javaExecutableFile.getPath());
+
+		populateConfigSystemProperties(command);
+
+		command.add("-jar");
+		command.add(thisJarFile.getPath());
+
+		final ProcessBuilder pb = new ProcessBuilder(command);
 
 		final File processRedirectInputFile = getProcessRedirectInputFile();
 		final File processRedirectOutputFile = getProcessRedirectOutputFile();
@@ -64,6 +74,18 @@ public class LocalServerProcessLauncher {
 		}
 
 		waitUntilServerOnline();
+	}
+
+	private void populateConfigSystemProperties(final List<String> command) {
+		for (final Map.Entry<Object, Object> me : System.getProperties().entrySet()) {
+			final String k = me.getKey().toString();
+			final String v = me.getValue().toString();
+
+			if (k.startsWith(Config.SYSTEM_PROPERTY_PREFIX)) {
+				final String arg = "-D" + k + "=" + v;
+				command.add(arg);
+			}
+		}
 	}
 
 	private void waitUntilServerOnline() {
