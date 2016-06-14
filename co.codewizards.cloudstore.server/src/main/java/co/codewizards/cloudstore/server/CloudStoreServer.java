@@ -86,9 +86,9 @@ public class CloudStoreServer implements Runnable {
 	private Server server;
 
 	public static void main(String[] args) throws Exception {
+		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 		initLogging();
 		try {
-			args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
 			createCloudStoreServer(args).run();
 		} catch (final Throwable x) {
 			logger.error(x.toString(), x);

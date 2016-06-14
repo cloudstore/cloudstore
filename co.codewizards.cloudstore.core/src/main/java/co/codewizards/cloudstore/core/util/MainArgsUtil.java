@@ -3,21 +3,18 @@ package co.codewizards.cloudstore.core.util;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public final class MainArgsUtil {
-	private static final Logger logger = LoggerFactory.getLogger(MainArgsUtil.class);
+// Logging is usually not yet initialised, when this class is used => commented out logger, it makes no sense.
+//	private static final Logger logger = LoggerFactory.getLogger(MainArgsUtil.class);
 
 	private MainArgsUtil() { }
 
 	public static String[][] separateSystemPropertiesFromOtherArgs(String[] args) {
-		if (logger.isDebugEnabled())
-			logger.debug("separateSystemPropertiesFromOtherArgs: args={}", Arrays.toString(args));
+//		if (logger.isDebugEnabled())
+//			logger.debug("separateSystemPropertiesFromOtherArgs: args={}", Arrays.toString(args));
 
 		List<String> sysPropArgs = new ArrayList<String>(args.length);
 		List<String> otherArgs = new ArrayList<String>(args.length);
@@ -47,11 +44,11 @@ public final class MainArgsUtil {
 			if (equalsIndex >= 0) {
 				String k = kv.substring(0, equalsIndex);
 				String v = kv.substring(equalsIndex + 1);
-				logger.debug("extractAndApplySystemPropertiesReturnOthers: k='{}' v='{}'", k, v);
+//				logger.debug("extractAndApplySystemPropertiesReturnOthers: k='{}' v='{}'", k, v);
 				System.setProperty(k, v);
 			}
 			else {
-				logger.debug("extractAndApplySystemPropertiesReturnOthers: kv='{}'", kv);
+//				logger.debug("extractAndApplySystemPropertiesReturnOthers: kv='{}'", kv);
 				System.setProperty(kv, "");
 			}
 		}

@@ -145,8 +145,9 @@ public class CloudStoreClient {
 	 *
 	 * @param args the program arguments.
 	 */
-	public static void main(final String... args) throws Exception
+	public static void main(String... args) throws Exception
 	{
+		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args); // must do this before initLogging(), because it already accesses the ConfigDir!
 		initLogging();
 		try {
 			final int programExitStatus;
