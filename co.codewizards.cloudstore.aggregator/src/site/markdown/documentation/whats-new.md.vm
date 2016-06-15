@@ -5,6 +5,20 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.7?
+
+Compared to version 0.9.6, there are the following changes:
+
+* Enhancement: Basic LDAP support for WebDAV: It's optionally possible to authenticate via LDAP - and then use
+	a browser or other WebDAV-capable device to browse + read. Writing is not yet supported.
+
+* Enhancement: Many refactorings for improved extensibility (enhances code quality - not user experience)
+	needed for downstream projects.
+
+* Bugfix: Fixed bug in collision handling happening in rare situations when a file type changed (e.g. from directory
+	to ordinary file).	   
+
+
 $H$H$H What\'s new in 0.9.6?
 
 Compared to version 0.9.5, there are the following changes:
