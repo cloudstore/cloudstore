@@ -127,7 +127,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 				assertThat(libFile.getName()).endsWith(expectedLibFileSuffix);
 			}
 		}
-		assertThat(cloudstoreLibCount).isGreaterThanOrEqualTo(7);
+		assertThat(cloudstoreLibCount).isGreaterThanOrEqualTo(6);
 		assertThat(allLibCount).isGreaterThanOrEqualTo(20);
 	}
 }
