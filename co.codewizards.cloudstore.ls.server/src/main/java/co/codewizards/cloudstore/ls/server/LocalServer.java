@@ -5,6 +5,8 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -47,6 +49,9 @@ public class LocalServer {
 
 	private File localServerRunningFile;
 	private LockFile localServerRunningLockFile;
+	private File localServerStopFile;
+	private final Timer localServerStopFileTimer = new Timer("localServerStopFileTimer", true);
+	private TimerTask localServerStopFileTimerTask;
 
 	private static final Map<String, LocalServer> localServerRunningFile2LocalServer_running = new HashMap<>();
 
@@ -63,6 +68,13 @@ public class LocalServer {
 			}
 		}
 		return localServerRunningFile;
+	}
+
+	public File getLocalServerStopFile() {
+		if (localServerStopFile == null)
+			localServerStopFile = createFile(ConfigDir.getInstance().getFile(), "localServerRunning.deleteToStop");
+
+		return localServerStopFile;
 	}
 
 	/**
@@ -94,6 +106,7 @@ public class LocalServer {
 				// We now hold both the computer-wide LockFile and the JVM-wide synchronization, hence it's safe to write all the fields.
 				localServerRunningLockFile = _localServerRunningLockFile;
 				server = s = createServer();
+				createLocalServerStopFileTimerTask();
 
 				localServerRunningFile2LocalServer_running.put(localServerRunningFilePath, this);
 
@@ -132,6 +145,49 @@ public class LocalServer {
 		}
 	}
 
+	private void createLocalServerStopFileTimerTask() {
+		final File localServerStopFile = getLocalServerStopFile();
+		try {
+			localServerStopFile.createNewFile();
+
+			if (! localServerStopFile.exists())
+				throw new IOException("File not created!");
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create file: " + localServerStopFile);
+		}
+
+		synchronized (localServerStopFileTimer) {
+			cancelLocalServerStopFileTimerTask();
+
+			localServerStopFileTimerTask = new TimerTask() {
+				@Override
+				public void run() {
+					if (localServerStopFile.exists()) {
+						logger.debug("localServerStopFileTimerTask.run: file '{}' exists => nothing to do.", localServerStopFile);
+						return;
+					}
+					logger.info("localServerStopFileTimerTask.run: file '{}' does not exist => stopping server!", localServerStopFile);
+
+					stop();
+					System.exit(0);
+				}
+			};
+
+			final long period = 5000L;
+			localServerStopFileTimer.schedule(localServerStopFileTimerTask, period, period);
+		}
+	}
+
+	private void cancelLocalServerStopFileTimerTask() {
+		synchronized (localServerStopFileTimer) {
+			if (localServerStopFileTimerTask != null) {
+				localServerStopFileTimerTask.cancel();
+				localServerStopFileTimerTask = null;
+			}
+		}
+	}
+
 //	private void waitForServerToGetReady() throws TimeoutException { // seems not to be necessary => start() seems to block until the REST app is ready => commented out.
 //		final int localPort = getLocalPort();
 //		if (localPort < 0)
@@ -154,6 +210,8 @@ public class LocalServer {
 //	}
 
 	private void onStopOrFailure() {
+		cancelLocalServerStopFileTimerTask();
+
 		synchronized (localServerRunningFile2LocalServer_running) {
 			final File localServerRunningFile = getLocalServerRunningFile();
 			final String localServerRunningFilePath = localServerRunningFile.getPath();
@@ -162,6 +220,17 @@ public class LocalServer {
 				localServerRunningFile2LocalServer_running.remove(localServerRunningFilePath);
 				server = null;
 			}
+
+			final File localServerStopFile = getLocalServerStopFile();
+			if (localServerStopFile.exists()) {
+				localServerStopFile.delete();
+				if (localServerStopFile.exists())
+					logger.warn("onStopOrFailure: Failed to delete file: {}", localServerStopFile);
+				else
+					logger.info("onStopOrFailure: Successfully deleted file: {}", localServerStopFile);
+			}
+			else
+				logger.info("onStopOrFailure: File did not exist (could not delete): {}", localServerStopFile);
 
 			if (localServerRunningLockFile != null) {
 				localServerRunningLockFile.release();

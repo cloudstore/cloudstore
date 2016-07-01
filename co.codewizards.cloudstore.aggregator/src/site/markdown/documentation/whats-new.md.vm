@@ -5,6 +5,14 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.8?
+
+Compared to version 0.9.7, there are the following changes:
+
+* Enhancement: Updater must stop client\'s background process.
+	([issue 51](https://github.com/cloudstore/cloudstore/issues/51)).
+
+
 $H$H$H What\'s new in 0.9.7?
 
 Compared to version 0.9.6, there are the following changes:

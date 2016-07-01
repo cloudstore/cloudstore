@@ -29,6 +29,9 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.appid.AppId;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.io.LockFile;
+import co.codewizards.cloudstore.core.io.LockFileFactory;
+import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.util.AssertUtil;
@@ -49,6 +52,10 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 	private Properties remoteUpdateProperties;
 	private File tempDownloadDir;
+
+	private File localServerRunningFile;
+	private LockFile localServerRunningLockFile;
+	private File localServerStopFile;
 
 	public static void main(final String[] args) throws Exception {
 		initLogging();
@@ -147,11 +154,23 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 		boolean restoreRenamedFiles = false;
 		try {
+			stopLocalServer();
+			final long localServerStoppedTimestamp = System.currentTimeMillis();
+
 			final File downloadFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].downloadURL");
 			final File signatureFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].signatureURL");
 
 			System.out.println("Verifying PGP signature.");
 			new PGPVerifier().verify(downloadFile, signatureFile);
+
+			final long durationAfterLocalServerStop = System.currentTimeMillis() - localServerStoppedTimestamp;
+			final long additionalWaitTime = 10_000L - durationAfterLocalServerStop;
+			if (additionalWaitTime > 0L) {
+				// We make sure, at least 10 seconds passed after the LocalServer stopped in order to make sure
+				// the Java process really finished (this is *after* the lock is released by the running process).
+				// In Windows, we might otherwise run into some lingering file locks.
+				Thread.sleep(additionalWaitTime);
+			}
 
 			checkAvailableDiskSpace(getInstallationDir(), downloadFile.length() * 5);
 
@@ -196,8 +215,82 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				System.out.println("Deleting temporary download-directory.");
 				IOUtil.deleteDirectoryRecursively(tempDownloadDir);
 			}
+
+			if (localServerRunningLockFile != null) {
+				localServerRunningLockFile.release();
+				localServerRunningLockFile = null;
+			}
 		}
 		System.out.println("Update successfully done. Exiting.");
+	}
+
+	private void stopLocalServer() {
+		try {
+			boolean localServerRunning = ! tryAcquireLocalServerRunningLockFile();
+			if (localServerRunning) {
+				System.out.println("LocalServer is running. Stopping it...");
+				final File localServerStopFile = getLocalServerStopFile();
+
+				if (localServerStopFile.exists()) {
+					localServerStopFile.delete();
+					if (localServerStopFile.exists())
+						logger.warn("Failed to delete file: {}", localServerStopFile);
+					else
+						System.out.println("File successfully deleted: " + localServerStopFile);
+				}
+				else {
+					System.out.println("WARNING: File does not exist (could thus not delete it): " + localServerStopFile);
+					logger.warn("File does not exist: {}", localServerStopFile);
+				}
+
+				System.out.println("Waiting for LocalServer to stop...");
+				final long waitStartTimestamp = System.currentTimeMillis();
+				do {
+					if (System.currentTimeMillis() - waitStartTimestamp > 120_000L)
+						throw new TimeoutException("LocalServer did not stop within timeout!");
+
+					localServerRunning = ! tryAcquireLocalServerRunningLockFile();
+				} while (localServerRunning);
+
+				System.out.println("LocalServer stopped.");
+			}
+		} catch (Exception x) {
+			logger.error("stopLocalServer: " + x, x);
+			x.printStackTrace();
+		}
+	}
+
+	private File getLocalServerRunningFile() {
+		if (localServerRunningFile == null) {
+			localServerRunningFile = createFile(ConfigDir.getInstance().getFile(), "localServerRunning.lock");
+			try {
+				localServerRunningFile = localServerRunningFile.getCanonicalFile();
+			} catch (IOException x) {
+				logger.warn("getLocalServerRunningFile: " + x, x);
+			}
+		}
+		return localServerRunningFile;
+	}
+
+	private File getLocalServerStopFile() {
+		if (localServerStopFile == null)
+			localServerStopFile = createFile(ConfigDir.getInstance().getFile(), "localServerRunning.deleteToStop");
+
+		return localServerStopFile;
+	}
+
+	private boolean tryAcquireLocalServerRunningLockFile() {
+		if (localServerRunningLockFile != null) {
+			logger.warn("tryAcquireLocalServerRunningLockFile: Already acquired before!!! Skipping!");
+			return true;
+		}
+
+		try {
+			localServerRunningLockFile = LockFileFactory.getInstance().acquire(getLocalServerRunningFile(), 1000);
+			return true;
+		} catch (TimeoutException x) {
+			return false;
+		}
 	}
 
 	private void checkAvailableDiskSpace(final File dir, final long expectedRequiredSpace) throws IOException {
