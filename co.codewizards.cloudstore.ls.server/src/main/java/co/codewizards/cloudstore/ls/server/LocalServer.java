@@ -49,6 +49,7 @@ public class LocalServer {
 
 	private File localServerRunningFile;
 	private LockFile localServerRunningLockFile;
+	private boolean localServerStopFileEnabled;
 	private File localServerStopFile;
 	private final Timer localServerStopFileTimer = new Timer("localServerStopFileTimer", true);
 	private TimerTask localServerStopFileTimerTask;
@@ -75,6 +76,13 @@ public class LocalServer {
 			localServerStopFile = createFile(ConfigDir.getInstance().getFile(), "localServerRunning.deleteToStop");
 
 		return localServerStopFile;
+	}
+
+	public boolean isLocalServerStopFileEnabled() {
+		return localServerStopFileEnabled;
+	}
+	public void setLocalServerStopFileEnabled(boolean localServerStopFileEnabled) {
+		this.localServerStopFileEnabled = localServerStopFileEnabled;
 	}
 
 	/**
@@ -146,6 +154,9 @@ public class LocalServer {
 	}
 
 	private void createLocalServerStopFileTimerTask() {
+		if (! isLocalServerStopFileEnabled())
+			return;
+
 		final File localServerStopFile = getLocalServerStopFile();
 		try {
 			localServerStopFile.createNewFile();

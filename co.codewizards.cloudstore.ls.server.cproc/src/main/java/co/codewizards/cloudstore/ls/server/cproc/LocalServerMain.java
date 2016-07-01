@@ -35,7 +35,9 @@ public class LocalServerMain {
 
 		try {
 			args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
-			createLocalServer().start();
+			final LocalServer localServer = createLocalServer();
+			localServer.setLocalServerStopFileEnabled(true);
+			localServer.start();
 		} catch (final Throwable x) {
 			logger.error(x.toString(), x);
 			System.exit(999);
