@@ -12,6 +12,9 @@ Compared to version 0.9.8, there are the following changes:
 * Bugfix: Broken symlinks are now deleted properly
 	([issue 44](https://github.com/cloudstore/cloudstore/issues/44)).
 
+* Enhancement: Support ignore-rules
+	([issue 4](https://github.com/cloudstore/cloudstore/issues/4)).
+
 
 $H$H$H What\'s new in 0.9.8?
 
@@ -32,7 +35,14 @@ Compared to version 0.9.6, there are the following changes:
 	needed for downstream projects.
 
 * Bugfix: Fixed bug in collision handling happening in rare situations when a file type changed (e.g. from directory
-	to ordinary file).	   
+	to ordinary file).
+
+* Bugfix: Fixed bug in auto-update ([issue 50](https://github.com/cloudstore/cloudstore/issues/50)).
+    **Important**: You must manually upgrade! The updater in version 0.9.6 is broken
+	rendering an auto-update to any newer version impossible. That's why, we temporarily disabled the auto-update
+	(for the auto-update, the last official release still is 0.9.6). We're going to enable the auto-update on
+	2016-09-01, again. If you do not manually upgrade your installation until then, you're going to face an endless loop!
+	The bug is fixed since 0.9.7 (released on 2016-06-15).
 
 
 $H$H$H What\'s new in 0.9.6?
