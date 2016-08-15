@@ -19,6 +19,8 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 
 	private final File directory;
 	private Config config;
+	private List<IgnoreRule> ignoreRules;
+	private Long configVersion;
 
 	protected IgnoreRuleManagerImpl(File directory) {
 		this.directory = assertNotNull("directory", directory);
@@ -29,21 +31,29 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 		return createObject(IgnoreRuleManagerImpl.class, directory); // TODO we should add a cache! But one that's invalidated when the Config needs reloading.
 	}
 
-	public List<IgnoreRule> getIgnoreRules() {
-		final List<IgnoreRule> result = new ArrayList<>();
-		int emptyCounter = 0;
-		for (int index = 0; ; ++index) {
-			final IgnoreRule ignoreRule = loadIgnoreRule(index);
-			if (ignoreRule == null) {
-				if (++emptyCounter > 3)
-					break; // We're a bit tolerant and don't immediately break (but only after 3 empty indices).
+	public synchronized List<IgnoreRule> getIgnoreRules() {
+		final long newConfigVersion = config.getVersion();
+		if (configVersion == null || configVersion.equals(newConfigVersion))
+			ignoreRules = null;
 
-				continue;
+		if (ignoreRules == null) {
+			final List<IgnoreRule> result = new ArrayList<>();
+			int emptyCounter = 0;
+			for (int index = 0; ; ++index) {
+				final IgnoreRule ignoreRule = loadIgnoreRule(index);
+				if (ignoreRule == null) {
+					if (++emptyCounter > 3)
+						break; // We're a bit tolerant and don't immediately break (but only after 3 empty indices).
+
+					continue;
+				}
+				emptyCounter = 0;
+				result.add(ignoreRule);
 			}
-			emptyCounter = 0;
-			result.add(ignoreRule);
+			configVersion = newConfigVersion;
+			ignoreRules = Collections.unmodifiableList(result);
 		}
-		return Collections.unmodifiableList(result);
+		return ignoreRules;
 	}
 
 	@Override

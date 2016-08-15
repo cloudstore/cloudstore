@@ -91,6 +91,8 @@ public class ConfigImpl implements Config {
 	private static final Object classMutex = ConfigImpl.class;
 	private final Object instanceMutex;
 
+	private long version = 0;
+
 	protected ConfigImpl(final ConfigImpl parentConfig, final File file, final File [] propertiesFiles) {
 		this.parentConfig = parentConfig;
 
@@ -237,6 +239,7 @@ public class ConfigImpl implements Config {
 			logger.trace("read: Entered instanceMutex.");
 			try {
 				properties.clear();
+				version = 0;
 				for (int i = 0; i < propertiesFiles.length; i++) {
 					final File propertiesFile = propertiesFiles[i];
 					logger.debug("read: Reading propertiesFile '{}'.", propertiesFile.getAbsolutePath());
@@ -252,6 +255,7 @@ public class ConfigImpl implements Config {
 						}
 					}
 					propertiesFilesLastModified[i] = lastModified;
+					version += lastModified;
 				}
 			} catch (final IOException e) {
 				properties.clear();
@@ -352,6 +356,21 @@ public class ConfigImpl implements Config {
 		}
 
 		return lastModified;
+	}
+
+	@Override
+	public long getVersion() {
+		long result;
+
+		synchronized (instanceMutex) {
+			readIfNeeded();
+			result = version;
+		}
+
+		if (parentConfig != null)
+			result += parentConfig.getVersion();
+
+		return result;
 	}
 
 	@Override

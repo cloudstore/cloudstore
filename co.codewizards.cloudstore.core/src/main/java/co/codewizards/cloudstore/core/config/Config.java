@@ -183,4 +183,14 @@ public interface Config {
 
 	boolean getPropertyAsBoolean(final String key, final boolean defaultValue);
 
+	/**
+	 * Gets a version number that is guaranteed to be changed whenever the underlying files change.
+	 * <p>
+	 * It is <i>not</i> guaranteed to be incremented! Depending on the underlying change, a newer
+	 * version number might be less than a previous version number! In most cases, however, the
+	 * version number actually grows with each change. Code must not rely on this, but it is a
+	 * helpful assumption for debugging.
+	 * @return a version number that is guaranteed to be changed whenever the underlying files change.
+	 */
+	long getVersion();
 }
