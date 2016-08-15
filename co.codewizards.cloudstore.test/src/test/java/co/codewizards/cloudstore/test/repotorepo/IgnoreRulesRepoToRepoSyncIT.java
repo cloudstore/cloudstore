@@ -51,6 +51,7 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 		properties.put("ignore[0].namePattern", "a"); // ignore a file that already exists and was already synced
 		properties.put("ignore[1].namePattern", "c"); // ignore a new file
 		PropertiesUtil.store(createFile(remoteRoot, ".cloudstore.properties"), properties, null);
+
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
 
 
@@ -60,7 +61,7 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 		}
 
 		try (OutputStream out = child_1_b.createOutputStream(true);) {
-			out.write(new byte[] { 1, 2, 3 });
+			out.write(new byte[] { 4, 5, 6 });
 		}
 
 		final File child_1_c = createFileWithRandomContent(child_1, "c"); // new file!

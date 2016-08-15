@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.ignore;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -75,37 +76,37 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 		cleanFileRefs();
 
 		File irm_dir = null;
-		IgnoreRuleManagerImpl config;
+		IgnoreRuleManagerImpl irm;
 		synchronized (classMutex) {
-			config = file2IgnoreRuleManager.get(directory);
-			if (config != null) {
-				irm_dir = config.directory;
+			irm = file2IgnoreRuleManager.get(directory);
+			if (irm != null) {
+				irm_dir = irm.directory;
 				if (irm_dir == null) // very unlikely, but it actually *can* happen.
-					config = null; // we try to make it extremely probable that the Config we return does have a valid file reference.
+					irm = null; // we try to make it extremely probable that the Config we return does have a valid file reference.
 			}
 
-			if (config == null) {
+			if (irm == null) {
 				final File localRoot = LocalRepoHelper.getLocalRootContainingFile(directory);
 				if (localRoot == null)
 					throw new IllegalArgumentException("directory is not inside a repository: " + directory.getAbsolutePath());
 
-				config = new IgnoreRuleManagerImpl(directory);
-				file2IgnoreRuleManager.put(directory, config);
+				irm = new IgnoreRuleManagerImpl(directory);
+				file2IgnoreRuleManager.put(directory, irm);
 				fileSoftRefs.add(new SoftReference<File>(directory));
-				irm_dir = config.directory;
+				irm_dir = irm.directory;
 			}
 			assertNotNull("irm_dir", irm_dir);
 		}
 		refreshFileHardRefAndCleanOldHardRefs(irm_dir);
-		return config;
+		return irm;
 	}
 
 
 	public List<IgnoreRule> getIgnoreRules() {
 		refreshFileHardRefAndCleanOldHardRefs();
 		synchronized (instanceMutex) {
-			final long newConfigVersion = config.getVersion();
-			if (configVersion == null || configVersion.equals(newConfigVersion))
+			final Long newConfigVersion = config.getVersion();
+			if (! equal(configVersion, newConfigVersion))
 				ignoreRules = null;
 
 			if (ignoreRules == null) {
