@@ -3,9 +3,15 @@ package co.codewizards.cloudstore.core.ignore;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
+import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	private static final Logger logger = LoggerFactory.getLogger(IgnoreRuleManagerImpl.class);
@@ -22,38 +30,103 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	private List<IgnoreRule> ignoreRules;
 	private Long configVersion;
 
+	private static final Object classMutex = IgnoreRuleManagerImpl.class;
+	private final Object instanceMutex = this;
+
+	private static final long fileRefsCleanPeriod = 60000L;
+	private static long fileRefsCleanLastTimestamp;
+
+	private static final LinkedHashSet<File> fileHardRefs = new LinkedHashSet<>();
+	private static final int fileHardRefsMaxSize = 10;
+
+	/**
+	 * {@link SoftReference}s to the files used in {@link #file2IgnoreRuleManager}.
+	 * <p>
+	 * There is no {@code SoftHashMap}, hence we use a WeakHashMap combined with the {@code SoftReference}s here.
+	 * @see #file2IgnoreRuleManager
+	 */
+	private static final LinkedList<SoftReference<File>> fileSoftRefs = new LinkedList<>();
+	/**
+	 * @see #fileSoftRefs
+	 */
+	private static final Map<File, IgnoreRuleManagerImpl> file2IgnoreRuleManager = new WeakHashMap<>();
+
 	protected IgnoreRuleManagerImpl(File directory) {
 		this.directory = assertNotNull("directory", directory);
 		config = ConfigImpl.getInstanceForDirectory(this.directory);
 	}
 
-	public static IgnoreRuleManager getInstanceForDirectory(File directory) {
-		return createObject(IgnoreRuleManagerImpl.class, directory); // TODO we should add a cache! But one that's invalidated when the Config needs reloading.
+	private static void cleanFileRefs() {
+		synchronized (classMutex) {
+			if (System.currentTimeMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
+				return;
+
+			for (final Iterator<SoftReference<File>> it = fileSoftRefs.iterator(); it.hasNext(); ) {
+				final SoftReference<File> fileRef = it.next();
+				if (fileRef.get() == null)
+					it.remove();
+			}
+			fileRefsCleanLastTimestamp = System.currentTimeMillis();
+		}
 	}
 
-	public synchronized List<IgnoreRule> getIgnoreRules() {
-		final long newConfigVersion = config.getVersion();
-		if (configVersion == null || configVersion.equals(newConfigVersion))
-			ignoreRules = null;
+	public static IgnoreRuleManager getInstanceForDirectory(final File directory) {
+		AssertUtil.assertNotNull("directory", directory);
+		cleanFileRefs();
 
-		if (ignoreRules == null) {
-			final List<IgnoreRule> result = new ArrayList<>();
-			int emptyCounter = 0;
-			for (int index = 0; ; ++index) {
-				final IgnoreRule ignoreRule = loadIgnoreRule(index);
-				if (ignoreRule == null) {
-					if (++emptyCounter > 3)
-						break; // We're a bit tolerant and don't immediately break (but only after 3 empty indices).
-
-					continue;
-				}
-				emptyCounter = 0;
-				result.add(ignoreRule);
+		File irm_dir = null;
+		IgnoreRuleManagerImpl config;
+		synchronized (classMutex) {
+			config = file2IgnoreRuleManager.get(directory);
+			if (config != null) {
+				irm_dir = config.directory;
+				if (irm_dir == null) // very unlikely, but it actually *can* happen.
+					config = null; // we try to make it extremely probable that the Config we return does have a valid file reference.
 			}
-			configVersion = newConfigVersion;
-			ignoreRules = Collections.unmodifiableList(result);
+
+			if (config == null) {
+				final File localRoot = LocalRepoHelper.getLocalRootContainingFile(directory);
+				if (localRoot == null)
+					throw new IllegalArgumentException("directory is not inside a repository: " + directory.getAbsolutePath());
+
+				config = new IgnoreRuleManagerImpl(directory);
+				file2IgnoreRuleManager.put(directory, config);
+				fileSoftRefs.add(new SoftReference<File>(directory));
+				irm_dir = config.directory;
+			}
+			assertNotNull("irm_dir", irm_dir);
 		}
-		return ignoreRules;
+		refreshFileHardRefAndCleanOldHardRefs(irm_dir);
+		return config;
+	}
+
+
+	public List<IgnoreRule> getIgnoreRules() {
+		refreshFileHardRefAndCleanOldHardRefs();
+		synchronized (instanceMutex) {
+			final long newConfigVersion = config.getVersion();
+			if (configVersion == null || configVersion.equals(newConfigVersion))
+				ignoreRules = null;
+
+			if (ignoreRules == null) {
+				final List<IgnoreRule> result = new ArrayList<>();
+				int emptyCounter = 0;
+				for (int index = 0; ; ++index) {
+					final IgnoreRule ignoreRule = loadIgnoreRule(index);
+					if (ignoreRule == null) {
+						if (++emptyCounter > 3)
+							break; // We're a bit tolerant and don't immediately break (but only after 3 empty indices).
+
+						continue;
+					}
+					emptyCounter = 0;
+					result.add(ignoreRule);
+				}
+				configVersion = newConfigVersion;
+				ignoreRules = Collections.unmodifiableList(result);
+			}
+			return ignoreRules;
+		}
 	}
 
 	@Override
@@ -115,5 +188,28 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 
 	private String getConfigKeyIgnorePrefix(int index) {
 		return String.format("ignore[%d].", index);
+	}
+
+	private static final void refreshFileHardRefAndCleanOldHardRefs(final IgnoreRuleManagerImpl ignoreRuleManager) {
+		final File dir = AssertUtil.assertNotNull("ignoreRuleManager", ignoreRuleManager).directory;
+		if (dir != null)
+			refreshFileHardRefAndCleanOldHardRefs(dir);
+	}
+
+	private final void refreshFileHardRefAndCleanOldHardRefs() {
+		refreshFileHardRefAndCleanOldHardRefs(this);
+	}
+
+	private static final void refreshFileHardRefAndCleanOldHardRefs(final File dir) {
+		AssertUtil.assertNotNull("dir", dir);
+		synchronized (fileHardRefs) {
+			// make sure the current dir is at the end of fileHardRefs
+			fileHardRefs.remove(dir);
+			fileHardRefs.add(dir);
+
+			// remove the first entry until size does not exceed limit anymore.
+			while (fileHardRefs.size() > fileHardRefsMaxSize)
+				fileHardRefs.remove(fileHardRefs.iterator().next());
+		}
 	}
 }

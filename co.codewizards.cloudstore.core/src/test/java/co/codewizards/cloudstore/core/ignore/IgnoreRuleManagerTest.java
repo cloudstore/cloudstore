@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
@@ -26,6 +27,13 @@ public class IgnoreRuleManagerTest {
 		tempDir = createTempDirectory("oink");
 		File f = createFile(tempDir, "bla.properties");
 		final Config config = new ConfigImpl(null, tempDir, new File[] { f }) {
+		};
+
+		new MockUp<LocalRepoHelper>() {
+			@Mock
+			File getLocalRootContainingFile(final File file) {
+				return file;
+			}
 		};
 
 		new MockUp<ConfigImpl>() {
@@ -44,6 +52,13 @@ public class IgnoreRuleManagerTest {
 				return config;
 			}
 		};
+	}
+
+	public void after() throws Exception {
+		if (tempDir != null)
+			tempDir.deleteRecursively();
+
+		tempDir = null;
 	}
 
 	@Test

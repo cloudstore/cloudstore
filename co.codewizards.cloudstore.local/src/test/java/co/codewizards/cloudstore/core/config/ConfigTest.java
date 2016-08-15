@@ -46,17 +46,25 @@ public class ConfigTest extends AbstractTest {
 			String value = globalConfig.getProperty(testKey, null);
 			assertThat(value).isNull();
 
+			long version1 = globalConfig.getVersion();
+
 			waitForDifferentLastModifiedTimestamp();
 
 			setGlobalProperty(testKey, "testValueAAA");
 			value = globalConfig.getProperty(testKey, null);
 			assertThat(value).isEqualTo("testValueAAA");
 
+			long version2 = globalConfig.getVersion();
+			assertThat(version1).isNotEqualTo(version2);
+
 			waitForDifferentLastModifiedTimestamp();
 
 			setGlobalProperty(testKey, "testValueBBB");
 			value = globalConfig.getProperty(testKey, null);
 			assertThat(value).isEqualTo("testValueBBB");
+
+			version1 = globalConfig.getVersion();
+			assertThat(version1).isNotEqualTo(version2);
 
 			deleteMainConfigFiles();
 		}
@@ -90,9 +98,14 @@ public class ConfigTest extends AbstractTest {
 				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.directAfterTransfer);
 				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.class, null)).isNull();
 
+				long version1 = config_1.getVersion();
+
 				waitForDifferentLastModifiedTimestamp();
 				setGlobalProperty(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.replaceAfterTransfer.name());
 				assertThat(config_1.getPropertyAsEnum(FileWriteStrategy.CONFIG_KEY, FileWriteStrategy.directAfterTransfer)).isEqualTo(FileWriteStrategy.replaceAfterTransfer);
+
+				long version2 = config_1.getVersion();
+				assertThat(version1).isNotEqualTo(version2);
 
 				final File child_1_a = createFile(child_1, "a");
 				final Config config_1_a = ConfigImpl.getInstanceForFile(child_1_a);
