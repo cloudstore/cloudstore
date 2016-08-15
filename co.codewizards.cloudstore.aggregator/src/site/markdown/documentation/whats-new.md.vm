@@ -5,11 +5,19 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.9?
+
+Compared to version 0.9.8, there are the following changes:
+
+* Bugfix: Broken symlinks are now deleted properly
+	([issue 44](https://github.com/cloudstore/cloudstore/issues/44)).
+
+
 $H$H$H What\'s new in 0.9.8?
 
 Compared to version 0.9.7, there are the following changes:
 
-* Enhancement: Updater must stop client\'s background process.
+* Enhancement: Updater must stop client\'s background process
 	([issue 51](https://github.com/cloudstore/cloudstore/issues/51)).
 
 

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.FileChunkDto;
+import co.codewizards.cloudstore.core.ignore.IgnoreRuleManagerImpl;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
@@ -134,6 +135,17 @@ public class LocalRepoSync {
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
+
+			if (parentRepoFile != null) {
+				boolean ignored = IgnoreRuleManagerImpl.getInstanceForDirectory(file.getParentFile()).isIgnored(file);
+				if (ignored) {
+					if (repoFile != null) {
+						deleteRepoFile(repoFile, false);
+						repoFile = null;
+					}
+					return null;
+				}
+			}
 
 			// If the type changed - e.g. from normal file to directory - or if the file was deleted
 			// we must delete the old instance.

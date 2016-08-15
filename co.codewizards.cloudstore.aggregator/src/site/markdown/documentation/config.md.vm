@@ -54,6 +54,79 @@ $H$H$H Configuration settings
 
 The following property keys can be used to configure the behaviour of CloudStore:
 
+$H$H$H$H ignore[N].namePattern or ignore[N].nameRegex
+
+Files (or directories) can be ignored by specifying so-called ignore-rules. In every configuration
+file, zero or more such rules can be specified. Multiple rules are differentiated using
+an index, like in the following example:
+
+	ignore[0].namePattern = *.bak
+	ignore[1].nameRegex = [a-z]\d*\.jpg
+	ignore[2].namePattern = ~*
+
+The indices must be consecutive, starting at 0. If there is a hole, for example if after the above "ignore[2]" an
+"ignore[31]" would follow, all rules after this hole are ignored (i.e. "ignore[2]" would be the last to be taken
+into account).
+
+If a file matches an ignore-rule (that is enabled), this file is neither synchronised nor touched in any other
+way by CloudStore.
+
+Each ignore-rule has the following properties:
+
+$H$H$H$H$H namePattern
+
+A rule like "ignore[99].namePattern" specifies a
+[shell pattern](https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html),
+supporting the wild-cards \'*\' and \'?\' as well as ranges like \'[axz]\' or \'[a-z]\'.
+
+\'*\' means zero or more arbitrary characters.
+
+\'?\' matches exactly one arbitrary character.
+
+\'[acg]\' matches exactly one character being \'a\', \'c\' or \'g\'. It does not match \'b\'!
+
+\'[a-d]\' matches exactly one character that is one of \'a\', \'b\', \'c\' or \'d\'.
+
+If a simple shell pattern is not powerful enough to formulate an ignore-rule, you might want to use
+a regular expression instead (see below).
+
+Note that the pattern "*.jpg" matches "TREE.JPG", too, if case-sensitivity is not explicitly enabled (see below). 
+
+
+$H$H$H$H$H nameRegex
+
+A rule like "ignore[99].nameRegex" specifies a [regular expression](https://en.wikipedia.org/wiki/Regular_expression)
+matching the entire non-qualified file name.
+
+If both "ignore[99].namePattern" and "ignore[99].nameRegex" are specified, the "namePattern" is ignored. The property
+"nameRegex" has a higher priority overruling "namePattern".
+
+Note, that it is not sufficient, if the file name contains a part matching this pattern. The entire file name
+must be matched. For example, the rule "tree\\.jpg" does not match the file name "large_tree.jpg". Using \'^\' (start) or
+\'$\' (end) is thus not necessary.
+
+\'.*\\.bak\' matches every file whose name ends on ".bak". Please note that you must escape the dot (i.e. write "\\."), if you
+really mean the dot, because otherwise "." (without the escaping "\\") is a meta-character matching every possible character.
+
+
+$H$H$H$H$H caseSensitive
+
+By default, every pattern or reg-ex is case-<u>in</u>sensitive. This means, for example the pattern "*.jpg" matches the file "TREE.JPG", too.
+If you do not want this, you must enable the "caseSensitive" property by specifying "ignore[99].caseSensitive=true".
+
+
+$H$H$H$H$H enabled
+
+By default, every ignore-rule is enabled. Obviously, it does not make much sense to declare a disabled rule, in the first
+place. However, it is a common situation that you might want to disable a rule in a sub-directory that would otherwise be
+inherited from the parent-directory.
+
+In this case, simply add the following to your sub-directory's *cloudstore.properties*:
+
+	ignore[99].enabled=false
+
+Of course, you likely have to replace "99" by the index of the rule you want to disable.
+
 
 $H$H$H$H fileWriteStrategy
 
