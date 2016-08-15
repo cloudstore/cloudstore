@@ -404,7 +404,7 @@ public final class IOUtil {
 	@Deprecated
 	public static boolean deleteDirectoryRecursively(final File dir)
 	{
-		if (!dir.exists())
+		if (!dir.existsNoFollow())
 			return true;
 
 		// If we're running this on linux (that's what I just tested ;) and dir denotes a symlink,

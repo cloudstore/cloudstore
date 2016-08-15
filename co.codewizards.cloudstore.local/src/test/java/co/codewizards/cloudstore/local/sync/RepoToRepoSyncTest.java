@@ -672,6 +672,11 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		final File broken = createRelativeSymlink(createFile(child_1, "broken"), createFile(child_1, "doesNotExist"));
 
+		assertThat(createFile(child_1, "broken").existsNoFollow()).isTrue();
+		assertThat(broken.existsNoFollow()).isTrue();
+		assertThat(broken.isSymbolicLink()).isTrue();
+		assertThat(broken.exists()).isFalse(); // following is not possible, because it's broken, i.e. exists() must be false!
+
 		final long child_1_a_lastModified = System.currentTimeMillis() - (24L * 3600);
 		final long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
 		final long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
@@ -693,15 +698,29 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		final RepoToRepoSync repoToRepoSync = new RepoToRepoSync(getLocalRootWithPathPrefix(), getRemoteRootUrlWithPathPrefix());
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
-		repoToRepoSync.close();
-
-		localRepoManagerRemote.close();
 
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
 		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+
+		// delete broken symbolic link and normal symbolic link from remote
+		// repository
+		broken.delete();
+		b.delete();
+
+		// synchronize new changes
+		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
+
+		assertThatNoCollisionInRepo(localRoot);
+		assertThatNoCollisionInRepo(remoteRoot);
+
+		// compare local and remote repositories after synchronizing changes
+		assertDirectoriesAreEqualRecursively(getLocalRootWithPathPrefix(), getRemoteRootWithPathPrefix());
+
+		repoToRepoSync.close();
+		localRepoManagerRemote.close();
 	}
 
 	@Test

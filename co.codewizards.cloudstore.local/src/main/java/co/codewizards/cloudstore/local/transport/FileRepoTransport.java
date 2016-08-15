@@ -220,11 +220,11 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			try {
 				assertNoDeleteModificationCollision(transaction, clientRepositoryId, path);
 
-				if (file.exists() && !file.isSymbolicLink())
+				if (file.existsNoFollow() && !file.isSymbolicLink())
 					handleFileTypeCollision(transaction, clientRepositoryId, file, SymlinkDto.class);
 //					file.renameTo(IOUtil.createCollisionFile(file));
 
-				if (file.exists() && !file.isSymbolicLink())
+				if (file.existsNoFollow() && !file.isSymbolicLink())
 					throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 				final File localRoot = getLocalRepoManager().getLocalRoot();
@@ -232,7 +232,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				try {
 					final boolean currentTargetEqualsNewTarget;
 //					final Path symlinkPath = file.toPath();
-					if (file.isSymbolicLink() || file.exists()) {
+					if (file.isSymbolicLink()) {
 //						final Path currentTargetPath = Files.readSymbolicLink(symlinkPath);
 						final String currentTarget = file.readSymbolicLinkToPathString();
 						currentTargetEqualsNewTarget = currentTarget.equals(target);
@@ -311,10 +311,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final File fromFile = getFile(fromPath);
 		final File toFile = getFile(toPath);
 
-		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
+		if (!fromFile.isFile()) // TODO throw an exception and catch in RepoToRepoSync!
 			return;
 
-		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
+		if (toFile.existsNoFollow()) // TODO either simply throw an exception or implement proper collision check.
 			return;
 
 		final File toParentFile = toFile.getParentFile();
@@ -349,10 +349,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final File fromFile = getFile(fromPath);
 		final File toFile = getFile(toPath);
 
-		if (!fromFile.exists()) // TODO throw an exception and catch in RepoToRepoSync!
+		if (!fromFile.isFile()) // TODO throw an exception and catch in RepoToRepoSync!
 			return;
 
-		if (toFile.exists()) // TODO either simply throw an exception or implement proper collision check.
+		if (toFile.existsNoFollow()) // TODO either simply throw an exception or implement proper collision check.
 			return;
 
 		final File fromParentFile = fromFile.getParentFile();
@@ -578,10 +578,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new IllegalStateException("parentRepoFile == null");
 			}
 
-			if (file.exists() && !file.isDirectory())
+			if (file.existsNoFollow() && !file.isDirectory())
 				handleFileTypeCollision(transaction, clientRepositoryId, file, DirectoryDto.class);
 
-			if (file.exists() && !file.isDirectory())
+			if (file.existsNoFollow() && !file.isDirectory())
 				throw new IllegalStateException("Could not rename file! It is still in the way: " + file);
 
 			if (!file.isDirectory())
@@ -813,7 +813,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		assertNotNull("file", file);
 		final File collisionFile = IOUtil.createCollisionFile(file);
 		file.renameTo(collisionFile);
-		if (file.exists())
+		if (file.existsNoFollow())
 			throw new IllegalStateException("Could not rename file to resolve collision: " + file);
 
 		return collisionFile;
@@ -872,7 +872,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		AssertUtil.assertNotNull("file", file);
 		AssertUtil.assertNotNull("normalFileOrSymlink", normalFileOrSymlink);
 
-		if (!file.exists()) {
+		if (!file.existsNoFollow()) {
 			logger.debug("detectFileCollision: path='{}': return false, because destination file does not exist.", normalFileOrSymlink.getPath());
 			return false;
 		}
