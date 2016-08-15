@@ -27,6 +27,11 @@ public class IgnoreRuleManagerTest {
 		tempDir = createTempDirectory("oink");
 		File f = createFile(tempDir, "bla.properties");
 		final Config config = new ConfigImpl(null, tempDir, new File[] { f }) {
+			long version;
+			@Override
+			public synchronized long getVersion() {
+				return ++version;
+			}
 		};
 
 		new MockUp<LocalRepoHelper>() {
