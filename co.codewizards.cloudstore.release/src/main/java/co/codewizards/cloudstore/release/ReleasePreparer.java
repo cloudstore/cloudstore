@@ -15,6 +15,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
+import co.codewizards.cloudstore.core.util.IOUtil;
+
 public class ReleasePreparer {
 
 	// Set 'newMavenVersion' to the new desired  version. Then run the main method. It will update
