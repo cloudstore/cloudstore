@@ -26,6 +26,7 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 
@@ -1374,7 +1375,7 @@ public final class IOUtil {
 		final File result = createFile(parentFile,
 				String.format("%s.%s%s%s",
 						fileName,
-						Long.toString(System.currentTimeMillis(), 36),
+						Long.toString(System.currentTimeMillis(), 36) + new Uid(),
 						COLLISION_FILE_NAME_INFIX,
 						fileExtension));
 		return result;
