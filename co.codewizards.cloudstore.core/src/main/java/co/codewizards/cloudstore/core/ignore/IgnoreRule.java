@@ -25,9 +25,9 @@ import java.util.regex.Pattern;
  */
 public interface IgnoreRule {
 
-	int getIndex();
+	String getIgnoreRuleId();
 
-	void setIndex(int index);
+	void setIgnoreRuleId(String ignoreRuleId);
 
 	/**
 	 * Gets a shell-style name-pattern or <code>null</code>.

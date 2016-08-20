@@ -5,7 +5,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.util.regex.Pattern;
 
 public class IgnoreRuleImpl implements IgnoreRule {
-	private int index;
+	private String ignoreRuleId;
 	private String namePattern;
 	private String nameRegex;
 	private boolean enabled;
@@ -16,13 +16,12 @@ public class IgnoreRuleImpl implements IgnoreRule {
 	}
 
 	@Override
-	public int getIndex() {
-		return index;
+	public String getIgnoreRuleId() {
+		return ignoreRuleId;
 	}
-
 	@Override
-	public void setIndex(int index) {
-		this.index = index;
+	public void setIgnoreRuleId(String ignoreRuleId) {
+		this.ignoreRuleId = ignoreRuleId;
 	}
 
 	@Override

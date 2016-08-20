@@ -54,19 +54,16 @@ $H$H$H Configuration settings
 
 The following property keys can be used to configure the behaviour of CloudStore:
 
-$H$H$H$H ignore[N].namePattern or ignore[N].nameRegex
+$H$H$H$H ignore[SSS].namePattern or ignore[SSS].nameRegex
 
 Files (or directories) can be ignored by specifying so-called ignore-rules. In every configuration
 file, zero or more such rules can be specified. Multiple rules are differentiated using
-an index, like in the following example:
+an alphanumeric identifier inbetween square brackets, like in the following example:
 
-	ignore[0].namePattern = *.bak
-	ignore[1].nameRegex = [a-z]\d*\.jpg
-	ignore[2].namePattern = ~*
-
-The indices must be consecutive, starting at 0. If there is a hole, for example if after the above "ignore[2]" an
-"ignore[31]" would follow, all rules after this hole are ignored (i.e. "ignore[2]" would be the last to be taken
-into account).
+	ignore[backup-file].namePattern = *.bak
+	ignore[25af5db5].nameRegex = [a-z]\d*\.jpg
+	ignore[25af5db5].enabled = false
+	ignore[Xe3k-4Ldp].namePattern = ~*
 
 If a file matches an ignore-rule (that is enabled), this file is neither synchronised nor touched in any other
 way by CloudStore.

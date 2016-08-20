@@ -1,6 +1,10 @@
 package co.codewizards.cloudstore.core.config;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 
@@ -193,4 +197,38 @@ public interface Config {
 	 * @return a version number that is guaranteed to be changed whenever the underlying files change.
 	 */
 	long getVersion();
+
+	/**
+	 * Gets all config-property-keys matching the given regular expression.
+	 * <p>
+	 * Just like {@link #getProperty(String, String)}, this method takes inheritance into account:
+	 * It collects keys from the current {@code Config} instance and all its parents, recursively.
+	 * <p>
+	 * Note, that {@link Matcher#matches()} is used, i.e. the {@code regex} must match the entire
+	 * config-key.
+	 * <p>
+	 * The given {@code regex} may contain capturing groups, whose results are returned in the {@code Map}'s
+	 * values. Note, that the entire match (which is by convention the group 0) is ignored in the values,
+	 * because it is the {@code Map}'s key, already. Hence, the first entry in the {@code Map}'s values
+	 * (with index 0) corresponds to the first capturing group in the regular expression.
+	 * <p>
+	 * For example, let's say the regex is "ignore\[([^]]*)\]\.(.*)" and the following matching properties
+	 * exist:
+	 * <ul>
+	 * <li>ignore[backup-file].namePattern=*.bak</li>
+	 * <li>ignore[backup-file].enabled=false</li>
+	 * <li>ignore[class-file].namePattern=*.class</li>
+	 * </ul>
+	 * <p>
+	 * This leads to a resulting map with the following entries:
+	 * <ul>
+	 * <li>key: "ignore[backup-file].namePattern", value: "backup-file", "namePattern"</li>
+	 * <li>key: "ignore[backup-file].enabled", value: "backup-file", "enabled"</li>
+	 * <li>key: "ignore[class-file].namePattern", value: "class-file", "namePattern"</li>
+	 * </ul>
+	 * <p>
+	 * @param regex the regular expression to look for. Must not be <code>null</code>.
+	 * @return the keys found together with capturing groups. Never <code>null</code>.
+	 */
+	Map<String, List<String>> getKey2GroupsMatching(Pattern regex);
 }

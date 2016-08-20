@@ -10,12 +10,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +31,6 @@ import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -86,7 +91,7 @@ public class ConfigImpl implements Config {
 	private final WeakReference<File> fileRef;
 	protected final File[] propertiesFiles;
 	private final long[] propertiesFilesLastModified;
-	private final Properties properties;
+	protected final Properties properties;
 
 	private static final Object classMutex = ConfigImpl.class;
 	private final Object instanceMutex;
@@ -99,9 +104,9 @@ public class ConfigImpl implements Config {
 		if (parentConfig == null)
 			fileRef = null;
 		else
-			fileRef = new WeakReference<File>(AssertUtil.assertNotNull("file", file));
+			fileRef = new WeakReference<File>(assertNotNull("file", file));
 
-		this.propertiesFiles = AssertUtil.assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
+		this.propertiesFiles = assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
 		properties = new Properties(parentConfig == null ? null : parentConfig.properties);
 		propertiesFilesLastModified = new long[propertiesFiles.length];
 		instanceMutex = properties;
@@ -170,7 +175,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static Config getInstance(final File file, final boolean isDirectory) {
-		AssertUtil.assertNotNull("file", file);
+		assertNotNull("file", file);
 		cleanFileRefs();
 
 		File config_file = null;
@@ -194,7 +199,7 @@ public class ConfigImpl implements Config {
 				fileSoftRefs.add(new SoftReference<File>(file));
 				config_file = config.getFile();
 			}
-			AssertUtil.assertNotNull("config_file", config_file);
+			assertNotNull("config_file", config_file);
 		}
 		refreshFileHardRefAndCleanOldHardRefs(config_file);
 		return config;
@@ -216,7 +221,7 @@ public class ConfigImpl implements Config {
 		}
 	}
 
-	private ConfigImpl readIfNeeded() {
+	private void readIfNeeded() {
 		synchronized (instanceMutex) {
 			for (int i = 0; i < propertiesFiles.length; i++) {
 				final File propertiesFile = propertiesFiles[i];
@@ -230,8 +235,6 @@ public class ConfigImpl implements Config {
 
 		if (parentConfig != null)
 			parentConfig.readIfNeeded();
-
-		return this;
 	}
 
 	private void read() {
@@ -459,7 +462,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public String getPropertyAsNonEmptyTrimmedString(final String key, final String defaultValue) {
-		AssertUtil.assertNotNull("key", key);
+		assertNotNull("key", key);
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -540,7 +543,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final E defaultValue) {
-		AssertUtil.assertNotNull("defaultValue", defaultValue);
+		assertNotNull("defaultValue", defaultValue);
 		@SuppressWarnings("unchecked")
 		final Class<E> enumClass = (Class<E>) defaultValue.getClass();
 		return getPropertyAsEnum(key, enumClass, defaultValue);
@@ -548,7 +551,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final Class<E> enumClass, final E defaultValue) {
-		AssertUtil.assertNotNull("enumClass", enumClass);
+		assertNotNull("enumClass", enumClass);
 		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
@@ -578,7 +581,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final ConfigImpl config) {
-		final File config_file = AssertUtil.assertNotNull("config", config).getFile();
+		final File config_file = assertNotNull("config", config).getFile();
 		if (config_file != null)
 			refreshFileHardRefAndCleanOldHardRefs(config_file);
 	}
@@ -591,7 +594,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File config_file) {
-		AssertUtil.assertNotNull("config_file", config_file);
+		assertNotNull("config_file", config_file);
 		synchronized (fileHardRefs) {
 			// make sure the config_file is at the end of fileHardRefs
 			fileHardRefs.remove(config_file);
@@ -600,6 +603,43 @@ public class ConfigImpl implements Config {
 			// remove the first entry until size does not exceed limit anymore.
 			while (fileHardRefs.size() > fileHardRefsMaxSize)
 				fileHardRefs.remove(fileHardRefs.iterator().next());
+		}
+	}
+
+	@Override
+	public Map<String, List<String>> getKey2GroupsMatching(final Pattern regex) {
+		assertNotNull("regex", regex);
+		refreshFileHardRefAndCleanOldHardRefs();
+
+		final Map<String, List<String>> key2Groups = new HashMap<>();
+		populateKeysMatching(key2Groups, regex);
+		return Collections.unmodifiableMap(key2Groups);
+	}
+
+	protected void populateKeysMatching(final Map<String, List<String>> key2Groups, final Pattern regex) {
+		assertNotNull("key2Groups", key2Groups);
+		assertNotNull("regex", regex);
+		if (parentConfig != null)
+			parentConfig.populateKeysMatching(key2Groups, regex);
+
+		synchronized (instanceMutex) {
+			readIfNeeded();
+
+			for (final Object k : properties.keySet()) {
+				final String key = (String) k;
+				if (key2Groups.containsKey(key))
+					continue;
+
+				final Matcher matcher = regex.matcher(key);
+				if (matcher.matches()) {
+					final int groupCount = matcher.groupCount();
+					final List<String> groups = new ArrayList<>(groupCount);
+					for (int i = 1; i <= groupCount; ++i) // ignore group 0, because this is the same as key.
+						groups.add(matcher.group(i));
+
+					key2Groups.put(key, Collections.unmodifiableList(groups));
+				}
+			}
 		}
 	}
 }

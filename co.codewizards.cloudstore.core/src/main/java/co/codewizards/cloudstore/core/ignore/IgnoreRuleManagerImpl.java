@@ -7,12 +7,15 @@ import static co.codewizards.cloudstore.core.util.Util.*;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +24,6 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	private static final Logger logger = LoggerFactory.getLogger(IgnoreRuleManagerImpl.class);
@@ -72,7 +74,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	public static IgnoreRuleManager getInstanceForDirectory(final File directory) {
-		AssertUtil.assertNotNull("directory", directory);
+		assertNotNull("directory", directory);
 		cleanFileRefs();
 
 		File irm_dir = null;
@@ -110,24 +112,29 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 				ignoreRules = null;
 
 			if (ignoreRules == null) {
-				final List<IgnoreRule> result = new ArrayList<>();
-				int emptyCounter = 0;
-				for (int index = 0; ; ++index) {
-					final IgnoreRule ignoreRule = loadIgnoreRule(index);
-					if (ignoreRule == null) {
-						if (++emptyCounter > 3)
-							break; // We're a bit tolerant and don't immediately break (but only after 3 empty indices).
-
-						continue;
-					}
-					emptyCounter = 0;
-					result.add(ignoreRule);
+				final Set<String> ignoreRuleIds = getIgnoreRuleIds();
+				final List<IgnoreRule> result = new ArrayList<>(ignoreRuleIds.size());
+				for (final String ignoreRuleId : ignoreRuleIds) {
+					final IgnoreRule ignoreRule = loadIgnoreRule(ignoreRuleId);
+					if (ignoreRule != null)
+						result.add(ignoreRule);
 				}
 				configVersion = newConfigVersion;
 				ignoreRules = Collections.unmodifiableList(result);
+				logger.info("getIgnoreRules: Loaded for newConfigVersion={}: {}", newConfigVersion, ignoreRules);
 			}
 			return ignoreRules;
 		}
+	}
+
+	private Set<String> getIgnoreRuleIds() {
+		final Set<String> result = new HashSet<>();
+		final Map<String, List<String>> key2Groups = config.getKey2GroupsMatching(Pattern.compile("ignore\\[([^]]*)\\].*"));
+		for (final List<String> groups : key2Groups.values()) {
+			final String ignoreRuleId = groups.get(0);
+			result.add(ignoreRuleId);
+		}
+		return result;
 	}
 
 	@Override
@@ -149,50 +156,52 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 		return false;
 	}
 
-	private IgnoreRule loadIgnoreRule(int index) {
-		String namePattern = config.getProperty(getConfigKeyNamePattern(index), null);
-		final String nameRegex = config.getProperty(getConfigKeyNameRegex(index), null);
+	private IgnoreRule loadIgnoreRule(final String ignoreRuleId) {
+		assertNotNull("ignoreRuleId", ignoreRuleId);
+		String namePattern = config.getProperty(getConfigKeyNamePattern(ignoreRuleId), null);
+		final String nameRegex = config.getProperty(getConfigKeyNameRegex(ignoreRuleId), null);
 
 		if (namePattern == null && nameRegex == null)
 			return null;
 
 		if (namePattern != null && nameRegex != null) {
-			logger.warn("loadIgnoreRule: index={}: namePattern='{}' and nameRegex='{}' are both specified! Ignoring namePattern!",
-					index, namePattern, nameRegex);
+			logger.warn("loadIgnoreRule: ignoreRuleId={}: namePattern='{}' and nameRegex='{}' are both specified! Ignoring namePattern!",
+					ignoreRuleId, namePattern, nameRegex);
 			namePattern = null;
 		}
 
 		IgnoreRule ignoreRule = createObject(IgnoreRuleImpl.class);
-		ignoreRule.setIndex(index);
+		ignoreRule.setIgnoreRuleId(ignoreRuleId);
 		ignoreRule.setNamePattern(namePattern);
 		ignoreRule.setNameRegex(nameRegex);
-		ignoreRule.setEnabled(config.getPropertyAsBoolean(getConfigKeyEnabled(index), true));
-		ignoreRule.setCaseSensitive(config.getPropertyAsBoolean(getConfigKeyCaseSensitive(index), false));
+		ignoreRule.setEnabled(config.getPropertyAsBoolean(getConfigKeyEnabled(ignoreRuleId), true));
+		ignoreRule.setCaseSensitive(config.getPropertyAsBoolean(getConfigKeyCaseSensitive(ignoreRuleId), false));
 		return ignoreRule;
 	}
 
-	private String getConfigKeyNamePattern(int index) {
-		return getConfigKeyIgnorePrefix(index) + "namePattern";
+	private String getConfigKeyNamePattern(String ignoreRuleId) {
+		return getConfigKeyIgnorePrefix(ignoreRuleId) + "namePattern";
 	}
 
-	private String getConfigKeyNameRegex(int index) {
-		return getConfigKeyIgnorePrefix(index) + "nameRegex";
+	private String getConfigKeyNameRegex(String ignoreRuleId) {
+		return getConfigKeyIgnorePrefix(ignoreRuleId) + "nameRegex";
 	}
 
-	private String getConfigKeyEnabled(int index) {
-		return getConfigKeyIgnorePrefix(index) + "enabled";
+	private String getConfigKeyEnabled(String ignoreRuleId) {
+		return getConfigKeyIgnorePrefix(ignoreRuleId) + "enabled";
 	}
 
-	private String getConfigKeyCaseSensitive(int index) {
-		return getConfigKeyIgnorePrefix(index) + "caseSensitive";
+	private String getConfigKeyCaseSensitive(String ignoreRuleId) {
+		return getConfigKeyIgnorePrefix(ignoreRuleId) + "caseSensitive";
 	}
 
-	private String getConfigKeyIgnorePrefix(int index) {
-		return String.format("ignore[%d].", index);
+	private String getConfigKeyIgnorePrefix(String ignoreRuleId) {
+		assertNotNull("ignoreRuleId", ignoreRuleId);
+		return "ignore[" + ignoreRuleId + "].";
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final IgnoreRuleManagerImpl ignoreRuleManager) {
-		final File dir = AssertUtil.assertNotNull("ignoreRuleManager", ignoreRuleManager).directory;
+		final File dir = assertNotNull("ignoreRuleManager", ignoreRuleManager).directory;
 		if (dir != null)
 			refreshFileHardRefAndCleanOldHardRefs(dir);
 	}
@@ -202,7 +211,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File dir) {
-		AssertUtil.assertNotNull("dir", dir);
+		assertNotNull("dir", dir);
 		synchronized (fileHardRefs) {
 			// make sure the current dir is at the end of fileHardRefs
 			fileHardRefs.remove(dir);
