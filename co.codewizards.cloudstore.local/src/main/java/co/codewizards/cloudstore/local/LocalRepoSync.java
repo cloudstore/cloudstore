@@ -55,6 +55,7 @@ public class LocalRepoSync {
 	protected final ModificationDao modificationDao;
 	protected final DeleteModificationDao deleteModificationDao;
 	private Collection<RemoteRepository> remoteRepositories;
+	private boolean ignoreRulesEnabled;
 
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
 
@@ -137,7 +138,9 @@ public class LocalRepoSync {
 			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
 
 			if (parentRepoFile != null) {
-				boolean ignored = IgnoreRuleManagerImpl.getInstanceForDirectory(file.getParentFile()).isIgnored(file);
+				boolean ignored = isIgnoreRulesEnabled()
+						? IgnoreRuleManagerImpl.getInstanceForDirectory(file.getParentFile()).isIgnored(file)
+								: false;
 				if (ignored) {
 					if (repoFile != null) {
 						deleteRepoFile(repoFile, false);
@@ -629,5 +632,16 @@ public class LocalRepoSync {
 
 	protected void onFinalizeFileChunk(FileChunk fileChunk) {
 		// can be extended by sub-classes to handle FileChunk-subclasses specifically.
+	}
+
+	public boolean isIgnoreRulesEnabled() {
+		return ignoreRulesEnabled;
+	}
+	public void setIgnoreRulesEnabled(boolean ignoreRulesEnabled) {
+		this.ignoreRulesEnabled = ignoreRulesEnabled;
+	}
+	public LocalRepoSync ignoreRulesEnabled(boolean ignoreRulesEnabled) {
+		setIgnoreRulesEnabled(ignoreRulesEnabled);
+		return this;
 	}
 }

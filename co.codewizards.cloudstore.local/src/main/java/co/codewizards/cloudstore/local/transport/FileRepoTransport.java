@@ -414,7 +414,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
 			ParentFileLastModifiedManager.getInstance().backupParentFileLastModified(parentFile);
 			try {
-				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
+				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction); // not sure about the ignoreRulesEnabled here.
 				localRepoSync.sync(file, new NullProgressMonitor(), true);
 
 				if (fileIsLocalRoot) {
@@ -622,7 +622,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	protected RepoFile syncRepoFile(final LocalRepoTransaction transaction, final File file) {
 		assertNotNull("transaction", transaction);
 		assertNotNull("file", file);
-		return LocalRepoSync.create(transaction).sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
+		return LocalRepoSync.create(transaction)
+				.sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
 	}
 
 	/**
