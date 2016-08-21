@@ -108,7 +108,7 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 	}
 
 	@Test
-	public void ignoreRulesExistBecomeDisabled() throws Exception {
+	public void ignoreRulesBecomeDisabled() throws Exception {
 		createLocalAndRemoteRepo();
 		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(remoteRoot);
 
