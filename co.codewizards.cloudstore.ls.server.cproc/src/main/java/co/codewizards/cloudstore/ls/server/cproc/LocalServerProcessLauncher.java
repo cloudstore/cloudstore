@@ -22,10 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
+import co.codewizards.cloudstore.ls.core.LsConfig;
 
 public class LocalServerProcessLauncher {
 	private static final Logger logger = LoggerFactory.getLogger(LocalServerProcessLauncher.class);
@@ -34,20 +34,27 @@ public class LocalServerProcessLauncher {
 	private static final String JAR_URL_CONTENT_PATH_SEPARATOR = "!/";
 	private static final String FILE_PROTOCOL = "file";
 
-	private static final String CONFIG_KEY_START_TIMEOUT = "LocalServerProcess.startTimeout";
-	private static final long DEFAULT_START_TIMEOUT = 120000L;
-
 	public LocalServerProcessLauncher() {
 	}
 
-	public void start() throws IOException {
+	public boolean start() throws IOException {
+		// Check the configuration 'localServerProcess.enabled'.
+		if (! LsConfig.isLocalServerProcessEnabled())
+			return false;
+
+		// Even though 'localServerProcess.enabled' is 'true', we also check for 'localServer.enabled'.
+		// If the 'localServer.enabled' is 'false', waitUntilServerOnline() fails anyway, because the
+		// LocalServer is not started inside the separate VM process. Hence, we don't launch the VM at all.
+		if (! LsConfig.isLocalServerEnabled())
+			return false;
+
 		final File javaExecutableFile = getJavaExecutableFile();
 		if (javaExecutableFile == null)
-			return;
+			return false;
 
 		final File thisJarFile = getThisJarFile();
 		if (thisJarFile == null)
-			return;
+			return false;
 
 		final List<String> command = new ArrayList<>();
 		command.add(javaExecutableFile.getPath());
@@ -70,10 +77,11 @@ public class LocalServerProcessLauncher {
 		final Process process = pb.start();
 		if (process == null) {
 			logger.warn("start: process=null");
-			return;
+			return false;
 		}
 
 		waitUntilServerOnline();
+		return true;
 	}
 
 	private void populateConfigSystemProperties(final List<String> command) {
@@ -89,10 +97,9 @@ public class LocalServerProcessLauncher {
 	}
 
 	private void waitUntilServerOnline() {
-		final Config config = ConfigImpl.getInstance();
 		final long startTimestamp = System.currentTimeMillis();
 		while (true) {
-			final long timeoutMs = config.getPropertyAsPositiveOrZeroLong(CONFIG_KEY_START_TIMEOUT, DEFAULT_START_TIMEOUT);
+			final long timeoutMs = LsConfig.getLocalServerProcessStartTimeout();
 			final boolean timeout = System.currentTimeMillis() - startTimestamp > timeoutMs;
 
 			LocalServerPropertiesManager.getInstance().clear();
