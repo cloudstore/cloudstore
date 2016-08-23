@@ -1,16 +1,42 @@
 package co.codewizards.cloudstore.ls.core;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class LsConfig {
 
+	/**
+	 * {@link Config}-key controlling whether the local-server enabled.
+	 * @see #DEFAULT_LOCAL_SERVER_ENABLED
+	 * @see #isLocalServerEnabled()
+	 */
 	public static final String CONFIG_KEY_LOCAL_SERVER_ENABLED = "localServer.enabled";
+	/**
+	 * Default value for {@link #CONFIG_KEY_LOCAL_SERVER_ENABLED}.
+	 */
 	public static final boolean DEFAULT_LOCAL_SERVER_ENABLED = true;
 
+	/**
+	 * {@link Config}-key controlling whether the separate local-server-<b>process</b> is launched.
+	 * @see #DEFAULT_LOCAL_SERVER_PROCESS_ENABLED
+	 * @see #isLocalServerProcessEnabled()
+	 */
 	public static final String CONFIG_KEY_LOCAL_SERVER_PROCESS_ENABLED = "localServerProcess.enabled";
+	/**
+	 * Default value for {@link #CONFIG_KEY_LOCAL_SERVER_PROCESS_ENABLED}
+	 */
 	public static final boolean DEFAULT_LOCAL_SERVER_PROCESS_ENABLED = true;
 
+	/**
+	 * {@link Config}-key controlling the timeout in milliseconds the primary (first launched) process waits for
+	 * the separate local-server-process to become available.
+	 * @see #DEFAULT_LOCAL_SERVER_PROCESS_START_TIMEOUT
+	 * @see #getLocalServerProcessStartTimeout()
+	 */
 	public static final String CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT = "localServerProcess.startTimeout";
+	/**
+	 * Default value for {@link #CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT}
+	 */
 	public static final long DEFAULT_LOCAL_SERVER_PROCESS_START_TIMEOUT = 120000L;
 
 	private LsConfig() {
@@ -25,6 +51,7 @@ public class LsConfig {
 	 * Thus in order to launch the local-server-process, both {@code isLocalServerEnabled()}
 	 * and {@link #isLocalServerProcessEnabled()} must be <code>true</code>.
 	 * @return <code>true</code>, if the local-server should be listening; <code>false</code> otherwise.
+	 * @see #CONFIG_KEY_LOCAL_SERVER_ENABLED
 	 */
 	public static boolean isLocalServerEnabled() {
 		return ConfigImpl.getInstance().getPropertyAsBoolean(
@@ -38,10 +65,13 @@ public class LsConfig {
 	 * Controls, whether a TCP (HTTP+REST) server is started in a separate process,
 	 * i.e. whether the current process should launch a separate process.
 	 * <p>
-	 * If <code>false</code>, it also prevents the local-server-<b>process</b> from being launched.
-	 * Thus in order to launch the local-server-process, both {@link #isLocalServerEnabled()}
+	 * If <code>false</code>, the local-server (if {@linkplain #isLocalServerEnabled() enabled})
+	 * runs inside the primary (first-launched) VM process.
+	 * <p>
+	 * Note: In order to launch the local-server-process, both {@link #isLocalServerEnabled()}
 	 * and {@code isLocalServerProcessEnabled()} must be <code>true</code>.
 	 * @return <code>true</code>, if the local-server should be listening; <code>false</code> otherwise.
+	 * @see #CONFIG_KEY_LOCAL_SERVER_PROCESS_ENABLED
 	 */
 	public static boolean isLocalServerProcessEnabled() {
 		return ConfigImpl.getInstance().getPropertyAsBoolean(
@@ -49,6 +79,15 @@ public class LsConfig {
 				DEFAULT_LOCAL_SERVER_PROCESS_ENABLED);
 	}
 
+	/**
+	 * Gets the timeout in milliseconds the primary (first launched) process waits for
+	 * the separate local-server-process to become available.
+	 * <p>
+	 * If the local-server does not get ready within this timeout, an exception is thrown.
+	 * @return the timeout in milliseconds within which the local-server-process must be
+	 * launched completely (i.e. the TCP server become available).
+	 * @see #CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT
+	 */
 	public static long getLocalServerProcessStartTimeout() {
 		final long timeoutMs = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
 						CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT,
