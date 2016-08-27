@@ -16,9 +16,9 @@ import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 
-public class PathPrefixedIgnoreRulesRepoToRepoSyncIT extends AbstractRepoToRepoSyncIT
+public class PathPrefixedConfigInheritanceRepoToRepoSyncIT extends AbstractRepoToRepoSyncIT
 {
-	private static final Logger logger = LoggerFactory.getLogger(PathPrefixedIgnoreRulesRepoToRepoSyncIT.class);
+	private static final Logger logger = LoggerFactory.getLogger(PathPrefixedConfigInheritanceRepoToRepoSyncIT.class);
 
 	@Test
 	public void parentConfigWithRemotePathPrefix() throws Exception {
