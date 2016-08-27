@@ -25,6 +25,35 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRepoToRepoSyncIT.class);
 
+	protected LocalRepoManager localRepoManagerLocal;
+	protected LocalRepoManager localRepoManagerRemote;
+	protected RepoToRepoSync repoToRepoSync;
+
+	@Override
+	public void before() throws Exception {
+		super.before();
+	}
+
+	@Override
+	public void after() throws Exception {
+		if (repoToRepoSync != null) {
+			repoToRepoSync.close();
+			repoToRepoSync = null;
+		}
+
+		if (localRepoManagerLocal != null) {
+			localRepoManagerLocal.close();
+			localRepoManagerLocal = null;
+		}
+
+		if (localRepoManagerRemote != null) {
+			localRepoManagerRemote.close();
+			localRepoManagerRemote = null;
+		}
+
+		super.after();
+	}
+
 	protected void syncFromRemoteToLocal() throws Exception {
 		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot.exists()).isFalse();
@@ -36,11 +65,15 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot.isDirectory()).isTrue();
 
-		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
+		System.out.println("localRoot: " + localRoot.getName());
+		System.out.println("localRepositoryId: " + localRepoManagerLocal.getRepositoryId());
 
-		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
+		System.out.println("remoteRoot: " + remoteRoot.getName());
+		System.out.println("remoteRepositoryId: " + localRepoManagerRemote.getRepositoryId());
 
 		final UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
 		remoteRootURLWithPathPrefix = getRemoteRootURLWithPathPrefix(remoteRepositoryId);
@@ -80,14 +113,10 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 		final File child_5 = createDirectory(remoteRoot, "5#");
 		createFileWithRandomContent(child_5, "e");
 
-		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
-		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(remoteRoot);
-
-		localRepoManagerLocal.close();
-		localRepoManagerRemote.close();
 
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
@@ -105,10 +134,10 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 		remoteRoot.mkdirs();
 		assertThat(remoteRoot.isDirectory()).isTrue();
 
-		final LocalRepoManager localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
+		localRepoManagerLocal = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot);
 		assertThat(localRepoManagerLocal).isNotNull();
 
-		final LocalRepoManager localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
+		localRepoManagerRemote = localRepoManagerFactory.createLocalRepoManagerForNewRepository(remoteRoot);
 		assertThat(localRepoManagerRemote).isNotNull();
 
 		final UUID remoteRepositoryId = localRepoManagerRemote.getRepositoryId();
@@ -142,14 +171,10 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 
 		assertThatFilesInRepoAreCorrect(localRoot);
 
-		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+		repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
-		repoToRepoSync.close();
 
 		assertThatFilesInRepoAreCorrect(localRoot);
-
-		localRepoManagerLocal.close();
-		localRepoManagerRemote.close();
 
 		assertThatNoCollisionInRepo(localRoot);
 		assertThatNoCollisionInRepo(remoteRoot);
@@ -175,9 +200,8 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_b.isFile()).isTrue();
 
-		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+//		repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
-		repoToRepoSync.close();
 
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_b.isFile()).isTrue();
@@ -208,9 +232,9 @@ public abstract class AbstractRepoToRepoSyncIT extends AbstractRepoAwareIT
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_new_xxx.isFile()).isTrue();
 
-		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
+//		final RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(), remoteRootURLWithPathPrefix);
 		repoToRepoSync.sync(new LoggerProgressMonitor(logger));
-		repoToRepoSync.close();
+//		repoToRepoSync.close();
 
 		assertThat(r_child_2_1_b.exists()).isFalse();
 		assertThat(r_child_2_new_xxx.isFile()).isTrue();

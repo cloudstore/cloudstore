@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -361,4 +362,5 @@ public interface RepoTransport extends AutoCloseable {
 	@Override
 	public void close();
 
+	void putParentConfigPropSetDto(ConfigPropSetDto parentConfigPropSetDto);
 }

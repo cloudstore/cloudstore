@@ -13,22 +13,32 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jdo.PersistenceManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
@@ -52,6 +62,7 @@ import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.LocalRepoSync;
@@ -1354,4 +1365,87 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		}
 	}
 
+	@Override
+	public void putParentConfigPropSetDto(ConfigPropSetDto parentConfigPropSetDto) {
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) { // we open a write-transaction merely for the exclusive lock
+			final RemoteRepository remoteRepository = transaction.getDao(RemoteRepositoryDao.class).getRemoteRepositoryOrFail(getClientRepositoryIdOrFail());
+			if (! remoteRepository.getLocalPathPrefix().isEmpty()) {
+				logger.warn("putParentConfigPropSetDto: IGNORING unsupported situation! See: https://github.com/cloudstore/cloudstore/issues/58");
+				return;
+			}
+
+			final File metaDir = getLocalRepoManager().getLocalRoot().createFile(LocalRepoManager.META_DIR_NAME);
+			if (! metaDir.isDirectory())
+				throw new IOException("Directory does not exist: " + metaDir);
+
+			final File repoParentConfigFile = metaDir.createFile(Config.PROPERTIES_FILE_NAME_PARENT_PREFIX + getClientRepositoryIdOrFail() + Config.PROPERTIES_FILE_NAME_SUFFIX);
+
+			if (parentConfigPropSetDto.getConfigPropDtos().isEmpty()) {
+				repoParentConfigFile.delete();
+				if (repoParentConfigFile.isFile())
+					throw new IOException("Deleting file failed: " + repoParentConfigFile);
+			}
+			else {
+				final Properties properties = new Properties();
+				for (final ConfigPropDto configPropDto : parentConfigPropSetDto.getConfigPropDtos())
+					properties.setProperty(configPropDto.getKey(), configPropDto.getValue());
+
+				PropertiesUtil.store(repoParentConfigFile, properties, null);
+			}
+
+			mergeRepoParentConfigFiles();
+
+			transaction.commit();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void mergeRepoParentConfigFiles() throws IOException {
+		final File metaDir = getLocalRepoManager().getLocalRoot().createFile(LocalRepoManager.META_DIR_NAME);
+
+		final Properties properties = new Properties();
+		for (File configFile : getRepoParentConfigFiles()) {
+			try (InputStream in = configFile.createInputStream()) {
+				properties.load(in);
+			}
+		}
+
+		final File parentConfigFile = metaDir.createFile(Config.PROPERTIES_FILE_NAME_PARENT);
+		if (properties.isEmpty()) {
+			parentConfigFile.delete();
+			if (parentConfigFile.isFile())
+				throw new IOException("Deleting file failed: " + parentConfigFile);
+		}
+		else
+			PropertiesUtil.store(parentConfigFile, properties, null);
+	}
+
+	private List<File> getRepoParentConfigFiles() {
+		final List<File> result = new ArrayList<>();
+		final File metaDir = getLocalRepoManager().getLocalRoot().createFile(LocalRepoManager.META_DIR_NAME);
+
+		final Pattern repoParentConfigPattern = Pattern.compile(
+				Pattern.quote(Config.PROPERTIES_FILE_NAME_PARENT_PREFIX) + "[^.]*" + Pattern.quote(Config.PROPERTIES_FILE_NAME_SUFFIX));
+
+		Matcher repoParentConfigMatcher = null;
+		for (File file : metaDir.listFiles()) {
+			if (repoParentConfigMatcher == null)
+				repoParentConfigMatcher = repoParentConfigPattern.matcher(file.getName());
+			else
+				repoParentConfigMatcher.reset(file.getName());
+
+			if (repoParentConfigMatcher.matches() && file.isFile())
+				result.add(file);
+		}
+
+		Collections.sort(result, new Comparator<File>() {
+			@Override
+			public int compare(File o1, File o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+
+		return result;
+	}
 }

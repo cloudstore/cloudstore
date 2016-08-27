@@ -4,11 +4,15 @@ import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 
 import javax.jdo.FetchPlan;
@@ -16,7 +20,10 @@ import javax.jdo.FetchPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
@@ -52,7 +59,24 @@ public class ChangeSetDtoBuilder {
 	private final LocalRepoTransaction transaction;
 	private final RepoTransport repoTransport;
 	private final UUID clientRepositoryId;
+
+	/**
+	 * The path-prefix of the opposite side.
+	 * <p>
+	 * For example, when we are building the {@code ChangeSetDto} on the server-side, then this is
+	 * the prefix used by the client. Thus, let's assume that the client has checked-out the
+	 * sub-directory "/documents", then this is the sub-directory on the server-side inside the server's
+	 * root-directory.
+	 * <p>
+	 * If, in this same scenario, the {@code ChangeSetDto} is built on the client-side, then this
+	 * is an empty string.
+	 */
 	private final String pathPrefix;
+
+	private LocalRepository localRepository;
+	private RemoteRepository remoteRepository;
+	private LastSyncToRemoteRepo lastSyncToRemoteRepo;
+	private Collection<Modification> modifications;
 
 	protected ChangeSetDtoBuilder(final LocalRepoTransaction transaction, final RepoTransport repoTransport) {
 		this.transaction = assertNotNull("transaction", transaction);
@@ -66,41 +90,41 @@ public class ChangeSetDtoBuilder {
 	}
 
 	public ChangeSetDto buildChangeSetDto() {
+		logger.trace(">>> buildChangeSetDto >>>");
+
+		localRepository = null; remoteRepository = null;
+		lastSyncToRemoteRepo = null; modifications = null;
+
 		final ChangeSetDto changeSetDto = createObject(ChangeSetDto.class);
+
 		final LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
 		final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
-		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 		final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
 		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 
-		// We must *first* read the LocalRepository and afterwards all changes, because this way, we don't need to lock it in the DB.
-		// If we *then* read RepoFiles with a newer localRevision, it doesn't do any harm - we'll simply read them again, in the
-		// next run.
-		final LocalRepository localRepository = localRepositoryDao.getLocalRepositoryOrFail();
+		localRepository = localRepositoryDao.getLocalRepositoryOrFail();
+		remoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
+
+		logger.trace("localRepositoryId: {}", localRepository.getRepositoryId());
+		logger.trace("remoteRepositoryId: {}", remoteRepository.getRepositoryId());
+//		logger.trace("remoteRepository.localPathPrefix: {}", remoteRepository.getLocalPathPrefix()); // same as pathPrefix
+		logger.trace("pathPrefix: {}", pathPrefix);
+
 		changeSetDto.setRepositoryDto(RepositoryDtoConverter.create().toRepositoryDto(localRepository));
 
-		final RemoteRepository toRemoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
-
-		LastSyncToRemoteRepo lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepo(toRemoteRepository);
-		if (lastSyncToRemoteRepo == null) {
-			lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
-			lastSyncToRemoteRepo.setRemoteRepository(toRemoteRepository);
-			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
-		}
-		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
-		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
+		prepareLastSyncToRemoteRepo();
 		logger.info("buildChangeSetDto: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={} localRepositoryRevisionInProgress={}",
-				localRepository.getRepositoryId(), toRemoteRepository.getRepositoryId(),
+				localRepository.getRepositoryId(), remoteRepository.getRepositoryId(),
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
 
 		((LocalRepoTransactionImpl)transaction).getPersistenceManager().getFetchPlan().setGroup(FetchPlan.ALL);
-		final Collection<Modification> modifications = modificationDao.getModificationsAfter(toRemoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+		modifications = modificationDao.getModificationsAfter(remoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 		changeSetDto.setModificationDtos(toModificationDtos(modifications));
 
 		if (!pathPrefix.isEmpty()) {
 			final Collection<DeleteModification> deleteModifications = transaction.getDao(DeleteModificationDao.class).getDeleteModificationsForPathOrParentOfPathAfter(
-					pathPrefix, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), toRemoteRepository);
+					pathPrefix, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), remoteRepository);
 			if (!deleteModifications.isEmpty()) { // our virtual root was deleted => create synthetic DeleteModificationDto for virtual root
 				final DeleteModificationDto deleteModificationDto = new DeleteModificationDto();
 				deleteModificationDto.setId(0);
@@ -119,7 +143,115 @@ public class ChangeSetDtoBuilder {
 		final Map<Long, RepoFileDto> id2RepoFileDto = getId2RepoFileDtoWithParents(pathPrefixRepoFile, repoFiles, transaction);
 		changeSetDto.setRepoFileDtos(new ArrayList<RepoFileDto>(id2RepoFileDto.values()));
 
+		changeSetDto.setParentConfigPropSetDto(buildParentConfigPropSetDto());
+		logger.trace("<<< buildChangeSetDto <<<");
 		return changeSetDto;
+	}
+
+	protected void prepareLastSyncToRemoteRepo() {
+		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
+		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepo(remoteRepository);
+		if (lastSyncToRemoteRepo == null) {
+			lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
+			lastSyncToRemoteRepo.setRemoteRepository(remoteRepository);
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
+		}
+		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
+		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
+	}
+
+	/**
+	 * @return the {@code ConfigPropSetDto} for the parent configs or <code>null</code>, if no sync needed.
+	 */
+	protected ConfigPropSetDto buildParentConfigPropSetDto() {
+		logger.trace(">>> buildConfigPropSetDto >>>");
+		if (pathPrefix.isEmpty()) {
+			logger.debug("buildConfigPropSetDto: pathPrefix is empty => returning null.");
+			logger.trace("<<< buildConfigPropSetDto <<< null");
+			return null;
+		}
+
+		final List<File> configFiles = getExistingConfigFilesAbovePathPrefix();
+		if (! isFileModifiedAfterLastSync(configFiles) && ! isConfigFileDeletedAfterLastSync()) {
+			logger.trace("<<< buildConfigPropSetDto <<< null");
+			return null;
+		}
+
+		final Properties properties = new Properties();
+		for (final File configFile : configFiles) {
+			try {
+				try (InputStream in = configFile.createInputStream()) {
+					properties.load(in); // overwrites entries with same key
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		final ConfigPropSetDto result = new ConfigPropSetDto();
+		for (final Map.Entry<Object, Object> me : properties.entrySet()) {
+			final ConfigPropDto configPropDto = new ConfigPropDto();
+			configPropDto.setKey((String) me.getKey());
+			configPropDto.setValue((String) me.getValue());
+			result.getConfigPropDtos().add(configPropDto);
+		}
+
+		logger.trace("<<< buildConfigPropSetDto <<< {}", result);
+		return result;
+	}
+
+	private boolean isConfigFileDeletedAfterLastSync() {
+		final String searchSuffix = "/" + Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY;
+		for (final Modification modification : assertNotNull("modifications", modifications)) {
+			if (modification instanceof DeleteModification) {
+				final DeleteModification deleteModification = (DeleteModification) modification;
+				if (deleteModification.getPath().endsWith(searchSuffix)) {
+					logger.trace("isConfigFileDeletedAfterLastSync: returning true, because of deletion: {}", deleteModification.getPath());
+					return true;
+				}
+			}
+		}
+		logger.trace("isConfigFileDeletedAfterLastSync: returning false");
+		return false;
+	}
+
+	protected List<File> getExistingConfigFilesAbovePathPrefix() {
+		final ArrayList<File> result = new ArrayList<>();
+		final File localRoot = transaction.getLocalRepoManager().getLocalRoot();
+		File dir = getPathPrefixFile();
+		while (! localRoot.equals(dir)) {
+			dir = assertNotNull("dir.parentFile [dir=" + dir + "]", dir.getParentFile());
+			File configFile = dir.createFile(Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY);
+			if (configFile.isFile()) {
+				result.add(configFile);
+				logger.trace("getExistingConfigFilesAbovePathPrefix: enlisted configFile: {}", configFile);
+			}
+			else
+				logger.trace("getExistingConfigFilesAbovePathPrefix: skipped non-existing configFile: {}", configFile);
+		}
+		Collections.reverse(result); // must be sorted according to inheritance hierarchy with following file overriding previous file
+		return result;
+	}
+
+	protected boolean isFileModifiedAfterLastSync(final Collection<File> files) {
+		assertNotNull("files", files);
+		assertNotNull("lastSyncToRemoteRepo", lastSyncToRemoteRepo);
+
+		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+		final File localRoot = transaction.getLocalRepoManager().getLocalRoot();
+		for (final File file : files) {
+			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
+			if (repoFile == null) {
+				logger.warn("isFileModifiedAfterLastSync: RepoFile not found for (assuming it is new): {}", file);
+				return true;
+			}
+			if (repoFile.getLocalRevision() > lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced()) {
+				logger.trace("isFileModifiedAfterLastSync: file modified: {}", file);
+				return true;
+			}
+		}
+		logger.trace("isFileModifiedAfterLastSync: returning false");
+		return false;
 	}
 
 	protected File getPathPrefixFile() {

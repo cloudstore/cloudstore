@@ -31,6 +31,7 @@ import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -45,9 +46,10 @@ public class ConfigImpl implements Config {
 	private static final long fileRefsCleanPeriod = 60000L;
 	private static long fileRefsCleanLastTimestamp;
 
-	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local.properties";
+//	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local.properties";
 
-	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN = '.' + APP_ID_SIMPLE_ID + ".properties";
+//	private static final String PROPERTIES_FILE_NAME_FOR_DIRECTORY = '.' + APP_ID_SIMPLE_ID + ".properties";
+
 	/**
 	 * @deprecated We should only support one of these files - this is unnecessary!
 	 */
@@ -207,11 +209,15 @@ public class ConfigImpl implements Config {
 
 	private static File[] createPropertiesFiles(final File file, final boolean isDirectory) {
 		if (isDirectory) {
-			return new File[] {
-				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_HIDDEN),
-				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE),
-				createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL) // overrides the settings of the shared file!
-			};
+			List<File> files = new ArrayList<>();
+			File metaDir = createFile(file, LocalRepoManager.META_DIR_NAME);
+			if (metaDir.isDirectory())
+				files.add(createFile(metaDir, PROPERTIES_FILE_NAME_PARENT));
+
+			files.add(createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY));
+			files.add(createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_VISIBLE));
+			files.add(createFile(file, PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL)); // overrides the settings of the shared file!
+			return files.toArray(new File[files.size()]);
 		}
 		else {
 			return new File[] {

@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.dto.jaxb;
 
 import co.codewizards.cloudstore.core.auth.EncryptedSignedAuthToken;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
@@ -23,6 +24,7 @@ public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbCon
 	public Class<?>[] getClassesToBeBound() {
 		return new Class<?>[] {
 				ChangeSetDto.class,
+				ConfigPropSetDto.class,
 				CopyModificationDto.class,
 				DeleteModificationDto.class,
 				DirectoryDto.class,

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
@@ -230,8 +231,11 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	protected void sync(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final ChangeSetDto changeSetDto, final ProgressMonitor monitor) {
-		monitor.beginTask("Synchronising...", changeSetDto.getModificationDtos().size() + 3 * changeSetDto.getRepoFileDtos().size() + 1);
+		monitor.beginTask("Synchronising...", 1 + changeSetDto.getModificationDtos().size() + 3 * changeSetDto.getRepoFileDtos().size() + 1);
 		try {
+			syncParentConfigPropSetDto(fromRepoTransport, toRepoTransport, changeSetDto.getParentConfigPropSetDto(),
+					new SubProgressMonitor(monitor, 1));
+
 			final RepoFileDtoTreeNode repoFileDtoTree = RepoFileDtoTreeNode.createTree(changeSetDto.getRepoFileDtos());
 			if (repoFileDtoTree != null) {
 				sync(fromRepoTransport, toRepoTransport, repoFileDtoTree,
@@ -253,6 +257,24 @@ public class RepoToRepoSync implements AutoCloseable {
 						new Class<?>[] { RepoFileDto.class }, new Class<?>[] { DirectoryDto.class }, false,
 						new SubProgressMonitor(monitor, repoFileDtoTree.size()));
 			}
+		} finally {
+			monitor.done();
+		}
+	}
+
+	protected void syncParentConfigPropSetDto(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
+			final ConfigPropSetDto parentConfigPropSetDto, final ProgressMonitor monitor) {
+		assertNotNull("fromRepoTransport", fromRepoTransport);
+		assertNotNull("toRepoTransport", toRepoTransport);
+		// parentConfigPropSetDto may be null!
+		assertNotNull("monitor", monitor);
+
+		monitor.beginTask("Synchronising parent-config...", 1);
+		try {
+			if (parentConfigPropSetDto == null)
+				return;
+
+			toRepoTransport.putParentConfigPropSetDto(parentConfigPropSetDto);
 		} finally {
 			monitor.done();
 		}

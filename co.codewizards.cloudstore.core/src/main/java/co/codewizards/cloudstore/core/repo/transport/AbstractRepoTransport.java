@@ -1,16 +1,14 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.util.UrlDecoder;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public abstract class AbstractRepoTransport implements RepoTransport {
@@ -112,12 +110,8 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 				throw new IllegalStateException("pathPrefix should not end with '" + SLASH + "', but it does!");
 		}
 
-		try {
-			final String pathPrefix = URLDecoder.decode(urlEncodedPathPrefix, CHARSET_NAME_UTF_8);
-			return pathPrefix;
-		} catch (final UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		final String pathPrefix = UrlDecoder.decode(urlEncodedPathPrefix);
+		return pathPrefix;
 	}
 
 	@Override

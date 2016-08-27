@@ -9,7 +9,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.glassfish.jersey.uri.UriComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +16,8 @@ import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
 import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.core.util.UrlEncoder;
+import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 
 /**
@@ -84,7 +85,8 @@ public abstract class AbstractRequest<R> implements Request<R> {
 		// This UriComponent method is safe. It does not try to handle the '{' and '}'
 		// specially and with type PATH_SEGMENT, it encodes spaces using '%20' instead of '+'.
 		// It can therefore be used for *both* path segments *and* query parameters.
-		return UriComponent.encode(string, UriComponent.Type.PATH_SEGMENT);
+//		return org.glassfish.jersey.uri.UriComponent.encode(string, UriComponent.Type.PATH_SEGMENT);
+		return UrlEncoder.encode(string);
 	}
 
 	/**

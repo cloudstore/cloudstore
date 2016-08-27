@@ -1,14 +1,11 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,8 +54,10 @@ public final class UrlUtil {
 	}
 
 	/**
-	 * Appends the {@linkplain URLEncoder URL-encoded} {@code path} to the given
-	 * base {@code url}.
+	 * Appends the URL-encoded {@code path} to the given base {@code url}.
+	 * <p>
+	 * This method does <i>not</i> use {@link java.net.URLEncoder URLEncoder}, because of
+	 * <a href="https://java.net/jira/browse/JERSEY-417">JERSEY-417</a>.
 	 * @param url the URL to be appended. Must not be <code>null</code>.
 	 * @param path the path to append. May be <code>null</code>. It is assumed that this
 	 * path is already encoded. It is therefore <b>not</b> modified at all and appended
@@ -77,7 +76,7 @@ public final class UrlUtil {
 	/**
 	 * Appends the plain {@code path} to the given base {@code url}.
 	 * <p>
-	 * Each path segment (the text between '/') is separately {@linkplain URLEncoder URL-encoded}. A
+	 * Each path segment (the text between '/') is separately {@linkplain UrlEncoder URL-encoded}. A
 	 * '/' itself is therefore conserved and not encoded.
 	 * @param url the URL to be appended. Must not be <code>null</code>.
 	 * @param path the path to append. May be <code>null</code>.
@@ -92,11 +91,7 @@ public final class UrlUtil {
 		final String[] pathSegments = path.split("/");
 		final List<String> encodedPathSegments = new ArrayList<String>(pathSegments.length);
 		for (final String pathSegment : pathSegments) {
-			try {
-				encodedPathSegments.add(URLEncoder.encode(pathSegment, CHARSET_NAME_UTF_8));
-			} catch (final UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
+			encodedPathSegments.add(UrlEncoder.encode(pathSegment));
 		}
 		return appendEncodedPath(url, encodedPathSegments);
 	}

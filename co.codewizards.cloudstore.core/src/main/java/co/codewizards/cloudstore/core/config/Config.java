@@ -56,7 +56,15 @@ import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 public interface Config {
 	String APP_ID_SIMPLE_ID = AppIdRegistry.getInstance().getAppIdOrFail().getSimpleId();
 
-	String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local.properties";
+	String PROPERTIES_FILE_NAME_SUFFIX = ".properties";
+
+	String PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL = '.' + APP_ID_SIMPLE_ID + ".local" + PROPERTIES_FILE_NAME_SUFFIX;
+
+	String PROPERTIES_FILE_NAME_FOR_DIRECTORY = '.' + APP_ID_SIMPLE_ID + PROPERTIES_FILE_NAME_SUFFIX;
+
+	String PROPERTIES_FILE_NAME_PARENT_PREFIX = "parent.";
+
+	String PROPERTIES_FILE_NAME_PARENT = "parent" + PROPERTIES_FILE_NAME_SUFFIX;
 
 	/**
 	 * Prefix used for system properties overriding configuration entries.

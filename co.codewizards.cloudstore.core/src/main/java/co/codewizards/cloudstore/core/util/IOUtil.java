@@ -17,7 +17,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
@@ -808,11 +807,7 @@ public final class IOUtil {
 		String userNameDir = (prefix == null ? "" : prefix) + String.valueOf(getUserName()) + (suffix == null ? "" : suffix);
 
 		// the user name might contain illegal characters (in windows) => we encode basically all characters.
-		try {
-			userNameDir = URLEncoder.encode(userNameDir.replace('*', '_'), CHARSET_NAME_UTF_8);
-		} catch (final UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		userNameDir = UrlEncoder.encode(userNameDir.replace('*', '_'));
 
 		return createFile(IOUtil.getTempDir(), userNameDir);
 	}

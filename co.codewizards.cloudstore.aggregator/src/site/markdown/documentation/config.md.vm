@@ -37,17 +37,24 @@ $H$H$H$H Configuration per directory or per file
 Additionally, every directory can optionally contain the following files:
 
 1. *.cloudstore.properties*
-2. *cloudstore.properties*
-3. *.\$\{anyFileName\}.cloudstore.properties*
-4. *\$\{anyFileName\}.cloudstore.properties*
+2. *.cloudstore.local.properties*
+3. *cloudstore.properties* **(deprecated!)**
+4. *.\$\{anyFileName\}.cloudstore.properties* **(deprecated!)**
+5. *\$\{anyFileName\}.cloudstore.properties* **(deprecated!)**
 
 The files 1. and 2. are applicable to the entire directory and all sub-directories and files in it.
-Usually, on GNU/Linux people will prefer 1., but when using Windows, files starting with a \".\" are
-sometimes a bit hard to deal with. Therefore, we support both. The file 2. overrides the settings of file 1..
+
+The file 2. is excluded from the synchronisation.
+
+The file 3. is deprecated and will be removed, soon, because it is bad for performance to test
+for the existence of so many files. And there's no necessity for it.
 
 The files 3. and 4. are applicable only to the file ${anyFileName}. Thus, if you want to set special
 behaviour for the file *example.db* only, you can create the file *.example.db.cloudstore.properties* in
-the same directory.
+the same directory. This is not practical and therefore it's now deprecated, too. We may add a replacement
+working with name patterns (or regular expressions) applying to multiple files, but at the moment, this is
+not yet planned. Please let us know, if you use this feature and need it. Otherwise we're just going to drop
+this without a replacement.
 
 
 $H$H$H Configuration settings

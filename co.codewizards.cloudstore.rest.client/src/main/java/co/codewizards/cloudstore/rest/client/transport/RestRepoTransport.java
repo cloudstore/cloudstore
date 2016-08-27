@@ -23,6 +23,7 @@ import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
+import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
@@ -51,6 +52,7 @@ import co.codewizards.cloudstore.rest.client.request.MakeDirectory;
 import co.codewizards.cloudstore.rest.client.request.MakeSymlink;
 import co.codewizards.cloudstore.rest.client.request.Move;
 import co.codewizards.cloudstore.rest.client.request.PutFileData;
+import co.codewizards.cloudstore.rest.client.request.PutParentConfigPropSetDto;
 import co.codewizards.cloudstore.rest.client.request.RequestRepoConnection;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
@@ -221,6 +223,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
+	public void putParentConfigPropSetDto(ConfigPropSetDto parentConfigPropSetDto) {
+		getClient().execute(new PutParentConfigPropSetDto(getRepositoryId().toString(), parentConfigPropSetDto));
+	}
+
+	@Override
 	public String getUserName() {
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		return AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX + clientRepositoryId;
@@ -359,5 +366,4 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 		}
 		return builder;
 	}
-
 }

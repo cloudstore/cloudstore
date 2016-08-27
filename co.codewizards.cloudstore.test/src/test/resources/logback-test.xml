@@ -15,7 +15,10 @@
 	</logger>
 -->
 
+	<!--
 	<logger name="co.codewizards.cloudstore.ls.client.LocalServerClient" level="DEBUG" />
+	-->
+	<logger name="co.codewizards.cloudstore.local.transport.ChangeSetDtoBuilder" level="ALL" />
 
 	<!-- The level of the root logger is set to DEBUG by default. But we want to be able to change it here. -->
 <!--
