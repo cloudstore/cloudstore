@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
-import co.codewizards.cloudstore.core.dto.ConfigPropDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
@@ -188,13 +187,7 @@ public class ChangeSetDtoBuilder {
 			}
 		}
 
-		final ConfigPropSetDto result = new ConfigPropSetDto();
-		for (final Map.Entry<Object, Object> me : properties.entrySet()) {
-			final ConfigPropDto configPropDto = new ConfigPropDto();
-			configPropDto.setKey((String) me.getKey());
-			configPropDto.setValue((String) me.getValue());
-			result.getConfigPropDtos().add(configPropDto);
-		}
+		final ConfigPropSetDto result = new ConfigPropSetDto(properties);
 
 		logger.trace("<<< buildConfigPropSetDto <<< {}", result);
 		return result;

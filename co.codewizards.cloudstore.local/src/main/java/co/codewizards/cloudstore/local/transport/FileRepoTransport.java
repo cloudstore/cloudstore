@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
-import co.codewizards.cloudstore.core.dto.ConfigPropDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
@@ -1386,10 +1385,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 					throw new IOException("Deleting file failed: " + repoParentConfigFile);
 			}
 			else {
-				final Properties properties = new Properties();
-				for (final ConfigPropDto configPropDto : parentConfigPropSetDto.getConfigPropDtos())
-					properties.setProperty(configPropDto.getKey(), configPropDto.getValue());
-
+				Properties properties = parentConfigPropSetDto.toProperties();
 				PropertiesUtil.store(repoParentConfigFile, properties, null);
 			}
 

@@ -1,9 +1,11 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,6 +43,12 @@ public abstract class DtoIo <D> {
 			throw new IllegalStateException("Subclass " + getClass().getName() + " has no generic type argument!");
 	}
 
+	public byte[] serialize(final D dto) {
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		serialize(dto, out);
+		return out.toByteArray();
+	}
+
 	public void serialize(final D dto, final OutputStream out) {
 		assertNotNull("dto", dto);
 		assertNotNull("out", out);
@@ -49,6 +57,12 @@ public abstract class DtoIo <D> {
 		} catch (final JAXBException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public byte[] serializeWithGz(final D dto) {
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		serializeWithGz(dto, out);
+		return out.toByteArray();
 	}
 
 	public void serializeWithGz(final D dto, final OutputStream out) {
@@ -93,6 +107,11 @@ public abstract class DtoIo <D> {
 		}
 	}
 
+	public D deserialize(final byte[] in) {
+		assertNotNull("in", in);
+		return deserialize(new ByteArrayInputStream(in));
+	}
+
 	public D deserialize(final InputStream in) {
 		assertNotNull("in", in);
 		try {
@@ -100,6 +119,11 @@ public abstract class DtoIo <D> {
 		} catch (final JAXBException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public D deserializeWithGz(final byte[] in) {
+		assertNotNull("in", in);
+		return deserializeWithGz(new ByteArrayInputStream(in));
 	}
 
 	public D deserializeWithGz(final InputStream in) {
