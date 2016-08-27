@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>co.codewizards.cloudstore</groupId>
 		<artifactId>co.codewizards.cloudstore.parent</artifactId>
-		<version>0.9.10-SNAPSHOT</version>
+		<version>0.9.10</version>
 		<relativePath>../co.codewizards.cloudstore.parent</relativePath>
 	</parent>
 

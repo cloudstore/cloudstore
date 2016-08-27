@@ -9,6 +9,12 @@ $H$H$H What\'s new in 0.9.10?
 
 Compared to version 0.9.9, there are the following changes:
 
+* Bugfix: '+' in directory name caused errors when using as path-prefix
+	([issue 59](https://github.com/cloudstore/cloudstore/issues/59)).
+
+* Bugfix: Config inheritance now works with partial check-outs (sub-directory) 
+	([issue 58](https://github.com/cloudstore/cloudstore/issues/58)).
+
 * Enhancement: Ignore-rules allow arbitrary alphanumeric identifiers
 	([issue 53](https://github.com/cloudstore/cloudstore/issues/53)).
 
