@@ -218,6 +218,7 @@ public class ChangeSetDtoBuilder {
 	protected List<File> getExistingConfigFilesAbovePathPrefix() {
 		final ArrayList<File> result = new ArrayList<>();
 		final File localRoot = transaction.getLocalRepoManager().getLocalRoot();
+
 		File dir = getPathPrefixFile();
 		while (! localRoot.equals(dir)) {
 			dir = assertNotNull("dir.parentFile [dir=" + dir + "]", dir.getParentFile());
@@ -229,6 +230,18 @@ public class ChangeSetDtoBuilder {
 			else
 				logger.trace("getExistingConfigFilesAbovePathPrefix: skipped non-existing configFile: {}", configFile);
 		}
+
+		// Highly unlikely, but maybe another client is connected to an already path-prefixed repository
+		// in a cascaded setup.
+		final File metaDir = localRoot.createFile(LocalRepoManager.META_DIR_NAME);
+		final File parentConfigFile = metaDir.createFile(Config.PROPERTIES_FILE_NAME_PARENT);
+		if (parentConfigFile.isFile()) {
+			result.add(parentConfigFile);
+			logger.trace("getExistingConfigFilesAbovePathPrefix: enlisted configFile: {}", parentConfigFile);
+		}
+		else
+			logger.trace("getExistingConfigFilesAbovePathPrefix: skipped non-existing configFile: {}", parentConfigFile);
+
 		Collections.reverse(result); // must be sorted according to inheritance hierarchy with following file overriding previous file
 		return result;
 	}
