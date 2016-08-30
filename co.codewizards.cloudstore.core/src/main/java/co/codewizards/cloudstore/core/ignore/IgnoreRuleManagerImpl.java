@@ -145,6 +145,12 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 			throw new IllegalArgumentException(String.format("file '%s' is not located within parent-directory '%s'!",
 					file.getAbsolutePath(), directory.getAbsolutePath()));
 
+		if (fileName.equalsIgnoreCase(Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY_LOCAL))
+			return true;
+
+		if (fileName.equalsIgnoreCase(Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY))
+			return false; // https://github.com/cloudstore/cloudstore/issues/60
+
 		for (final IgnoreRule ignoreRule : getIgnoreRules()) {
 			if (! ignoreRule.isEnabled())
 				continue;
