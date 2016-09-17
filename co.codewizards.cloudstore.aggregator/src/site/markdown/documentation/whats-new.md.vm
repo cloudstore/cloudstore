@@ -5,6 +5,14 @@ $!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-relaxed
 What\'s new?
 -------
 
+$H$H$H What\'s new in 0.9.11?
+
+Compared to version 0.9.10, there are the following changes:
+
+* Bugfix: '.cloudstore.properties' is now exempt from ignore-rules
+	([issue 60](https://github.com/cloudstore/cloudstore/issues/60)).
+
+
 $H$H$H What\'s new in 0.9.10?
 
 Compared to version 0.9.9, there are the following changes:
