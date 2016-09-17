@@ -121,7 +121,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 				}
 				configVersion = newConfigVersion;
 				ignoreRules = Collections.unmodifiableList(result);
-				logger.info("getIgnoreRules: Loaded for newConfigVersion={}: {}", newConfigVersion, ignoreRules);
+				logger.debug("getIgnoreRules: Loaded for newConfigVersion={}: {}", newConfigVersion, ignoreRules);
 			}
 			return ignoreRules;
 		}
