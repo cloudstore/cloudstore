@@ -89,6 +89,10 @@ table.homepagecolumns li {
 	line-height: 18px;    
 }
 
+#nl_container .vestigo-box-content a {
+	color: #FFFFFF;
+}
+
 .arrows {
 	background-image: url('../images/arrows-right-list.png');
 	background-position: left top;
@@ -99,7 +103,7 @@ table.homepagecolumns li {
 
 div.slider {
 	position: relative; 
-	background: url('../images/slider_bg.jpg'); no-repeat 
+	background: url('../images/slider_bg.jpg'), no-repeat; 
 	height: 425px;
 }
 div.slider_header {
