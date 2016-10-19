@@ -61,6 +61,14 @@ input[type="text"].focus {
 	color: #6f6f6f;
 }
 
+#nl_container tt { /* in-line code */
+	background-color: #F0F0F0;
+}
+
+#nl_container pre { /* code blocks */
+	background-color: #F0F0F0;
+}
+
 #nl_header {
 	/* height: 69px; */
 	height: 111px;
