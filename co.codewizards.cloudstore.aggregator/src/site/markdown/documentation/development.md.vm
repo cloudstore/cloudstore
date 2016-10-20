@@ -18,6 +18,16 @@ Furthermore, you are - of course - very welcome to contribute. Please [contact u
 to lend us a hand.
 
 
+$H$H$H Contributor licence agreement
+
+**Important note:** By contributing to this project, you accept the conditions of the
+[AGPL](../about/licence.html) and also grant the [CodeWizards GmbH](http://codewizards.co) an
+irrevocable and non-exclusive permission to work with your contributions. This includes the
+right to licence your contributions to third parties under another licence, at the sole discretion
+of the CodeWizards. You do *not* give up any right to use your contributions yourself, but you do give up
+the right to constrain what the CodeWizards are allowed to do with your contributions.
+
+
 $H$H$H Setting up a workspace
 
 $H$H$H$H Step 1: Eclipse
