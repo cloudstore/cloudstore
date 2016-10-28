@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -10,9 +11,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import co.codewizards.cloudstore.core.oio.File;
 
 public final class UrlUtil {
+
+	private static final Logger logger = LoggerFactory.getLogger(UrlUtil.class);
+
+	public static final String PROTOCOL_FILE = "file";
+	public static final String PROTOCOL_JAR = "jar";
 
 	private UrlUtil() { }
 
@@ -46,6 +55,10 @@ public final class UrlUtil {
 	}
 
 	public static File getFile(final URL url) {
+		assertNotNull("url", url);
+		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
+			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
+
 		try {
 			return createFile(url.toURI());
 		} catch (final URISyntaxException e) {
@@ -66,7 +79,7 @@ public final class UrlUtil {
 	 * @see #appendNonEncodedPath(URL, String)
 	 */
 	public static URL appendEncodedPath(final URL url, final String path) {
-		AssertUtil.assertNotNull("url", url);
+		assertNotNull("url", url);
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -84,7 +97,7 @@ public final class UrlUtil {
 	 * @see #appendEncodedPath(URL, String)
 	 */
 	public static URL appendNonEncodedPath(final URL url, final String path) {
-		AssertUtil.assertNotNull("url", url);
+		assertNotNull("url", url);
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -97,7 +110,7 @@ public final class UrlUtil {
 	}
 
 	private static URL appendEncodedPath(final URL url, final List<String> pathSegments) {
-		AssertUtil.assertNotNull("url", url);
+		assertNotNull("url", url);
 
 		if (pathSegments == null || pathSegments.isEmpty())
 			return url;
@@ -124,7 +137,7 @@ public final class UrlUtil {
 	}
 
 	private static char getLastChar(final StringBuilder stringBuilder) {
-		AssertUtil.assertNotNull("stringBuilder", stringBuilder);
+		assertNotNull("stringBuilder", stringBuilder);
 
 		final int index = stringBuilder.length() - 1;
 		if (index < 0)
@@ -146,6 +159,43 @@ public final class UrlUtil {
 			return new URI(url.getProtocol(), url.getAuthority(), url.getPath(), url.getQuery(), url.getRef());
 		} catch (final URISyntaxException e) {
 			// Since every URL is an URI, its transformation should never fail. But if it does, we rethrow.
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Gets the File referencing the JAR.
+	 *
+	 * @param url the url to be unwrapped. Must not be <code>null</code>. Must be a JAR-URL (i.e. protocol must be {@link #PROTOCOL_JAR})!
+	 * @return the unwrapped URL, i.e. usually the 'file:'-URL pointing to the JAR-URL.
+	 */
+	public static File getFileFromJarUrl(final URL url) {
+		URL fileUrl = getFileUrlFromJarUrl(url);
+		return getFile(fileUrl);
+	}
+
+	/**
+	 * Removes the 'jar:'-prefix and the '!...'-suffix in order to unwrap the 'file:'-URL pointing to the JAR.
+	 *
+	 * @param url the url to be unwrapped. Must not be <code>null</code>. Must be a JAR-URL (i.e. protocol must be {@link #PROTOCOL_JAR})!
+	 * @return the unwrapped URL, i.e. usually the 'file:'-URL pointing to the JAR-URL.
+	 */
+	public static URL getFileUrlFromJarUrl(final URL url) { // TODO nested JARs not yet supported!
+		assertNotNull("url", url);
+		logger.debug("getFileUrlFromJarUrl: url={}", url);
+		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
+			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
+
+		String urlStrWithoutJarPrefix = url.getFile();
+		final int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
+		if (exclamationMarkIndex >= 0) {
+			urlStrWithoutJarPrefix = urlStrWithoutJarPrefix.substring(0, exclamationMarkIndex);
+		}
+		try {
+			final URL urlWithoutJarPrefixAndSuffix = new URL(urlStrWithoutJarPrefix);
+			logger.debug("getFileUrlFromJarUrl: urlWithoutJarPrefixAndSuffix={}", urlWithoutJarPrefixAndSuffix);
+			return urlWithoutJarPrefixAndSuffix;
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}

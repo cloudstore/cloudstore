@@ -1,20 +1,18 @@
 package co.codewizards.cloudstore.core.version;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.UrlUtil.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 
 public class LocalVersionInIdeHelper {
 
@@ -30,9 +28,9 @@ public class LocalVersionInIdeHelper {
 	public Version getLocalVersionInIde() {
 		resource = this.getClass().getResource("");
 
-		if (resource.getProtocol().equalsIgnoreCase(CloudStoreUpdaterCore.PROTOCOL_JAR)) {
+		if (resource.getProtocol().equalsIgnoreCase(PROTOCOL_JAR)) {
 			return getLocalVersionInIde_jar();
-		} else if (resource.getProtocol().equalsIgnoreCase(CloudStoreUpdaterCore.PROTOCOL_FILE)) {
+		} else if (resource.getProtocol().equalsIgnoreCase(PROTOCOL_FILE)) {
 			return getLocalVersionInIde_file();
 		} else
 			throw new IllegalStateException("LocalVersionInIdeHelper was not loaded from a local JAR or class file!");
@@ -55,7 +53,7 @@ public class LocalVersionInIdeHelper {
 
 	protected Version getLocalVersionInIde_file() {
 		try {
-			File dir = createFile(new java.io.File(resource.toURI())).getCanonicalFile();
+			File dir = getFile(resource).getCanonicalFile();
 			File pomXmlFile;
 			do {
 				pomXmlFile = null;
@@ -72,7 +70,7 @@ public class LocalVersionInIdeHelper {
 				}
 			}
 			throw new IllegalStateException("Could not determine local version!");
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

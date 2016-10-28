@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.updater;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.UrlUtil.*;
 
 import java.io.BufferedReader;
 import java.io.FileFilter;
@@ -9,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,9 +37,6 @@ import co.codewizards.cloudstore.core.version.Version;
 
 public class CloudStoreUpdaterCore {
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdaterCore.class);
-
-	public static final String PROTOCOL_FILE = "file";
-	public static final String PROTOCOL_JAR = "jar";
 
 	public static final String INSTALLATION_PROPERTIES_FILE_NAME = "installation.properties";
 	public static final String INSTALLATION_PROPERTIES_ARTIFACT_ID = "artifactId";
@@ -240,9 +236,7 @@ public class CloudStoreUpdaterCore {
 		final URL resource = CloudStoreUpdaterCore.class.getResource("");
 		logger.debug("determineInstallationDirFromClass: resource={}", resource);
 		if (resource.getProtocol().equalsIgnoreCase(PROTOCOL_JAR)) {
-			final URL fileUrl = removePrefixAndSuffixFromJarURL(resource);
-			logger.debug("determineInstallationDirFromClass: fileUrl={}", fileUrl);
-			final File file = createFileFromFileURL(fileUrl);
+			final File file = getFileFromJarUrl(resource);
 			logger.debug("determineInstallationDirFromClass: file={}", file);
 
 			File dir = file;
@@ -263,37 +257,6 @@ public class CloudStoreUpdaterCore {
 			throw new IllegalStateException("CloudStoreUpdaterCore was loaded inside the IDE! Load it from a real installation!");
 		} else
 			throw new IllegalStateException("Class 'CloudStoreUpdaterCore' was not loaded from a local JAR or class file!");
-	}
-
-	private File createFileFromFileURL(final URL url) {
-		assertNotNull("url", url);
-		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
-			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
-
-		try {
-			final File file = createFile(url.toURI());
-			return file;
-		} catch (final URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private URL removePrefixAndSuffixFromJarURL(final URL url) {
-		assertNotNull("url", url);
-		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
-			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);
-
-		String urlStrWithoutJarPrefix = url.getFile();
-		final int exclamationMarkIndex = urlStrWithoutJarPrefix.indexOf('!');
-		if (exclamationMarkIndex >= 0) {
-			urlStrWithoutJarPrefix = urlStrWithoutJarPrefix.substring(0, exclamationMarkIndex);
-		}
-		try {
-			final URL urlWithoutJarPrefixAndSuffix = new URL(urlStrWithoutJarPrefix);
-			return urlWithoutJarPrefixAndSuffix;
-		} catch (final MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**
