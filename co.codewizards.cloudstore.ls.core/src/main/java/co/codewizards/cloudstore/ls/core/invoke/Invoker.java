@@ -4,7 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 
 public interface Invoker {
 

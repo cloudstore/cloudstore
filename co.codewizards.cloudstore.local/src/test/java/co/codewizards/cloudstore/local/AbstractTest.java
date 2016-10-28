@@ -18,8 +18,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import co.codewizards.cloudstore.core.TestMode;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.IoFile;
 import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
@@ -38,6 +39,7 @@ public abstract class AbstractTest {
 	protected static String jvmInstanceDir;
 
 	static {
+		TestMode.enableTestMode();
 		final Uid jvmInstanceId = new Uid(); // for parallel test execution ;-)
 		jvmInstanceDir = "target/jvm/" + jvmInstanceId;
 		final String configDirString = jvmInstanceDir + "/.cloudstore";

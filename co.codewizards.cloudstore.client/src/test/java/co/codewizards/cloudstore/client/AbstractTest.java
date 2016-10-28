@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 
+import co.codewizards.cloudstore.core.TestMode;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -17,6 +18,7 @@ import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 public abstract class AbstractTest {
 
 	static {
+		TestMode.enableTestMode();
 		System.setProperty(ConfigDir.SYSTEM_PROPERTY_CONFIG_DIR, "target/.cloudstore");
 		System.setProperty(LocalRepoManager.SYSTEM_PROPERTY_KEY_SIZE, "1024");
 	}

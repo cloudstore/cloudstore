@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.version.Version;
+
 public class VersionTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(VersionTest.class);

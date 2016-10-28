@@ -27,6 +27,7 @@ import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
+import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
@@ -48,6 +49,7 @@ import co.codewizards.cloudstore.rest.client.request.GetEncryptedSignedAuthToken
 import co.codewizards.cloudstore.rest.client.request.GetFileData;
 import co.codewizards.cloudstore.rest.client.request.GetRepoFileDto;
 import co.codewizards.cloudstore.rest.client.request.GetRepositoryDto;
+import co.codewizards.cloudstore.rest.client.request.GetVersionInfoDto;
 import co.codewizards.cloudstore.rest.client.request.MakeDirectory;
 import co.codewizards.cloudstore.rest.client.request.MakeSymlink;
 import co.codewizards.cloudstore.rest.client.request.Move;
@@ -365,5 +367,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			throw new RuntimeException(e);
 		}
 		return builder;
+	}
+
+	@Override
+	public VersionInfoDto getVersionInfoDto() {
+		final VersionInfoDto versionInfoDto = getClient().execute(new GetVersionInfoDto());
+		return versionInfoDto;
 	}
 }

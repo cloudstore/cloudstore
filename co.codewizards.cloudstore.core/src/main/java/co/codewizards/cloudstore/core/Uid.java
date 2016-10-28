@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.dto;
+package co.codewizards.cloudstore.core;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 

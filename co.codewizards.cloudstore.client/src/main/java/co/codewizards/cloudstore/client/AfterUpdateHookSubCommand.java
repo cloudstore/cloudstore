@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.client;
 
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
-import co.codewizards.cloudstore.core.updater.Version;
+import co.codewizards.cloudstore.core.version.Version;
 
 /**
  * <p>

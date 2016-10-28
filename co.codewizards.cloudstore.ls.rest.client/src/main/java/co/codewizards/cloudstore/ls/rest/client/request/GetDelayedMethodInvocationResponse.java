@@ -4,7 +4,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import javax.ws.rs.client.WebTarget;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationResponse;
 import co.codewizards.cloudstore.ls.core.provider.MediaTypeConst;
 

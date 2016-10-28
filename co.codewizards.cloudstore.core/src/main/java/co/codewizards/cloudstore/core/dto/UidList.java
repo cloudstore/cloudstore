@@ -8,6 +8,8 @@ import java.util.StringTokenizer;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import co.codewizards.cloudstore.core.Uid;
+
 @XmlRootElement
 public class UidList extends ArrayList<Uid> {
 	private static final long serialVersionUID = 1L;

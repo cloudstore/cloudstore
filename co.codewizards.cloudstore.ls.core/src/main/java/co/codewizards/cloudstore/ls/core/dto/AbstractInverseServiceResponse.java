@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.ls.core.dto;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
-import co.codewizards.cloudstore.core.dto.Uid;
+
+import co.codewizards.cloudstore.core.Uid;
 
 public abstract class AbstractInverseServiceResponse implements InverseServiceResponse {
 	private static final long serialVersionUID = 1L;

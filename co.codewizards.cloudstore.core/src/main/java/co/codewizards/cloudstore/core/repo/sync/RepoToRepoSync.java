@@ -37,6 +37,7 @@ import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
+import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.ProgressMonitor;
 import co.codewizards.cloudstore.core.progress.SubProgressMonitor;
@@ -50,6 +51,7 @@ import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
 import co.codewizards.cloudstore.core.util.UrlUtil;
+import co.codewizards.cloudstore.core.version.VersionCompatibilityValidator;
 
 /**
  * Logic for synchronising a local with a remote repository.
@@ -108,6 +110,10 @@ public class RepoToRepoSync implements AutoCloseable {
 		assertNotNull("monitor", monitor);
 		monitor.beginTask("Synchronising...", 201);
 		try {
+			final VersionInfoDto clientVersionInfoDto = localRepoTransport.getVersionInfoDto();
+			final VersionInfoDto serverVersionInfoDto = remoteRepoTransport.getVersionInfoDto();
+			VersionCompatibilityValidator.getInstance().validate(clientVersionInfoDto, serverVersionInfoDto);
+
 			readRemoteRepositoryIdFromRepoTransport();
 			monitor.worked(1);
 

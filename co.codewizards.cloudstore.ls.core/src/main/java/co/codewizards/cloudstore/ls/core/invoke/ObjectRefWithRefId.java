@@ -4,7 +4,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.Serializable;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 
 public class ObjectRefWithRefId implements Serializable {
 	private static final long serialVersionUID = 1L;

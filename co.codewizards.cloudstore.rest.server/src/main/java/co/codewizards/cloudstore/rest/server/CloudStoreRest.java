@@ -21,6 +21,7 @@ import co.codewizards.cloudstore.rest.server.service.RepoFileDtoService;
 import co.codewizards.cloudstore.rest.server.service.RepositoryDtoService;
 import co.codewizards.cloudstore.rest.server.service.RequestRepoConnectionService;
 import co.codewizards.cloudstore.rest.server.service.TestService;
+import co.codewizards.cloudstore.rest.server.service.VersionInfoDtoService;
 import co.codewizards.cloudstore.rest.server.service.WebDavService;
 import co.codewizards.cloudstore.rest.shared.filter.GZIPContainerRequestFilter;
 import co.codewizards.cloudstore.rest.shared.interceptor.GZIPConditionalReaderInterceptor;
@@ -60,6 +61,7 @@ public class CloudStoreRest extends ResourceConfig {
 				RepositoryDtoService.class,
 				RequestRepoConnectionService.class,
 				TestService.class,
+				VersionInfoDtoService.class,
 				WebDavService.class,
 				// END services
 

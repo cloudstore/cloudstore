@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.ls.core.dto;
 
 import java.io.Serializable;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 
 public interface InverseServiceRequest extends Serializable {

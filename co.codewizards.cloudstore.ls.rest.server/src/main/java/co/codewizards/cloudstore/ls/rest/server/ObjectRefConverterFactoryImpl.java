@@ -6,7 +6,7 @@ import java.security.Principal;
 
 import javax.ws.rs.core.SecurityContext;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverterFactory;

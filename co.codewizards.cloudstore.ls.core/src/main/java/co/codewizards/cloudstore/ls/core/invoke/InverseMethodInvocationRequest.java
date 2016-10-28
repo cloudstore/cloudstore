@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
-import co.codewizards.cloudstore.core.dto.Uid;
+
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.dto.AbstractInverseServiceRequest;
 
 public class InverseMethodInvocationRequest extends AbstractInverseServiceRequest {

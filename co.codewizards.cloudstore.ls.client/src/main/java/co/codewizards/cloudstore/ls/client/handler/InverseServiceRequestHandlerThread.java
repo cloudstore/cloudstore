@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.dto.Uid;
 import co.codewizards.cloudstore.ls.client.LocalServerClient;
 import co.codewizards.cloudstore.ls.core.dto.ErrorResponse;
 import co.codewizards.cloudstore.ls.core.dto.InverseServiceRequest;

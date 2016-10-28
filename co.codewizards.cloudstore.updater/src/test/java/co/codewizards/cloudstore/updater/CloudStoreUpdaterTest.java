@@ -11,8 +11,8 @@ import org.junit.runner.RunWith;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
-import co.codewizards.cloudstore.core.updater.Version;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
+import co.codewizards.cloudstore.core.version.Version;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;

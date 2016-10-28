@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.dto.jaxb;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 
 public class UidXmlAdapter extends XmlAdapter<String, Uid> {
 

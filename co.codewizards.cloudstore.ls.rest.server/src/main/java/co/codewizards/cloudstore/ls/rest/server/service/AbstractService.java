@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.ls.rest.server.service;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.rest.server.InverseInvoker;
 

@@ -11,6 +11,7 @@ import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
+import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
@@ -363,4 +364,6 @@ public interface RepoTransport extends AutoCloseable {
 	public void close();
 
 	void putParentConfigPropSetDto(ConfigPropSetDto parentConfigPropSetDto);
+
+	VersionInfoDto getVersionInfoDto();
 }

@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.TestMode;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
@@ -32,6 +33,8 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
+import co.codewizards.cloudstore.core.version.LocalVersionInIdeHelper;
+import co.codewizards.cloudstore.core.version.Version;
 
 public class CloudStoreUpdaterCore {
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdaterCore.class);
@@ -149,15 +152,24 @@ public class CloudStoreUpdaterCore {
 
 	public Version getLocalVersion() {
 		if (localVersion == null) {
-			final String value = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_VERSION);
-			if (value == null || value.isEmpty())
-				throw new IllegalStateException("Failed to read local version from installation-properties-file!");
+			Properties installationProperties = null;
+			try {
+				installationProperties = getInstallationProperties();
+			} catch (UnsupportedOperationException x) {
+				// running inside IDE => read pom.xml (or other IDE resource) instead
+				localVersion = LocalVersionInIdeHelper.getInstance().getLocalVersionInIde();
+			}
+			if (localVersion == null) {
+				final String value = installationProperties.getProperty(INSTALLATION_PROPERTIES_VERSION);
+				if (value == null || value.isEmpty())
+					throw new IllegalStateException("Failed to read local version from installation-properties-file!");
 
-			final String trimmed = value.trim();
-			if (trimmed.isEmpty())
-				throw new IllegalStateException("Failed to read local version from installation-properties-file!");
+				final String trimmed = value.trim();
+				if (trimmed.isEmpty())
+					throw new IllegalStateException("Failed to read local version from installation-properties-file!");
 
-			localVersion = new Version(trimmed);
+				localVersion = new Version(trimmed);
+			}
 		}
 		return localVersion;
 	}
@@ -222,6 +234,9 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File determineInstallationDirFromClass() {
+		if (TestMode.isTestModeEnabled())
+			throw new UnsupportedOperationException("There is no installationDir in test-mode!");
+
 		final URL resource = CloudStoreUpdaterCore.class.getResource("");
 		logger.debug("determineInstallationDirFromClass: resource={}", resource);
 		if (resource.getProtocol().equalsIgnoreCase(PROTOCOL_JAR)) {
@@ -245,7 +260,7 @@ public class CloudStoreUpdaterCore {
 			}
 			throw new IllegalStateException(String.format("File '%s' was not found in any expected location!", INSTALLATION_PROPERTIES_FILE_NAME));
 		} else if (resource.getProtocol().equalsIgnoreCase(PROTOCOL_FILE)) {
-			throw new UnsupportedOperationException("CloudStoreUpdaterCore was loaded inside the IDE! Load it from a real installation!");
+			throw new IllegalStateException("CloudStoreUpdaterCore was loaded inside the IDE! Load it from a real installation!");
 		} else
 			throw new IllegalStateException("Class 'CloudStoreUpdaterCore' was not loaded from a local JAR or class file!");
 	}

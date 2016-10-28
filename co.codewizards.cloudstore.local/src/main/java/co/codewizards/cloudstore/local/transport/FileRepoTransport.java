@@ -44,6 +44,7 @@ import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
+import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
@@ -63,6 +64,7 @@ import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
+import co.codewizards.cloudstore.core.version.VersionInfoProvider;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
 import co.codewizards.cloudstore.local.LocalRepoSync;
 import co.codewizards.cloudstore.local.dto.RepoFileDtoConverter;
@@ -120,7 +122,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 	@Override
 	public void requestRepoConnection(final byte[] publicKey) {
-		AssertUtil.assertNotNull("publicKey", publicKey);
+		assertNotNull("publicKey", publicKey);
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
@@ -1443,5 +1445,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		});
 
 		return result;
+	}
+
+	@Override
+	public VersionInfoDto getVersionInfoDto() {
+		return VersionInfoProvider.getInstance().getVersionInfoDto();
 	}
 }

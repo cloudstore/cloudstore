@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.updater;
+package co.codewizards.cloudstore.core.version;
 
 
 /**

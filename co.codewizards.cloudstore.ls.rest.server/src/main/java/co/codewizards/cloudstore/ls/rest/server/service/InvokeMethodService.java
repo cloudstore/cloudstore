@@ -10,7 +10,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InvokeMethodExecutor;
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;

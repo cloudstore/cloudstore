@@ -2,7 +2,8 @@ package co.codewizards.cloudstore.ls.client.handler;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-import co.codewizards.cloudstore.core.dto.Uid;
+
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.InverseMethodInvocationResponse;

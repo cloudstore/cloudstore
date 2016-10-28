@@ -2,7 +2,8 @@ package co.codewizards.cloudstore.ls.core.invoke;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
-import co.codewizards.cloudstore.core.dto.Uid;
+
+import co.codewizards.cloudstore.core.Uid;
 
 public class DelayedResponseIdScheduledEviction implements Comparable<DelayedResponseIdScheduledEviction> {
 

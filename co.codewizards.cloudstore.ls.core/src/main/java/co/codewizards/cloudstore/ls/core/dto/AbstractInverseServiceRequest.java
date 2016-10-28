@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.dto;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 
 public abstract class AbstractInverseServiceRequest implements InverseServiceRequest {
 	private static final long serialVersionUID = 1L;

@@ -17,6 +17,7 @@ import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.UidList;
+import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 
 public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbContextProvider {
 
@@ -39,7 +40,8 @@ public class CloudStoreJaxbContextProviderImpl extends AbstractCloudStoreJaxbCon
 				RepositoryDto.class,
 				SymlinkDto.class,
 				TempChunkFileDto.class,
-				UidList.class
+				UidList.class,
+				VersionInfoDto.class
 		};
 	}
 

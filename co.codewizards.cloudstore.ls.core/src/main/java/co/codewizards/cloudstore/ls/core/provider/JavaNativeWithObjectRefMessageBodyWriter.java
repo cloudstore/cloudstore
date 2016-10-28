@@ -31,7 +31,7 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.dto.Uid;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.io.NoCloseOutputStream;
 import co.codewizards.cloudstore.core.ls.NoObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ForceNonTransientClassSet;

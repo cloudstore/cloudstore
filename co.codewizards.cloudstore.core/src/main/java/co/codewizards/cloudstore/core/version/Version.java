@@ -1,40 +1,47 @@
-package co.codewizards.cloudstore.core.updater;
+package co.codewizards.cloudstore.core.version;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import co.codewizards.cloudstore.core.dto.jaxb.VersionXmlAdapter;
+
 /**
- * This class is used to <code>version</code> the client plugins of JFire and may be used to act
- * as a version identifier in any project.
- *
- * The pattern a version <code>String</code> is:
+ * This class represents a <code>version</code> of a piece of software.
+ * <p>
+ * A version <code>String</code> has the following form:
+ * <br/>
  * <code>major</code>{@value #DEFAULT_SEPARATOR}<code>minor</code>{@value #DEFAULT_SEPARATOR}
- * <code>release</code>[{@value #DEFAULT_SEPARATOR}<code>patchLevel</code>
- * [{@value #DEFAULT_SEPARATOR}<code>suffix</code>]] <br>
+ * <code>release</code>[{@value #DEFAULT_SEPARATOR}<code>patchLevel</code>][{@value #SUFFIX_SEPARATOR}<code>suffix</code>]
+ * <br/>
  * The suffix may consist of 'a-zA-Z0-9#$!_-'. Additionally the following version string is
  * also valid: '<pre>1.2.3.test</pre>'.
- *
- * <p>Examples of valid versions are:
+ * <p>
+ * Examples of valid versions are:
  * <ul>
  * 	<li><pre>1.2.3</pre></li>
  * 	<li><pre>1.2.3.4</pre></li>
- * 	<li><pre>1.2.3.4.test</pre></li>
- * 	<li><pre>1.2.3.t_e!st</pre></li>
+ * 	<li><pre>1.2.3.4-test</pre></li>
+ * 	<li><pre>1.2.3-t_e!st</pre></li>
  * </ul>
- * </p>
- *
- *
- * <p>Note: This class is immutable!</p>
+ * <p>
+ * Instances of this class are immutable!
+ * <p>
+ * {@link #compareTo(Version)} understands the {@link #SNAPSHOT_SUFFIX}. This means:
+ * {@code 1.0.0-SNAPSHOT < 1.0.0}
+ * <p>
  *
  * @author Marius Heinzmann marius[AT]NightLabs[DOT]de
  * @author Marco Schulze marco@nightlabs.de
  * @author Niklas Schiffler <nick@nightlabs.de>
  */
+@XmlJavaTypeAdapter(type=Version.class, value=VersionXmlAdapter.class)
 public class Version implements Comparable<Version>, Serializable
 {
-	private static final String SNAPSHOT_SUFFIX = "SNAPSHOT";
+	public static final String SNAPSHOT_SUFFIX = "SNAPSHOT";
 
 	private static final long serialVersionUID = 1L;
 
@@ -55,8 +62,8 @@ public class Version implements Comparable<Version>, Serializable
 	private int patchLevel;
 	private String suffix;
 
-	private static final String DEFAULT_SEPARATOR = ".";
-	private static final String SUFFIX_SEPARATOR = "-";
+	public static final String DEFAULT_SEPARATOR = ".";
+	public static final String SUFFIX_SEPARATOR = "-";
 	private static final String EMPTYSTRING = "";
 
 	/**
@@ -403,7 +410,7 @@ public class Version implements Comparable<Version>, Serializable
 			if (other.suffix.equalsIgnoreCase(SNAPSHOT_SUFFIX))
 				return 1;
 
-			// TODO Maybe we'll later change this to compare the suffix as well.
+			// We currently ignore all suffix values except for the "SNAPSHOT". They are purely informational.
 			return 0;
 		}
 
@@ -413,7 +420,7 @@ public class Version implements Comparable<Version>, Serializable
 		if (suffix.equalsIgnoreCase(SNAPSHOT_SUFFIX))
 			return -1;
 
-		// TODO Maybe we'll later change this to compare the suffix as well.
+		// We currently ignore all suffix values except for the "SNAPSHOT". They are purely informational.
 		return 0;
 	}
 
