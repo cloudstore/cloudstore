@@ -20,7 +20,7 @@ import java.util.concurrent.locks.Lock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.TestMode;
+import co.codewizards.cloudstore.core.DevMode;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigDir;
@@ -230,7 +230,7 @@ public class CloudStoreUpdaterCore {
 	}
 
 	private File determineInstallationDirFromClass() {
-		if (TestMode.isTestModeEnabled())
+		if (DevMode.isDevModeEnabled())
 			throw new UnsupportedOperationException("There is no installationDir in test-mode!");
 
 		final URL resource = CloudStoreUpdaterCore.class.getResource("");

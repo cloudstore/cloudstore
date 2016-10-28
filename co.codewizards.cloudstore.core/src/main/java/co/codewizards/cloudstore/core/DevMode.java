@@ -1,17 +1,17 @@
 package co.codewizards.cloudstore.core;
 
-public class TestMode {
+public class DevMode {
 
-	private static final String SYSTEM_PROPERTY_KEY_TEST_MODE = TestMode.class.getName() + ".enabled";
+	private static final String SYSTEM_PROPERTY_KEY_TEST_MODE = "DevMode.enabled";
 
-	private TestMode() {
+	private DevMode() {
 	}
 
-	public static void enableTestMode() {
+	public static void enableDevMode() {
 		System.setProperty(SYSTEM_PROPERTY_KEY_TEST_MODE, Boolean.TRUE.toString());
 	}
 
-	public static boolean isTestModeEnabled() {
+	public static boolean isDevModeEnabled() {
 		final String sysPropVal = System.getProperty(SYSTEM_PROPERTY_KEY_TEST_MODE);
 		return Boolean.valueOf(sysPropVal);
 	}
