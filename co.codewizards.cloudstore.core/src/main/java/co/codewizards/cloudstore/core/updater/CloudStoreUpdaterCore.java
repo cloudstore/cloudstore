@@ -231,7 +231,7 @@ public class CloudStoreUpdaterCore {
 
 	private File determineInstallationDirFromClass() {
 		if (DevMode.isDevModeEnabled())
-			throw new UnsupportedOperationException("There is no installationDir in test-mode!");
+			throw new UnsupportedOperationException("There is no installationDir in DevMode!");
 
 		final URL resource = CloudStoreUpdaterCore.class.getResource("");
 		logger.debug("determineInstallationDirFromClass: resource={}", resource);
