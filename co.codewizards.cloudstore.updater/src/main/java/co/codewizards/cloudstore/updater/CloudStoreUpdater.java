@@ -141,7 +141,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	      // Call context.reset() to clear any previous configuration, e.g. default
 	      // configuration. For multi-step configuration, omit calling context.reset().
 	      context.reset();
-	      configurator.doConfigure(logbackXmlFile.createInputStream());
+	      configurator.doConfigure(logbackXmlFile.getIoFile());
 	    } catch (final JoranException je) {
 	    	// StatusPrinter will handle this
 	    	doNothing();
