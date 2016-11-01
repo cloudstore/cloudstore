@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.oio.nio;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
-import java.io.ByteArrayOutputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;

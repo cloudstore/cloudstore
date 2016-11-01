@@ -1,8 +1,9 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
@@ -117,7 +118,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 		try (final LockFile lockFile = acquireTrustStoreFileLockFile();) {
 			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-			try (final InputStream in = new BufferedInputStream(lockFile.createInputStream());) {
+			try (final InputStream in = new BufferedInputStream(castStream(lockFile.createInputStream()))) {
 				in.mark(1);
 				final boolean empty = in.read() < 0;
 				in.reset();
@@ -134,7 +135,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	private void writeTrustStore(final KeyStore trustStore) {
 		try (final LockFile lockFile = acquireTrustStoreFileLockFile();) {
-			try (final OutputStream out = lockFile.createOutputStream();) {
+			try (final OutputStream out = castStream(lockFile.createOutputStream())) {
 				trustStore.store(out, TRUST_STORE_PASSWORD_CHAR_ARRAY);
 			}
 		} catch (final RuntimeException x) {

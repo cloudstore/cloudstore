@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.test.repotorepo;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.io.ByteArrayOutputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,11 +57,11 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 
 
 		// Modify some files and see whether the ignore-rules are respected.
-		try (OutputStream out = child_1_a.createOutputStream(true);) {
+		try (OutputStream out = castStream(child_1_a.createOutputStream(true))) {
 			out.write(new byte[] { 1, 2, 3 });
 		}
 
-		try (OutputStream out = child_1_b.createOutputStream(true);) {
+		try (OutputStream out = castStream(child_1_b.createOutputStream(true))) {
 			out.write(new byte[] { 4, 5, 6 });
 		}
 
@@ -138,11 +139,11 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 
 
 		// Modify some files and see whether the ignore-rules are respected.
-		try (OutputStream out = child_1_a.createOutputStream(true);) {
+		try (OutputStream out = castStream(child_1_a.createOutputStream(true))) {
 			out.write(new byte[] { 1, 2, 3 });
 		}
 
-		try (OutputStream out = child_1_b.createOutputStream(true);) {
+		try (OutputStream out = castStream(child_1_b.createOutputStream(true))) {
 			out.write(new byte[] { 4, 5, 6 });
 		}
 
@@ -237,7 +238,7 @@ public class IgnoreRulesRepoToRepoSyncIT extends AbstractRepoAwareIT
 
 	private static byte[] readAll(File f) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		try (InputStream in = f.createInputStream()) {
+		try (InputStream in = castStream(f.createInputStream())) {
 			IOUtil.transferStreamData(in, out);
 		}
 		return out.toByteArray();

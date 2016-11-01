@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
@@ -179,7 +180,7 @@ public class ChangeSetDtoBuilder {
 		final Properties properties = new Properties();
 		for (final File configFile : configFiles) {
 			try {
-				try (InputStream in = configFile.createInputStream()) {
+				try (InputStream in = castStream(configFile.createInputStream())) {
 					properties.load(in); // overwrites entries with same key
 				}
 			} catch (IOException e) {

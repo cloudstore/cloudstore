@@ -88,7 +88,7 @@ public interface LockFile extends AutoCloseable {
 	 * <code>null</code>.
 	 * @throws IOException if creating the {@link InputStream} fails.
 	 */
-	InputStream createInputStream() throws IOException;
+	IInputStream createInputStream() throws IOException;
 
 	/**
 	 * Creates an {@link OutputStream} writing into the {@linkplain #getFile() locked file} (overwriting
@@ -100,6 +100,6 @@ public interface LockFile extends AutoCloseable {
 	 * <code>null</code>.
 	 * @throws IOException if creating the {@link OutputStream} fails.
 	 */
-	OutputStream createOutputStream() throws IOException;
+	IOutputStream createOutputStream() throws IOException;
 
 }

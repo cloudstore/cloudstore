@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -62,7 +62,7 @@ public class TarGzFile {
 
 	public void compress(final File rootDir) throws IOException {
 		boolean deleteIncompleteTarGzFile = false;
-		final OutputStream fout = tarGzFile.createOutputStream();
+		final OutputStream fout = castStream(tarGzFile.createOutputStream());
 		try {
 			deleteIncompleteTarGzFile = true;
 
@@ -99,7 +99,7 @@ public class TarGzFile {
 					out.putArchiveEntry(archiveEntry);
 					try {
 						if (child.isFile()) {
-							final InputStream in = child.createInputStream();
+							final InputStream in = castStream(child.createInputStream());
 							try {
 								transferStreamData(in, out);
 							} finally {
@@ -124,7 +124,7 @@ public class TarGzFile {
 		rootDir.mkdirs();
 		final TarGzEntryNameConverter tarGzEntryNameConverter = this.tarGzEntryNameConverter == null ? defaultEntryNameConverter : this.tarGzEntryNameConverter;
 		final FileFilter fileFilter = this.fileFilter;
-		final InputStream fin = tarGzFile.createInputStream();
+		final InputStream fin = castStream(tarGzFile.createInputStream());
 		try {
 			final TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(fin)));
 			try {
@@ -150,7 +150,7 @@ public class TarGzFile {
 							if (file.isFile())
 								file.delete();
 
-							final OutputStream out = file.createOutputStream();
+							final OutputStream out = castStream(file.createOutputStream());
 							try {
 								transferStreamData(in, out);
 							} finally {

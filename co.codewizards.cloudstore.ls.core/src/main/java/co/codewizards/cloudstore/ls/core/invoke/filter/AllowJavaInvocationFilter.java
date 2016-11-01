@@ -1,11 +1,12 @@
 package co.codewizards.cloudstore.ls.core.invoke.filter;
 
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 
 public class AllowJavaInvocationFilter extends AbstractInvocationFilter {
 
@@ -24,6 +25,9 @@ public class AllowJavaInvocationFilter extends AbstractInvocationFilter {
 			return true;
 
 		if (ByteArrayInputStream.class.equals(targetClass) || ByteArrayOutputStream.class.equals(targetClass))
+			return true;
+
+		if (java.io.ByteArrayInputStream.class.equals(targetClass) || java.io.ByteArrayOutputStream.class.equals(targetClass))
 			return true;
 
 		final Object[] arguments = extMethodInvocationRequest.getMethodInvocationRequest().getArguments();

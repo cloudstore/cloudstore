@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
@@ -47,7 +48,7 @@ public abstract class AbstractTestWithTempDir {
 
 		File file = tempDir.createFile(fileName);
 		try (InputStream in = url.openStream();) {
-			try (OutputStream out = file.createOutputStream();) {
+			try (OutputStream out = castStream(file.createOutputStream())) {
 				transferStreamData(in, out);
 			}
 		}

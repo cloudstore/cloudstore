@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.appid;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
+import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -82,7 +83,7 @@ public class AppIdRegistry {
 				if (!parentdir.canWrite())
 					throw new IOException("destination's parent directory is unwriteable: " + destinationFile.getCanonicalPath());
 			}
-			destination = destinationFile.createOutputStream();
+			destination = castStream(destinationFile.createOutputStream());
 
 			try (Reader r = new InputStreamReader(source)) {
 				try (Writer w = new OutputStreamWriter(destination)) {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;

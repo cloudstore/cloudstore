@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
@@ -438,7 +439,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			boolean successful = false;
 			final InputStream in = url.openStream();
 			try {
-				final OutputStream out = downloadFile.createOutputStream();
+				final OutputStream out = castStream(downloadFile.createOutputStream());
 				try {
 
 					final byte[] buf = new byte[65535];

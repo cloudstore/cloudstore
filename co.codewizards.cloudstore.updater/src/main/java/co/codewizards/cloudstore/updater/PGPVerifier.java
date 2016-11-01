@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
@@ -38,7 +40,7 @@ public class PGPVerifier {
 				final PGPSignature signature = sl.get(index);
 				signature.init(new BcPGPContentVerifierBuilderProvider(), publicKeyRing.getPublicKey(signature.getKeyID()));
 
-				final InputStream contentIn = file.createInputStream();
+				final InputStream contentIn = castStream(file.createInputStream());
 				try {
 					final byte[] buf = new byte[16 * 1024];
 					int len;
@@ -88,7 +90,7 @@ public class PGPVerifier {
 			throw new PGPVerifyException("The signature-file does not exist or is not readable: " + signatureFile.getAbsolutePath());
 
 		try {
-			final InputStream in = new BufferedInputStream(signatureFile.createInputStream());
+			final InputStream in = new BufferedInputStream(castStream(signatureFile.createInputStream()));
 			try {
 				final PGPObjectFactory objectFactory = new PGPObjectFactory(
 						PGPUtil.getDecoderStream(in), new BcKeyFingerprintCalculator());

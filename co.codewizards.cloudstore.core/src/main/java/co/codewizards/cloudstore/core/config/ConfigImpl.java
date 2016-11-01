@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.PropertiesUtil.*;
@@ -255,7 +256,7 @@ public class ConfigImpl implements Config {
 					final long lastModified = getLastModifiedAndWaitIfNeeded(propertiesFile);
 					if (propertiesFile.exists()) { // prevent the properties file from being modified while we're reading it.
 						try ( LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); ) { // TODO maybe system property for timeout?
-							final InputStream in = lockFile.createInputStream();
+							final InputStream in = castStream(lockFile.createInputStream());
 							try {
 								properties.load(in);
 							} finally {
@@ -288,7 +289,7 @@ public class ConfigImpl implements Config {
 
 				logger.debug("write: Writing propertiesFile '{}'.", propertiesFile.getAbsolutePath());
 				try ( LockFile lockFile = LockFileFactory.getInstance().acquire(propertiesFile, 10000); ) { // TODO maybe system property for timeout?
-					final OutputStream out = lockFile.createOutputStream();
+					final OutputStream out = castStream(lockFile.createOutputStream());
 					try {
 						properties.store(out, null);
 					} finally {

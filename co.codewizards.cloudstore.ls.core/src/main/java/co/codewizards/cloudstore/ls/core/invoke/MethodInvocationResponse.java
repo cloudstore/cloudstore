@@ -7,15 +7,22 @@ public class MethodInvocationResponse implements Serializable {
 
 	private final Object result;
 
-	protected MethodInvocationResponse(final Object result) {
+	private final Object[] writableArguments;
+
+	protected MethodInvocationResponse(final Object result, Object[] writableArguments) {
 		this.result = result;
+		this.writableArguments = writableArguments;
 	}
 
-	public static MethodInvocationResponse forInvocation(Object object) {
-		return new MethodInvocationResponse(object);
+	public static MethodInvocationResponse forInvocation(Object object, Object[] writableArguments) {
+		return new MethodInvocationResponse(object, writableArguments);
 	}
 
 	public Object getResult() {
 		return result;
+	}
+
+	public Object[] getWritableArguments() {
+		return writableArguments;
 	}
 }

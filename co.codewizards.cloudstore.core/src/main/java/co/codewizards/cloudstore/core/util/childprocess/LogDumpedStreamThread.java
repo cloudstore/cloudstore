@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.util.childprocess;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;

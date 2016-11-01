@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.server.auth;
 
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
 import java.io.IOException;

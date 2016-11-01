@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -572,8 +573,8 @@ public class LocalRepoSync {
 			final int bufLength = 32 * 1024;
 
 			long offset = 0;
-			final InputStream in = file.createInputStream();
-			try {
+
+			try (final InputStream in = castStream(file.createInputStream())) {
 				FileChunk fileChunk = null;
 
 				final byte[] buf = new byte[bufLength];
@@ -610,8 +611,6 @@ public class LocalRepoSync {
 					if (bytesRead > 0)
 						monitor.worked(bytesRead);
 				}
-			} finally {
-				in.close();
 			}
 			normalFile.setSha1(HashUtil.encodeHexStr(mdAll.digest()));
 			normalFile.setLength(offset);

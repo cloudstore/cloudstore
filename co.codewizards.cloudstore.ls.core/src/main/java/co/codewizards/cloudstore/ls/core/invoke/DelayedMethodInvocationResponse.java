@@ -8,7 +8,7 @@ public class DelayedMethodInvocationResponse extends MethodInvocationResponse {
 	private static final long serialVersionUID = 1L;
 
 	public DelayedMethodInvocationResponse(Uid delayedResponseId) {
-		super(assertNotNull("delayedResponseId", delayedResponseId));
+		super(assertNotNull("delayedResponseId", delayedResponseId), null);
 	}
 
 	@Override

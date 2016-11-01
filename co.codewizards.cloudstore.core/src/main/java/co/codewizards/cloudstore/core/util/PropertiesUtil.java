@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -124,7 +125,7 @@ public final class PropertiesUtil
 
 	public static java.util.Properties load(final File file) throws IOException
 	{
-		final InputStream in = file.createInputStream();
+		final InputStream in = castStream(file.createInputStream());
 		try {
 			final java.util.Properties properties = new java.util.Properties();
 			properties.load(in);
@@ -141,7 +142,7 @@ public final class PropertiesUtil
 
 	public static void store(final File file, final java.util.Properties properties, final String comment) throws IOException
 	{
-		final OutputStream out = file.createOutputStream();
+		final OutputStream out = castStream(file.createOutputStream());
 		try {
 			properties.store(out, comment);
 		} finally {

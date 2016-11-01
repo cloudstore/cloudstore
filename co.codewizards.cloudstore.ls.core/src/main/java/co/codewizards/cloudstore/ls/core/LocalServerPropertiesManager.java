@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.ls.core;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -50,7 +51,7 @@ public class LocalServerPropertiesManager {
 			properties = new Properties();
 
 			try (final LockFile lockFile = LockFileFactory.getInstance().acquire(getLocalServerPropertiesFile(), 30000);) {
-				try (InputStream in = lockFile.createInputStream();) {
+				try (InputStream in = castStream(lockFile.createInputStream())) {
 					final Properties p = localServerProperties;
 					if (p != null)
 						return p;
@@ -69,7 +70,7 @@ public class LocalServerPropertiesManager {
 		final Properties properties = getLocalServerProperties();
 
 		try (final LockFile lockFile = LockFileFactory.getInstance().acquire(getLocalServerPropertiesFile(), 30000);) {
-			try (OutputStream out = lockFile.createOutputStream();) {
+			try (OutputStream out = castStream(lockFile.createOutputStream())) {
 				properties.store(out, null);
 			}
 		} catch (IOException x) {

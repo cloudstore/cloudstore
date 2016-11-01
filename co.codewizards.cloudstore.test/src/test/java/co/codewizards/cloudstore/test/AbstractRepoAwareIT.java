@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -82,7 +83,7 @@ public abstract class AbstractRepoAwareIT extends AbstractIT {
 	protected File createFileWithChunks(final File localRoot, final File parent, final String name, final int chunks) throws IOException {
 		assertThat(chunks).isGreaterThanOrEqualTo(1);
 		final File file = createFile(parent, name);
-		final OutputStream out = file.createOutputStream();
+		final OutputStream out = castStream(file.createOutputStream());
 		// fill chunks, not at the end of file:
 		final byte[] buf = new byte[CHUNK_SIZE];
 		for (int i = 0; i < chunks - 1; ++i) {

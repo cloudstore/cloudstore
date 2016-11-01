@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.version;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.UrlUtil.*;
 
@@ -65,7 +66,7 @@ public class LocalVersionInIdeHelper {
 			} while (! pomXmlFile.exists());
 
 			if (pomXmlFile != null) {
-				try (InputStream pomXmlIn = pomXmlFile.createInputStream()) {
+				try (InputStream pomXmlIn = castStream(pomXmlFile.createInputStream())) {
 					return readVersionFromPomXml(pomXmlIn);
 				}
 			}

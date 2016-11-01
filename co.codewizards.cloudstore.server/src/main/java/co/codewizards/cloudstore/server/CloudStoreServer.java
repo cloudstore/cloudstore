@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.server;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
@@ -250,7 +251,7 @@ public class CloudStoreServer implements Runnable {
 			final PrivateKeyEntry entry = new PrivateKeyEntry(pair.getPrivate(), new Certificate[]{ pkCertificate });
 			ks.setEntry(CERTIFICATE_ALIAS, entry, new KeyStore.PasswordProtection(KEY_PASSWORD_CHAR_ARRAY));
 
-			final OutputStream fos = getKeyStoreFile().createOutputStream();
+			final OutputStream fos = castStream(getKeyStoreFile().createOutputStream());
 			try {
 				ks.store(fos, KEY_STORE_PASSWORD_CHAR_ARRAY);
 			} finally {
@@ -263,7 +264,7 @@ public class CloudStoreServer implements Runnable {
 		}
 
 		final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		final InputStream fis = getKeyStoreFile().createInputStream();
+		final InputStream fis = castStream(getKeyStoreFile().createInputStream());
 		try {
 			ks.load(fis, KEY_STORE_PASSWORD_CHAR_ARRAY);
 		} finally {

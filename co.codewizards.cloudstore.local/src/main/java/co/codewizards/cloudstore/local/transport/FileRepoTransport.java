@@ -1,10 +1,11 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -960,7 +961,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		final long offset = AssertUtil.assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()).getOffset();
 		final byte[] fileData = new byte[(int) tempChunkFile.length()];
 		try {
-			final InputStream in = tempChunkFile.createInputStream();
+			final InputStream in = castStream(tempChunkFile.createInputStream());
 			try {
 				int off = 0;
 				while (off < fileData.length) {
@@ -1065,7 +1066,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				final InputStream fileIn;
 				if (destFile != file) {
 					try {
-						fileIn = file.createInputStream();
+						fileIn = castStream(file.createInputStream());
 						destFile.createNewFile();
 					} catch (final IOException e) {
 						throw new RuntimeException(e);
@@ -1074,40 +1075,46 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				else
 					fileIn = null;
 
-				final TempChunkFileDtoIo tempChunkFileDtoIo = new TempChunkFileDtoIo();
-				long destFileWriteOffset = 0;
 				// tempChunkFileWithDtoFiles are sorted by offset (ascending)
 				final Collection<TempChunkFileWithDtoFile> tempChunkFileWithDtoFiles = tempChunkFileManager.getOffset2TempChunkFileWithDtoFile(file).values();
-				logger.debug("endPutFile: #tempChunkFileWithDtoFiles={}", tempChunkFileWithDtoFiles.size());
-				for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
-					final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile(); // tempChunkFile may be null!!!
-					final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
-					if (tempChunkFileDtoFile == null)
-						throw new IllegalStateException("No meta-data (tempChunkFileDtoFile) for file: " + (tempChunkFile == null ? null : tempChunkFile.getAbsolutePath()));
+				try {
+					final TempChunkFileDtoIo tempChunkFileDtoIo = new TempChunkFileDtoIo();
+					long destFileWriteOffset = 0;
+					logger.debug("endPutFile: #tempChunkFileWithDtoFiles={}", tempChunkFileWithDtoFiles.size());
+					for (final TempChunkFileWithDtoFile tempChunkFileWithDtoFile : tempChunkFileWithDtoFiles) {
+						final File tempChunkFile = tempChunkFileWithDtoFile.getTempChunkFile(); // tempChunkFile may be null!!!
+						final File tempChunkFileDtoFile = tempChunkFileWithDtoFile.getTempChunkFileDtoFile();
+						if (tempChunkFileDtoFile == null)
+							throw new IllegalStateException("No meta-data (tempChunkFileDtoFile) for file: " + (tempChunkFile == null ? null : tempChunkFile.getAbsolutePath()));
 
-					final TempChunkFileDto tempChunkFileDto = tempChunkFileDtoIo.deserialize(tempChunkFileDtoFile);
-					final long offset = AssertUtil.assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()).getOffset();
+						final TempChunkFileDto tempChunkFileDto = tempChunkFileDtoIo.deserialize(tempChunkFileDtoFile);
+						final long offset = AssertUtil.assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()).getOffset();
 
-					if (fileIn != null) {
-						// The following might fail, if *file* was truncated during the transfer. In this case,
-						// throwing an exception now is probably the best choice as the next sync run will
-						// continue cleanly.
-						logger.info("endPutFile: writing from fileIn into destFile {}", destFile.getName());
-						writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, offset - destFileWriteOffset);
-						final long tempChunkFileLength = tempChunkFileDto.getFileChunkDto().getLength();
-						skipOrFail(fileIn, tempChunkFileLength); // skipping beyond the EOF is supported by the FileInputStream according to Javadoc.
-						destFileWriteOffset = offset + tempChunkFileLength;
+						if (fileIn != null) {
+							// The following might fail, if *file* was truncated during the transfer. In this case,
+							// throwing an exception now is probably the best choice as the next sync run will
+							// continue cleanly.
+							logger.info("endPutFile: writing from fileIn into destFile {}", destFile.getName());
+							writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, offset - destFileWriteOffset);
+							final long tempChunkFileLength = tempChunkFileDto.getFileChunkDto().getLength();
+							skipOrFail(fileIn, tempChunkFileLength); // skipping beyond the EOF is supported by the FileInputStream according to Javadoc.
+							destFileWriteOffset = offset + tempChunkFileLength;
+						}
+
+						if (tempChunkFile != null && tempChunkFile.exists()) {
+							logger.info("endPutFile: writing tempChunkFile {} into destFile {}", tempChunkFile.getName(), destFile.getName());
+							writeTempChunkFileToDestFile(destFile, tempChunkFile, tempChunkFileDto);
+							deleteOrFail(tempChunkFile);
+						}
 					}
 
-					if (tempChunkFile != null && tempChunkFile.exists()) {
-						logger.info("endPutFile: writing tempChunkFile {} into destFile {}", tempChunkFile.getName(), destFile.getName());
-						writeTempChunkFileToDestFile(destFile, tempChunkFile, tempChunkFileDto);
-						deleteOrFail(tempChunkFile);
-					}
+					if (fileIn != null && destFileWriteOffset < length)
+						writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, length - destFileWriteOffset);
+
+				} finally {
+					if (fileIn != null)
+						fileIn.close();
 				}
-
-				if (fileIn != null && destFileWriteOffset < length)
-					writeFileDataToDestFile(destFile, destFileWriteOffset, fileIn, length - destFileWriteOffset);
 
 				try {
 					final RandomAccessFile raf = destFile.createRandomAccessFile("rw");
@@ -1404,7 +1411,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 		final Properties properties = new Properties();
 		for (File configFile : getRepoParentConfigFiles()) {
-			try (InputStream in = configFile.createInputStream()) {
+			try (InputStream in = castStream(configFile.createInputStream())) {
 				properties.load(in);
 			}
 		}

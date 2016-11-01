@@ -48,18 +48,18 @@ public class InvokeMethodService extends AbstractService {
 			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
 				objectManager.incRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
 
-			return MethodInvocationResponse.forInvocation(null);
+			return MethodInvocationResponse.forInvocation(null, null);
 		}
 		else if (ObjectRef.VIRTUAL_METHOD_NAME_DEC_REF_COUNT.equals(methodName)) {
 			final ObjectRefWithRefId[] objectRefWithRefIds = cast(methodInvocationRequest.getArguments()[0]);
 			for (final ObjectRefWithRefId objectRefWithRefId : objectRefWithRefIds)
 				objectManager.decRefCount(objectRefWithRefId.object, objectRefWithRefId.refId);
 
-			return MethodInvocationResponse.forInvocation(null);
+			return MethodInvocationResponse.forInvocation(null, null);
 		}
 		else if (ObjectRef.VIRTUAL_METHOD_CLOSE_OBJECT_MANAGER.equals(methodName)) {
 			objectManager.close();
-			return MethodInvocationResponse.forInvocation(null);
+			return MethodInvocationResponse.forInvocation(null, null);
 		}
 
 		final ExtMethodInvocationRequest extMethodInvocationRequest = new ExtMethodInvocationRequest(objectManager, methodInvocationRequest, clazz);

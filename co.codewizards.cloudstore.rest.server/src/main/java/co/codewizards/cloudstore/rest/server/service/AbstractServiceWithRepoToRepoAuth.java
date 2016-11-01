@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.rest.server.service;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
 import java.io.IOException;

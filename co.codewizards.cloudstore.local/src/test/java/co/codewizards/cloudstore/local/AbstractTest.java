@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -121,7 +122,7 @@ public abstract class AbstractTest {
 
 	protected File createFileWithRandomContent(final File file, final long minLength) throws IOException {
 		assertThat(file.exists()).isFalse(); // prevent accidentally overwriting important data ;-)
-		final OutputStream out = file.createOutputStream();
+		final OutputStream out = castStream(file.createOutputStream());
 		final byte[] buf = new byte[1 + random.nextInt(10241)];
 		final int loops = 1 + random.nextInt(100);
 		for (int i = 0; i < loops; ++i) {

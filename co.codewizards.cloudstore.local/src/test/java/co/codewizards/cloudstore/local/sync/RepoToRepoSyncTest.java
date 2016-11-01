@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.sync;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -193,7 +194,7 @@ public class RepoToRepoSyncTest extends AbstractTest {
 
 		logger.info("file='{}' length={}", child_2_1_b, child_2_1_b.length());
 
-		final OutputStream out = child_2_1_b.createOutputStream();
+		final OutputStream out = castStream(child_2_1_b.createOutputStream());
 		out.write(random.nextInt());
 		out.close();
 

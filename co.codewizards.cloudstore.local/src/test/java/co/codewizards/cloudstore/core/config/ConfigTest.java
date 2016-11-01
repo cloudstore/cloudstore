@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -216,7 +217,7 @@ public class ConfigTest extends AbstractTest {
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {
-			final InputStream in = propertiesFile.createInputStream();
+			final InputStream in = castStream(propertiesFile.createInputStream());
 			properties.load(in);
 			in.close();
 		}
@@ -226,7 +227,7 @@ public class ConfigTest extends AbstractTest {
 		else
 			properties.setProperty(key, value);
 
-		final OutputStream out = propertiesFile.createOutputStream();
+		final OutputStream out = castStream(propertiesFile.createOutputStream());
 		properties.store(out, null);
 		out.close();
 	}

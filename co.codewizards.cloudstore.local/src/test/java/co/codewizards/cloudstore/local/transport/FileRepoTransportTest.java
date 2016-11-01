@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -175,7 +176,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final File child_2 = createFile(remoteRoot, "2");
 		final File child_2_1 = createFile(child_2, "1");
 		final File child_2_1_b = createFile(child_2_1, "b");
-		final OutputStream out = child_2_1_b.createOutputStream(true);
+		final OutputStream out = castStream(child_2_1_b.createOutputStream(true));
 		out.write(4);
 		out.close();
 

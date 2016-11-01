@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
@@ -53,7 +54,7 @@ public class JdbcConnectionFactory {
 		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			final Properties repositoryProperties = new Properties();
-			try (InputStream in = repositoryPropertiesFile.createInputStream();) {
+			try (InputStream in = castStream(repositoryPropertiesFile.createInputStream())) {
 				repositoryProperties.load(in);
 			}
 			final String repositoryIdStr = repositoryProperties.getProperty(PROP_REPOSITORY_ID);

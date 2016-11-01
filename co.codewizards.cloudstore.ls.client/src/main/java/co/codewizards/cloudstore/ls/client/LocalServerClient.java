@@ -4,6 +4,8 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.io.Closeable;
+import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
@@ -183,8 +185,8 @@ public class LocalServerClient implements Invoker, Closeable {
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invoke(object, methodName, arguments));
 
-		if (!(object instanceof RemoteObjectProxy))
-			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
+		if (!(object instanceof RemoteObjectProxy) && !(object instanceof Serializable))
+			throw new IllegalArgumentException("object is neither an instance of RemoteObjectProxy nor Serializable!");
 
 		return invoke(object, methodName, (Class<?>[]) null, arguments);
 	}
@@ -261,7 +263,36 @@ public class LocalServerClient implements Invoker, Closeable {
 		}
 
 		final Object result = methodInvocationResponse.getResult();
+		if (methodInvocationResponse.getWritableArguments() != null)
+			copyWritableArgumentsBack(methodInvocationRequest.getArguments(), methodInvocationResponse.getWritableArguments());
+
 		return cast(result);
+	}
+
+	private void copyWritableArgumentsBack(final Object[] requestArguments, final Object[] responseArguments) {
+		assertNotNull("requestArguments", requestArguments);
+		assertNotNull("responseArguments", responseArguments);
+
+		for (int i = 0; i < responseArguments.length; ++i) {
+			final Object responseArgument = responseArguments[i];
+			if (responseArgument != null)
+				copyWritableArgumentBack(requestArguments[i], responseArgument);
+		}
+	}
+
+	private void copyWritableArgumentBack(final Object requestArgument, final Object responseArgument) {
+		assertNotNull("requestArgument", requestArgument);
+		assertNotNull("responseArgument", responseArgument);
+
+		if (requestArgument.getClass().isArray()) {
+			final int length = Array.getLength(requestArgument);
+			for (int i = 0; i < length; ++i) {
+				final Object value = Array.get(responseArgument, i);
+				Array.set(requestArgument, i, value);
+			}
+		}
+		else
+			throw new UnsupportedOperationException("No idea how to copy this back! requestArgument=" + requestArgument);
 	}
 
 	private RemoteObjectProxy _createRemoteObjectProxy(final ObjectRef objectRef, final Class<?>[] interfaces) {

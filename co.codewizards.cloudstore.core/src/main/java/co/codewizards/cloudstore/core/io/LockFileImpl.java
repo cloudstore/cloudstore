@@ -168,16 +168,16 @@ class LockFileImpl implements LockFile {
 	}
 
 	@Override
-	public InputStream createInputStream() throws IOException {
+	public IInputStream createInputStream() throws IOException {
 		return new LockFileInputStream();
 	}
 
 	@Override
-	public OutputStream createOutputStream() throws IOException {
+	public IOutputStream createOutputStream() throws IOException {
 		return new LockFileOutputStream();
 	}
 
-	private class LockFileInputStream extends InputStream {
+	private class LockFileInputStream extends InputStream implements IInputStream {
 
 		private long position;
 
@@ -208,7 +208,7 @@ class LockFileImpl implements LockFile {
 		}
 	}
 
-	private class LockFileOutputStream extends OutputStream {
+	private class LockFileOutputStream extends OutputStream implements IOutputStream {
 
 		private long position;
 

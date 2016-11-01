@@ -220,7 +220,7 @@ public class InvokeMethodExecutor {
 
 			synchronized (this) {
 				if (this.error == null) {
-					methodInvocationResponse = MethodInvocationResponse.forInvocation(resultObject);
+					methodInvocationResponse = MethodInvocationResponse.forInvocation(resultObject, filterWritableArguments(arguments));
 					assertNotNull("methodInvocationResponse", methodInvocationResponse);
 				}
 
@@ -248,5 +248,21 @@ public class InvokeMethodExecutor {
 
 			return delayedResponseId;
 		}
+	}
+
+	private Object[] filterWritableArguments(final Object[] arguments) {
+		if (arguments == null || arguments.length == 0)
+			return null;
+
+		boolean atLeastOneWritable = false;
+		final Object[] result = new Object[arguments.length];
+		for (int i = 0; i < arguments.length; ++i) {
+			final Object argument = arguments[i];
+			if (argument != null && argument.getClass().isArray()) {
+				result[i] = argument;
+				atLeastOneWritable = true;
+			}
+		}
+		return atLeastOneWritable ? result : null;
 	}
 }

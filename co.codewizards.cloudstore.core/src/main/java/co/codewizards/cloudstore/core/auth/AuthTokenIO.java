@@ -1,21 +1,19 @@
 package co.codewizards.cloudstore.core.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 
 public class AuthTokenIO {
 
 	public byte[] serialise(AuthToken authToken) {
-		AssertUtil.assertNotNull("authToken", authToken);
+		assertNotNull("authToken", authToken);
 		try {
 			JAXBContext context = createContext();
 			Marshaller marshaller = context.createMarshaller();
@@ -28,7 +26,7 @@ public class AuthTokenIO {
 	}
 
 	public AuthToken deserialise(byte[] authTokenData) {
-		AssertUtil.assertNotNull("authTokenData", authTokenData);
+		assertNotNull("authTokenData", authTokenData);
 		try {
 			JAXBContext context = createContext();
 			Unmarshaller unmarshaller = context.createUnmarshaller();

@@ -1,11 +1,12 @@
 package co.codewizards.cloudstore.core.dto.jaxb;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -83,7 +84,7 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			try (final OutputStream out = new BufferedOutputStream(file.createOutputStream());) {
+			try (final OutputStream out = new BufferedOutputStream(castStream(file.createOutputStream()))) {
 				getMarshaller().marshal(dto, out);
 			}
 		} catch (JAXBException | IOException e) {
@@ -97,7 +98,7 @@ public abstract class DtoIo <D> {
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
-			try (final OutputStream out = new BufferedOutputStream(file.createOutputStream());) {
+			try (final OutputStream out = new BufferedOutputStream(castStream(file.createOutputStream()))) {
 				try (GZIPOutputStream gzOut = new GZIPOutputStream(out);) {
 					getMarshaller().marshal(dto, gzOut);
 				}
@@ -141,7 +142,7 @@ public abstract class DtoIo <D> {
 		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			try (final InputStream in = new BufferedInputStream(file.createInputStream());) {
+			try (final InputStream in = new BufferedInputStream(castStream(file.createInputStream()))) {
 				return dtoClass.cast(getUnmarshaller().unmarshal(in));
 			}
 		} catch (JAXBException | IOException e) {
@@ -153,7 +154,7 @@ public abstract class DtoIo <D> {
 		AssertUtil.assertNotNull("file", file);
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
-			try (final InputStream in = new BufferedInputStream(file.createInputStream());) {
+			try (final InputStream in = new BufferedInputStream(castStream(file.createInputStream()))) {
 				try (GZIPInputStream gzIn = new GZIPInputStream(in);) {
 					return dtoClass.cast(getUnmarshaller().unmarshal(gzIn));
 				}

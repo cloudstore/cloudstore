@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.DeflaterOutputStream;
 
-public class NoCloseOutputStream extends FilterOutputStream {
+public class NoCloseOutputStream extends FilterOutputStream implements IOutputStream {
 
 	public NoCloseOutputStream(OutputStream out) {
 		super(out);

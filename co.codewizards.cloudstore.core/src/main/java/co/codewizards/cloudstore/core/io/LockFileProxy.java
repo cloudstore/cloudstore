@@ -1,8 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -52,12 +50,12 @@ class LockFileProxy implements LockFile {
 	}
 
 	@Override
-	public InputStream createInputStream() throws IOException {
+	public IInputStream createInputStream() throws IOException {
 		return lockFileImpl.createInputStream();
 	}
 
 	@Override
-	public OutputStream createOutputStream() throws IOException {
+	public IOutputStream createOutputStream() throws IOException {
 		return lockFileImpl.createOutputStream();
 	}
 }

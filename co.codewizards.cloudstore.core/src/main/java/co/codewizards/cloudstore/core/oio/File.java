@@ -3,11 +3,12 @@ package co.codewizards.cloudstore.core.oio;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.net.URI;
+
+import co.codewizards.cloudstore.core.io.IInputStream;
+import co.codewizards.cloudstore.core.io.IOutputStream;
 
 
 /**
@@ -78,9 +79,9 @@ public interface File extends Serializable {
 	/** This is platform dependent (e.g. might fail at renaming between different partitions). Plz see {@link java.io.File#renameTo(java.io.File)}. */
 	boolean renameTo(File newFileName);
 	boolean setLastModified(long lastModified);
-	OutputStream createOutputStream() throws FileNotFoundException;
-	OutputStream createOutputStream(boolean append) throws FileNotFoundException;
-	InputStream createInputStream() throws FileNotFoundException;
+	IOutputStream createOutputStream() throws FileNotFoundException;
+	IOutputStream createOutputStream(boolean append) throws FileNotFoundException;
+	IInputStream createInputStream() throws FileNotFoundException;
 	String getName();
 	void createSymbolicLink(String targetPath) throws IOException;
 

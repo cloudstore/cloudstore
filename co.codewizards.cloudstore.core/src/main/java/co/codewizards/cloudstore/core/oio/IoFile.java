@@ -1,18 +1,20 @@
 package co.codewizards.cloudstore.core.oio;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.io.IInputStream;
+import co.codewizards.cloudstore.core.io.IOutputStream;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 /**
@@ -256,18 +258,18 @@ public class IoFile implements File {
 	}
 
 	@Override
-	public OutputStream createOutputStream() throws FileNotFoundException {
-		return new FileOutputStream(ioFile);
+	public IOutputStream createOutputStream() throws FileNotFoundException {
+		return castStream(new FileOutputStream(ioFile));
 	}
 
 	@Override
-	public InputStream createInputStream() throws FileNotFoundException {
-		return new FileInputStream(ioFile);
+	public IInputStream createInputStream() throws FileNotFoundException {
+		return castStream(new FileInputStream(ioFile));
 	}
 
 	@Override
-	public OutputStream createOutputStream(final boolean append) throws FileNotFoundException {
-		return new FileOutputStream(ioFile, append);
+	public IOutputStream createOutputStream(final boolean append) throws FileNotFoundException {
+		return castStream(new FileOutputStream(ioFile, append));
 	}
 
 	@Override

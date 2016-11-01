@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.otp;
 
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -64,7 +65,7 @@ public class OneTimePadRegistry {
 
 	private void writeToFile(byte[] bytes, String fileNameSuffix) throws IOException{
 		final File file = createFile(ConfigDir.getInstance().getFile(), fileNamePrefix + fileNameSuffix);
-		try(final OutputStream os = file.createOutputStream()){
+		try(final OutputStream os = castStream(file.createOutputStream())) {
 			os.write(bytes);
 		}
 	}

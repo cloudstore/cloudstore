@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
@@ -577,7 +578,7 @@ public final class IOUtil {
 		OutputStream out = null;
 		OutputStreamWriter w = null;
 		try {
-			out = file.createOutputStream();
+			out = castStream(file.createOutputStream());
 			w = new OutputStreamWriter(out, encoding);
 			w.write(text);
 		} finally {
@@ -602,7 +603,7 @@ public final class IOUtil {
 			throw new IllegalArgumentException("File exceeds " + GIGABYTE + " bytes: " + f.getAbsolutePath());
 
 		final StringBuffer sb = new StringBuffer();
-		final InputStream fin = f.createInputStream();
+		final InputStream fin = castStream(f.createInputStream());
 		try {
 			final InputStreamReader reader = new InputStreamReader(fin, encoding);
 			try {
@@ -877,8 +878,8 @@ public final class IOUtil {
 			return true;
 		if(f1.length() != f2.length())
 			return false;
-		try (final InputStream in1 = f1.createInputStream();) {
-			try (final InputStream in2 = f2.createInputStream();) {
+		try (final InputStream in1 = castStream(f1.createInputStream())) {
+			try (final InputStream in2 = castStream(f2.createInputStream())) {
 				return compareInputStreams(in1, in2);
 			}
 		}
@@ -970,7 +971,7 @@ public final class IOUtil {
 				if (!parentdir.canWrite())
 					throw new IOException("FileCopy: destination's parent directory is unwriteable: " + destinationFile.getCanonicalPath());
 			}
-			destination = destinationFile.createOutputStream();
+			destination = castStream(destinationFile.createOutputStream());
 			transferStreamData(source,destination);
 		} finally {
 			if (source != null)
@@ -1025,8 +1026,8 @@ public final class IOUtil {
 			}
 			// If we've gotten this far, then everything is okay; we can
 			// copy the file.
-			source = sourceFile.createInputStream();
-			destination = destinationFile.createOutputStream();
+			source = castStream(sourceFile.createInputStream());
+			destination = castStream(destinationFile.createOutputStream());
 			transferStreamData(source, destination, 0, sourceFile.length(), monitor);
 			// No matter what happens, always close any streams we've opened.
 		} finally {
@@ -1115,12 +1116,12 @@ public final class IOUtil {
 		}
 
 		// Create and configure StreamTokenizer to read template file.
-		final InputStream fin = templateFile.createInputStream();
+		final InputStream fin = castStream(templateFile.createInputStream());
 		try {
 			final Reader fr = characterSet != null ? new InputStreamReader(fin, characterSet) : new InputStreamReader(fin);
 			try {
 				// Create FileWriter
-				final OutputStream fos = destinationFile.createOutputStream();
+				final OutputStream fos = castStream(destinationFile.createOutputStream());
 				try {
 					final Writer fw = characterSet != null ? new OutputStreamWriter(fos, characterSet) : new OutputStreamWriter(fos);
 					try {
@@ -1339,7 +1340,7 @@ public final class IOUtil {
 		final long length = file.length();
 		final byte[] bytes = new byte[(int)length];
 
-		final InputStream is = file.createInputStream();
+		final InputStream is = castStream(file.createInputStream());
 		try {
 			// Read in the bytes
 			int offset = 0;

@@ -182,11 +182,41 @@ public class ReflectionUtil {
 			return false;
 
 		for (int i = 0; i < parameterTypes.length; i++) {
-			if (argTypes[i] != null && !parameterTypes[i].isAssignableFrom(argTypes[i]))
+			if (argTypes[i] != null
+					&& ! parameterTypes[i].isAssignableFrom(argTypes[i])
+					&& ! isSimpleTypeAssignmentPossible(parameterTypes[i], argTypes[i]))
 				return false;
 		}
 
 		return true;
+	}
+
+	private static boolean isSimpleTypeAssignmentPossible(Class<?> parameterType, Class<?> argType) {
+		if (parameterType == boolean.class && argType == Boolean.class)
+			return true;
+
+		if (parameterType == byte.class && argType == Byte.class)
+			return true;
+
+		if (parameterType == char.class && argType == Character.class)
+			return true;
+
+		if (parameterType == double.class && argType == Double.class)
+			return true;
+
+		if (parameterType == float.class && argType == Float.class)
+			return true;
+
+		if (parameterType == int.class && argType == Integer.class)
+			return true;
+
+		if (parameterType == long.class && argType == Long.class)
+			return true;
+
+		if (parameterType == short.class && argType == Short.class)
+			return true;
+
+		return false;
 	}
 
 	public static List<Method> getDeclaredMethods(final Class<?> clazz, final String name) {

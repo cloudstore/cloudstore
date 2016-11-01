@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
@@ -387,11 +388,8 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 			if (registryFile.exists() && registryFile.length() > 0) {
 				final Properties properties = new Properties();
 				try ( final LockFile lockFile = acquireLockFile(); ) {
-					final InputStream in = lockFile.createInputStream();
-					try {
+					try (final InputStream in = castStream(lockFile.createInputStream())) {
 						properties.load(in);
-					} finally {
-						in.close();
 					}
 				}
 				repoRegistryProperties = properties;
@@ -420,11 +418,8 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		try {
 			final File registryFile = getRegistryFile();
 			try ( final LockFile lockFile = acquireLockFile(); ) {
-				final OutputStream out = lockFile.createOutputStream();
-				try {
+				try (final OutputStream out = castStream(lockFile.createOutputStream())) {
 					repoRegistryProperties.store(out, null);
-				} finally {
-					out.close();
 				}
 			}
 			repoRegistryFileLastModified = registryFile.lastModified();

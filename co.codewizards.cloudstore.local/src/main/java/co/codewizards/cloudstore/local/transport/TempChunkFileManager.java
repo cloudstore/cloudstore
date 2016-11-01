@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 
-import java.io.ByteArrayInputStream;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
@@ -53,11 +54,8 @@ public class TempChunkFileManager {
 			// the temp-chunk-file or the chunk was already written into the final destination.
 			deleteOrFail(tempChunkFileDtoFile);
 
-			final OutputStream out = tempChunkFile.createOutputStream();
-			try {
+			try (final OutputStream out = castStream(tempChunkFile.createOutputStream())) {
 				out.write(fileData);
-			} finally {
-				out.close();
 			}
 			final String sha1 = sha1(fileData);
 			logger.trace("writeFileDataToTempChunkFile: Wrote {} bytes with SHA1 '{}' to '{}'.", fileData.length, sha1, tempChunkFile.getAbsolutePath());

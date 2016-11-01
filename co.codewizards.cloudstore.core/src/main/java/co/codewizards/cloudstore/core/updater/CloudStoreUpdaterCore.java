@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.updater;
 
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.UrlUtil.*;
@@ -43,8 +44,8 @@ public class CloudStoreUpdaterCore {
 	public static final String INSTALLATION_PROPERTIES_VERSION = "version";
 	public static final String remoteVersionURL = // "http://cloudstore.codewizards.co/update/${artifactId}/version";
 			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/version";
-	public static final String remoteUpdatePropertiesURL = // "http://cloudstore.codewizards.co/update/${artifactId}/update.properties";
-			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/update.properties";
+	public static final String remoteUpdatePropertiesURL = // "http://cloudstore.codewizards.co/update/${artifactId}/update.0.properties";
+			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/update.0.properties";
 
 	/**
 	 * Configuration property key controlling whether we do a downgrade. By default, only an upgrade is done. If this
@@ -300,7 +301,7 @@ public class CloudStoreUpdaterCore {
 		try ( final LockFile lockFile = LockFileFactory.getInstance().acquire(getUpdaterPropertiesFile(), 30000); ) {
 			final Properties properties = new Properties();
 			try {
-				final InputStream in = lockFile.createInputStream();
+				final InputStream in = castStream(lockFile.createInputStream());
 				try {
 					properties.load(in);
 				} finally {
@@ -345,7 +346,7 @@ public class CloudStoreUpdaterCore {
 			try {
 				final Properties properties = new Properties();
 				try {
-					final InputStream in = lockFile.createInputStream();
+					final InputStream in = castStream(lockFile.createInputStream());
 					try {
 						properties.load(in);
 					} finally {
@@ -361,7 +362,7 @@ public class CloudStoreUpdaterCore {
 						properties.setProperty(PROPERTY_KEY_REMOTE_VERSION_TIMESTAMP, remoteVersionCache.remoteVersionTimestamp.toString());
 					}
 
-					final OutputStream out = lockFile.createOutputStream();
+					final OutputStream out = castStream(lockFile.createOutputStream());
 					try {
 						properties.store(out, null);
 					} finally {

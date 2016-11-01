@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -89,7 +90,7 @@ public final class ZipUtil {
 	public static void zipFilesRecursively(final File zipOutputFile, final File[] files, final File entryRoot, final ProgressMonitor monitor)
 	throws IOException
 	{
-		final OutputStream fout = zipOutputFile.createOutputStream();
+		final OutputStream fout = castStream(zipOutputFile.createOutputStream());
 		final ZipOutputStream out = new ZipOutputStream(fout);
 		try {
 			zipFilesRecursively(out, zipOutputFile, files, entryRoot, monitor);
@@ -207,7 +208,7 @@ public final class ZipUtil {
 				}
 				else {
 					// Create a new zipEntry
-					final BufferedInputStream in = new BufferedInputStream( file.createInputStream() );
+					final BufferedInputStream in = new BufferedInputStream(castStream(file.createInputStream()));
 					final ZipEntry entry = new ZipEntry(relativePath);
 					entry.setTime(file.lastModified());
 					out.putNextEntry(entry);
@@ -274,7 +275,7 @@ public final class ZipUtil {
 
 		final Properties properties = new Properties();
 		if (metaFile.exists()) {
-			final InputStream in = metaFile.createInputStream();
+			final InputStream in = castStream(metaFile.createInputStream());
 			try {
 				properties.load(in);
 			} finally {
@@ -316,11 +317,8 @@ public final class ZipUtil {
 			unzipArchive(zipArchive, unzipRootFolder);
 			properties.setProperty(PROPERTY_KEY_ZIP_FILESIZE, Long.toString(zipLength, 36));
 			properties.setProperty(PROPERTY_KEY_ZIP_TIMESTAMP, Long.toString(zipLastModified, 36));
-			final OutputStream out = metaFile.createOutputStream();
-			try {
+			try (final OutputStream out = castStream(metaFile.createOutputStream())) {
 				properties.store(out, null);
-			} finally {
-				out.close();
 			}
 		}
 	}
@@ -356,15 +354,14 @@ public final class ZipUtil {
 						dir.mkdirs( );
 					}
 
-					final BufferedOutputStream out = new BufferedOutputStream( file.createOutputStream() );
-
-					int len;
-					final byte[] buf = new byte[1024 * 5];
-					while( (len = in.read(buf)) > 0 )
-					{
-						out.write(buf, 0, len);
+					try (final BufferedOutputStream out = new BufferedOutputStream(castStream(file.createOutputStream()))) {
+						int len;
+						final byte[] buf = new byte[1024 * 5];
+						while( (len = in.read(buf)) > 0 )
+						{
+							out.write(buf, 0, len);
+						}
 					}
-					out.close();
 				}
 			}
 		} finally {
