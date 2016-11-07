@@ -1,6 +1,13 @@
 #!/bin/sh
 
 BIN_DIR=`dirname $0`
-LIB_DIR="$BIN_DIR/../lib"
+INSTALLATION_DIR="$BIN_DIR/.."
+UPDATER_DIR="$INSTALLATION_DIR/updater"
 
-java -jar $LIB_DIR/${project.artifactId}-${project.version}.jar "$@"
+java -jar "$INSTALLATION_DIR/lib/${project.artifactId}-${project.version}.jar" "$@"
+
+if [ -d "$UPDATER_DIR" ]; then
+	echo "Updating CloudStore..."
+	java -jar "$UPDATER_DIR/lib/co.codewizards.cloudstore.updater-${project.version}.jar" -installationDir "$INSTALLATION_DIR"
+	"$0" "$@"
+fi

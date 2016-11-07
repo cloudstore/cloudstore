@@ -82,6 +82,9 @@ public class CloudStoreUpdaterCore {
 	 */
 	public static final String CONFIG_KEY_FORCE = "updater.force";
 
+	/**
+	 * Default value for {@link #CONFIG_KEY_REMOTE_VERSION_CACHE_VALIDITY_PERIOD} (6 hours in milliseconds).
+	 */
 	public static final long DEFAULT_REMOTE_VERSION_CACHE_VALIDITY_PERIOD = 6 * 60 * 60 * 1000;
 
 	/**

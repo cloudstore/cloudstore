@@ -85,6 +85,7 @@ public class CloudStoreServer implements Runnable {
 	private int securePort;
 	private final AtomicBoolean running = new AtomicBoolean();
 	private Server server;
+	private CloudStoreUpdaterTimer updaterTimer;
 
 	public static void main(String[] args) throws Exception {
 		args = MainArgsUtil.extractAndApplySystemPropertiesReturnOthers(args);
@@ -136,6 +137,9 @@ public class CloudStoreServer implements Runnable {
 
 				server = createServer();
 				server.start();
+
+				updaterTimer = createUpdaterTimer();
+				updaterTimer.start();
 			}
 
 			server.join();
@@ -161,11 +165,18 @@ public class CloudStoreServer implements Runnable {
 		}
 	}
 
+	protected CloudStoreUpdaterTimer createUpdaterTimer() {
+		return new CloudStoreUpdaterTimer();
+	}
+
 	protected LocalServer createLocalServer() {
 		return new LocalServer();
 	}
 
 	public synchronized void stop() {
+		if (updaterTimer != null)
+			updaterTimer.stop();
+
 		if (server != null) {
 			try {
 				server.stop();
