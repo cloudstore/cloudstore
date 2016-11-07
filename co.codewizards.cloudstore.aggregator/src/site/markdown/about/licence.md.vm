@@ -18,3 +18,13 @@ In short, this means:
 so that the whole community benefits. This, too, implies access to the source codes. If you modify CloudStore, you must
 make your modifications publicly available. However, if you just use CloudStore in your own application, you\'re not required
 to publish your own (separate) application (using CloudStore as a library) as free software.
+
+
+$H$H$H Contributor licence agreement
+
+By contributing to this project, you accept the conditions of the
+[LGPL](../about/licence.html) and also grant the [CodeWizards GmbH](http://codewizards.co) an
+irrevocable and non-exclusive permission to work with your contributions. This includes the
+right to licence your contributions to third parties under another licence, at the sole discretion
+of the CodeWizards. You do *not* give up any right to use your contributions yourself, but you do give up
+the right to constrain what the CodeWizards are allowed to do with your contributions.
