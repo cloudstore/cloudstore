@@ -26,6 +26,6 @@ public class VersionInfoProvider {
 	}
 
 	protected Version getMinimumRemoteVersion() {
-		return new Version("0.9.12-SNAPSHOT");
+		return new Version("0.9.12");
 	}
 }
