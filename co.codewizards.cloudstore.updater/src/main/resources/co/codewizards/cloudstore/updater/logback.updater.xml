@@ -10,10 +10,10 @@
 	</appender>
 
 	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${cloudstore.logDir}/cloudstore.client.log</file>
+		<file>${${appId.simpleId}.logDir}/${appId.simpleId}.updater.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>${cloudstore.logDir}/cloudstore.updater.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+			<fileNamePattern>${${appId.simpleId}.logDir}/${appId.simpleId}.updater.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
 
 			<!-- keep 30 days -->
 			<maxHistory>30</maxHistory>

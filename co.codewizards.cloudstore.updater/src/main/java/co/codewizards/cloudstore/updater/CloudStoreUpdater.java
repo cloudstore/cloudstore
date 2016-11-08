@@ -132,8 +132,10 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 		final String logbackXmlName = "logback.updater.xml";
 		final File logbackXmlFile = createFile(ConfigDir.getInstance().getFile(), logbackXmlName);
-		if (!logbackXmlFile.exists())
-			IOUtil.copyResource(CloudStoreUpdater.class, logbackXmlName, logbackXmlFile);
+		if (!logbackXmlFile.exists()) {
+			AppIdRegistry.getInstance().copyResourceResolvingAppId(
+					CloudStoreUpdater.class, logbackXmlName, logbackXmlFile);
+		}
 
 		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 	    try {
@@ -366,9 +368,16 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 		@Override
 		public File getFile(final File rootDir, String entryName) {
-			final String prefix = appId.getSimpleId() + "/";
-			if (entryName.startsWith(prefix))
-				entryName = entryName.substring(prefix.length());
+			final String prefix1 = appId.getSimpleId() + "/";
+			final String prefix2 = appId.getSimpleId() + "-"; // needed by subshare! it uses "subshare-server" in its server-installation
+
+			if (entryName.startsWith(prefix1))
+				entryName = entryName.substring(prefix1.length());
+			else if (entryName.startsWith(prefix2)) {
+				final int slashIndex = entryName.indexOf('/', prefix2.length());
+				if (slashIndex >= 0)
+					entryName = entryName.substring(slashIndex + 1);
+			}
 
 			return entryName.isEmpty() ? rootDir : createFile(rootDir, entryName);
 		}

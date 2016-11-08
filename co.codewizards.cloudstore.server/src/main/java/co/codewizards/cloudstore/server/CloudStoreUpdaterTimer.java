@@ -33,9 +33,12 @@ public class CloudStoreUpdaterTimer {
 	public static final String CONFIG_KEY_TIMER_PERIOD = "updater.timer.period";
 
 	/**
-	 * The timer-period for the very first check, done after {@link #start()} (1 minute in milliseconds).
+	 * The timer-period for the very first check, done after {@link #start()} (30 seconds in milliseconds).
+	 * <p>
+	 * Important: This is also the time it takes until the "updater/"-directory from a previous
+	 * update is deleted.
 	 */
-	private static final long ON_START_TIMER_PERIOD = 60 * 1000;
+	private static final long ON_START_TIMER_PERIOD = 30 * 1000;
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreUpdaterTimer.class);
 
