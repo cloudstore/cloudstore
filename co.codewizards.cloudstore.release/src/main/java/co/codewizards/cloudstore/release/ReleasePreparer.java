@@ -30,8 +30,8 @@ public class ReleasePreparer {
 	//   * to create a tag in SVN after check-in!
 	//   * to update the symlinks on the web-server after the release was successful.
 
-	protected String newMavenVersion = "0.9.13";
-//	protected String newMavenVersion = "0.9.14-SNAPSHOT";
+//	protected String newMavenVersion = "0.9.14";
+	protected String newMavenVersion = "0.9.14-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.
