@@ -54,7 +54,7 @@ public class DeleteModification extends Modification {
 		return path;
 	}
 	public void setPath(final String path) {
-		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull(path, "path");
 		if (path.isEmpty())
 			throw new IllegalArgumentException("path is empty! path must start with '/' and thus has a minimum length of 1 char!");
 

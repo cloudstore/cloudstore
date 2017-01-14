@@ -12,8 +12,8 @@ public class CheckServerTrustedCertificateExceptionContext {
 	private Throwable error;
 
 	protected CheckServerTrustedCertificateExceptionContext(X509Certificate[] certificateChain, Throwable certificateException) {
-		this.certificateChain = AssertUtil.assertNotNull("certificateChain", certificateChain);
-		this.error = AssertUtil.assertNotNull("error", certificateException);
+		this.certificateChain = AssertUtil.assertNotNull(certificateChain, "certificateChain");
+		this.error = AssertUtil.assertNotNull(certificateException, "error");
 
 		if (certificateChain.length < 1)
 			throw new IllegalArgumentException("certificateChain is empty!");

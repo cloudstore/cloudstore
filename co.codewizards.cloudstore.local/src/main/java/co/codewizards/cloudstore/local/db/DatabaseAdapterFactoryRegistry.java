@@ -77,7 +77,7 @@ public class DatabaseAdapterFactoryRegistry {
 		SortedMap<String, DatabaseAdapterFactory> result = new TreeMap<String, DatabaseAdapterFactory>();
 		for (final DatabaseAdapterFactory a : ServiceLoader.load(DatabaseAdapterFactory.class)) {
 			final String name = a.getName();
-			assertNotNull(String.format("%s.getName()", a.getClass().getName()), name);
+			assertNotNull(name, String.format("%s.getName()", a.getClass().getName()));
 			if (name.indexOf(' ') >= 0)
 				throw new IllegalStateException(
 						String.format("%s.getName() returned a symbolic name containing a space!", a.getClass().getName()));

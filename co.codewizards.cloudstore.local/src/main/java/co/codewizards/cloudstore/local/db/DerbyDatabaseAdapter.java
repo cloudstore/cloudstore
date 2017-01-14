@@ -32,7 +32,7 @@ public class DerbyDatabaseAdapter extends AbstractDatabaseAdapter {
 		initProperties();
 		initDriverClass();
 
-		connectionURL = assertNotNull("connectionURL", connectionURL).trim() + ";create=true";
+		connectionURL = assertNotNull(connectionURL, "connectionURL").trim() + ";create=true";
 		Connection connection = createConnection();
 		connection.close();
 	}

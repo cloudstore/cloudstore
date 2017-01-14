@@ -12,7 +12,7 @@ class ObjectRefConverterFactoryImpl implements ObjectRefConverterFactory {
 	private final LocalServerClient localServerClient;
 
 	public ObjectRefConverterFactoryImpl(final LocalServerClient localServerClient) {
-		this.localServerClient = assertNotNull("localServerClient", localServerClient);
+		this.localServerClient = assertNotNull(localServerClient, "localServerClient");
 	}
 
 	@Override

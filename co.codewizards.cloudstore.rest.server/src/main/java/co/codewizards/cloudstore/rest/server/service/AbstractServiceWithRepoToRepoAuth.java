@@ -204,7 +204,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected UUID getClientRepositoryIdFromUserName(final String userName) {
-		if (assertNotNull("userName", userName).startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
+		if (assertNotNull(userName, "userName").startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
 			final String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
 			final UUID clientRepositoryId = UUID.fromString(repositoryIdString);
 			return clientRepositoryId;
@@ -255,7 +255,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected URL getLocalRootURL(final UUID clientRepositoryId) {
-		assertNotNull("repositoryName", repositoryName);
+		assertNotNull(repositoryName, "repositoryName");
 		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {

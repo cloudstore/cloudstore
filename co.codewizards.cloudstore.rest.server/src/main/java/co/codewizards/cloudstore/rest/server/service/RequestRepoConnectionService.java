@@ -42,8 +42,8 @@ public class RequestRepoConnectionService
 	@Consumes(MediaType.APPLICATION_XML)
 	public void requestConnection(@PathParam("pathPrefix") final String pathPrefix, final RepositoryDto clientRepositoryDto)
 	{
-		AssertUtil.assertNotNull("pathPrefix", pathPrefix);
-		AssertUtil.assertNotNull("repositoryDto", clientRepositoryDto);
+		AssertUtil.assertNotNull(pathPrefix, "pathPrefix");
+		AssertUtil.assertNotNull(clientRepositoryDto, "repositoryDto");
 
 		URL localRootURL = LocalRepoRegistryImpl.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);

@@ -56,7 +56,7 @@ implements MessageBodyWriter<Object>
 	private SecurityContext securityContext;
 
 	public JavaNativeWithObjectRefMessageBodyWriter(final ObjectRefConverterFactory objectRefConverterFactory) {
-		this.objectRefConverterFactory = assertNotNull("objectRefConverterFactory", objectRefConverterFactory);
+		this.objectRefConverterFactory = assertNotNull(objectRefConverterFactory, "objectRefConverterFactory");
 	}
 
 	@Override
@@ -96,9 +96,9 @@ implements MessageBodyWriter<Object>
 
 		public ReplacingObjectOutputStream(OutputStream out, final ObjectRefConverter objectRefConverter, final NoObjectRefAnalyser noObjectRefAnalyser, final ObjectGraphContainer objectGraphContainer) throws IOException {
 			super(out);
-			this.objectRefConverter = assertNotNull("objectRefConverter", objectRefConverter);
-			this.noObjectRefAnalyser = assertNotNull("noObjectRefAnalyser", noObjectRefAnalyser);
-			this.objectGraphContainer = assertNotNull("objectGraphContainer", objectGraphContainer);
+			this.objectRefConverter = assertNotNull(objectRefConverter, "objectRefConverter");
+			this.noObjectRefAnalyser = assertNotNull(noObjectRefAnalyser, "noObjectRefAnalyser");
+			this.objectGraphContainer = assertNotNull(objectGraphContainer, "objectGraphContainer");
 			enableReplaceObject(true);
 		}
 

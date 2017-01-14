@@ -22,8 +22,8 @@ public class ClassInfo implements Serializable {
 
 	public ClassInfo(final int classId, final String className, final Set<String> interfaceNames, final boolean equalsOverridden) {
 		this.classId = classId;
-		this.className = assertNotNull("className", className);
-		this.interfaceNames = assertNotNull("interfaceNames", interfaceNames);
+		this.className = assertNotNull(className, "className");
+		this.interfaceNames = assertNotNull(interfaceNames, "interfaceNames");
 		this.equalsOverridden = equalsOverridden;
 	}
 

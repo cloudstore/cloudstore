@@ -59,8 +59,8 @@ public class TransientRepoPasswordManager {
 	}
 
 	public synchronized TransientRepoPassword getCurrentAuthRepoPassword(final UUID serverRepositoryId, final UUID clientRepositoryId) {
-		AssertUtil.assertNotNull("serverRepositoryId", serverRepositoryId);
-		AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
+		AssertUtil.assertNotNull(serverRepositoryId, "serverRepositoryId");
+		AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
 
 		Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
 		if (clientRepositoryId2AuthRepoPasswordSet == null) {
@@ -87,9 +87,9 @@ public class TransientRepoPasswordManager {
 	}
 
 	public synchronized boolean isPasswordValid(final UUID serverRepositoryId, final UUID clientRepositoryId, final char[] password) {
-		AssertUtil.assertNotNull("serverRepositoryId", serverRepositoryId);
-		AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
-		AssertUtil.assertNotNull("password", password);
+		AssertUtil.assertNotNull(serverRepositoryId, "serverRepositoryId");
+		AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
+		AssertUtil.assertNotNull(password, "password");
 		final Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
 		if (clientRepositoryId2AuthRepoPasswordSet == null)
 			return false;
@@ -119,10 +119,10 @@ public class TransientRepoPasswordManager {
 			final UUID clientRepositoryId = oldestAuthRepoPassword.getClientRepositoryId();
 
 			final Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
-			AssertUtil.assertNotNull("clientRepositoryId2AuthRepoPasswordSet", clientRepositoryId2AuthRepoPasswordSet);
+			AssertUtil.assertNotNull(clientRepositoryId2AuthRepoPasswordSet, "clientRepositoryId2AuthRepoPasswordSet");
 
 			final SortedSet<TransientRepoPassword> authRepoPasswordSet = clientRepositoryId2AuthRepoPasswordSet.get(clientRepositoryId);
-			AssertUtil.assertNotNull("authRepoPasswordSet", authRepoPasswordSet);
+			AssertUtil.assertNotNull(authRepoPasswordSet, "authRepoPasswordSet");
 
 			authRepoPasswordSet.remove(oldestAuthRepoPassword);
 
@@ -188,12 +188,12 @@ public class TransientRepoPasswordManager {
 	};
 
 	private boolean isAfterRenewalDateOrInEarlyRenewalPeriod(final TransientRepoPassword transientRepoPassword) {
-		AssertUtil.assertNotNull("authRepoPassword", transientRepoPassword);
+		AssertUtil.assertNotNull(transientRepoPassword, "authRepoPassword");
 		return System.currentTimeMillis() + getEarlyRenewalPeriod() > transientRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
 	}
 
 	private boolean isExpired(final TransientRepoPassword transientRepoPassword) {
-		AssertUtil.assertNotNull("authRepoPassword", transientRepoPassword);
+		AssertUtil.assertNotNull(transientRepoPassword, "authRepoPassword");
 		return System.currentTimeMillis() > transientRepoPassword.getAuthToken().getExpiryDateTime().getMillis();
 	}
 

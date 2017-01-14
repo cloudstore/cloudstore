@@ -12,13 +12,13 @@ public class InverseMethodInvocationRequest extends AbstractInverseServiceReques
 	private final Uid delayedResponseId;
 
 	public InverseMethodInvocationRequest(final MethodInvocationRequest methodInvocationRequest) {
-		this.methodInvocationRequest = assertNotNull("methodInvocationRequest", methodInvocationRequest);
+		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
 		this.delayedResponseId = null;
 	}
 
 	public InverseMethodInvocationRequest(final Uid delayedResponseId) {
 		this.methodInvocationRequest = null;
-		this.delayedResponseId = assertNotNull("delayedResponseId", delayedResponseId);
+		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
 	}
 
 	public MethodInvocationRequest getMethodInvocationRequest() {

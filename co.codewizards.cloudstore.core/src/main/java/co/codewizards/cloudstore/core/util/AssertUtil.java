@@ -10,16 +10,16 @@ public final class AssertUtil {
 
 	private AssertUtil() { }
 
-	public static final <T> T assertNotNull(final String name, final T object) {
+	public static final <T> T assertNotNull(final T object, final String name) {
 		if (object == null)
 			throw new IllegalArgumentException(String.format("%s == null", name));
 
 		return object;
 	}
 
-	public static final <T> T assertNotNull(final String name, final T object, final String additionalInfoTemplate, final Object ... additionalInfoArgs) {
+	public static final <T> T assertNotNull(final T object, final String name, final String additionalInfoTemplate, final Object ... additionalInfoArgs) {
 		if (additionalInfoTemplate == null)
-			return assertNotNull(name, object);
+			return assertNotNull(object, name);
 
 		if (object == null)
 			throw new IllegalArgumentException(String.format("%s == null :: ", name) + String.format(additionalInfoTemplate, additionalInfoArgs));
@@ -27,8 +27,8 @@ public final class AssertUtil {
 		return object;
 	}
 
-	public static final <T> T[] assertNotNullAndNoNullElement(final String name, final T[] array) {
-		assertNotNull(name, array);
+	public static final <T> T[] assertNotNullAndNoNullElement(final T[] array, final String name) {
+		assertNotNull(array, name);
 		for (int i = 0; i < array.length; i++) {
 			if (array[i] == null)
 				throw new IllegalArgumentException(String.format("%s[%s] == null", name, i));
@@ -36,8 +36,8 @@ public final class AssertUtil {
 		return array;
 	}
 
-	public static final <E, T extends Collection<E>> T assertNotNullAndNoNullElement(final String name, final T collection) {
-		assertNotNull(name, collection);
+	public static final <E, T extends Collection<E>> T assertNotNullAndNoNullElement(final T collection, final String name) {
+		assertNotNull(collection, name);
 		int i = -1;
 		for (final E element : collection) {
 			++i;
@@ -47,8 +47,8 @@ public final class AssertUtil {
 		return collection;
 	}
 
-	public static final <E, T extends Collection<E>> T assertNotEmpty(final String name, final T collection) {
-		assertNotNull(name, collection);
+	public static final <E, T extends Collection<E>> T assertNotEmpty(final T collection, final String name) {
+		assertNotNull(collection, name);
 		if (collection.isEmpty())
 			throw new IllegalArgumentException(String.format("%s is empty", name));
 

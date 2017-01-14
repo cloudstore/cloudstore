@@ -12,14 +12,14 @@ class ObjectRefConverterImpl implements ObjectRefConverter {
 	private final ObjectManager objectManager;
 
 	public ObjectRefConverterImpl(final LocalServerClient localServerClient) {
-		this.localServerClient = assertNotNull("localServerClient", localServerClient);
-		this.objectManager = assertNotNull("localServerClient.objectManager", localServerClient.getObjectManager());
+		this.localServerClient = assertNotNull(localServerClient, "localServerClient");
+		this.objectManager = assertNotNull(localServerClient.getObjectManager(), "localServerClient.objectManager");
 	}
 
 	@Override
 	public Object convertToObjectRefIfNeeded(Object object) {
 		if (object instanceof RemoteObjectProxy)
-			return assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
+			return assertNotNull(((RemoteObjectProxy)object).getObjectRef(), "object.getObjectRef()");
 		else
 			return objectManager.getObjectRefOrObject(object);
 	}

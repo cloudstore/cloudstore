@@ -35,8 +35,8 @@ public class InverseServiceRequestHandlerThread extends Thread {
 	private final Executor executor = Executors.newCachedThreadPool();
 
 	public InverseServiceRequestHandlerThread(final LocalServerClient localServerClient) {
-		this.localServerClientRef = new WeakReference<LocalServerClient>(assertNotNull("localServerClient", localServerClient));
-		this.localServerRestClientRef = new WeakReference<LocalServerRestClient>(assertNotNull("localServerRestClient", localServerClient.getLocalServerRestClient()));
+		this.localServerClientRef = new WeakReference<LocalServerClient>(assertNotNull(localServerClient, "localServerClient"));
+		this.localServerRestClientRef = new WeakReference<LocalServerRestClient>(assertNotNull(localServerClient.getLocalServerRestClient(), "localServerRestClient"));
 		setName(getClass().getSimpleName() + '-' + nextThreadId.getAndIncrement());
 		setDaemon(true);
 	}
@@ -79,14 +79,14 @@ public class InverseServiceRequestHandlerThread extends Thread {
 		private final InverseServiceRequest inverseServiceRequest;
 
 		public HandlerRunnable(final InverseServiceRequest inverseServiceRequest) {
-			this.inverseServiceRequest = assertNotNull("inverseServiceRequest", inverseServiceRequest);
+			this.inverseServiceRequest = assertNotNull(inverseServiceRequest, "inverseServiceRequest");
 		}
 
 		@Override
 		public void run() {
-			assertNotNull("inverseServiceRequest", inverseServiceRequest);
+			assertNotNull(inverseServiceRequest, "inverseServiceRequest");
 			final Uid requestId = inverseServiceRequest.getRequestId();
-			assertNotNull("inverseServiceRequest.requestId", requestId);
+			assertNotNull(requestId, "inverseServiceRequest.requestId");
 
 			final LocalServerRestClient localServerRestClient = getLocalServerRestClientOrFail();
 

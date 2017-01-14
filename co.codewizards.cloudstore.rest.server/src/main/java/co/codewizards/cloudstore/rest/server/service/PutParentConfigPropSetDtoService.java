@@ -27,7 +27,7 @@ public class PutParentConfigPropSetDtoService extends AbstractServiceWithRepoToR
 
 	@PUT
 	public void beginPutFile(final ConfigPropSetDto parentConfigPropSetDto) {
-		assertNotNull("parentConfigPropSetDto", parentConfigPropSetDto);
+		assertNotNull(parentConfigPropSetDto, "parentConfigPropSetDto");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			repoTransport.putParentConfigPropSetDto(parentConfigPropSetDto);

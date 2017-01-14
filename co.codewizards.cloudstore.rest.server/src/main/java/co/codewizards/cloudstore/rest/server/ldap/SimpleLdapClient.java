@@ -32,9 +32,9 @@ public class SimpleLdapClient implements LdapClient{
 	private final String url;
 
 	public SimpleLdapClient(final List<String> templates, final String url){
-		this.templates = assertNotEmpty("templates", templates);
+		this.templates = assertNotEmpty(templates, "templates");
 		validateTemplates(templates);
-		this.url = assertNotNull("url", url);
+		this.url = assertNotNull(url, "url");
 	}
 
 	@Override

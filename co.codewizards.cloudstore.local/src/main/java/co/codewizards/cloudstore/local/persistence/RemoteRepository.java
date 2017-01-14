@@ -87,7 +87,7 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 		return localPathPrefix;
 	}
 	public void setLocalPathPrefix(final String localPathPrefix) {
-		assertNotNull("localPathPrefix", localPathPrefix);
+		assertNotNull(localPathPrefix, "localPathPrefix");
 
 		if (!localPathPrefix.isEmpty() && !localPathPrefix.startsWith("/"))
 			throw new IllegalArgumentException("localPathPrefix must start with '/' but does not: " + localPathPrefix);

@@ -45,14 +45,14 @@ public class RepoFileDtoConverter {
 	}
 
 	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
-		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
-		this.localRepoManager = AssertUtil.assertNotNull("transaction.localRepoManager", transaction.getLocalRepoManager());
+		this.transaction = AssertUtil.assertNotNull(transaction, "transaction");
+		this.localRepoManager = AssertUtil.assertNotNull(transaction.getLocalRepoManager(), "transaction.localRepoManager");
 		this.repoFileDao = this.transaction.getDao(RepoFileDao.class);
 	}
 
 	public RepoFileDto toRepoFileDto(final RepoFile repoFile, final int depth) {
-		AssertUtil.assertNotNull("repoFileDao", repoFileDao);
-		AssertUtil.assertNotNull("repoFile", repoFile);
+		AssertUtil.assertNotNull(repoFileDao, "repoFileDao");
+		AssertUtil.assertNotNull(repoFile, "repoFile");
 		final RepoFileDto repoFileDto;
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
@@ -88,7 +88,7 @@ public class RepoFileDtoConverter {
 						logger.warn("toRepoFileDto: Ignoring corrupt tempChunkFileDtoFile '" + tempChunkFileDtoFile.getAbsolutePath() + "': " + x, x);
 						continue;
 					}
-					normalFileDto.getTempFileChunkDtos().add(AssertUtil.assertNotNull("tempChunkFileDto.fileChunkDto", tempChunkFileDto.getFileChunkDto()));
+					normalFileDto.getTempFileChunkDtos().add(AssertUtil.assertNotNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto"));
 				}
 			}
 		}

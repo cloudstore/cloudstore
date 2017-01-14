@@ -16,7 +16,7 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 
 	@Override
 	public RepoTransport createRepoTransport(URL remoteRoot, UUID clientRepositoryId) {
-		AssertUtil.assertNotNull("remoteRoot", remoteRoot);
+		AssertUtil.assertNotNull(remoteRoot, "remoteRoot");
 		// clientRepositoryId may be null!
 		RepoTransport repoTransport = _createRepoTransport();
 		if (repoTransport == null)

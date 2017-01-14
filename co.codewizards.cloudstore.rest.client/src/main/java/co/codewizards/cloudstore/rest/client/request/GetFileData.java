@@ -12,7 +12,7 @@ public class GetFileData extends AbstractRequest<byte[]> {
 	private final int length;
 
 	public GetFileData(final String repositoryName, final String path, final long offset, final int length) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.path = path;
 		this.offset = offset;
 		this.length = length;

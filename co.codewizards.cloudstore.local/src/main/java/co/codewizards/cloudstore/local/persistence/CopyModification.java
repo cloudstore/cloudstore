@@ -63,7 +63,7 @@ public class CopyModification extends Modification {
 		return fromPath;
 	}
 	public void setFromPath(final String fromPath) {
-		assertNotNull("fromPath", fromPath);
+		assertNotNull(fromPath, "fromPath");
 
 		if (equal(this.fromPath, fromPath))
 			return;
@@ -82,7 +82,7 @@ public class CopyModification extends Modification {
 		return toPath;
 	}
 	public void setToPath(final String toPath) {
-		assertNotNull("toPath", toPath);
+		assertNotNull(toPath, "toPath");
 
 		if (equal(this.toPath, toPath))
 			return;

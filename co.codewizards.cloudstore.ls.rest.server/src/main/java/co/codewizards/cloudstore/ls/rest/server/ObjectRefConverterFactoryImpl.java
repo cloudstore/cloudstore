@@ -15,8 +15,8 @@ class ObjectRefConverterFactoryImpl implements ObjectRefConverterFactory {
 
 	@Override
 	public ObjectRefConverter createObjectRefConverter(final SecurityContext securityContext) {
-		final Principal userPrincipal = assertNotNull("securityContext", securityContext).getUserPrincipal();
-		assertNotNull("securityContext.userPrincipal", userPrincipal);
+		final Principal userPrincipal = assertNotNull(securityContext, "securityContext").getUserPrincipal();
+		assertNotNull(userPrincipal, "securityContext.userPrincipal");
 
 		final Uid clientId = new Uid(securityContext.getUserPrincipal().getName());
 		final ObjectManager objectManager = ObjectManager.getInstance(clientId);

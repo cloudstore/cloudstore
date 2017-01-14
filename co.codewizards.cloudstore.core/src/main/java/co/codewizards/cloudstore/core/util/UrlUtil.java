@@ -55,7 +55,7 @@ public final class UrlUtil {
 	}
 
 	public static File getFile(final URL url) {
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_FILE))
 			throw new IllegalStateException("url does not reference a local file, i.e. it does not start with 'file:': " + url);
 
@@ -79,7 +79,7 @@ public final class UrlUtil {
 	 * @see #appendNonEncodedPath(URL, String)
 	 */
 	public static URL appendEncodedPath(final URL url, final String path) {
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -97,7 +97,7 @@ public final class UrlUtil {
 	 * @see #appendEncodedPath(URL, String)
 	 */
 	public static URL appendNonEncodedPath(final URL url, final String path) {
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 		if (path == null || path.isEmpty())
 			return url;
 
@@ -110,7 +110,7 @@ public final class UrlUtil {
 	}
 
 	private static URL appendEncodedPath(final URL url, final List<String> pathSegments) {
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 
 		if (pathSegments == null || pathSegments.isEmpty())
 			return url;
@@ -137,7 +137,7 @@ public final class UrlUtil {
 	}
 
 	private static char getLastChar(final StringBuilder stringBuilder) {
-		assertNotNull("stringBuilder", stringBuilder);
+		assertNotNull(stringBuilder, "stringBuilder");
 
 		final int index = stringBuilder.length() - 1;
 		if (index < 0)
@@ -181,7 +181,7 @@ public final class UrlUtil {
 	 * @return the unwrapped URL, i.e. usually the 'file:'-URL pointing to the JAR-URL.
 	 */
 	public static URL getFileUrlFromJarUrl(final URL url) { // TODO nested JARs not yet supported!
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 		logger.debug("getFileUrlFromJarUrl: url={}", url);
 		if (!url.getProtocol().equalsIgnoreCase(PROTOCOL_JAR))
 			throw new IllegalArgumentException("url is not starting with 'jar:': " + url);

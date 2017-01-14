@@ -14,8 +14,8 @@ public class PutParentConfigPropSetDto extends VoidRequest {
 	private final ConfigPropSetDto parentConfigPropSetDto;
 
 	public PutParentConfigPropSetDto(final String repositoryName, final ConfigPropSetDto parentConfigPropSetDto) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.parentConfigPropSetDto = assertNotNull("parentConfigPropSetDto", parentConfigPropSetDto);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.parentConfigPropSetDto = assertNotNull(parentConfigPropSetDto, "parentConfigPropSetDto");
 	}
 
 	@Override

@@ -29,7 +29,7 @@ public class WeakPropertyChangeListener implements PropertyChangeListener {
 	public WeakPropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
 		expunge();
 
-		this.bean = assertNotNull("bean", bean);
+		this.bean = assertNotNull(bean, "bean");
 		this.property = property;
 
 		listenerRef = new WeakReference<PropertyChangeListener>(listener, listenerRefQueue);

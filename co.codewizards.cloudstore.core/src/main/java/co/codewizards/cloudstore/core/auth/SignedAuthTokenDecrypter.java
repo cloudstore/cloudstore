@@ -17,7 +17,7 @@ public class SignedAuthTokenDecrypter {
 	private PrivateKey privateKey;
 
 	public SignedAuthTokenDecrypter(final byte[] privateKeyData) {
-		AssertUtil.assertNotNull("privateKeyData", privateKeyData);
+		AssertUtil.assertNotNull(privateKeyData, "privateKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -31,9 +31,9 @@ public class SignedAuthTokenDecrypter {
 	}
 
 	public byte[] decrypt(final EncryptedSignedAuthToken encryptedSignedAuthToken) {
-		AssertUtil.assertNotNull("encryptedSignedAuthToken", encryptedSignedAuthToken);
-		AssertUtil.assertNotNull("encryptedSignedAuthToken.encryptedSignedAuthTokenData", encryptedSignedAuthToken.getEncryptedSignedAuthTokenData());
-		AssertUtil.assertNotNull("encryptedSignedAuthToken.encryptedSymmetricKey", encryptedSignedAuthToken.getEncryptedSymmetricKey());
+		AssertUtil.assertNotNull(encryptedSignedAuthToken, "encryptedSignedAuthToken");
+		AssertUtil.assertNotNull(encryptedSignedAuthToken.getEncryptedSignedAuthTokenData(), "encryptedSignedAuthToken.encryptedSignedAuthTokenData");
+		AssertUtil.assertNotNull(encryptedSignedAuthToken.getEncryptedSymmetricKey(), "encryptedSignedAuthToken.encryptedSymmetricKey");
 		try {
 			final Cipher asymCipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA1ANDMGF1PADDING");
 			asymCipher.init(Cipher.DECRYPT_MODE, privateKey);

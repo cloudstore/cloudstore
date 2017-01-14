@@ -142,7 +142,7 @@ public abstract class RepoFile extends Entity implements AutoTrackLocalRevision 
 	 * @return the {@link File} represented by this {@link RepoFile} inside the given repository's {@code localRoot} directory.
 	 */
 	public File getFile(final File localRoot) {
-		AssertUtil.assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull(localRoot, "localRoot");
 		File result = localRoot;
 		for (final RepoFile repoFile : getPathList()) {
 			if (repoFile.getParent() == null) // skip the root

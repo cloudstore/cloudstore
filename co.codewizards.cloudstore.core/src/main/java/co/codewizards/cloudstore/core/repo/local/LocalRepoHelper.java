@@ -31,7 +31,7 @@ public final class LocalRepoHelper {
 	 * @return the repository's local root. Is <code>null</code>, if {@code file} is not located inside a repository.
 	 */
 	public static File getLocalRootContainingFile(final File file) {
-		File parentFile = AssertUtil.assertNotNull("file", file);
+		File parentFile = AssertUtil.assertNotNull(file, "file");
 		while (parentFile != null) {
 			final File parentMetaDir = createFile(parentFile, LocalRepoManager.META_DIR_NAME);
 			if (parentMetaDir.exists())
@@ -43,7 +43,7 @@ public final class LocalRepoHelper {
 	}
 
 	public static Collection<File> getLocalRootsContainedInDirectory(File directory) {
-		assertNotNull("directory", directory);
+		assertNotNull(directory, "directory");
 		directory = directory.getAbsoluteFile();
 
 		if (! directory.isDirectory())

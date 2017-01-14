@@ -11,10 +11,10 @@ public class ExtMethodInvocationRequest {
 	private final Class<?> targetClass;
 
 	public ExtMethodInvocationRequest(final ObjectManager objectManager, final MethodInvocationRequest methodInvocationRequest, final Class<?> targetClass) {
-		this.objectManager = assertNotNull("objectManager", objectManager);
-		this.methodInvocationRequest = assertNotNull("methodInvocationRequest", methodInvocationRequest);
+		this.objectManager = assertNotNull(objectManager, "objectManager");
+		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
 		this.targetClass = targetClass == null ? methodInvocationRequest.getObject().getClass() : targetClass;
-		assertNotNull("this.targetClass", this.targetClass);
+		assertNotNull(this.targetClass, "this.targetClass");
 	}
 
 	public ObjectManager getObjectManager() {

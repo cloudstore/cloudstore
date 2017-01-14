@@ -16,8 +16,8 @@ public class MakeDirectory extends VoidRequest {
 	protected final Date lastModified;
 
 	public MakeDirectory(final String repositoryName, final String path, final Date lastModified) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.path = assertNotNull("path", path);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.path = assertNotNull(path, "path");
 		this.lastModified = lastModified;
 	}
 

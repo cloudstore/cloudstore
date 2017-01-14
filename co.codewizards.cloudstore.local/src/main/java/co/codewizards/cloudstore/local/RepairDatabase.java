@@ -26,7 +26,7 @@ public class RepairDatabase implements Runnable {
 	private Statement statement;
 
 	public RepairDatabase(File localRoot) {
-		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull(localRoot, "localRoot");
 	}
 
 	@Override

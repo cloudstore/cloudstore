@@ -18,7 +18,7 @@ public class ConfigPropSetDto {
 	}
 
 	public ConfigPropSetDto(final Properties properties) {
-		assertNotNull("properties", properties);
+		assertNotNull(properties, "properties");
 		configPropDtos = new ArrayList<>(properties.size());
 		for (final Map.Entry<Object, Object> me : properties.entrySet()) {
 			final ConfigPropDto configPropDto = new ConfigPropDto();

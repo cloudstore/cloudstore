@@ -87,8 +87,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	 * must be referenced here.
 	 */
 	protected RepoToRepoSync(File localRoot, final URL remoteRoot) {
-		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull("localRoot", localRoot));
-		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull("remoteRoot", remoteRoot));
+		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull(localRoot, "localRoot"));
+		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull(remoteRoot, "remoteRoot"));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
 		this.localRoot = localRoot = createFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
@@ -107,7 +107,7 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	public void sync(final ProgressMonitor monitor) {
-		assertNotNull("monitor", monitor);
+		assertNotNull(monitor, "monitor");
 		monitor.beginTask("Synchronising...", 201);
 		try {
 			final VersionInfoDto clientVersionInfoDto = localRepoTransport.getVersionInfoDto();
@@ -181,13 +181,13 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void waitForAndCheckLocalSyncFuture() {
 		try {
-			assertNotNull("localSyncFuture", localSyncFuture).get();
+			assertNotNull(localSyncFuture, "localSyncFuture").get();
 		} catch (final RuntimeException e) {
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
-		assertNotNull("localSyncExecutor", localSyncExecutor).shutdown();
+		assertNotNull(localSyncExecutor, "localSyncExecutor").shutdown();
 		localSyncFuture = null;
 		localSyncExecutor = null;
 	}
@@ -270,10 +270,10 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	protected void syncParentConfigPropSetDto(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final ConfigPropSetDto parentConfigPropSetDto, final ProgressMonitor monitor) {
-		assertNotNull("fromRepoTransport", fromRepoTransport);
-		assertNotNull("toRepoTransport", toRepoTransport);
+		assertNotNull(fromRepoTransport, "fromRepoTransport");
+		assertNotNull(toRepoTransport, "toRepoTransport");
 		// parentConfigPropSetDto may be null!
-		assertNotNull("monitor", monitor);
+		assertNotNull(monitor, "monitor");
 
 		monitor.beginTask("Synchronising parent-config...", 1);
 		try {
@@ -290,12 +290,12 @@ public class RepoToRepoSync implements AutoCloseable {
 			final RepoFileDtoTreeNode repoFileDtoTree,
 			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl, final boolean filesInProgressOnly,
 			final ProgressMonitor monitor) {
-		assertNotNull("fromRepoTransport", fromRepoTransport);
-		assertNotNull("toRepoTransport", toRepoTransport);
-		assertNotNull("repoFileDtoTree", repoFileDtoTree);
-		assertNotNull("repoFileDtoClassesIncl", repoFileDtoClassesIncl);
-		assertNotNull("repoFileDtoClassesExcl", repoFileDtoClassesExcl);
-		assertNotNull("monitor", monitor);
+		assertNotNull(fromRepoTransport, "fromRepoTransport");
+		assertNotNull(toRepoTransport, "toRepoTransport");
+		assertNotNull(repoFileDtoTree, "repoFileDtoTree");
+		assertNotNull(repoFileDtoClassesIncl, "repoFileDtoClassesIncl");
+		assertNotNull(repoFileDtoClassesExcl, "repoFileDtoClassesExcl");
+		assertNotNull(monitor, "monitor");
 
 		final Map<Class<?>, Boolean> repoFileDtoClass2Included = new HashMap<Class<?>, Boolean>();
 		final Map<Class<?>, Boolean> repoFileDtoClass2Excluded = new HashMap<Class<?>, Boolean>();
@@ -472,9 +472,9 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	protected void applyDeleteModification(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final DeleteModificationDto deleteModificationDto) {
-		assertNotNull("fromRepoTransport", fromRepoTransport);
-		assertNotNull("toRepoTransport", toRepoTransport);
-		assertNotNull("deleteModificationDto", deleteModificationDto);
+		assertNotNull(fromRepoTransport, "fromRepoTransport");
+		assertNotNull(toRepoTransport, "toRepoTransport");
+		assertNotNull(deleteModificationDto, "deleteModificationDto");
 
 		try {
 			delete(fromRepoTransport, toRepoTransport, deleteModificationDto);

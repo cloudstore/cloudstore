@@ -14,7 +14,7 @@ public class InvokeMethod extends AbstractRequest<MethodInvocationResponse> {
 	private final MethodInvocationRequest methodInvocationRequest;
 
 	public InvokeMethod(MethodInvocationRequest methodInvocationRequest) {
-		this.methodInvocationRequest = assertNotNull("methodInvocationRequest", methodInvocationRequest);
+		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
 	}
 
 	@Override

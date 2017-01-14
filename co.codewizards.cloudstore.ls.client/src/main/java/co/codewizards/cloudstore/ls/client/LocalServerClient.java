@@ -98,8 +98,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... arguments) {
-		assertNotNull("clazz", clazz);
-		assertNotNull("methodName", methodName);
+		assertNotNull(clazz, "clazz");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeStatic(clazz, methodName, arguments);
 
@@ -108,8 +108,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final Object ... arguments) {
-		assertNotNull("className", className);
-		assertNotNull("methodName", methodName);
+		assertNotNull(className, "className");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeStatic(getClassOrFail(className), methodName, arguments);
 
@@ -118,8 +118,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Class<?>[] argumentTypes, final Object ... arguments) {
-		assertNotNull("clazz", clazz);
-		assertNotNull("methodName", methodName);
+		assertNotNull(clazz, "clazz");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeStatic(clazz, methodName, argumentTypes, arguments);
 
@@ -128,8 +128,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
-		assertNotNull("className", className);
-		assertNotNull("methodName", methodName);
+		assertNotNull(className, "className");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeStatic(getClassOrFail(className), methodName, getClassesOrFail(argumentTypeNames), arguments);
 
@@ -141,7 +141,7 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeConstructor(final Class<T> clazz, final Object ... arguments) {
-		assertNotNull("clazz", clazz);
+		assertNotNull(clazz, "clazz");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeConstructor(clazz, arguments);
 
@@ -150,7 +150,7 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
-		assertNotNull("className", className);
+		assertNotNull(className, "className");
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invokeConstructor(getClassOrFail(className), arguments));
 
@@ -159,7 +159,7 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeConstructor(final Class<T> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
-		assertNotNull("clazz", clazz);
+		assertNotNull(clazz, "clazz");
 		if (! LsConfig.isLocalServerEnabled())
 			return ReflectionUtil.invokeConstructor(clazz, argumentTypes, arguments);
 
@@ -168,7 +168,7 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invokeConstructor(final String className, final String[] argumentTypeNames, final Object ... arguments) {
-		assertNotNull("className", className);
+		assertNotNull(className, "className");
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invokeConstructor(getClassOrFail(className), getClassesOrFail(argumentTypeNames), arguments));
 
@@ -180,8 +180,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final Object ... arguments) {
-		assertNotNull("object", object);
-		assertNotNull("methodName", methodName);
+		assertNotNull(object, "object");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invoke(object, methodName, arguments));
 
@@ -193,8 +193,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object... arguments) {
-		assertNotNull("object", object);
-		assertNotNull("methodName", methodName);
+		assertNotNull(object, "object");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invoke(object, methodName, argumentTypes, arguments));
 
@@ -203,8 +203,8 @@ public class LocalServerClient implements Invoker, Closeable {
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final String[] argumentTypeNames, final Object... arguments) {
-		assertNotNull("object", object);
-		assertNotNull("methodName", methodName);
+		assertNotNull(object, "object");
+		assertNotNull(methodName, "methodName");
 		if (! LsConfig.isLocalServerEnabled())
 			return cast(ReflectionUtil.invoke(object, methodName, getClassesOrFail(argumentTypeNames), arguments));
 
@@ -215,7 +215,7 @@ public class LocalServerClient implements Invoker, Closeable {
 	}
 
 	private Class<?>[] getClassesOrFail(final String[] classNames) {
-		assertNotNull("classNames", classNames);
+		assertNotNull(classNames, "classNames");
 		final Class<?>[] result = new Class<?>[classNames.length];
 		for (int i = 0; i < classNames.length; i++)
 			result[i] = getClassOrFail(classNames[i]);
@@ -224,7 +224,7 @@ public class LocalServerClient implements Invoker, Closeable {
 	}
 
 	private Class<?> getClassOrFail(final String className) {
-		assertNotNull("className", className);
+		assertNotNull(className, "className");
 		ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		if (loader == null)
 			loader = getClass().getClassLoader();
@@ -249,7 +249,7 @@ public class LocalServerClient implements Invoker, Closeable {
 	}
 
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
-		assertNotNull("methodInvocationRequest", methodInvocationRequest);
+		assertNotNull(methodInvocationRequest, "methodInvocationRequest");
 
 		MethodInvocationResponse methodInvocationResponse = getLocalServerRestClient().execute(
 				new InvokeMethod(methodInvocationRequest));
@@ -270,8 +270,8 @@ public class LocalServerClient implements Invoker, Closeable {
 	}
 
 	private void copyWritableArgumentsBack(final Object[] requestArguments, final Object[] responseArguments) {
-		assertNotNull("requestArguments", requestArguments);
-		assertNotNull("responseArguments", responseArguments);
+		assertNotNull(requestArguments, "requestArguments");
+		assertNotNull(responseArguments, "responseArguments");
 
 		for (int i = 0; i < responseArguments.length; ++i) {
 			final Object responseArgument = responseArguments[i];
@@ -281,8 +281,8 @@ public class LocalServerClient implements Invoker, Closeable {
 	}
 
 	private void copyWritableArgumentBack(final Object requestArgument, final Object responseArgument) {
-		assertNotNull("requestArgument", requestArgument);
-		assertNotNull("responseArgument", responseArgument);
+		assertNotNull(requestArgument, "requestArgument");
+		assertNotNull(responseArgument, "responseArgument");
 
 		if (requestArgument.getClass().isArray()) {
 			final int length = Array.getLength(requestArgument);

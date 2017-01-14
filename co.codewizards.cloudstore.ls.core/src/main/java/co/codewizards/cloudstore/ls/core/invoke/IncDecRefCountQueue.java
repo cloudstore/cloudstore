@@ -77,7 +77,7 @@ public class IncDecRefCountQueue {
 	private final Invoker invoker;
 
 	public IncDecRefCountQueue(final Invoker invoker) {
-		this.invoker = assertNotNull("invoker", invoker);
+		this.invoker = assertNotNull(invoker, "invoker");
 		incDecRefCountTimer.schedule(incDecRefCountTimerTask, INC_DEC_REF_COUNT_PERIOD_MS, INC_DEC_REF_COUNT_PERIOD_MS);
 	}
 

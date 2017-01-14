@@ -10,11 +10,11 @@ public abstract class AbstractInverseServiceResponse implements InverseServiceRe
 	private final Uid requestId;
 
 	public AbstractInverseServiceResponse(InverseServiceRequest request) {
-		this(assertNotNull("request.requestId", assertNotNull("request", request).getRequestId()));
+		this(assertNotNull(assertNotNull(request, "request").getRequestId(), "request.requestId"));
 	}
 
 	public AbstractInverseServiceResponse(Uid requestId) {
-		this.requestId = assertNotNull("requestId", requestId);
+		this.requestId = assertNotNull(requestId, "requestId");
 	}
 
 	@Override

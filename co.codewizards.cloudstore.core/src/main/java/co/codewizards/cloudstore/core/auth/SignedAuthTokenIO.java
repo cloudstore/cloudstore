@@ -14,7 +14,7 @@ import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class SignedAuthTokenIO {
 	public byte[] serialise(SignedAuthToken signedAuthToken) {
-		AssertUtil.assertNotNull("signedAuthToken", signedAuthToken);
+		AssertUtil.assertNotNull(signedAuthToken, "signedAuthToken");
 		try {
 			JAXBContext context = createContext();
 			Marshaller marshaller = context.createMarshaller();
@@ -27,7 +27,7 @@ public class SignedAuthTokenIO {
 	}
 
 	public SignedAuthToken deserialise(byte[] signedAuthTokenData) {
-		AssertUtil.assertNotNull("signedAuthTokenData", signedAuthTokenData);
+		AssertUtil.assertNotNull(signedAuthTokenData, "signedAuthTokenData");
 		try {
 			JAXBContext context = createContext();
 			Unmarshaller unmarshaller = context.createUnmarshaller();

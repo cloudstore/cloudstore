@@ -12,7 +12,7 @@ public class GetRepoFileDto extends AbstractRequest<RepoFileDto> {
 	private final String path;
 
 	public GetRepoFileDto(final String repositoryName, final String path) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.path = path;
 	}
 

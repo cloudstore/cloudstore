@@ -34,8 +34,8 @@ class DynamicX509TrustManager implements X509TrustManager {
 	private final List<Certificate> tempCertList = new ArrayList<Certificate>();
 
 	public DynamicX509TrustManager(final File trustStoreFile, final DynamicX509TrustManagerCallback callback) {
-		this.trustStoreFile = AssertUtil.assertNotNull("trustStoreFile", trustStoreFile);
-		this.callback = AssertUtil.assertNotNull("callback", callback);
+		this.trustStoreFile = AssertUtil.assertNotNull(trustStoreFile, "trustStoreFile");
+		this.callback = AssertUtil.assertNotNull(callback, "callback");
 		reloadTrustManager();
 	}
 
@@ -46,7 +46,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	@Override
 	public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws CertificateException {
-		AssertUtil.assertNotNull("chain", chain);
+		AssertUtil.assertNotNull(chain, "chain");
 		if (chain.length < 1)
 			throw new IllegalArgumentException("chain is empty!");
 
@@ -104,7 +104,7 @@ class DynamicX509TrustManager implements X509TrustManager {
 
 	private String sha1(final Certificate cert) {
 		try {
-			final byte[] certEncoded = AssertUtil.assertNotNull("cert", cert).getEncoded();
+			final byte[] certEncoded = AssertUtil.assertNotNull(cert, "cert").getEncoded();
 			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(certEncoded));
 			return HashUtil.encodeHexStr(hash);
 		} catch (final RuntimeException x) {

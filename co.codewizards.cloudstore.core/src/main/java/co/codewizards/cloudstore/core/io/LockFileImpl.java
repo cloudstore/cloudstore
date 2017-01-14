@@ -39,8 +39,8 @@ class LockFileImpl implements LockFile {
 	private final Object mutex = this;
 
 	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
-		this.lockFileFactory = AssertUtil.assertNotNull("lockFileFactory", lockFileFactory);
-		this.file = AssertUtil.assertNotNull("file", file);
+		this.lockFileFactory = AssertUtil.assertNotNull(lockFileFactory, "lockFileFactory");
+		this.file = AssertUtil.assertNotNull(file, "file");
 //		this.mutex = lockFileFactory.mutex;
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}

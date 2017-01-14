@@ -14,10 +14,10 @@ public class PutFileData extends VoidRequest {
 	private final byte[] fileData;
 
 	public PutFileData(final String repositoryName, final String path, final long offset, final byte[] fileData) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.path = assertNotNull("path", path);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.path = assertNotNull(path, "path");
 		this.offset = offset;
-		this.fileData = assertNotNull("fileData", fileData);
+		this.fileData = assertNotNull(fileData, "fileData");
 	}
 
 	@Override

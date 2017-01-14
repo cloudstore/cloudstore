@@ -212,8 +212,8 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {
-		AssertUtil.assertNotNull("propertiesFile", propertiesFile);
-		AssertUtil.assertNotNull("key", key);
+		AssertUtil.assertNotNull(propertiesFile, "propertiesFile");
+		AssertUtil.assertNotNull(key, "key");
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {

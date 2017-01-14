@@ -103,7 +103,7 @@ public class RepoTransportFactoryRegistry {
 	}
 
 	public <F extends RepoTransportFactory> F getRepoTransportFactory(Class<F> factoryClass) {
-		AssertUtil.assertNotNull("factoryClass", factoryClass);
+		AssertUtil.assertNotNull(factoryClass, "factoryClass");
 		List<RepoTransportFactory> repoTransportFactories = getRepoTransportFactories();
 		for (RepoTransportFactory repoTransportFactory : repoTransportFactories) {
 			if (factoryClass.isInstance(repoTransportFactory)) {

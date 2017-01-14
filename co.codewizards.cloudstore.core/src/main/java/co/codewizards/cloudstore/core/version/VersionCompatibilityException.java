@@ -12,14 +12,14 @@ public class VersionCompatibilityException extends RuntimeException {
 
 	public VersionCompatibilityException(final VersionInfoDto clientVersionInfoDto, final VersionInfoDto serverVersionInfoDto, String message) {
 		super(message);
-		this.clientVersionInfoDto = assertNotNull("clientVersionInfoDto", clientVersionInfoDto);
-		this.serverVersionInfoDto = assertNotNull("serverVersionInfoDto", serverVersionInfoDto);
+		this.clientVersionInfoDto = assertNotNull(clientVersionInfoDto, "clientVersionInfoDto");
+		this.serverVersionInfoDto = assertNotNull(serverVersionInfoDto, "serverVersionInfoDto");
 
-		assertNotNull("clientVersionInfoDto.localVersion", clientVersionInfoDto.getLocalVersion());
-		assertNotNull("clientVersionInfoDto.minimumRemoteVersion", clientVersionInfoDto.getMinimumRemoteVersion());
+		assertNotNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
+		assertNotNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
 
-		assertNotNull("serverVersionInfoDto.localVersion", serverVersionInfoDto.getLocalVersion());
-		assertNotNull("serverVersionInfoDto.minimumRemoteVersion", serverVersionInfoDto.getMinimumRemoteVersion());
+		assertNotNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
+		assertNotNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
 	}
 
 	public VersionInfoDto getClientVersionInfoDto() {

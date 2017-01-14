@@ -14,7 +14,7 @@ class InStream extends InputStream implements IInputStream {
 	}
 
 	protected InStream(final InputStream in) {
-		this.in = assertNotNull("in", in);
+		this.in = assertNotNull(in, "in");
 	}
 
 	@Override
@@ -68,7 +68,7 @@ class InStream extends InputStream implements IInputStream {
 		protected final IInputStream in;
 
 		protected InverseInStream(final IInputStream in) {
-			this.in = assertNotNull("in", in);
+			this.in = assertNotNull(in, "in");
 		}
 
 		@Override

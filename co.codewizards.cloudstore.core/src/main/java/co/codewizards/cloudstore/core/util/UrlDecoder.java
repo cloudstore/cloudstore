@@ -72,8 +72,8 @@ public final class UrlDecoder {
      */
     @Deprecated
 	public static String decode(String s, String enc) throws UnsupportedEncodingException {
-    	assertNotNull("s", s);
-    	assertNotNull("enc", enc);
+    	assertNotNull(s, "s");
+    	assertNotNull(enc, "enc");
 
     	Charset charset;
     	try {
@@ -110,8 +110,8 @@ public final class UrlDecoder {
      */
     @Deprecated
 	public static String decode(String s, Charset charset) {
-    	assertNotNull("s", s);
-    	assertNotNull("charset", charset);
+    	assertNotNull(s, "s");
+    	assertNotNull(charset, "charset");
 
         boolean needToChange = false;
         int numChars = s.length();

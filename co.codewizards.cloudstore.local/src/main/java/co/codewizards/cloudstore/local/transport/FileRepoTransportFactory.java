@@ -23,7 +23,7 @@ public class FileRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(final URL remoteRoot) {
-		return PROTOCOL_FILE.equals(assertNotNull("remoteRoot", remoteRoot).getProtocol());
+		return PROTOCOL_FILE.equals(assertNotNull(remoteRoot, "remoteRoot").getProtocol());
 	}
 
 	@Override

@@ -18,7 +18,7 @@ public abstract class AbstractLocalRepoTransactionListener implements LocalRepoT
 
 	protected LocalRepoTransaction getTransactionOrFail() {
 		final LocalRepoTransaction transaction = getTransaction();
-		AssertUtil.assertNotNull("transaction", transaction);
+		AssertUtil.assertNotNull(transaction, "transaction");
 		return transaction;
 	}
 

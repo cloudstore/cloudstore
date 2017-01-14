@@ -13,7 +13,7 @@ import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 public class AuthTokenIO {
 
 	public byte[] serialise(AuthToken authToken) {
-		assertNotNull("authToken", authToken);
+		assertNotNull(authToken, "authToken");
 		try {
 			JAXBContext context = createContext();
 			Marshaller marshaller = context.createMarshaller();
@@ -26,7 +26,7 @@ public class AuthTokenIO {
 	}
 
 	public AuthToken deserialise(byte[] authTokenData) {
-		assertNotNull("authTokenData", authTokenData);
+		assertNotNull(authTokenData, "authTokenData");
 		try {
 			JAXBContext context = createContext();
 			Unmarshaller unmarshaller = context.createUnmarshaller();

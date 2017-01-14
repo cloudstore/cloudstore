@@ -67,8 +67,8 @@ public class DeferrableExecutor {
 	// the client knows its socket's read-timeout.
 	@SuppressWarnings("unchecked")
 	public <V> V call(String callIdentifier, final CallableProvider<V> callableProvider) throws DeferredCompletionException, ExecutionException {
-		AssertUtil.assertNotNull("callIdentifier", callIdentifier);
-		AssertUtil.assertNotNull("callableProvider", callableProvider);
+		AssertUtil.assertNotNull(callIdentifier, "callIdentifier");
+		AssertUtil.assertNotNull(callableProvider, "callableProvider");
 
 		final int timeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroInt(CONFIG_KEY_TIMEOUT, DEFAULT_TIMEOUT);
 
@@ -104,8 +104,8 @@ public class DeferrableExecutor {
 		private final Callable<V> delegate;
 
 		public CallableWrapper(String identifier, Callable<V> delegate) {
-			this.identifier = AssertUtil.assertNotNull("identifier", identifier);
-			this.delegate = AssertUtil.assertNotNull("delegate", delegate);
+			this.identifier = AssertUtil.assertNotNull(identifier, "identifier");
+			this.delegate = AssertUtil.assertNotNull(delegate, "delegate");
 		}
 
 		@Override

@@ -74,8 +74,8 @@ public class DumpStreamThread extends Thread
 	private DumpStreamThread(final InputStream inputStream, final OutputStream outputStream,
 			final Logger childProcessLogger, final String childProcessLoggerName)
 	{
-		assertNotNull("inputStream", inputStream);
-		assertNotNull("outputStream", outputStream);
+		assertNotNull(inputStream, "inputStream");
+		assertNotNull(outputStream, "outputStream");
 
 		this.inputStream = inputStream;
 		this.outputStream = outputStream;

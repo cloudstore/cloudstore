@@ -35,7 +35,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			"toString"));
 
 	public LocalRepoManagerInvocationHandler(final LocalRepoManagerImpl localRepoManagerImpl) {
-		this.localRepoManagerImpl = assertNotNull("localRepoManagerImpl", localRepoManagerImpl);
+		this.localRepoManagerImpl = assertNotNull(localRepoManagerImpl, "localRepoManagerImpl");
 	}
 
 	@Override

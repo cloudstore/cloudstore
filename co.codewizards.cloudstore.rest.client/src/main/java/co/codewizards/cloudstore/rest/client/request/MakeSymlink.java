@@ -17,9 +17,9 @@ public class MakeSymlink extends VoidRequest {
 	protected final Date lastModified;
 
 	public MakeSymlink(final String repositoryName, final String path, final String target, final Date lastModified) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.path = assertNotNull("path", path);
-		this.target = assertNotNull("target", target);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.path = assertNotNull(path, "path");
+		this.target = assertNotNull(target, "target");
 		this.lastModified = lastModified;
 	}
 

@@ -79,10 +79,10 @@ public class ChangeSetDtoBuilder {
 	private Collection<Modification> modifications;
 
 	protected ChangeSetDtoBuilder(final LocalRepoTransaction transaction, final RepoTransport repoTransport) {
-		this.transaction = assertNotNull("transaction", transaction);
-		this.repoTransport = assertNotNull("repoTransport", repoTransport);
-		this.clientRepositoryId = assertNotNull("clientRepositoryId", repoTransport.getClientRepositoryId());
-		this.pathPrefix = assertNotNull("pathPrefix", repoTransport.getPathPrefix());
+		this.transaction = assertNotNull(transaction, "transaction");
+		this.repoTransport = assertNotNull(repoTransport, "repoTransport");
+		this.clientRepositoryId = assertNotNull(repoTransport.getClientRepositoryId(), "clientRepositoryId");
+		this.pathPrefix = assertNotNull(repoTransport.getPathPrefix(), "pathPrefix");
 	}
 
 	public static ChangeSetDtoBuilder create(final LocalRepoTransaction transaction, final RepoTransport repoTransport) {
@@ -196,7 +196,7 @@ public class ChangeSetDtoBuilder {
 
 	private boolean isConfigFileDeletedAfterLastSync() {
 		final String searchSuffix = "/" + Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY;
-		for (final Modification modification : assertNotNull("modifications", modifications)) {
+		for (final Modification modification : assertNotNull(modifications, "modifications")) {
 			if (modification instanceof DeleteModification) {
 				final DeleteModification deleteModification = (DeleteModification) modification;
 				if (deleteModification.getPath().endsWith(searchSuffix)) {
@@ -215,7 +215,7 @@ public class ChangeSetDtoBuilder {
 
 		File dir = getPathPrefixFile();
 		while (! localRoot.equals(dir)) {
-			dir = assertNotNull("dir.parentFile [dir=" + dir + "]", dir.getParentFile());
+			dir = assertNotNull(dir.getParentFile(), "dir.parentFile [dir=" + dir + "]");
 			File configFile = dir.createFile(Config.PROPERTIES_FILE_NAME_FOR_DIRECTORY);
 			if (configFile.isFile()) {
 				result.add(configFile);
@@ -241,8 +241,8 @@ public class ChangeSetDtoBuilder {
 	}
 
 	protected boolean isFileModifiedAfterLastSync(final Collection<File> files) {
-		assertNotNull("files", files);
-		assertNotNull("lastSyncToRemoteRepo", lastSyncToRemoteRepo);
+		assertNotNull(files, "files");
+		assertNotNull(lastSyncToRemoteRepo, "lastSyncToRemoteRepo");
 
 		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 		final File localRoot = transaction.getLocalRepoManager().getLocalRoot();
@@ -274,7 +274,7 @@ public class ChangeSetDtoBuilder {
 
 	private List<ModificationDto> toModificationDtos(final Collection<Modification> modifications) {
 		final long startTimestamp = System.currentTimeMillis();
-		final List<ModificationDto> result = new ArrayList<ModificationDto>(AssertUtil.assertNotNull("modifications", modifications).size());
+		final List<ModificationDto> result = new ArrayList<ModificationDto>(AssertUtil.assertNotNull(modifications, "modifications").size());
 		for (final Modification modification : modifications) {
 			final ModificationDto modificationDto = toModificationDto(modification);
 			if (modificationDto != null)
@@ -324,8 +324,8 @@ public class ChangeSetDtoBuilder {
 	}
 
 	private Map<Long, RepoFileDto> getId2RepoFileDtoWithParents(final RepoFile pathPrefixRepoFile, final Collection<RepoFile> repoFiles, final LocalRepoTransaction transaction) {
-		AssertUtil.assertNotNull("transaction", transaction);
-		AssertUtil.assertNotNull("repoFiles", repoFiles);
+		AssertUtil.assertNotNull(transaction, "transaction");
+		AssertUtil.assertNotNull(repoFiles, "repoFiles");
 		RepoFileDtoConverter repoFileDtoConverter = null;
 		final Map<Long, RepoFileDto> entityID2RepoFileDto = new HashMap<Long, RepoFileDto>();
 		for (final RepoFile repoFile : repoFiles) {
@@ -369,8 +369,8 @@ public class ChangeSetDtoBuilder {
 	}
 
 	private boolean isDirectOrIndirectParent(final RepoFile parentRepoFile, final RepoFile repoFile) {
-		AssertUtil.assertNotNull("parentRepoFile", parentRepoFile);
-		AssertUtil.assertNotNull("repoFile", repoFile);
+		AssertUtil.assertNotNull(parentRepoFile, "parentRepoFile");
+		AssertUtil.assertNotNull(repoFile, "repoFile");
 		RepoFile rf = repoFile;
 		while (rf != null) {
 			if (parentRepoFile.equals(rf))
@@ -382,7 +382,7 @@ public class ChangeSetDtoBuilder {
 	}
 
 	protected boolean isPathUnderPathPrefix(final String path) {
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		if (pathPrefix.isEmpty())
 			return true;
 

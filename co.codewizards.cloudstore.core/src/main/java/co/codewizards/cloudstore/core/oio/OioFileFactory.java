@@ -24,7 +24,7 @@ public class OioFileFactory {
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
 	public static File createFile(final String parent, final String ... children) {
-		assertNotNull("parent", parent);
+		assertNotNull(parent, "parent");
 
 		final FileFactory fileFactory = OioRegistry.getInstance().getFileFactory();
 		File result = null;
@@ -45,7 +45,7 @@ public class OioFileFactory {
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
 	public static File createFile(final File parent, final String ... children) {
-		assertNotNull("parent", parent);
+		assertNotNull(parent, "parent");
 
 		final FileFactory fileFactory = OioRegistry.getInstance().getFileFactory();
 		File result = parent;

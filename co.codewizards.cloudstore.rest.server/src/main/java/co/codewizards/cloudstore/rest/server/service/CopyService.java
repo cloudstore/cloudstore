@@ -35,7 +35,7 @@ public class CopyService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void copy(@PathParam("path") String path, @QueryParam("to") final String toPath)
 	{
-		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull(path, "path");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

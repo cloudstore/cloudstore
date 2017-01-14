@@ -38,9 +38,9 @@ public class FileInProgressMarkerDao extends Dao<FileInProgressMarker, FileInPro
 	 * @return <code>null</code> if none was found.
 	 */
 	public FileInProgressMarker getFileInProgressMarker(final UUID fromRepositoryId, final UUID toRepositoryId, final String path) {
-		assertNotNull("fromRepositoryId", fromRepositoryId);
-		assertNotNull("toRepositoryId", toRepositoryId);
-		assertNotNull("path", path);
+		assertNotNull(fromRepositoryId, "fromRepositoryId");
+		assertNotNull(toRepositoryId, "toRepositoryId");
+		assertNotNull(path, "path");
 		final String pathSha1 = sha1(path);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getFileInProgressMarker_fromRepositoryId_toRepositoryId_pathSha1");
 		try {

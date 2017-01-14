@@ -14,7 +14,7 @@ class OutStream extends OutputStream implements IOutputStream {
 	}
 
 	protected OutStream(final OutputStream out) {
-		this.out = assertNotNull("out", out);
+		this.out = assertNotNull(out, "out");
 	}
 
 	@Override
@@ -48,7 +48,7 @@ class OutStream extends OutputStream implements IOutputStream {
 		protected final IOutputStream out;
 
 		protected InverseOutStream(final IOutputStream out) {
-			this.out = assertNotNull("out", out);
+			this.out = assertNotNull(out, "out");
 		}
 
 		@Override

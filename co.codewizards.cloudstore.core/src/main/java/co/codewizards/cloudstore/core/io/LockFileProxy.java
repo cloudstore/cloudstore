@@ -17,7 +17,7 @@ class LockFileProxy implements LockFile {
 	private final AtomicBoolean released = new AtomicBoolean(false);
 
 	public LockFileProxy(final LockFileImpl lockFileImpl) {
-		this.lockFileImpl = AssertUtil.assertNotNull("lockFileImpl", lockFileImpl);
+		this.lockFileImpl = AssertUtil.assertNotNull(lockFileImpl, "lockFileImpl");
 	}
 
 	@Override

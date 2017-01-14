@@ -16,14 +16,14 @@ public class VersionCompatibilityValidator {
 
 	public void validate(final VersionInfoDto clientVersionInfoDto, final VersionInfoDto serverVersionInfoDto)
 	throws VersionCompatibilityException {
-		assertNotNull("clientVersionInfoDto", clientVersionInfoDto);
-		assertNotNull("serverVersionInfoDto", serverVersionInfoDto);
+		assertNotNull(clientVersionInfoDto, "clientVersionInfoDto");
+		assertNotNull(serverVersionInfoDto, "serverVersionInfoDto");
 
-		final Version clientVersion = assertNotNull("clientVersionInfoDto.localVersion", clientVersionInfoDto.getLocalVersion());
-		final Version minimumServerVersion = assertNotNull("clientVersionInfoDto.minimumRemoteVersion", clientVersionInfoDto.getMinimumRemoteVersion());
+		final Version clientVersion = assertNotNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
+		final Version minimumServerVersion = assertNotNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
 
-		final Version serverVersion = assertNotNull("serverVersionInfoDto.localVersion", serverVersionInfoDto.getLocalVersion());
-		final Version minimumClientVersion = assertNotNull("serverVersionInfoDto.minimumRemoteVersion", serverVersionInfoDto.getMinimumRemoteVersion());
+		final Version serverVersion = assertNotNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
+		final Version minimumClientVersion = assertNotNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
 
 		if (serverVersion.compareTo(minimumServerVersion) < 0)
 			throw new ServerTooOldException(clientVersionInfoDto, serverVersionInfoDto,

@@ -31,7 +31,7 @@ public class RemoteRepositoryRequestDao extends Dao<RemoteRepositoryRequest, Rem
 	}
 
 	public Collection<RemoteRepositoryRequest> getRemoteRepositoryRequestsChangedBefore(final Date changed) {
-		AssertUtil.assertNotNull("changed", changed);
+		AssertUtil.assertNotNull(changed, "changed");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepositoryRequestsChangedBefore_changed");
 		try {
 			@SuppressWarnings("unchecked")

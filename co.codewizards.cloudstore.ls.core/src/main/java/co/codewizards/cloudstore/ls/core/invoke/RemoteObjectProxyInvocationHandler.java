@@ -21,8 +21,8 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 	protected final boolean equalsOverridden;
 
 	public RemoteObjectProxyInvocationHandler(final Invoker invoker, final ObjectRef objectRef) {
-		this.invoker = assertNotNull("invoker", invoker);
-		this.objectRef = assertNotNull("objectRef", objectRef);
+		this.invoker = assertNotNull(invoker, "invoker");
+		this.objectRef = assertNotNull(objectRef, "objectRef");
 
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);

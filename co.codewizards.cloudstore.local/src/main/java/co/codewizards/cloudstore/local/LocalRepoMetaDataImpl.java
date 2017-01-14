@@ -29,7 +29,7 @@ public class LocalRepoMetaDataImpl implements LocalRepoMetaData {
 		return localRepoManager;
 	}
 	protected LocalRepoManager getLocalRepoManagerOrFail() {
-		return assertNotNull("localRepoManager", localRepoManager);
+		return assertNotNull(localRepoManager, "localRepoManager");
 	}
 	protected void setLocalRepoManager(LocalRepoManager localRepoManager) {
 		this.localRepoManager = localRepoManager;
@@ -53,7 +53,7 @@ public class LocalRepoMetaDataImpl implements LocalRepoMetaData {
 
 	@Override
 	public RepoFileDto getRepoFileDto(final String path, final int depth) {
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 
 		final RepoFileDto result;
 		try (final LocalRepoTransaction tx = beginReadTransaction();) {

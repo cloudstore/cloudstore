@@ -23,7 +23,7 @@ public class ReferenceJanitorRegistry {
 	private final List<ReferenceJanitor> referenceJanitors;
 
 	public ReferenceJanitorRegistry(final ObjectManager objectManager) {
-		this.objectManager = assertNotNull("objectManager", objectManager);
+		this.objectManager = assertNotNull(objectManager, "objectManager");
 		referenceJanitors = loadReferenceJanitors();
 	}
 

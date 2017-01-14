@@ -12,13 +12,13 @@ class ObjectRefConverterImpl implements ObjectRefConverter {
 	private InverseInvoker inverseInvoker;
 
 	public ObjectRefConverterImpl(final ObjectManager objectManager) {
-		this.objectManager = assertNotNull("objectManager", objectManager);
+		this.objectManager = assertNotNull(objectManager, "objectManager");
 	}
 
 	@Override
 	public Object convertToObjectRefIfNeeded(Object object) {
 		if (object instanceof RemoteObjectProxy)
-			return assertNotNull("object.getObjectRef()", ((RemoteObjectProxy)object).getObjectRef());
+			return assertNotNull(((RemoteObjectProxy)object).getObjectRef(), "object.getObjectRef()");
 		else
 			return objectManager.getObjectRefOrObject(object);
 	}

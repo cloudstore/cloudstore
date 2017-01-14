@@ -26,7 +26,7 @@ public class RemoteObjectProxyManager {
 	}
 
 	public synchronized RemoteObjectProxy getRemoteObjectProxy(final ObjectRef objectRef) {
-		assertNotNull("objectRef", objectRef);
+		assertNotNull(objectRef, "objectRef");
 		final WeakReference<RemoteObjectProxy> remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
 		final RemoteObjectProxy remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
 		evictOrphanedObjectRefs();
@@ -34,8 +34,8 @@ public class RemoteObjectProxyManager {
 	}
 
 	public synchronized RemoteObjectProxy getRemoteObjectProxyOrCreate(final ObjectRef objectRef, final RemoteObjectProxyFactory remoteObjectProxyFactory) {
-		assertNotNull("objectRef", objectRef);
-		assertNotNull("remoteObjectProxyFactory", remoteObjectProxyFactory);
+		assertNotNull(objectRef, "objectRef");
+		assertNotNull(remoteObjectProxyFactory, "remoteObjectProxyFactory");
 
 		final WeakReference<RemoteObjectProxy> remoteObjectProxyRef = objectRef2RemoteObjectProxyRef.get(objectRef);
 		RemoteObjectProxy remoteObjectProxy = remoteObjectProxyRef == null ? null : remoteObjectProxyRef.get();
@@ -47,7 +47,7 @@ public class RemoteObjectProxyManager {
 			// We do not need to create the proxy outside of the synchronized block, anymore, because the proxy creation now works without
 			// immediate inverse-invocation and thus there's no more risk of a deadlock, here. => stay inside single big synchronized-block.
 			remoteObjectProxy = remoteObjectProxyFactory.createRemoteObjectProxy(objectRef);
-			assertNotNull("remoteObjectProxyFactory.createRemoteObjectProxy(objectRef)", remoteObjectProxy);
+			assertNotNull(remoteObjectProxy, "remoteObjectProxyFactory.createRemoteObjectProxy(objectRef)");
 
 			final WeakReference<RemoteObjectProxy> reference = new WeakReference<>(remoteObjectProxy, referenceQueue);
 			objectRef2RemoteObjectProxyRef.put(objectRef, reference);

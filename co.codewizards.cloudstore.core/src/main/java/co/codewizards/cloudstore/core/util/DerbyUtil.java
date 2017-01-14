@@ -19,7 +19,7 @@ public class DerbyUtil {
 	private DerbyUtil() { }
 
 	public static void shutdownDerbyDatabase(String connectionURL) {
-		String shutdownConnectionURL = AssertUtil.assertNotNull("connectionURL", connectionURL) + ";shutdown=true";
+		String shutdownConnectionURL = AssertUtil.assertNotNull(connectionURL, "connectionURL") + ";shutdown=true";
 		try {
 			DriverManager.getConnection(shutdownConnectionURL);
 		} catch (SQLException e) {
@@ -32,6 +32,6 @@ public class DerbyUtil {
 	}
 
 	public static void setLogFile(File file) {
-		System.setProperty("derby.stream.error.file", AssertUtil.assertNotNull("file", file).getAbsolutePath());
+		System.setProperty("derby.stream.error.file", AssertUtil.assertNotNull(file, "file").getAbsolutePath());
 	}
 }

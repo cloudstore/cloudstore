@@ -51,8 +51,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serialize(final D dto, final OutputStream out) {
-		assertNotNull("dto", dto);
-		assertNotNull("out", out);
+		assertNotNull(dto, "dto");
+		assertNotNull(out, "out");
 		try {
 			getMarshaller().marshal(dto, new NoCloseOutputStream(out));
 		} catch (final JAXBException e) {
@@ -67,8 +67,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serializeWithGz(final D dto, final OutputStream out) {
-		assertNotNull("dto", dto);
-		assertNotNull("out", out);
+		assertNotNull(dto, "dto");
+		assertNotNull(out, "out");
 		try {
 			try (GZIPOutputStream gzOut = new GZIPOutputStream(new NoCloseOutputStream(out));) {
 				getMarshaller().marshal(dto, gzOut);
@@ -79,8 +79,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serialize(final D dto, final File file) {
-		assertNotNull("dto", dto);
-		assertNotNull("file", file);
+		assertNotNull(dto, "dto");
+		assertNotNull(file, "file");
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -93,8 +93,8 @@ public abstract class DtoIo <D> {
 	}
 
 	public void serializeWithGz(final D dto, final File file) {
-		assertNotNull("dto", dto);
-		assertNotNull("file", file);
+		assertNotNull(dto, "dto");
+		assertNotNull(file, "file");
 		try {
 			// Even though https://github.com/cloudstore/cloudstore/issues/31 seems to affect only unmarshal(File),
 			// we manage the OutputStream ourself, as well.
@@ -109,12 +109,12 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserialize(final byte[] in) {
-		assertNotNull("in", in);
+		assertNotNull(in, "in");
 		return deserialize(new ByteArrayInputStream(in));
 	}
 
 	public D deserialize(final InputStream in) {
-		assertNotNull("in", in);
+		assertNotNull(in, "in");
 		try {
 			return dtoClass.cast(getUnmarshaller().unmarshal(new NoCloseInputStream(in)));
 		} catch (final JAXBException e) {
@@ -123,12 +123,12 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserializeWithGz(final byte[] in) {
-		assertNotNull("in", in);
+		assertNotNull(in, "in");
 		return deserializeWithGz(new ByteArrayInputStream(in));
 	}
 
 	public D deserializeWithGz(final InputStream in) {
-		assertNotNull("in", in);
+		assertNotNull(in, "in");
 		try {
 			try (GZIPInputStream gzIn = new GZIPInputStream(new NoCloseInputStream(in));) {
 				return dtoClass.cast(getUnmarshaller().unmarshal(gzIn));
@@ -139,7 +139,7 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserialize(final File file) {
-		AssertUtil.assertNotNull("file", file);
+		AssertUtil.assertNotNull(file, "file");
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
 			try (final InputStream in = new BufferedInputStream(castStream(file.createInputStream()))) {
@@ -151,7 +151,7 @@ public abstract class DtoIo <D> {
 	}
 
 	public D deserializeWithGz(final File file) {
-		AssertUtil.assertNotNull("file", file);
+		AssertUtil.assertNotNull(file, "file");
 		try {
 			// Because of https://github.com/cloudstore/cloudstore/issues/31 we do not use unmarshal(File), anymore.
 			try (final InputStream in = new BufferedInputStream(castStream(file.createInputStream()))) {

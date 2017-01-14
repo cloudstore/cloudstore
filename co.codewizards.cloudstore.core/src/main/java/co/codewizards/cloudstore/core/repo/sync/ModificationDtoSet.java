@@ -18,7 +18,7 @@ public class ModificationDtoSet {
 	private final Map<String, List<CopyModificationDto>> fromPath2CopyModificationDtos;
 
 	public ModificationDtoSet(final Collection<ModificationDto> modificationDtos) {
-		AssertUtil.assertNotNull("modificationDtos", modificationDtos);
+		AssertUtil.assertNotNull(modificationDtos, "modificationDtos");
 		path2DeleteModificationDtos = new HashMap<String, List<DeleteModificationDto>>();
 		fromPath2CopyModificationDtos = new HashMap<String, List<CopyModificationDto>>();
 		for (final ModificationDto modificationDto : modificationDtos) {

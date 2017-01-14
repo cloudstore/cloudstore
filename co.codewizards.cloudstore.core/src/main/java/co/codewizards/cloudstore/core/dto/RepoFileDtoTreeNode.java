@@ -38,7 +38,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	 * @throws IllegalArgumentException if the given {@code repoFileDtos} does not meet the criteria stated above.
 	 */
 	public static RepoFileDtoTreeNode createTree(final Collection<RepoFileDto> repoFileDtos) throws IllegalArgumentException {
-		AssertUtil.assertNotNull("repoFileDtos", repoFileDtos);
+		AssertUtil.assertNotNull(repoFileDtos, "repoFileDtos");
 		if (repoFileDtos.isEmpty())
 			return null;
 
@@ -86,7 +86,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	private List<RepoFileDtoTreeNode> flattenedTreeList;
 
 	protected RepoFileDtoTreeNode(final RepoFileDto repoFileDto) {
-		this.repoFileDto = AssertUtil.assertNotNull("repoFileDto", repoFileDto);
+		this.repoFileDto = AssertUtil.assertNotNull(repoFileDto, "repoFileDto");
 	}
 
 	public RepoFileDto getRepoFileDto() {

@@ -11,8 +11,8 @@ public class LocalRepoManagerCloseEvent extends EventObject {
 	private final boolean backend;
 
 	public LocalRepoManagerCloseEvent(Object source, LocalRepoManager localRepoManager, boolean backend) {
-		super(AssertUtil.assertNotNull("source", source));
-		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
+		super(AssertUtil.assertNotNull(source, "source"));
+		this.localRepoManager = AssertUtil.assertNotNull(localRepoManager, "localRepoManager");
 		this.backend = backend;
 	}
 

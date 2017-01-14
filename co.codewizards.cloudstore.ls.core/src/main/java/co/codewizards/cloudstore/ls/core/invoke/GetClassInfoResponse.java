@@ -14,7 +14,7 @@ public class GetClassInfoResponse extends AbstractInverseServiceResponse {
 
 	public GetClassInfoResponse(final GetClassInfoRequest request, final ClassInfo classInfo) {
 		super(request);
-		this.classInfo = assertNotNull("classInfo", classInfo);
+		this.classInfo = assertNotNull(classInfo, "classInfo");
 	}
 
 	public ClassInfo getClassInfo() {

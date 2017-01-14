@@ -18,14 +18,14 @@ public final class ByteArrayInputStreamLs {
 	}
 
 	public static IByteArrayInputStream create(byte[] data) {
-		assertNotNull("data", data);
+		assertNotNull(data, "data");
 		return LocalServerClient.getInstance().invokeConstructor(ByteArrayInputStream.class,
 				new Class<?>[] { byte[].class },
 				data);
 	}
 
 	public static IByteArrayInputStream create(byte[] data, int offset, int length) {
-		assertNotNull("data", data);
+		assertNotNull(data, "data");
 		return LocalServerClient.getInstance().invokeConstructor(ByteArrayInputStream.class,
 				new Class<?>[] { byte[].class, int.class, int.class },
 				data, offset, length);

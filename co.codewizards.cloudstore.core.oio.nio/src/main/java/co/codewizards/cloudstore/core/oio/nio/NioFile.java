@@ -163,7 +163,7 @@ public class NioFile extends IoFile implements File {
 	}
 
 	private static String toPathString(final Path path) {
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 

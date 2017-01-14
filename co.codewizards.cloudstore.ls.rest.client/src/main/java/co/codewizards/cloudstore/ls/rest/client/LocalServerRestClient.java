@@ -151,7 +151,7 @@ public class LocalServerRestClient {
 //	}
 
 	public <R> R execute(final Request<R> request) {
-		AssertUtil.assertNotNull("request", request);
+		AssertUtil.assertNotNull(request, "request");
 		RuntimeException firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 1; // *re*-try: 1 retries means 2 invocations in total
@@ -241,7 +241,7 @@ public class LocalServerRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = AssertUtil.assertNotNull("client", client);
+			this.client = AssertUtil.assertNotNull(client, "client");
 		}
 	}
 

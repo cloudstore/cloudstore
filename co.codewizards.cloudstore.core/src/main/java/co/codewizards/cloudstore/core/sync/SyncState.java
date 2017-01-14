@@ -25,12 +25,12 @@ public class SyncState implements Serializable {
 	private final Date syncFinished;
 
 	public SyncState(final URL url, final Severity severity, final String message, final Error error, final Date syncStarted, final Date syncFinished) {
-		this.url = assertNotNull("url", url);
-		this.severity = assertNotNull("severity", severity);
+		this.url = assertNotNull(url, "url");
+		this.severity = assertNotNull(severity, "severity");
 		this.message = message;
 		this.error = error;
-		this.syncStarted = assertNotNull("syncStarted", syncStarted);
-		this.syncFinished = assertNotNull("syncFinished", syncFinished);
+		this.syncStarted = assertNotNull(syncStarted, "syncStarted");
+		this.syncFinished = assertNotNull(syncFinished, "syncFinished");
 	}
 
 	/**

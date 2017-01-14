@@ -13,12 +13,12 @@ public class TransientRepoPassword {
 	private final char[] password;
 
 	protected TransientRepoPassword(final UUID serverRepositoryId, final UUID clientRepositoryId, final AuthToken authToken) {
-		this.serverRepositoryId = AssertUtil.assertNotNull("serverRepositoryId", serverRepositoryId);
-		this.clientRepositoryId = AssertUtil.assertNotNull("clientRepositoryId", clientRepositoryId);
-		this.authToken = AssertUtil.assertNotNull("authToken", authToken);
+		this.serverRepositoryId = AssertUtil.assertNotNull(serverRepositoryId, "serverRepositoryId");
+		this.clientRepositoryId = AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
+		this.authToken = AssertUtil.assertNotNull(authToken, "authToken");
 		authToken.makeUnmodifiable();
-		AssertUtil.assertNotNull("authToken.expiryDateTime", authToken.getExpiryDateTime());
-		AssertUtil.assertNotNull("authToken.password", authToken.getPassword());
+		AssertUtil.assertNotNull(authToken.getExpiryDateTime(), "authToken.expiryDateTime");
+		AssertUtil.assertNotNull(authToken.getPassword(), "authToken.password");
 		this.password = authToken.getPassword().toCharArray();
 	}
 

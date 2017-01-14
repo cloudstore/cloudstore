@@ -13,7 +13,7 @@ public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 	private final boolean localSync;
 
 	public GetChangeSetDto(final String repositoryName, final boolean localSync) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.localSync = localSync;
 	}
 

@@ -13,7 +13,7 @@ public class GetDelayedMethodInvocationResponse extends AbstractRequest<MethodIn
 	private final Uid delayedResponseId;
 
 	public GetDelayedMethodInvocationResponse(final Uid delayedResponseId) {
-		this.delayedResponseId = assertNotNull("delayedResponseId", delayedResponseId);
+		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
 	}
 
 	@Override

@@ -38,7 +38,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return factory;
 	}
 	public AbstractDatabaseAdapterFactory getFactoryOrFail() {
-		return assertNotNull("factory", factory);
+		return assertNotNull(factory, "factory");
 	}
 	protected void setFactory(AbstractDatabaseAdapterFactory factory) {
 		this.factory = factory;
@@ -49,7 +49,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return repositoryId;
 	}
 	public UUID getRepositoryIdOrFail() {
-		return assertNotNull("repositoryId", repositoryId);
+		return assertNotNull(repositoryId, "repositoryId");
 	}
 	@Override
 	public void setRepositoryId(UUID repositoryId) {
@@ -61,7 +61,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return localRoot;
 	}
 	public File getLocalRootOrFail() {
-		return assertNotNull("localRoot", localRoot);
+		return assertNotNull(localRoot, "localRoot");
 	}
 	@Override
 	public void setLocalRoot(File localRoot) {

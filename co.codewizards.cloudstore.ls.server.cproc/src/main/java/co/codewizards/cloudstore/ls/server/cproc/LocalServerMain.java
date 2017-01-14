@@ -48,7 +48,7 @@ public class LocalServerMain {
 		return localServerClass;
 	}
 	public static void setLocalServerClass(final Class<? extends LocalServer> localServerClass) {
-		LocalServerMain.localServerClass = assertNotNull("localServerClass", localServerClass);
+		LocalServerMain.localServerClass = assertNotNull(localServerClass, "localServerClass");
 	}
 
 	protected static Constructor<? extends LocalServer> getLocalServerConstructor() throws NoSuchMethodException, SecurityException {

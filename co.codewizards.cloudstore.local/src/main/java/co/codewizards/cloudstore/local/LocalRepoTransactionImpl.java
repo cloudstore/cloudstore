@@ -47,8 +47,8 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final CopyOnWriteArrayList<LocalRepoTransactionPostCloseListener> postCloseListeners = new CopyOnWriteArrayList<>();
 
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
-		this.localRepoManager = AssertUtil.assertNotNull("localRepoManager", localRepoManager);
-		this.persistenceManagerFactory = AssertUtil.assertNotNull("localRepoManager.persistenceManagerFactory", localRepoManager.getPersistenceManagerFactory());
+		this.localRepoManager = AssertUtil.assertNotNull(localRepoManager, "localRepoManager");
+		this.persistenceManagerFactory = AssertUtil.assertNotNull(localRepoManager.getPersistenceManagerFactory(), "localRepoManager.persistenceManagerFactory");
 		this.lock = localRepoManager.getLock();
 		this.write = write;
 		begin();
@@ -194,7 +194,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public <D> D getDao(final Class<D> daoClass) {
-		assertNotNull("daoClass", daoClass);
+		assertNotNull(daoClass, "daoClass");
 
 		@SuppressWarnings("unchecked")
 		D dao = (D) daoClass2Dao.get(daoClass);
@@ -248,11 +248,11 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public void addPreCloseListener(LocalRepoTransactionPreCloseListener listener) {
-		preCloseListeners.add(assertNotNull("listener", listener));
+		preCloseListeners.add(assertNotNull(listener, "listener"));
 	}
 	@Override
 	public void addPostCloseListener(LocalRepoTransactionPostCloseListener listener) {
-		postCloseListeners.add(assertNotNull("listener", listener));
+		postCloseListeners.add(assertNotNull(listener, "listener"));
 	}
 
 	protected void firePreCloseListeners(final boolean commit) {

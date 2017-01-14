@@ -14,11 +14,11 @@ public class RequestRepoConnection extends VoidRequest {
 	private final RepositoryDto clientRepositoryDto;
 
 	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.pathPrefix = pathPrefix;
-		this.clientRepositoryDto = assertNotNull("clientRepositoryDto", clientRepositoryDto);
-		assertNotNull("clientRepositoryDto.repositoryId", clientRepositoryDto.getRepositoryId());
-		assertNotNull("clientRepositoryDto.publicKey", clientRepositoryDto.getPublicKey());
+		this.clientRepositoryDto = assertNotNull(clientRepositoryDto, "clientRepositoryDto");
+		assertNotNull(clientRepositoryDto.getRepositoryId(), "clientRepositoryDto.repositoryId");
+		assertNotNull(clientRepositoryDto.getPublicKey(), "clientRepositoryDto.publicKey");
 	}
 
 	@Override

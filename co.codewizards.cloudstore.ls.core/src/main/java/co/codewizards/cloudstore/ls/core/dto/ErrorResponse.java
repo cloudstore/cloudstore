@@ -12,7 +12,7 @@ public class ErrorResponse extends AbstractInverseServiceResponse {
 
 	public ErrorResponse(final Uid requestId, final Error error) {
 		super(requestId);
-		this.error = assertNotNull("error", error);
+		this.error = assertNotNull(error, "error");
 	}
 
 	public Error getError() {

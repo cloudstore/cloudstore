@@ -17,7 +17,7 @@ public class NormalFileDao extends Dao<NormalFile, NormalFileDao> {
 	 * @return those {@link RepoFile}s matching the given criteria. Never <code>null</code>; but maybe empty.
 	 */
 	public Collection<NormalFile> getNormalFilesForSha1(final String sha1, final long length) {
-		AssertUtil.assertNotNull("sha1", sha1);
+		AssertUtil.assertNotNull(sha1, "sha1");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getNormalFiles_sha1_length");
 		try {
 			@SuppressWarnings("unchecked")

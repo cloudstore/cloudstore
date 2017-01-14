@@ -41,7 +41,7 @@ public class RepoFileDtoService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public RepoFileDto getRepoFileDto(final @PathParam("path") String path)
 	{
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
 			final String callIdentifier = RepoFileDtoService.class.getName() + ".getRepoFileDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + path;

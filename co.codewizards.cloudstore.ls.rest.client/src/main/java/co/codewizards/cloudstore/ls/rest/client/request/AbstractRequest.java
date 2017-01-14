@@ -54,7 +54,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 */
 	protected LocalServerRestClient getLocalServerRestClientOrFail() {
 		final LocalServerRestClient localServerRestClient = getLocalServerRestClient();
-		AssertUtil.assertNotNull("localServerRestClient", localServerRestClient);
+		AssertUtil.assertNotNull(localServerRestClient, "localServerRestClient");
 		return localServerRestClient;
 	}
 
@@ -81,7 +81,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 * @return the encoded {@code String}.
 	 */
 	protected static String urlEncode(final String string) {
-		AssertUtil.assertNotNull("string", string);
+		AssertUtil.assertNotNull(string, "string");
 		// This UriComponent method is safe. It does not try to handle the '{' and '}'
 		// specially and with type PATH_SEGMENT, it encodes spaces using '%20' instead of '+'.
 		// It can therefore be used for *both* path segments *and* query parameters.
@@ -166,7 +166,7 @@ public abstract class AbstractRequest<R> implements Request<R> {
 	 * @return the encoded path. Never <code>null</code>.
 	 */
 	protected String encodePath(final String path) {
-		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull(path, "path");
 
 		final StringBuilder sb = new StringBuilder();
 		final String[] segments = path.split("/");

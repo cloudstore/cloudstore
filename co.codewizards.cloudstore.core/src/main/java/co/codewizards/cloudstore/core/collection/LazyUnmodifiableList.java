@@ -175,7 +175,7 @@ public abstract class LazyUnmodifiableList<E> implements List<E> {
 
 	protected List<E> getElements() {
 		if (elements == null)
-			elements = Collections.unmodifiableList(new ArrayList<E>(assertNotNull(getClass().getName() + ".loadElements()", loadElements())));
+			elements = Collections.unmodifiableList(new ArrayList<E>(assertNotNull(loadElements(), getClass().getName() + ".loadElements()")));
 
 		return elements;
 	}

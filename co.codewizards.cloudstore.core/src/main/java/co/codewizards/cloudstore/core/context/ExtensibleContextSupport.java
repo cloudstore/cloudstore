@@ -11,7 +11,7 @@ public class ExtensibleContextSupport implements ExtensibleContext {
 
 	@Override
 	public void setContextObject(final Object object) {
-		assertNotNull("object", object);
+		assertNotNull(object, "object");
 		Class<?> clazz = object.getClass();
 		if (clazz == Object.class)
 			throw new IllegalArgumentException("object is of type java.lang.Object! Must be a sub-class!");
@@ -35,19 +35,19 @@ public class ExtensibleContextSupport implements ExtensibleContext {
 
 	@Override
 	public <T> T getContextObject(final Class<T> clazz) {
-		assertNotNull("clazz", clazz);
+		assertNotNull(clazz, "clazz");
 		return clazz.cast(contextClass2ContextObject.get(clazz));
 	}
 
 	@Override
 	public void removeContextObject(Object object) {
-		assertNotNull("object", object);
+		assertNotNull(object, "object");
 		removeContextObject(object.getClass());
 	}
 
 	@Override
 	public void removeContextObject(Class<?> clazz) {
-		assertNotNull("clazz", clazz);
+		assertNotNull(clazz, "clazz");
 
 		while (clazz != Object.class) {
 			contextClass2ContextObject.remove(clazz);

@@ -50,8 +50,8 @@ public class AppIdRegistry {
 	}
 
 	public void copyResourceResolvingAppId(final Reader reader, final Writer writer) throws IOException {
-		assertNotNull("writer", writer);
-		assertNotNull("reader", reader);
+		assertNotNull(writer, "writer");
+		assertNotNull(reader, "reader");
 
 		final AppId appId = getAppIdOrFail();
 		Map<String, Object> variables = new HashMap<>();

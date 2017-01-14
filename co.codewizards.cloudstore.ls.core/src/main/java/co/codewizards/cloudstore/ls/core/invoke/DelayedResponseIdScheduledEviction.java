@@ -12,7 +12,7 @@ public class DelayedResponseIdScheduledEviction implements Comparable<DelayedRes
 
 	public DelayedResponseIdScheduledEviction(final long scheduledEvictionTimestamp, final Uid delayedResponseId) {
 		this.scheduledEvictionTimestamp = scheduledEvictionTimestamp;
-		this.delayedResponseId = assertNotNull("delayedResponseId", delayedResponseId);
+		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
 	}
 
 	public Uid getDelayedResponseId() {

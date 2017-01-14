@@ -89,7 +89,7 @@ public class ObjectFactory {
 	}
 
 	public <T> T createObject(final Class<T> clazz, Class<?>[] parameterTypes, final Object ... parameters) {
-		assertNotNull("clazz", clazz);
+		assertNotNull(clazz, "clazz");
 		if (parameterTypes != null && parameters != null) {
 			if (parameterTypes.length != parameters.length)
 				throw new IllegalArgumentException(String.format(
@@ -127,8 +127,8 @@ public class ObjectFactory {
 	}
 
 	private <T> Constructor<T> getMatchingConstructor(final Class<T> clazz, final Object[] parameters) {
-		assertNotNull("clazz", clazz);
-		assertNotNull("parameters", parameters);
+		assertNotNull(clazz, "clazz");
+		assertNotNull(parameters, "parameters");
 		final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
 		final List<Constructor<T>> constructorsWithSameNumberOfArguments = new LinkedList<Constructor<T>>();
 		for (final Constructor<?> constructor : constructors) {

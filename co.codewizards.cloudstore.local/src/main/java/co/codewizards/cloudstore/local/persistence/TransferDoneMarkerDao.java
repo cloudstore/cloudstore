@@ -18,9 +18,9 @@ public class TransferDoneMarkerDao extends Dao<TransferDoneMarker, TransferDoneM
 	private static final Logger logger = LoggerFactory.getLogger(TransferDoneMarkerDao.class);
 
 	public TransferDoneMarker getTransferDoneMarker(final UUID fromRepositoryId, final UUID toRepositoryId, final TransferDoneMarkerType transferDoneMarkerType, final long fromEntityId) {
-		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
-		AssertUtil.assertNotNull("toRepositoryId", toRepositoryId);
-		AssertUtil.assertNotNull("transferDoneMarkerType", transferDoneMarkerType);
+		AssertUtil.assertNotNull(fromRepositoryId, "fromRepositoryId");
+		AssertUtil.assertNotNull(toRepositoryId, "toRepositoryId");
+		AssertUtil.assertNotNull(transferDoneMarkerType, "transferDoneMarkerType");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getTransferDoneMarker_fromRepositoryId_toRepositoryId_transferDoneMarkerType_fromEntityId");
 		try {
 			final Map<String, Object> m = new HashMap<String, Object>(4);
@@ -36,8 +36,8 @@ public class TransferDoneMarkerDao extends Dao<TransferDoneMarker, TransferDoneM
 	}
 
 	public Collection<TransferDoneMarker> getRepoFileTransferDones(final UUID fromRepositoryId, final UUID toRepositoryId) {
-		AssertUtil.assertNotNull("fromRepositoryId", fromRepositoryId);
-		AssertUtil.assertNotNull("toRepositoryId", toRepositoryId);
+		AssertUtil.assertNotNull(fromRepositoryId, "fromRepositoryId");
+		AssertUtil.assertNotNull(toRepositoryId, "toRepositoryId");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getTransferDoneMarkers_fromRepositoryId_toRepositoryId");
 		try {
 			long startTimestamp = System.currentTimeMillis();

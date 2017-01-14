@@ -27,7 +27,7 @@ class RepoSyncRunner implements Runnable {
 	private Date syncFinished;
 
 	public RepoSyncRunner(final RepoSyncQueueItem repoSyncQueueItem) {
-		this.repoSyncQueueItem = assertNotNull("repoSyncQueueItem", repoSyncQueueItem);
+		this.repoSyncQueueItem = assertNotNull(repoSyncQueueItem, "repoSyncQueueItem");
 	}
 
 	public RepoSyncQueueItem getSyncQueueItem() {

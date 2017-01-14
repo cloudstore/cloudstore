@@ -20,7 +20,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	public RepoInfoSubCommand() { }
 
 	protected RepoInfoSubCommand(final File localRoot) {
-		this.localRoot = AssertUtil.assertNotNull("localRoot", localRoot);
+		this.localRoot = AssertUtil.assertNotNull(localRoot, "localRoot");
 		this.localFile = this.localRoot;
 		this.local = localRoot.getPath();
 	}

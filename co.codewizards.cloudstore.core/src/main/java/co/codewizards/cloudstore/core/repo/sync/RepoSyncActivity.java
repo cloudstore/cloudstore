@@ -16,9 +16,9 @@ public class RepoSyncActivity implements Serializable {
 	private final RepoSyncActivityType activityType;
 
 	public RepoSyncActivity(final UUID localRepositoryId, final File localRoot, final RepoSyncActivityType activityType) {
-		this.localRepositoryId = assertNotNull("localRepositoryId", localRepositoryId);
-		this.localRoot = assertNotNull("localRoot", localRoot);
-		this.activityType = assertNotNull("activityType", activityType);
+		this.localRepositoryId = assertNotNull(localRepositoryId, "localRepositoryId");
+		this.localRoot = assertNotNull(localRoot, "localRoot");
+		this.activityType = assertNotNull(activityType, "activityType");
 	}
 
 	public UUID getLocalRepositoryId() {

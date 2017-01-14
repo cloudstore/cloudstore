@@ -40,8 +40,8 @@ public class MakeSymlinkService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void makeSymlink(@PathParam("path") String path)
 	{
-		AssertUtil.assertNotNull("path", path);
-		AssertUtil.assertNotNull("target", target);
+		AssertUtil.assertNotNull(path, "path");
+		AssertUtil.assertNotNull(target, "target");
 		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeSymlink(path, target, lastModified == null ? null : lastModified.toDate());

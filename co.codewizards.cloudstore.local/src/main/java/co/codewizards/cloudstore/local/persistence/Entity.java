@@ -119,7 +119,7 @@ public abstract class Entity implements AutoTrackChanged
 	 * @param created the timestamp of the creation of this entity. Must not be <code>null</code>.
 	 */
 	protected void setCreated(final Date created) {
-		assertNotNull("created", created);
+		assertNotNull(created, "created");
 		this.created = created;
 	}
 
@@ -129,7 +129,7 @@ public abstract class Entity implements AutoTrackChanged
 	}
 	@Override
 	public void setChanged(final Date changed) {
-		assertNotNull("created", created);
+		assertNotNull(created, "created");
 		this.changed = changed;
 	}
 

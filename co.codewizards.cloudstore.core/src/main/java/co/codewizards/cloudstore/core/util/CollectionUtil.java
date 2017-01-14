@@ -33,7 +33,7 @@ public final class CollectionUtil {
 	 * @see #splitList(List, int)
 	 */
 	public static <E> List<Set<E>> splitSet(final Set<E> inputSet, final int maxSize) {
-		assertNotNull("inputSet", inputSet);
+		assertNotNull(inputSet, "inputSet");
 		if (maxSize < 1)
 			throw new IllegalArgumentException("maxSize < 1");
 
@@ -66,7 +66,7 @@ public final class CollectionUtil {
 	 * @see #splitSet(Set, int)
 	 */
 	public static <E> List<List<E>> splitList(final List<E> inputList, final int maxSize) {
-		assertNotNull("inputList", inputList);
+		assertNotNull(inputList, "inputList");
 		if (maxSize < 1)
 			throw new IllegalArgumentException("maxSize < 1");
 

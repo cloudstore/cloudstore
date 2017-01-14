@@ -15,7 +15,7 @@ public class AuthTokenVerifier {
 	private PublicKey publicKey;
 
 	public AuthTokenVerifier(byte[] publicKeyData) {
-		AssertUtil.assertNotNull("publicKeyData", publicKeyData);
+		AssertUtil.assertNotNull(publicKeyData, "publicKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -29,9 +29,9 @@ public class AuthTokenVerifier {
 	}
 
 	public void verify(SignedAuthToken signedAuthToken) {
-		AssertUtil.assertNotNull("signedAuthToken", signedAuthToken);
-		AssertUtil.assertNotNull("signedAuthToken.authTokenData", signedAuthToken.getAuthTokenData());
-		AssertUtil.assertNotNull("signedAuthToken.signature", signedAuthToken.getSignature());
+		AssertUtil.assertNotNull(signedAuthToken, "signedAuthToken");
+		AssertUtil.assertNotNull(signedAuthToken.getAuthTokenData(), "signedAuthToken.authTokenData");
+		AssertUtil.assertNotNull(signedAuthToken.getSignature(), "signedAuthToken.signature");
 		try {
 			Signature verificationEngine = Signature.getInstance(SIGNATURE_ALGORITHM);
 			verificationEngine.initVerify(publicKey);

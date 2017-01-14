@@ -39,7 +39,7 @@ implements MessageBodyReader<Object>
 	private SecurityContext securityContext;
 
 	public JavaNativeWithObjectRefMessageBodyReader(final ObjectRefConverterFactory objectRefConverterFactory) {
-		this.objectRefConverterFactory = assertNotNull("objectRefConverterFactory", objectRefConverterFactory);
+		this.objectRefConverterFactory = assertNotNull(objectRefConverterFactory, "objectRefConverterFactory");
 	}
 
 	@Override
@@ -87,7 +87,7 @@ implements MessageBodyReader<Object>
 
 		public ResolvingObjectInputStream(final InputStream in, final ObjectRefConverter objectRefConverter) throws IOException {
 			super(in);
-			this.objectRefConverter = assertNotNull("objectRefConverter", objectRefConverter);
+			this.objectRefConverter = assertNotNull(objectRefConverter, "objectRefConverter");
 			enableResolveObject(true);
 		}
 

@@ -14,7 +14,7 @@ public class FileChunkDtoConverter {
 	protected FileChunkDtoConverter() { }
 
 	public FileChunkDto toFileChunkDto(final FileChunk fileChunk) {
-		assertNotNull("fileChunk", fileChunk);
+		assertNotNull(fileChunk, "fileChunk");
 		final FileChunkDto fileChunkDto = createObject(FileChunkDto.class);
 		fileChunkDto.setOffset(fileChunk.getOffset());
 		fileChunkDto.setLength(fileChunk.getLength());

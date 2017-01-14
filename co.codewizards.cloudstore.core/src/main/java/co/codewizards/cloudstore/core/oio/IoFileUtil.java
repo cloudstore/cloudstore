@@ -50,7 +50,7 @@ public class IoFileUtil {
 
 	public static File[] listRoots() {
 		final java.io.File[] roots = java.io.File.listRoots();
-		assertNotNull("java.io.File.listRoots()", roots);
+		assertNotNull(roots, "java.io.File.listRoots()");
 		final File[] result = new File[roots.length];
 		for (int i = 0; i < roots.length; i++)
 			result[i] = createFile(roots[i]);

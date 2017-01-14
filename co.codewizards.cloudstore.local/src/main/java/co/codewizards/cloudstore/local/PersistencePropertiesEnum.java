@@ -22,7 +22,7 @@ public enum PersistencePropertiesEnum {
 	public final String key;
 
 	private PersistencePropertiesEnum(String key) {
-		this.key = AssertUtil.assertNotNull("key", key);
+		this.key = AssertUtil.assertNotNull(key, "key");
 	}
 
 	@Override

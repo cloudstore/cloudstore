@@ -10,7 +10,7 @@ public class InverseMethodInvocationResponse extends AbstractInverseServiceRespo
 
 	public InverseMethodInvocationResponse(final InverseMethodInvocationRequest request, final MethodInvocationResponse methodInvocationResponse) {
 		super(request);
-		this.methodInvocationResponse = assertNotNull("methodInvocationResponse", methodInvocationResponse);
+		this.methodInvocationResponse = assertNotNull(methodInvocationResponse, "methodInvocationResponse");
 	}
 
 	public MethodInvocationResponse getMethodInvocationResponse() {

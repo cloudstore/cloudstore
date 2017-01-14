@@ -130,8 +130,8 @@ public final class UrlEncoder {
      */
     @Deprecated
 	public static String encode(String s, String enc) throws UnsupportedEncodingException {
-    	assertNotNull("s", s);
-    	assertNotNull("enc", enc);
+    	assertNotNull(s, "s");
+    	assertNotNull(enc, "enc");
     	Charset charset;
     	try {
             charset = Charset.forName(enc);
@@ -165,8 +165,8 @@ public final class UrlEncoder {
      */
     @Deprecated
 	public static String encode(String s, Charset charset) {
-    	assertNotNull("s", s);
-    	assertNotNull("charset", charset);
+    	assertNotNull(s, "s");
+    	assertNotNull(charset, "charset");
 
         boolean needToChange = false;
         StringBuffer out = new StringBuffer(s.length());

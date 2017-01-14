@@ -15,7 +15,7 @@ import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryDao> {
 	public RemoteRepository getRemoteRepository(final UUID repositoryId) {
-		AssertUtil.assertNotNull("repositoryId", repositoryId);
+		AssertUtil.assertNotNull(repositoryId, "repositoryId");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepository_repositoryId");
 		try {
 			final RemoteRepository remoteRepository = (RemoteRepository) query.execute(repositoryId.toString());
@@ -26,7 +26,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 	}
 
 	public RemoteRepository getRemoteRepository(URL remoteRoot) {
-		AssertUtil.assertNotNull("remoteRoot", remoteRoot);
+		AssertUtil.assertNotNull(remoteRoot, "remoteRoot");
 		remoteRoot = UrlUtil.canonicalizeURL(remoteRoot);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepository_remoteRootSha1");
 		try {
@@ -72,7 +72,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 
 	@Override
 	public void deletePersistent(final RemoteRepository entity) {
-		AssertUtil.assertNotNull("entity", entity);
+		AssertUtil.assertNotNull(entity, "entity");
 		deleteDependentObjects(entity);
 		pm().flush();
 		super.deletePersistent(entity);
@@ -80,7 +80,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 
 	@Override
 	public void deletePersistentAll(final Collection<? extends RemoteRepository> entities) {
-		AssertUtil.assertNotNull("entities", entities);
+		AssertUtil.assertNotNull(entities, "entities");
 		for (final RemoteRepository remoteRepository : entities) {
 			deleteDependentObjects(remoteRepository);
 		}
@@ -89,7 +89,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 	}
 
 	protected void deleteDependentObjects(final RemoteRepository remoteRepository) {
-		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
+		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
 
 		final ModificationDao modificationDao = getDao(ModificationDao.class);
 		modificationDao.deletePersistentAll(modificationDao.getModifications(remoteRepository));

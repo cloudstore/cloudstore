@@ -21,7 +21,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 * @return those {@link Modification}s matching the given criteria. Never <code>null</code>, but maybe empty.
 	 */
 	public Collection<Modification> getModificationsAfter(final RemoteRepository remoteRepository, final long localRevision) {
-		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
+		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();
@@ -40,7 +40,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	}
 
 	public Collection<Modification> getModificationsBeforeOrEqual(final RemoteRepository remoteRepository, final long localRevision) {
-		AssertUtil.assertNotNull("remoteRepository", remoteRepository);
+		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
 		try {
 			long startTimestamp = System.currentTimeMillis();

@@ -46,11 +46,11 @@ public class QueryLdapClient implements LdapClient{
 	private final char[] adminPassword;
 
 	public QueryLdapClient(String query, String queryDn, String url, String bindDn, char[] password) {
-		this.query = assertNotNull("query", query);
-		this.queryDn = assertNotNull("queryDn", queryDn);
-		this.url = assertNotNull("url", url);
-		this.adminDn = assertNotNull("bindDn", bindDn);
-		this.adminPassword = assertNotNull("password", password);
+		this.query = assertNotNull(query, "query");
+		this.queryDn = assertNotNull(queryDn, "queryDn");
+		this.url = assertNotNull(url, "url");
+		this.adminDn = assertNotNull(bindDn, "bindDn");
+		this.adminPassword = assertNotNull(password, "password");
 	}
 
 	@Override

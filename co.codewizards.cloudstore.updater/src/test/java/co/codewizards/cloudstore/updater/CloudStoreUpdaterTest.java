@@ -36,7 +36,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 		new MockUp<CloudStoreUpdaterCore>() {
 			@Mock
 			Version getRemoteVersion(Invocation invocation) {
-				return assertNotNull("remoteVersion", remoteVersion);
+				return assertNotNull(remoteVersion, "remoteVersion");
 			}
 		};
 	}
@@ -106,7 +106,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 	}
 
 	private void assertThatInstallationIs(String expectedArtifactId, String expectedVersion) throws IOException {
-		assertNotNull("installationDir", installationDir);
+		assertNotNull(installationDir, "installationDir");
 
 		File installationPropertiesFile = installationDir.createFile("installation.properties");
 		assertThat(installationPropertiesFile.getIoFile()).exists();

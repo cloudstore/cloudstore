@@ -10,7 +10,7 @@ public class EndSyncToRepository extends VoidRequest {
 	private final long fromLocalRevision;
 
 	public EndSyncToRepository(final String repositoryName, final long fromLocalRevision) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.fromLocalRevision = fromLocalRevision;
 	}
 

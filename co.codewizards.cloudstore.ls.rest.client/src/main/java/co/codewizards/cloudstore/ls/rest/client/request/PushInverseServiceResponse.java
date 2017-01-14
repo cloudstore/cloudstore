@@ -14,7 +14,7 @@ public class PushInverseServiceResponse extends VoidRequest {
 	private final InverseServiceResponse response;
 
 	public PushInverseServiceResponse(final InverseServiceResponse response) {
-		this.response = assertNotNull("response", response);
+		this.response = assertNotNull(response, "response");
 	}
 
 	@Override

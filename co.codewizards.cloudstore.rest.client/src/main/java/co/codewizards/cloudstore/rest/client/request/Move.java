@@ -11,9 +11,9 @@ public class Move extends VoidRequest {
 	private final String toPath;
 
 	public Move(final String repositoryName, final String fromPath, final String toPath) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
-		this.fromPath = assertNotNull("fromPath", fromPath);
-		this.toPath = assertNotNull("toPath", toPath);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.fromPath = assertNotNull(fromPath, "fromPath");
+		this.toPath = assertNotNull(toPath, "toPath");
 	}
 
 	@Override

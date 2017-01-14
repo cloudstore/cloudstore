@@ -18,7 +18,7 @@ public class LocalRepoTransactionListenerRegistry {
 	private static List<Class<? extends LocalRepoTransactionListener>> listenerClasses;
 
 	public LocalRepoTransactionListenerRegistry(final LocalRepoTransaction transaction) {
-		this.transaction = AssertUtil.assertNotNull("transaction", transaction);
+		this.transaction = AssertUtil.assertNotNull(transaction, "transaction");
 		this.listeners = createListeners();
 
 		for (final LocalRepoTransactionListener listener : listeners)

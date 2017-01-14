@@ -38,7 +38,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	@Override
 	public void prepare() throws Exception {
 		super.prepare();
-		AssertUtil.assertNotNull("local", local);
+		AssertUtil.assertNotNull(local, "local");
 
 		String repositoryName;
 		final int slashIndex = local.indexOf('/');
@@ -78,7 +78,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	}
 
 	protected void assertLocalRootNotNull() {
-		AssertUtil.assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull(localRoot, "localRoot");
 	}
 
 }

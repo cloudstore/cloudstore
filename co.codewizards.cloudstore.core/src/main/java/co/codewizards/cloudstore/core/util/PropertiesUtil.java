@@ -419,8 +419,8 @@ public final class PropertiesUtil
 	}
 
 	public static long getPropertyValueAsLong(final Properties properties, final String key, long defaultValue) {
-		assertNotNull("properties", properties);
-		assertNotNull("key", key);
+		assertNotNull(properties, "properties");
+		assertNotNull(key, "key");
 
 		final String value = properties.getProperty(key);
 		if (value == null)
@@ -452,7 +452,7 @@ public final class PropertiesUtil
 	 * @return the env var name. Never <code>null</code>.
 	 */
 	public static String systemPropertyToEnvironmentVariable(final String key) {
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 
 		if (key.isEmpty())
 			throw new IllegalArgumentException("key is an empty string! At least one character is required!");

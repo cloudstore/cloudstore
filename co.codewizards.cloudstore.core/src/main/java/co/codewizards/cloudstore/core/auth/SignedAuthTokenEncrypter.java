@@ -26,7 +26,7 @@ public class SignedAuthTokenEncrypter {
 	private PublicKey publicKey;
 
 	public SignedAuthTokenEncrypter(final byte[] publicKeyData) {
-		AssertUtil.assertNotNull("publicKeyData", publicKeyData);
+		AssertUtil.assertNotNull(publicKeyData, "publicKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");

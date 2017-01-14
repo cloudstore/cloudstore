@@ -93,7 +93,7 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 
 	@Override
 	public int compareTo(final FileChunk other) {
-		AssertUtil.assertNotNull("other", other);
+		AssertUtil.assertNotNull(other, "other");
 
 		if (this.normalFile != other.normalFile) {
 			final long thisRepoFileId = this.normalFile == null ? 0 : this.normalFile.getId();

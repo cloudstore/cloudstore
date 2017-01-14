@@ -35,7 +35,7 @@ public class MoveService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void move(@PathParam("path") String path, @QueryParam("to") final String toPath)
 	{
-		AssertUtil.assertNotNull("path", path);
+		AssertUtil.assertNotNull(path, "path");
 		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.move(path, toPath);

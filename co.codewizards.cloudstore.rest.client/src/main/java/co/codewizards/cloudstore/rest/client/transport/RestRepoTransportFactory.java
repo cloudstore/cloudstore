@@ -35,7 +35,7 @@ public class RestRepoTransportFactory extends AbstractRepoTransportFactory {
 
 	@Override
 	public boolean isSupported(URL remoteRoot) {
-		return PROTOCOL_HTTP.equals(AssertUtil.assertNotNull("remoteRoot", remoteRoot).getProtocol())
+		return PROTOCOL_HTTP.equals(AssertUtil.assertNotNull(remoteRoot, "remoteRoot").getProtocol())
 				|| PROTOCOL_HTTPS.equals(remoteRoot.getProtocol());
 	}
 

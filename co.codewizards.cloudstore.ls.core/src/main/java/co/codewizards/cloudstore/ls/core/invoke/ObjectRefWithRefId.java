@@ -13,7 +13,7 @@ public class ObjectRefWithRefId implements Serializable {
 	public final Uid refId;
 
 	public ObjectRefWithRefId(final Object object, final Uid refId) {
-		this.object = assertNotNull("object", object);
-		this.refId = assertNotNull("refId", refId);
+		this.object = assertNotNull(object, "object");
+		this.refId = assertNotNull(refId, "refId");
 	}
 }

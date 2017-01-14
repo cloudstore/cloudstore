@@ -19,8 +19,8 @@ public class PersistencePropertiesProvider {
 	private final File localRoot;
 
 	public PersistencePropertiesProvider(final UUID repositoryId, final File localRoot) {
-		this.repositoryId = assertNotNull("repositoryId", repositoryId);
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.repositoryId = assertNotNull(repositoryId, "repositoryId");
+		this.localRoot = assertNotNull(localRoot, "localRoot");
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 	}

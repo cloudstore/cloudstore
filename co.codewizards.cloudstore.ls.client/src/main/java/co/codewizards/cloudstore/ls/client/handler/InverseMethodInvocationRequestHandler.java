@@ -21,7 +21,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 
 	@Override
 	public InverseMethodInvocationResponse handle(final InverseMethodInvocationRequest request) throws Exception {
-		assertNotNull("request", request);
+		assertNotNull(request, "request");
 
 		final MethodInvocationRequest methodInvocationRequest = request.getMethodInvocationRequest();
 		if (methodInvocationRequest != null) {
@@ -39,7 +39,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 	}
 
 	private MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) throws Exception {
-		assertNotNull("methodInvocationRequest", methodInvocationRequest);
+		assertNotNull(methodInvocationRequest, "methodInvocationRequest");
 
 		final ObjectManager objectManager = getLocalServerClient().getObjectManager();
 		final ClassManager classManager = objectManager.getClassManager();
@@ -115,7 +115,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 	}
 
 	private MethodInvocationResponse getDelayedMethodInvocationResponse(final Uid delayedResponseId) throws Exception {
-		assertNotNull("delayedResponseId", delayedResponseId);
+		assertNotNull(delayedResponseId, "delayedResponseId");
 		return invokeMethodExecutor.getDelayedResponse(delayedResponseId);
 	}
 }

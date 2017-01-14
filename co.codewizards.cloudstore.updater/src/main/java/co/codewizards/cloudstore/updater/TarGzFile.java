@@ -30,7 +30,7 @@ public class TarGzFile {
 	private FileFilter fileFilter;
 
 	public TarGzFile(final File tarGzFile) {
-		this.tarGzFile = AssertUtil.assertNotNull("tarGzFile", tarGzFile);
+		this.tarGzFile = AssertUtil.assertNotNull(tarGzFile, "tarGzFile");
 	}
 
 	/**

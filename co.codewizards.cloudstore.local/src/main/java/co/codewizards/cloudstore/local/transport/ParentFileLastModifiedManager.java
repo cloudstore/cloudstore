@@ -13,7 +13,7 @@ public class ParentFileLastModifiedManager {
 		public int refCount = 0;
 
 		public ParentFileEntry(final File parentFile) {
-			this.parentFile = AssertUtil.assertNotNull("parentFile", parentFile);
+			this.parentFile = AssertUtil.assertNotNull(parentFile, "parentFile");
 			this.lastModified = parentFile.exists() ? parentFile.lastModified() : Long.MIN_VALUE;
 		}
 	}
@@ -31,7 +31,7 @@ public class ParentFileLastModifiedManager {
 	}
 
 	public synchronized void backupParentFileLastModified(final File parentFile) {
-		AssertUtil.assertNotNull("parentFile", parentFile);
+		AssertUtil.assertNotNull(parentFile, "parentFile");
 		ParentFileEntry parentFileEntry = parentFile2ParentFileEntry.get(parentFile);
 		if (parentFileEntry == null) {
 			parentFileEntry = new ParentFileEntry(parentFile);
@@ -41,7 +41,7 @@ public class ParentFileLastModifiedManager {
 	}
 
 	public synchronized void restoreParentFileLastModified(final File parentFile) {
-		AssertUtil.assertNotNull("parentFile", parentFile);
+		AssertUtil.assertNotNull(parentFile, "parentFile");
 		final ParentFileEntry parentFileEntry = parentFile2ParentFileEntry.get(parentFile);
 		if (parentFileEntry == null)
 			throw new IllegalStateException("parentFileEntry == null :: less invocations of restore... than of backup...!!! :: parentFile=" + parentFile);

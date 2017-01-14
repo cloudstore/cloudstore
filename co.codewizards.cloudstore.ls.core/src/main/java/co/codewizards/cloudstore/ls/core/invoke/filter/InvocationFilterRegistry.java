@@ -76,7 +76,7 @@ public class InvocationFilterRegistry {
 	}
 
 	public boolean canInvoke(final ExtMethodInvocationRequest extMethodInvocationRequest) {
-		assertNotNull("extMethodInvocationRequest", extMethodInvocationRequest);
+		assertNotNull(extMethodInvocationRequest, "extMethodInvocationRequest");
 		for (final InvocationFilter invocationFilter : getInvocationFilters()) {
 			final Boolean result = invocationFilter.canInvoke(extMethodInvocationRequest);
 			if (result != null)

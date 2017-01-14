@@ -38,13 +38,13 @@ public final class NioFileUtil {
 	}
 
 	static String toPathString(final Path path) {
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 
 	static String toPathString(final java.io.File file) {
 		final Path path = file.toPath();
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 

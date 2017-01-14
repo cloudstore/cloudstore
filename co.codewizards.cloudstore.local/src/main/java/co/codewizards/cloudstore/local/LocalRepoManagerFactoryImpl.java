@@ -136,7 +136,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	}
 
 	private File canonicalize(File localRoot) {
-		AssertUtil.assertNotNull("localRoot", localRoot);
+		AssertUtil.assertNotNull(localRoot, "localRoot");
 		try {
 			localRoot = localRoot.getCanonicalFile();
 		} catch (final IOException e) {
@@ -153,7 +153,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	}
 
 	private void postLocalRepoManagerBackendClose(final LocalRepoManagerImpl localRepoManager) {
-		AssertUtil.assertNotNull("localRepoManager", localRepoManager);
+		AssertUtil.assertNotNull(localRepoManager, "localRepoManager");
 		synchronized (this) {
 			final LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
 			if (localRepoManager != localRepoManager2) {

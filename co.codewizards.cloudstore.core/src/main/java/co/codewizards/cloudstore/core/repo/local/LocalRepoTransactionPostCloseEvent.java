@@ -13,7 +13,7 @@ public class LocalRepoTransactionPostCloseEvent extends EventObject {
 
 	public LocalRepoTransactionPostCloseEvent(LocalRepoTransaction source) {
 		super(source);
-		localRepoManager = assertNotNull("source", source).getLocalRepoManager();
+		localRepoManager = assertNotNull(source, "source").getLocalRepoManager();
 	}
 
 	@Override

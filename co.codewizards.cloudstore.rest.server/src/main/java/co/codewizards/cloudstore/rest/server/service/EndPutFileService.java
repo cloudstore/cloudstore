@@ -35,8 +35,8 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 			@QueryParam("length") final long length,
 			@QueryParam("sha1") final String sha1)
 	{
-		AssertUtil.assertNotNull("path", path);
-		AssertUtil.assertNotNull("lastModified", lastModified);
+		AssertUtil.assertNotNull(path, "path");
+		AssertUtil.assertNotNull(lastModified, "lastModified");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

@@ -10,7 +10,7 @@ public class BeginPutFile extends VoidRequest {
 	protected final String path;
 
 	public BeginPutFile(final String repositoryName, final String path) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.path = path;
 	}
 

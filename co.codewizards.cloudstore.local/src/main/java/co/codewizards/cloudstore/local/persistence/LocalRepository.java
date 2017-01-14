@@ -76,7 +76,7 @@ public class LocalRepository extends Repository {
 	@Override
 	public void jdoPreStore() {
 		super.jdoPreStore();
-		final PersistenceManager pm = assertNotNull("JDOHelper.getPersistenceManager(this)", JDOHelper.getPersistenceManager(this));
+		final PersistenceManager pm = assertNotNull(JDOHelper.getPersistenceManager(this), "JDOHelper.getPersistenceManager(this)");
 		final Iterator<LocalRepository> iterator = pm.getExtent(LocalRepository.class).iterator();
 		if (iterator.hasNext()) {
 			final LocalRepository persistentInstance = iterator.next();

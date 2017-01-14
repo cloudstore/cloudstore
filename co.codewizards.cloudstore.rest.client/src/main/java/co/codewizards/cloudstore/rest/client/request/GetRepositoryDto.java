@@ -8,7 +8,7 @@ public class GetRepositoryDto extends AbstractRequest<RepositoryDto> {
 	private final String repositoryName;
 
 	public GetRepositoryDto(final String repositoryName) {
-		this.repositoryName = assertNotNull("repositoryName", repositoryName);
+		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 	}
 
 	@Override

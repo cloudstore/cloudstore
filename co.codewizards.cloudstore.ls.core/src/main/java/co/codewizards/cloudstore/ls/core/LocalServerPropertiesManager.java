@@ -113,7 +113,7 @@ public class LocalServerPropertiesManager {
 	}
 
 	public void setPassword(final String password) {
-		assertNotNull("password", password);
+		assertNotNull(password, "password");
 		getLocalServerProperties().setProperty(PROPERTY_KEY_PASSWORD, password);
 	}
 

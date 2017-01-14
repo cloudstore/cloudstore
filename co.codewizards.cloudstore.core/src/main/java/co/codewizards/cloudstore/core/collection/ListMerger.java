@@ -37,8 +37,8 @@ public abstract class ListMerger<E, K> {
 	 * @param dest the destination into which to write. Must not be <code>null</code>.
 	 */
 	public void merge(final List<E> source, final List<E> dest) {
-		this.source = assertNotNull("source", source);
-		this.dest = assertNotNull("dest", dest);
+		this.source = assertNotNull(source, "source");
+		this.dest = assertNotNull(dest, "dest");
 
 		populateSourceKey2element();
 		populateDestKey2element();

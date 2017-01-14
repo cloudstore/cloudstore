@@ -118,7 +118,7 @@ public class CloudStoreServer implements Runnable {
 		return cloudStoreServerClass;
 	}
 	protected static void setCloudStoreServerClass(final Class<? extends CloudStoreServer> cloudStoreServerClass) {
-		assertNotNull("cloudStoreServerClass", cloudStoreServerClass);
+		assertNotNull(cloudStoreServerClass, "cloudStoreServerClass");
 		CloudStoreServer.cloudStoreServerClass = cloudStoreServerClass;
 	}
 
@@ -344,7 +344,7 @@ public class CloudStoreServer implements Runnable {
 	private ServletContextHandler createServletContextHandler() {
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		final ServletContainer servletContainer = new ServletContainer(AssertUtil.assertNotNull("createResourceConfig()", createResourceConfig()));
+		final ServletContainer servletContainer = new ServletContainer(AssertUtil.assertNotNull(createResourceConfig(), "createResourceConfig()"));
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 //		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;

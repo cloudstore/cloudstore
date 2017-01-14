@@ -15,7 +15,7 @@ public class AuthTokenSigner {
 	private PrivateKey privateKey;
 
 	public AuthTokenSigner(byte[] privateKeyData) {
-		AssertUtil.assertNotNull("privateKeyData", privateKeyData);
+		AssertUtil.assertNotNull(privateKeyData, "privateKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -29,7 +29,7 @@ public class AuthTokenSigner {
 	}
 
 	public SignedAuthToken sign(byte[] authTokenData) {
-		AssertUtil.assertNotNull("authTokenData", authTokenData);
+		AssertUtil.assertNotNull(authTokenData, "authTokenData");
 		Signature signingEngine;
 		try {
 			signingEngine = Signature.getInstance(SIGNATURE_ALGORITHM);

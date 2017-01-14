@@ -35,7 +35,7 @@ public class WeakIdentityHashMap<K, V> implements Map<K, V>, Serializable {
 	}
 
 	public WeakIdentityHashMap(final Map<? extends K, ? extends V> map) {
-		this(assertNotNull("map", map).size());
+		this(assertNotNull(map, "map").size());
 		putAll(map);
 	}
 
@@ -54,7 +54,7 @@ public class WeakIdentityHashMap<K, V> implements Map<K, V>, Serializable {
 	@Override
 	public V put(final K key, final V value) {
 		expunge();
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 		final WeakReference<K> keyRef = createReference(key, keyRefQueue);
 		return delegate.put(keyRef, value);
 	}
@@ -62,10 +62,10 @@ public class WeakIdentityHashMap<K, V> implements Map<K, V>, Serializable {
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		expunge();
-		assertNotNull("map", map);
+		assertNotNull(map, "map");
 		for (final Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
 			final K key = entry.getKey();
-			assertNotNull("entry.key", key);
+			assertNotNull(key, "entry.key");
 			final WeakReference<K> keyRef = createReference(key, keyRefQueue);
 			delegate.put(keyRef, entry.getValue());
 		}

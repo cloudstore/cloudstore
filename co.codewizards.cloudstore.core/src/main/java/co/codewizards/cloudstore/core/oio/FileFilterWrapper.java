@@ -8,7 +8,7 @@ public class FileFilterWrapper implements java.io.FileFilter {
 	private final FileFilter fileFilter;
 
 	public FileFilterWrapper(final FileFilter fileFilter) {
-		this.fileFilter = assertNotNull("fileFilter", fileFilter);
+		this.fileFilter = assertNotNull(fileFilter, "fileFilter");
 	}
 
 	@Override

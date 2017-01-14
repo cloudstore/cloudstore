@@ -171,7 +171,7 @@ public class LocalServerProcessLauncher {
 
 	private File getJavaExecutableFile() {
 		final String javaHome = System.getProperty("java.home");
-		assertNotNull("javaHome", javaHome);
+		assertNotNull(javaHome, "javaHome");
 
 		File file = createFile(javaHome, "bin", "java").getAbsoluteFile();
 		if (file.isFile()) {
@@ -197,7 +197,7 @@ public class LocalServerProcessLauncher {
 		// Should return an URL like this:
 		// jar:file:/home/mn/.../co.codewizards.cloudstore.ls.server.cproc-0.9.7-SNAPSHOT.jar!/co/codewizards/cloudstore/ls/server/cproc/
 		final URL url = this.getClass().getResource("");
-		assertNotNull("url", url);
+		assertNotNull(url, "url");
 
 		final String urlString = url.toString();
 		logger.debug("getThisJarFile: url='{}'", urlString);

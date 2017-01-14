@@ -82,8 +82,8 @@ public class CloudStoreRestClient {
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
 	public CloudStoreRestClient(final URL url, final ClientBuilder clientBuilder) {
-		this.url = assertNotNull("url", url);
-		this.clientBuilder = assertNotNull("clientBuilder", clientBuilder);
+		this.url = assertNotNull(url, "url");
+		this.clientBuilder = assertNotNull(clientBuilder, "clientBuilder");
 	}
 
 	/**
@@ -94,11 +94,11 @@ public class CloudStoreRestClient {
 	 */
 	public CloudStoreRestClient(final String url, final ClientBuilder clientBuilder) {
 		try{
-			this.url = assertNotNull("url", new URL(url));
+			this.url = assertNotNull(new URL(url), "url");
 		} catch (MalformedURLException e){
 			throw new IllegalStateException("url is invalid", e);
 		}
-		this.clientBuilder = assertNotNull("clientBuilder", clientBuilder);
+		this.clientBuilder = assertNotNull(clientBuilder, "clientBuilder");
 	}
 
 	private void determineBaseUrl() {
@@ -145,7 +145,7 @@ public class CloudStoreRestClient {
 	}
 
 	public <R> R execute(final Request<R> request) {
-		assertNotNull("request", request);
+		assertNotNull(request, "request");
 		RuntimeException firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
@@ -229,7 +229,7 @@ public class CloudStoreRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = assertNotNull("client", client);
+			this.client = assertNotNull(client, "client");
 		}
 	}
 

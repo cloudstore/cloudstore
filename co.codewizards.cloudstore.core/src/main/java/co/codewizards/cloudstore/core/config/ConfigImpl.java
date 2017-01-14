@@ -107,9 +107,9 @@ public class ConfigImpl implements Config {
 		if (parentConfig == null)
 			fileRef = null;
 		else
-			fileRef = new WeakReference<File>(assertNotNull("file", file));
+			fileRef = new WeakReference<File>(assertNotNull(file, "file"));
 
-		this.propertiesFiles = assertNotNullAndNoNullElement("propertiesFiles", propertiesFiles);
+		this.propertiesFiles = assertNotNullAndNoNullElement(propertiesFiles, "propertiesFiles");
 		properties = new Properties(parentConfig == null ? null : parentConfig.properties);
 		propertiesFilesLastModified = new long[propertiesFiles.length];
 		instanceMutex = properties;
@@ -178,7 +178,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static Config getInstance(final File file, final boolean isDirectory) {
-		assertNotNull("file", file);
+		assertNotNull(file, "file");
 		cleanFileRefs();
 
 		File config_file = null;
@@ -202,7 +202,7 @@ public class ConfigImpl implements Config {
 				fileSoftRefs.add(new SoftReference<File>(file));
 				config_file = config.getFile();
 			}
-			assertNotNull("config_file", config_file);
+			assertNotNull(config_file, "config_file");
 		}
 		refreshFileHardRefAndCleanOldHardRefs(config_file);
 		return config;
@@ -338,7 +338,7 @@ public class ConfigImpl implements Config {
 	 * does not exist.
 	 */
 	private long getLastModifiedAndWaitIfNeeded(final File file) {
-		assertNotNull("file", file);
+		assertNotNull(file, "file");
 		long lastModified = file.lastModified(); // is 0 for non-existing file
 		final long now = System.currentTimeMillis();
 
@@ -385,7 +385,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public String getProperty(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -412,7 +412,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public String getDirectProperty(final String key) {
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 
 		// TODO should we really take system properties and environment variables into account?!
 
@@ -439,7 +439,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public void setDirectProperty(final String key, final String value) {
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 
 		// TODO really prevent modifying values? Or handle system props + env-vars differently?
 
@@ -469,7 +469,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public String getPropertyAsNonEmptyTrimmedString(final String key, final String defaultValue) {
-		assertNotNull("key", key);
+		assertNotNull(key, "key");
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final String sysPropKey = SYSTEM_PROPERTY_PREFIX + key;
@@ -550,7 +550,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final E defaultValue) {
-		assertNotNull("defaultValue", defaultValue);
+		assertNotNull(defaultValue, "defaultValue");
 		@SuppressWarnings("unchecked")
 		final Class<E> enumClass = (Class<E>) defaultValue.getClass();
 		return getPropertyAsEnum(key, enumClass, defaultValue);
@@ -558,7 +558,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public <E extends Enum<E>> E getPropertyAsEnum(final String key, final Class<E> enumClass, final E defaultValue) {
-		assertNotNull("enumClass", enumClass);
+		assertNotNull(enumClass, "enumClass");
 		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
 		if (sval == null)
 			return defaultValue;
@@ -588,7 +588,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final ConfigImpl config) {
-		final File config_file = assertNotNull("config", config).getFile();
+		final File config_file = assertNotNull(config, "config").getFile();
 		if (config_file != null)
 			refreshFileHardRefAndCleanOldHardRefs(config_file);
 	}
@@ -601,7 +601,7 @@ public class ConfigImpl implements Config {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File config_file) {
-		assertNotNull("config_file", config_file);
+		assertNotNull(config_file, "config_file");
 		synchronized (fileHardRefs) {
 			// make sure the config_file is at the end of fileHardRefs
 			fileHardRefs.remove(config_file);
@@ -615,7 +615,7 @@ public class ConfigImpl implements Config {
 
 	@Override
 	public Map<String, List<String>> getKey2GroupsMatching(final Pattern regex) {
-		assertNotNull("regex", regex);
+		assertNotNull(regex, "regex");
 		refreshFileHardRefAndCleanOldHardRefs();
 
 		final Map<String, List<String>> key2Groups = new HashMap<>();
@@ -624,8 +624,8 @@ public class ConfigImpl implements Config {
 	}
 
 	protected void populateKeysMatching(final Map<String, List<String>> key2Groups, final Pattern regex) {
-		assertNotNull("key2Groups", key2Groups);
-		assertNotNull("regex", regex);
+		assertNotNull(key2Groups, "key2Groups");
+		assertNotNull(regex, "regex");
 		if (parentConfig != null)
 			parentConfig.populateKeysMatching(key2Groups, regex);
 

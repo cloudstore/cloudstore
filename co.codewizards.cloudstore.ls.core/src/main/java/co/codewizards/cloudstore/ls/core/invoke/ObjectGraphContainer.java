@@ -22,7 +22,7 @@ public class ObjectGraphContainer implements Serializable {
 	private IdentityHashMap<Object, ForceNonTransientContainer> transientFieldOwnerObject2ForceNonTransientContainer = new IdentityHashMap<Object, ForceNonTransientContainer>();
 
 	public ObjectGraphContainer(final Object root) {
-		this.root = assertNotNull("root", root);
+		this.root = assertNotNull(root, "root");
 	}
 
 	public Object getRoot() {
@@ -30,7 +30,7 @@ public class ObjectGraphContainer implements Serializable {
 	}
 
 	public void putForceNonTransientContainer(final ForceNonTransientContainer forceNonTransientContainer) {
-		assertNotNull("forceNonTransientContainer", forceNonTransientContainer);
+		assertNotNull(forceNonTransientContainer, "forceNonTransientContainer");
 		transientFieldOwnerObject2ForceNonTransientContainer.put(forceNonTransientContainer.getTransientFieldOwnerObject(), forceNonTransientContainer);
 	}
 

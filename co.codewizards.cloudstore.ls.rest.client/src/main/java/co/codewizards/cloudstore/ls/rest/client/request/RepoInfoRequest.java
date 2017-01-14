@@ -14,7 +14,7 @@ public class RepoInfoRequest extends AbstractRequest<RepoInfoResponseDto> {
 	private final RepoInfoRequestDto repoInfoRequestDto;
 
 	public RepoInfoRequest(final RepoInfoRequestDto repoInfoRequestDto) {
-		this.repoInfoRequestDto = assertNotNull("repoInfoRequestDto", repoInfoRequestDto);
+		this.repoInfoRequestDto = assertNotNull(repoInfoRequestDto, "repoInfoRequestDto");
 	}
 
 	@Override

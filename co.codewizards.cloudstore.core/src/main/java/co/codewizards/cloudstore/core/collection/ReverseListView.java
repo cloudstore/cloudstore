@@ -26,7 +26,7 @@ public final class ReverseListView<E> implements List<E> {
 	private final List<E> list;
 
 	public ReverseListView(final List<E> list) {
-		this.list = assertNotNull("list", list);
+		this.list = assertNotNull(list, "list");
 	}
 
 	@Override

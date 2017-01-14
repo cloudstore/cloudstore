@@ -119,7 +119,7 @@ public class CloudStoreUpdaterCore {
 			else {
 				final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 				// cannot use resolve(...), because it invokes this method ;-)
-				assertNotNull("artifactId", artifactId);
+				assertNotNull(artifactId, "artifactId");
 				final Map<String, Object> variables = new HashMap<>(1);
 				variables.put("artifactId", artifactId);
 				final String resolvedRemoteVersionURL = IOUtil.replaceTemplateVariables(remoteVersionURL, variables);
@@ -204,9 +204,9 @@ public class CloudStoreUpdaterCore {
 	 * @return
 	 */
 	protected String resolve(final String template) {
-		assertNotNull("template", template);
+		assertNotNull(template, "template");
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
-		assertNotNull("artifactId", artifactId);
+		assertNotNull(artifactId, "artifactId");
 
 		final Version remoteVersion = getRemoteVersion();
 
@@ -295,8 +295,8 @@ public class CloudStoreUpdaterCore {
 		public final DateTime remoteVersionTimestamp;
 
 		public RemoteVersionCache(final Version remoteVersion, final DateTime remoteVersionTimestamp) {
-			this.remoteVersion = AssertUtil.assertNotNull("remoteVersion", remoteVersion);
-			this.remoteVersionTimestamp = AssertUtil.assertNotNull("remoteVersionTimestamp", remoteVersionTimestamp);
+			this.remoteVersion = AssertUtil.assertNotNull(remoteVersion, "remoteVersion");
+			this.remoteVersionTimestamp = AssertUtil.assertNotNull(remoteVersionTimestamp, "remoteVersionTimestamp");
 		}
 	}
 

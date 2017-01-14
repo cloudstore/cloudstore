@@ -49,10 +49,10 @@ public class RepoInfoService
 	@POST
 	public RepoInfoResponseDto run(final RepoInfoRequestDto repoInfoRequestDto)
 	{
-		assertNotNull("repoInfoRequestDto", repoInfoRequestDto);
+		assertNotNull(repoInfoRequestDto, "repoInfoRequestDto");
 		repoInfoResponseDto = new RepoInfoResponseDto();
 
-		final File localRoot = createFile(assertNotNull("", repoInfoRequestDto.getLocalRoot()));
+		final File localRoot = createFile(assertNotNull(repoInfoRequestDto.getLocalRoot(), ""));
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			try ( LocalRepoTransaction transaction = localRepoManager.beginReadTransaction(); ) {

@@ -156,7 +156,7 @@ public class Base64Url {
     }
 
     public static String encodeBase64ToString(final byte[] binaryData) {
-    	assertNotNull("binaryData", binaryData);
+    	assertNotNull(binaryData, "binaryData");
     	return new String(encodeBase64(binaryData), US_ASCII);
     }
 
@@ -167,7 +167,7 @@ public class Base64Url {
      * @return Base64-encoded data.
      */
     public static byte[] encodeBase64(final byte[] binaryData) {
-    	assertNotNull("binaryData", binaryData);
+    	assertNotNull(binaryData, "binaryData");
         final int lengthDataBits = binaryData.length * EIGHTBIT;
         final int fewerThan24bits = lengthDataBits % TWENTYFOURBITGROUP;
         final int numberTriplets = lengthDataBits / TWENTYFOURBITGROUP;
@@ -259,7 +259,7 @@ public class Base64Url {
     }
 
     public static byte[] decodeBase64FromString(final String base64String) {
-    	final byte[] base64Data = assertNotNull("base64String", base64String).getBytes(US_ASCII);
+    	final byte[] base64Data = assertNotNull(base64String, "base64String").getBytes(US_ASCII);
     	return decodeBase64(base64Data);
     }
 
@@ -270,7 +270,7 @@ public class Base64Url {
      * @return Array containing decoded data.
      */
     public static byte[] decodeBase64(final byte[] base64Data) {
-    	assertNotNull("base64Data", base64Data);
+    	assertNotNull(base64Data, "base64Data");
     	// RFC 2045 requires that we discard ALL non-Base64 characters
         return _decodeBase64(appendPaddingIfNeeded(discardNonBase64(base64Data)));
     }

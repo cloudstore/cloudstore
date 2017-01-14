@@ -42,7 +42,7 @@ public class JdbcConnectionFactory {
 	private String connectionPassword;
 
 	public JdbcConnectionFactory(final File localRoot) {
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.localRoot = assertNotNull(localRoot, "localRoot");
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 

@@ -89,7 +89,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	public Uid(final byte[] bytes) {
-		if (assertNotNull("bytes", bytes).length != LENGTH_BYTES)
+		if (assertNotNull(bytes, "bytes").length != LENGTH_BYTES)
 			throw new IllegalArgumentException("bytes.length != " + LENGTH_BYTES);
 
 		long hi = 0;
@@ -106,7 +106,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 	}
 
 	private static final String assertValidUidString(final String uidString) {
-		if (assertNotNull("uidString", uidString).length() != LENGTH_STRING)
+		if (assertNotNull(uidString, "uidString").length() != LENGTH_STRING)
 			throw new IllegalArgumentException("uidString.length != " + LENGTH_STRING + " :: '" + uidString + "'");
 
 		return uidString;
@@ -196,7 +196,7 @@ public class Uid implements Comparable<Uid>, Serializable {
 
 	@Override
 	public int compareTo(final Uid other) {
-		assertNotNull("other", other);
+		assertNotNull(other, "other");
 		// Same semantics as for normal numbers.
 		return (this.hi < other.hi ? -1 :
 				(this.hi > other.hi ? 1 :

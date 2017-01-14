@@ -26,7 +26,7 @@ public class ClassInfoMap {
 	}
 
 	public synchronized ClassInfo putClassInfo(final ClassInfo classInfo) {
-		assertNotNull("classInfo", classInfo);
+		assertNotNull(classInfo, "classInfo");
 		return classId2ClassInfo.put(classInfo.getClassId(), classInfo);
 	}
 }

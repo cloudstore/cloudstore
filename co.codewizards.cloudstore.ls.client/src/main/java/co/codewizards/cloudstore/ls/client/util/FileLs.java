@@ -21,19 +21,19 @@ public class FileLs {
 	}
 
 	public static IInputStream createInputStream(final File file) {
-		assertNotNull("file", file);
+		assertNotNull(file, "file");
 		IInputStream in = LocalServerClient.getInstance().invoke(file, "createInputStream");
 		return in;
 	}
 
 	public static IOutputStream createOutputStream(final File file) {
-		assertNotNull("file", file);
+		assertNotNull(file, "file");
 		IOutputStream out = LocalServerClient.getInstance().invoke(file, "createOutputStream");
 		return out;
 	}
 
 	public static IOutputStream createOutputStream(final File file, boolean append) {
-		assertNotNull("file", file);
+		assertNotNull(file, "file");
 		IOutputStream out = LocalServerClient.getInstance().invoke(file, "createOutputStream", append);
 		return out;
 	}

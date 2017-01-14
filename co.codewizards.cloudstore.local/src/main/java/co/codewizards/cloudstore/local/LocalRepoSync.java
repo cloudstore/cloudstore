@@ -61,7 +61,7 @@ public class LocalRepoSync {
 	private final Map<String, Set<String>> sha1AndLength2Paths = new HashMap<String, Set<String>>();
 
 	protected LocalRepoSync(final LocalRepoTransaction transaction) {
-		this.transaction = assertNotNull("transaction", transaction);
+		this.transaction = assertNotNull(transaction, "transaction");
 		localRoot = this.transaction.getLocalRepoManager().getLocalRoot();
 		repoFileDao = this.transaction.getDao(RepoFileDao.class);
 		normalFileDao = this.transaction.getDao(NormalFileDao.class);
@@ -79,7 +79,7 @@ public class LocalRepoSync {
 	}
 
 	public RepoFile sync(final File file, final ProgressMonitor monitor, final boolean recursiveChildren) {
-		if (!(assertNotNull("file", file).isAbsolute()))
+		if (!(assertNotNull(file, "file").isAbsolute()))
 			throw new IllegalArgumentException("file is not absolute: " + file);
 
 		if (localRoot.equals(file)) {
@@ -132,8 +132,8 @@ public class LocalRepoSync {
 	 * {@code file} does not exist; otherwise it is never <code>null</code>.
 	 */
 	protected RepoFile sync(final RepoFile parentRepoFile, final File file, final ProgressMonitor monitor, final boolean recursiveChildren) {
-		assertNotNull("file", file);
-		assertNotNull("monitor", monitor);
+		assertNotNull(file, "file");
+		assertNotNull(monitor, "monitor");
 		monitor.beginTask("Local sync...", 100);
 		try {
 			RepoFile repoFile = repoFileDao.getRepoFile(localRoot, file);
@@ -212,8 +212,8 @@ public class LocalRepoSync {
 	 * the file does not exist (anymore) in the file system, <code>false</code> is returned, too.
 	 */
 	public boolean isRepoFileTypeCorrect(final RepoFile repoFile, final File file) {
-		assertNotNull("repoFile", repoFile);
-		assertNotNull("file", file);
+		assertNotNull(repoFile, "repoFile");
+		assertNotNull(file, "file");
 
 		if (file.isSymbolicLink())
 			return repoFile instanceof Symlink;
@@ -359,7 +359,7 @@ public class LocalRepoSync {
 	}
 
 	public void deleteRepoFile(final RepoFile repoFile, final boolean createDeleteModifications) {
-		final RepoFile parentRepoFile = assertNotNull("repoFile", repoFile).getParent();
+		final RepoFile parentRepoFile = assertNotNull(repoFile, "repoFile").getParent();
 		if (parentRepoFile == null)
 			throw new IllegalStateException("Deleting the root is not possible!");
 
@@ -454,9 +454,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final DeleteModification deleteModification, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("deleteModification", deleteModification);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		assertNotNull(deleteModification, "deleteModification");
+		assertNotNull(toNormalFile, "toNormalFile");
+		assertNotNull(fromPaths, "fromPaths");
 
 		if (deleteModification.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -468,9 +468,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final String fromPath, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("fromPath", fromPath);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		assertNotNull(fromPath, "fromPath");
+		assertNotNull(toNormalFile, "toNormalFile");
+		assertNotNull(fromPaths, "fromPaths");
 
 		if (!fromPaths.add(fromPath)) // already done before => prevent duplicates.
 			return;
@@ -487,9 +487,9 @@ public class LocalRepoSync {
 	}
 
 	private void createCopyModifications(final NormalFile fromNormalFile, final NormalFile toNormalFile, final Set<String> fromPaths) {
-		assertNotNull("fromNormalFile", fromNormalFile);
-		assertNotNull("toNormalFile", toNormalFile);
-		assertNotNull("fromPaths", fromPaths);
+		assertNotNull(fromNormalFile, "fromNormalFile");
+		assertNotNull(toNormalFile, "toNormalFile");
+		assertNotNull(fromPaths, "fromPaths");
 
 		if (fromNormalFile.getLength() != toNormalFile.getLength())
 			throw new IllegalArgumentException("fromNormalFile.length != toNormalFile.length");
@@ -501,24 +501,24 @@ public class LocalRepoSync {
 	}
 
 	protected void createDeleteModifications(final RepoFile repoFile) {
-		assertNotNull("repoFile", repoFile);
+		assertNotNull(repoFile, "repoFile");
 
 		for (final RemoteRepository remoteRepository : getRemoteRepositories())
 			createDeleteModification(repoFile, remoteRepository);
 	}
 
 	protected DeleteModification createDeleteModification(final RepoFile repoFile, final RemoteRepository remoteRepository) {
-		assertNotNull("repoFile", repoFile);
-		assertNotNull("remoteRepository", remoteRepository);
+		assertNotNull(repoFile, "repoFile");
+		assertNotNull(remoteRepository, "remoteRepository");
 		final DeleteModification modification = createObject(DeleteModification.class);
 		populateDeleteModification(modification, repoFile, remoteRepository);
 		return modificationDao.makePersistent(modification);
 	}
 
 	protected void populateDeleteModification(final DeleteModification modification, final RepoFile repoFile, final RemoteRepository remoteRepository) {
-		assertNotNull("modification", modification);
-		assertNotNull("repoFile", repoFile);
-		assertNotNull("remoteRepository", remoteRepository);
+		assertNotNull(modification, "modification");
+		assertNotNull(repoFile, "repoFile");
+		assertNotNull(remoteRepository, "remoteRepository");
 
 		final NormalFile normalFile = (repoFile instanceof NormalFile) ? (NormalFile) repoFile : null;
 
@@ -536,7 +536,7 @@ public class LocalRepoSync {
 	}
 
 	protected void deleteRepoFileWithAllChildrenRecursively(final RepoFile repoFile) {
-		assertNotNull("repoFile", repoFile);
+		assertNotNull(repoFile, "repoFile");
 		for (final RepoFile childRepoFile : repoFileDao.getChildRepoFiles(repoFile)) {
 			deleteRepoFileWithAllChildrenRecursively(childRepoFile);
 		}

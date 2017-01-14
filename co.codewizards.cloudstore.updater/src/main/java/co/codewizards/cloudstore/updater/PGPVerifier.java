@@ -29,8 +29,8 @@ public class PGPVerifier {
 	 * any of the {@linkplain #getPublicKeyRingWithTrustedKeys() trusted keys}.
 	 */
 	public void verify(final File file, final File signatureFile) throws PGPVerifyException {
-		AssertUtil.assertNotNull("file", file);
-		AssertUtil.assertNotNull("signatureFile", signatureFile);
+		AssertUtil.assertNotNull(file, "file");
+		AssertUtil.assertNotNull(signatureFile, "signatureFile");
 
 		final PGPSignatureList sl = readSignatureFile(signatureFile);
 		final PGPPublicKeyRingCollection publicKeyRing = getPublicKeyRingWithTrustedKeys();
@@ -85,7 +85,7 @@ public class PGPVerifier {
 	}
 
 	private PGPSignatureList readSignatureFile(final File signatureFile) throws PGPVerifyException {
-		AssertUtil.assertNotNull("signatureFile", signatureFile);
+		AssertUtil.assertNotNull(signatureFile, "signatureFile");
 		if (!signatureFile.isFile() || !signatureFile.canRead())
 			throw new PGPVerifyException("The signature-file does not exist or is not readable: " + signatureFile.getAbsolutePath());
 

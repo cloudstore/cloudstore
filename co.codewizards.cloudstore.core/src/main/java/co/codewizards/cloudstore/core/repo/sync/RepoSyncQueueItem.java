@@ -13,8 +13,8 @@ class RepoSyncQueueItem {
 	// TODO later, we should allow for syncing only a certain directory or even file
 
 	public RepoSyncQueueItem(final UUID repositoryId, final File localRoot) {
-		this.repositoryId = assertNotNull("repositoryId", repositoryId);
-		this.localRoot = assertNotNull("localRoot", localRoot);
+		this.repositoryId = assertNotNull(repositoryId, "repositoryId");
+		this.localRoot = assertNotNull(localRoot, "localRoot");
 	}
 
 	@Override

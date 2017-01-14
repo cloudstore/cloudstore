@@ -79,7 +79,7 @@ public class LockFileFactory {
 	 * @see LockFile#release()
 	 */
 	public LockFile acquire(File file, final long timeoutMillis) throws TimeoutException {
-		AssertUtil.assertNotNull("file", file);
+		AssertUtil.assertNotNull(file, "file");
 		try {
 			file = file.getCanonicalFile();
 		} catch (final IOException e) {

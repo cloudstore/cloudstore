@@ -29,7 +29,7 @@ public class BeginPutFileService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void beginPutFile(@PathParam("path") String path)
 	{
-		assertNotNull("path", path);
+		assertNotNull(path, "path");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

@@ -16,8 +16,8 @@ public class ForceNonTransientContainer implements Serializable {
 	private final Map<String, Object> transientFieldName2Value;
 
 	public ForceNonTransientContainer(final Object transientFieldOwnerObject, Map<String, Object> transientFieldName2Value) {
-		this.transientFieldOwnerObject = assertNotNull("transientFieldOwnerObject", transientFieldOwnerObject);
-		this.transientFieldName2Value = new NoObjectRefMap<String, Object>(assertNotNull("transientFieldName2Value", transientFieldName2Value));
+		this.transientFieldOwnerObject = assertNotNull(transientFieldOwnerObject, "transientFieldOwnerObject");
+		this.transientFieldName2Value = new NoObjectRefMap<String, Object>(assertNotNull(transientFieldName2Value, "transientFieldName2Value"));
 	}
 
 	public Object getTransientFieldOwnerObject() {
