@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.ls.core;
 
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
+
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 
@@ -38,6 +40,30 @@ public class LsConfig {
 	 * Default value for {@link #CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT}
 	 */
 	public static final long DEFAULT_LOCAL_SERVER_PROCESS_START_TIMEOUT = 120000L;
+
+	/**
+	 * Controls the value passed as
+	 * <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html">{@code -Xmx}</a>
+	 * to the child-process, thus specifying the maximum heap size of the local-server's JVM.
+	 * <p>
+	 * Possible values are everything understood by the JVM after the "-Xmx", for example:
+	 * <ul>
+	 * <li>"1G" for 1 <a href="https://en.wikipedia.org/wiki/Gibibyte">Gibibyte</a>
+	 * <li>"2g" for 2 <a href="https://en.wikipedia.org/wiki/Gibibyte">Gibibyte</a>
+	 * <li>"512M" for 512 <a href="https://en.wikipedia.org/wiki/Mebibyte">Mebibyte</a>
+	 * <li>"256M" for 256 <a href="https://en.wikipedia.org/wiki/Mebibyte">Mebibyte</a>
+	 * </ul>
+	 * <p>
+	 * This only has an effect, if {@link #CONFIG_KEY_LOCAL_SERVER_PROCESS_ENABLED} is <code>true</code>.
+	 * @see #DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE
+	 * @see #getLocalServerProcessMaxHeapSize()
+	 */
+	public static final String CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE = "localServerProcess.maxHeapSize";
+
+	/**
+	 * Default value for {@link #CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE}
+	 */
+	public static final String DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE = "";
 
 	private LsConfig() {
 	}
@@ -93,5 +119,12 @@ public class LsConfig {
 						CONFIG_KEY_LOCAL_SERVER_PROCESS_START_TIMEOUT,
 						DEFAULT_LOCAL_SERVER_PROCESS_START_TIMEOUT);
 		return timeoutMs;
+	}
+
+	public static String getLocalServerProcessMaxHeapSize() {
+		final String maxHeapSize = ConfigImpl.getInstance().getProperty(
+						CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE,
+						DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE);
+		return emptyToNull(maxHeapSize);
 	}
 }

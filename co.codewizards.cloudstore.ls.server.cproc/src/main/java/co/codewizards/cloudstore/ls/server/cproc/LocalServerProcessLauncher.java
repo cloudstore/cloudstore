@@ -59,10 +59,13 @@ public class LocalServerProcessLauncher {
 		final List<String> command = new ArrayList<>();
 		command.add(javaExecutableFile.getPath());
 
+		populateJvmArguments(command);
 		populateConfigSystemProperties(command);
 
 		command.add("-jar");
 		command.add(thisJarFile.getPath());
+
+		logger.info("start: command={}", command);
 
 		final ProcessBuilder pb = new ProcessBuilder(command);
 
@@ -82,6 +85,13 @@ public class LocalServerProcessLauncher {
 
 		waitUntilServerOnline();
 		return true;
+	}
+
+	private void populateJvmArguments(final List<String> command) {
+		String maxHeapSize = LsConfig.getLocalServerProcessMaxHeapSize();
+		if (maxHeapSize != null) {
+			command.add("-Xmx" + maxHeapSize); // Warning: This might not be supported by the JVM! The -X... options are not standard. But what should we do instead?!
+		}
 	}
 
 	private void populateConfigSystemProperties(final List<String> command) {

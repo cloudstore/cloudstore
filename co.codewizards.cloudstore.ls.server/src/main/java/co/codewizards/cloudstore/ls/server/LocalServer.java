@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.server;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.DebugUtil.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -92,6 +93,7 @@ public class LocalServer {
 	 * @throws RuntimeException in case starting the server fails for an unexpected reason.
 	 */
 	public boolean start() {
+		logMemoryStats(logger);
 		if (! LsConfig.isLocalServerEnabled())
 			return false;
 
