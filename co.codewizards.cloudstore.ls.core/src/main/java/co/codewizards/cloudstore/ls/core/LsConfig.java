@@ -122,7 +122,7 @@ public class LsConfig {
 	}
 
 	public static String getLocalServerProcessMaxHeapSize() {
-		final String maxHeapSize = ConfigImpl.getInstance().getProperty(
+		final String maxHeapSize = ConfigImpl.getInstance().getPropertyAsNonEmptyTrimmedString(
 						CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE,
 						DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE);
 		return emptyToNull(maxHeapSize);
