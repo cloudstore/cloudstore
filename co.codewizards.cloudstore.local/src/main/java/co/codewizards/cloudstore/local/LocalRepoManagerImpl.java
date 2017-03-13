@@ -291,7 +291,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	}
 
 	private void initLockFile() {
-		final File lock = createFile(getMetaDir(), "cloudstore-repository.lock");
+		final File lock = createFile(getMetaDir(), REPOSITORY_LOCK_FILE_NAME);
 		try {
 			lockFile = LockFileFactory.getInstance().acquire(lock, 100);
 		} catch (final TimeoutException x) {
