@@ -298,7 +298,7 @@ public class CloudStoreServer implements Runnable {
 		logger.info("initKeyStore: RSA fingerprint (SHA1): {}", certificateSha1);
 	}
 
-	private Server createServer() {
+	protected Server createServer() {
 		final QueuedThreadPool threadPool = new QueuedThreadPool();
 		threadPool.setMaxThreads(500);
 
