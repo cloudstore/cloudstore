@@ -1,7 +1,12 @@
 package co.codewizards.cloudstore.ls.rest.server;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -22,6 +27,17 @@ import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultExceptionMapper.class);
+
+	/**
+	 * The media-types supported for serialising an {@link Error}.
+	 */
+	private static final Set<MediaType> RESPONSE_MEDIA_TYPES = new LinkedHashSet<>(Arrays.asList(
+			MediaType.APPLICATION_XML_TYPE,
+			MediaType.APPLICATION_JSON_TYPE
+	));
+	
+	@Context
+	private HttpHeaders headers;
 
 	public DefaultExceptionMapper(@Context final LocalServerRest localServerRest) {
 		logger.debug("<init>: Instance created. localServerRest={}", localServerRest);
@@ -63,8 +79,16 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 		}
 		return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_XML)
+				.type(getResponseMediaType())
 				.entity(error)
 				.build();
+	}
+
+	private MediaType getResponseMediaType() {
+		for (MediaType mediaType : headers.getAcceptableMediaTypes()) {
+			if (RESPONSE_MEDIA_TYPES.contains(mediaType))
+				return mediaType;
+		}
+		return MediaType.APPLICATION_XML_TYPE;
 	}
 }

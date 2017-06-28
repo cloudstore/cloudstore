@@ -259,7 +259,7 @@ public class LocalServer {
 
 		final LocalServerPropertiesManager localServerPropertiesManager = LocalServerPropertiesManager.getInstance();
 		localServerPropertiesManager.setPort(localPort);
-		localServerPropertiesManager.setPassword(AuthManager.getInstance().getCurrentPassword());
+		localServerPropertiesManager.setPassword(new String(AuthManager.getInstance().getCurrentPassword()));
 		localServerPropertiesManager.writeLocalServerProperties();
 	}
 

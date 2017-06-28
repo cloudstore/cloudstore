@@ -85,6 +85,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 			char[] password = null;
 
 			final ByteArrayInputStream in = new ByteArrayInputStream(basicAuthDecodedBA);
+			char[] ca = null;
 			CharArrayWriter caw = new CharArrayWriter(basicAuthDecodedBA.length + 1);
 			CharArrayReader car = null;
 			try {
@@ -102,7 +103,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 
 				charsRead = 0;
 
-				car = new CharArrayReader(caw.toCharArray());
+				car = new CharArrayReader(ca = caw.toCharArray());
 				int charsReadTotalCheck = 0;
 
 				while (charsRead >= 0 && charsRead < charsReadTotal) {
@@ -130,22 +131,17 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_XML).entity(new Error(e)).build());
 			} finally {
 				// For extra safety: Overwrite all sensitive memory with 0.
+				// Unfortunately, we cannot overwrite auth.password. But at least we minimize things as much as possible.
 				Arrays.fill(basicAuthDecodedBA, (byte)0);
 
-				final char[] zeroArray = new char[] {0};
-				// overwrite caw & car:
+				if (ca != null)
+					Arrays.fill(ca, (char)0);
+
 				if (caw != null) {
-					final int oldCawSize = caw.size();
+					final char[] zeroArray = new char[caw.size()];
 					caw.reset();
 					try {
-						if (car != null) {
-							car.reset();
-						}
-						for (int i = 0; i < oldCawSize; ++i)
-							caw.write(zeroArray);
-						car = new CharArrayReader(caw.toCharArray());
-						car.close();
-						caw.reset();
+						caw.write(zeroArray);
 						caw = null;
 					} catch (final IOException e) {
 						throw new RuntimeException(e);

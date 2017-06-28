@@ -1,11 +1,13 @@
 package co.codewizards.cloudstore.ls.rest.server.auth;
 
+import java.util.Arrays;
+
 import co.codewizards.cloudstore.core.util.PasswordUtil;
 
 // TODO implement changing passwords - sth. similar to TransientRepoPasswordManager
 public class AuthManager {
 
-	private final String password = new String(PasswordUtil.createRandomPassword(25));
+	private final char[] password = PasswordUtil.createRandomPassword(25);
 
 	protected AuthManager() { }
 
@@ -17,11 +19,11 @@ public class AuthManager {
 		return Holder.instance;
 	}
 
-	public String getCurrentPassword() {
+	public char[] getCurrentPassword() {
 		return password;
 	}
 
-	public boolean isPasswordValid(String password) {
-		return this.password.equals(password);
+	public boolean isPasswordValid(char[] password) {
+		return Arrays.equals(this.password, password);
 	}
 }
