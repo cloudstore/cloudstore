@@ -1,7 +1,5 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,6 +35,7 @@ public class RepairDatabase implements Runnable {
 			try {
 				statement = connection.createStatement();
 				try {
+//					testInsert();
 					executeDerbyCheckTable();
 					dropForeignKeys();
 					dropIndices();
@@ -59,6 +58,62 @@ public class RepairDatabase implements Runnable {
 				+ "FROM sys.sysschemas s, sys.systables t "
 				+ "WHERE s.schemaid = t.schemaid");
 	}
+
+//	private void testInsert() throws SQLException {
+//		connection.setAutoCommit(false);
+//		try {
+//			long filechunkpayload_id_oid;
+//			long histocryptorepofile_id_oid;
+//			int length;
+//			long offset;
+//			Timestamp changed;
+//			Timestamp created;
+//
+//			try (ResultSet rs = statement.executeQuery("select * from \"histofilechunk\" order by \"id\"")) {
+//				if (! rs.next()) {
+//					logger.warn("Table \"histofilechunk\" is empty! Cannot obtain test data!");
+//					return;
+//				}
+//
+//				filechunkpayload_id_oid = rs.getLong("filechunkpayload_id_oid");
+//				histocryptorepofile_id_oid = rs.getLong("histocryptorepofile_id_oid");
+//				length = rs.getInt("length");
+//				offset = rs.getLong("offset");
+//				changed = rs.getTimestamp("changed");
+//				created = rs.getTimestamp("created");
+//			}
+//
+//			++offset; // there is a unique key => must change the offset!
+//
+//			logger.info("testInsert: filechunkpayload_id_oid={}, histocryptorepofile_id_oid={}, length={}, offset={}, changed={}, created={}",
+//					filechunkpayload_id_oid, histocryptorepofile_id_oid, length, offset, changed, created);
+//
+//			try (PreparedStatement ps = connection.prepareStatement(
+//					"INSERT INTO \"histofilechunk\""
+//				    + " (\"filechunkpayload_id_oid\",\"histocryptorepofile_id_oid\",\"length\",\"offset\",\"changed\",\"created\")"
+//				    + " VALUES (?,?,?,?,?,?)")) {
+//
+//				int paramIdx = 0;
+//				ps.setLong(++paramIdx, filechunkpayload_id_oid);
+//				ps.setLong(++paramIdx, histocryptorepofile_id_oid);
+//				ps.setInt(++paramIdx, length);
+//				ps.setLong(++paramIdx, offset);
+//				ps.setTimestamp(++paramIdx, changed);
+//				ps.setTimestamp(++paramIdx, created);
+//
+//				try {
+//					ps.execute();
+//				} catch (Exception x) {
+//					logger.error("testInsert: " + x, x);
+//					return;
+//				}
+//			}
+//			logger.info("testInsert: Success!");
+//		} finally {
+//			connection.rollback();
+//			connection.setAutoCommit(true);
+//		}
+//	}
 
 	private void dropForeignKeys() throws SQLException { // DataNucleus will re-create them.
 		for (String tableName : getTableNames()) {

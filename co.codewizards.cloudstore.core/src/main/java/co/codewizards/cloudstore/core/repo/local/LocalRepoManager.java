@@ -23,6 +23,7 @@ public interface LocalRepoManager extends AutoCloseable {
 	String TEMP_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-tmp";
 	String TEMP_NEW_FILE_PREFIX = "." + APP_ID_SIMPLE_ID + "-new_";
 
+	String REPOSITORY_LOCK_FILE_NAME = APP_ID_SIMPLE_ID + "-repository.lock";
 	String REPOSITORY_PROPERTIES_FILE_NAME = APP_ID_SIMPLE_ID + "-repository.properties";
 	String PROP_REPOSITORY_ID = "repository.id";
 	String PROP_VERSION = "repository.version";

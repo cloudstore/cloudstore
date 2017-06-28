@@ -52,7 +52,10 @@ public class LocalServerClientIT extends AbstractIT {
 
 	@AfterClass
 	public static void afterLocalServerClientIT() {
-		client.close();
+		if (client != null) {
+			client.close();
+			client = null;
+		}
 //		localServer.stop();
 	}
 
