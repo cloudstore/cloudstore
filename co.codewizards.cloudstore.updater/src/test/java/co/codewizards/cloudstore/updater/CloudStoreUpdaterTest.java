@@ -41,34 +41,6 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 		};
 	}
 
-//	@Test
-//	public void update_server_from_0_9_5_to_0_9_6() throws Exception {
-//		remoteVersion = new Version("0.9.6");
-//		File oldTarGzFile = downloadFileToTempDir("http://cloudstore.codewizards.co/0.9.5/download/co.codewizards.cloudstore.server-0.9.5-bin.tar.gz");
-//
-//		install(oldTarGzFile);
-//
-//		assertThatInstallationIs("co.codewizards.cloudstore.server", "0.9.5");
-//
-//		new CloudStoreUpdater(new String[] { "-installationDir", installationDir.getAbsolutePath() }).execute();
-//
-//		assertThatInstallationIs("co.codewizards.cloudstore.server", "0.9.6");
-//	}
-//
-//	@Test
-//	public void update_client_from_0_9_5_to_0_9_6() throws Exception {
-//		remoteVersion = new Version("0.9.6");
-//		File oldTarGzFile = downloadFileToTempDir("http://cloudstore.codewizards.co/0.9.5/download/co.codewizards.cloudstore.client-0.9.5-bin.tar.gz");
-//
-//		install(oldTarGzFile);
-//
-//		assertThatInstallationIs("co.codewizards.cloudstore.client", "0.9.5");
-//
-//		new CloudStoreUpdater(new String[] { "-installationDir", installationDir.getAbsolutePath() }).execute();
-//
-//		assertThatInstallationIs("co.codewizards.cloudstore.client", "0.9.6");
-//	}
-
 	@Test
 	public void update_server_from_0_9_6_to_0_9_7() throws Exception {
 		remoteVersion = new Version("0.9.7");
@@ -96,7 +68,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 
 		assertThatInstallationIs("co.codewizards.cloudstore.client", "0.9.7");
 	}
-	
+
 	@Test
 	public void update_server_from_0_9_13_to_0_10_0() throws Exception {
 		remoteVersion = new Version("0.10.0");

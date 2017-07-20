@@ -139,29 +139,41 @@ public class NioFile extends IoFile implements File {
 
 	@Override
 	public long lastModified() {
-		if (! exists()) { // https://github.com/cloudstore/cloudstore/issues/68
+		if (! exists()) // https://github.com/cloudstore/cloudstore/issues/68
 			return 0;
-		}
+
 		try {
 			final BasicFileAttributes attributes = Files.readAttributes(
 					ioFile.toPath(), BasicFileAttributes.class);
 			return attributes.lastModifiedTime().toMillis();
 		} catch (final IOException e) {
+			// The file might have been deleted between the check above and the attempt to read the
+			// attributes => check again and just log + exit, if it does not exist (anymore).
+			if (! exists()) {
+				logger.warn("lastModified: Seems, the file '{}' was deleted while we accessed it: {}", getAbsolutePath(), e);
+				return 0;
+			}
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public long getLastModifiedNoFollow() {
-		if (! existsNoFollow()) { // for symmetry reasons with lastModified() -- see also https://github.com/cloudstore/cloudstore/issues/68
+		if (! existsNoFollow()) // for symmetry reasons with lastModified() -- see also https://github.com/cloudstore/cloudstore/issues/68
 			return 0;
-		}
+
 		try {
 			final BasicFileAttributes attributes = Files.readAttributes(
 					ioFile.toPath(), BasicFileAttributes.class,
 					LinkOption.NOFOLLOW_LINKS);
 			return attributes.lastModifiedTime().toMillis();
 		} catch (final IOException e) {
+			// The file might have been deleted between the check above and the attempt to read the
+			// attributes => check again and just log + exit, if it does not exist (anymore).
+			if (! existsNoFollow()) {
+				logger.warn("getLastModifiedNoFollow: Seems, the file '{}' was deleted while we accessed it: {}", getAbsolutePath(), e);
+				return 0;
+			}
 			throw new RuntimeException(e);
 		}
 	}

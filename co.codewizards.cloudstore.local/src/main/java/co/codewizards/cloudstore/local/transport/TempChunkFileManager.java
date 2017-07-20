@@ -131,18 +131,6 @@ public class TempChunkFileManager {
 		return createFile(tempChunkFile.getParentFile(), tempChunkFile.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 	}
 
-//	private String sha1(final byte[] data) {
-//		AssertUtil.assertNotNull(data, "data");
-//		try {
-//			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
-//			return HashUtil.encodeHexStr(hash);
-//		} catch (final NoSuchAlgorithmException e) {
-//			throw new RuntimeException(e);
-//		} catch (final IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
-
 	/**
 	 * Create the temporary file for the given {@code destFile} and {@code offset}.
 	 * <p>
