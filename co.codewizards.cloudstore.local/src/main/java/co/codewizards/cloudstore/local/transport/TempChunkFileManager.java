@@ -1,13 +1,12 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.*;
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.createObject;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
+import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
 
-import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -22,7 +21,6 @@ import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.AssertUtil;
-import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class TempChunkFileManager {
@@ -91,7 +89,7 @@ public class TempChunkFileManager {
 		if (tempFiles == null)
 			return Collections.emptyMap();
 
-		final String destFileName = destFile.getName();
+		final String destFileNameHash = sha1(destFile.getName());
 		final Map<Long, TempChunkFileWithDtoFile> result = new TreeMap<Long, TempChunkFileWithDtoFile>();
 		for (final File tempFile : tempFiles) {
 			String tempFileName = tempFile.getName();
@@ -111,7 +109,7 @@ public class TempChunkFileManager {
 				throw new IllegalStateException("lastUnderscoreIndex < 0 :: tempFileName='" + tempFileName + '\'');
 
 			final String tempFileDestFileName = tempFileName.substring(TEMP_CHUNK_FILE_PREFIX.length(), lastUnderscoreIndex);
-			if (!destFileName.equals(tempFileDestFileName))
+			if (!destFileNameHash.equals(tempFileDestFileName))
 				continue;
 
 			final String offsetStr = tempFileName.substring(lastUnderscoreIndex + 1);
@@ -129,21 +127,21 @@ public class TempChunkFileManager {
 		return Collections.unmodifiableMap(result);
 	}
 
-	public File getTempChunkFileDtoFile(final File file) {
-		return createFile(file.getParentFile(), file.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
+	public File getTempChunkFileDtoFile(final File tempChunkFile) {
+		return createFile(tempChunkFile.getParentFile(), tempChunkFile.getName() + TEMP_CHUNK_FILE_Dto_FILE_SUFFIX);
 	}
 
-	private String sha1(final byte[] data) {
-		AssertUtil.assertNotNull(data, "data");
-		try {
-			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
-			return HashUtil.encodeHexStr(hash);
-		} catch (final NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+//	private String sha1(final byte[] data) {
+//		AssertUtil.assertNotNull(data, "data");
+//		try {
+//			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
+//			return HashUtil.encodeHexStr(hash);
+//		} catch (final NoSuchAlgorithmException e) {
+//			throw new RuntimeException(e);
+//		} catch (final IOException e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
 
 	/**
 	 * Create the temporary file for the given {@code destFile} and {@code offset}.
@@ -172,8 +170,10 @@ public class TempChunkFileManager {
 		if (!tempDir.isDirectory())
 			throw new IllegalStateException("Creating the directory failed (it does not exist after mkdir): " + tempDir.getAbsolutePath());
 
+		final String destFileNameHash = sha1(destFile.getName());
+
 		final File tempFile = createFile(tempDir, String.format("%s%s_%s",
-				TEMP_CHUNK_FILE_PREFIX, destFile.getName(), Long.toString(offset, 36)));
+				TEMP_CHUNK_FILE_PREFIX, destFileNameHash, Long.toString(offset, 36)));
 		if (createNewFile) {
 			try {
 				tempFile.createNewFile();

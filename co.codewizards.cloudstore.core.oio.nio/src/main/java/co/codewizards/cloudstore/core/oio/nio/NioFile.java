@@ -137,10 +137,19 @@ public class NioFile extends IoFile implements File {
 		return currentTarget;
 	}
 
-// *not* overriding lastModified(), because I see no advantages of the Files.readAttributes(...) over the classic
-// java.io.File.lastModified() -- and of cource because of: https://github.com/cloudstore/cloudstore/issues/68
-//	@Override
-//	public long lastModified() { ... }
+	@Override
+	public long lastModified() {
+		if (! exists()) { // https://github.com/cloudstore/cloudstore/issues/68
+			return 0;
+		}
+		try {
+			final BasicFileAttributes attributes = Files.readAttributes(
+					ioFile.toPath(), BasicFileAttributes.class);
+			return attributes.lastModifiedTime().toMillis();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	@Override
 	public long getLastModifiedNoFollow() {
