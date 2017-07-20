@@ -393,8 +393,8 @@ public class IoFile implements File {
 	}
 
 	@Override
-	public void setLastModifiedNoFollow(final long lastModified) {
-		this.ioFile.setLastModified(lastModified);
+	public boolean setLastModifiedNoFollow(final long lastModified) {
+		return ioFile.setLastModified(lastModified);
 	}
 
 	@Override

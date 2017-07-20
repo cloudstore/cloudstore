@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.oio.nio;
 
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -437,9 +438,16 @@ public class FileTest {
 		assertThat(childFileB2.relativize(childFileA2)).isEqualTo("../../" + "childFileA1" + "/" + "childFileA2");
 		assertThat(childFileB1.relativize(childFileA1)).isEqualTo("../" + "childFileA1");
 		assertThat(childFileB1.relativize(childFileA2)).isEqualTo("../" + "childFileA1" + "/" + "childFileA2");
-
 	}
 
+	@Test
+	public void longNonLatinFileName() {
+		File f = fileFactory.createFile("/media/calypso_sdb1/mn/ss/paruedee_publication/Publication/Sukhothai/ปัญหาหมอกควันกับภูมิทัศน์ที่เปลี่ยนไปในภูมิภาคเอเชียตะวันออกและเอเชียตะวันออกเฉี/.ปัญหาหมอกควันกับภูมิทัศน์ที่เปลี่ยนไปในภูมิภาคเอเชียตะวันออกและเอเชียตะวันออกเฉี.tex.subshare.properties");
+		assertThat(f.exists()).isEqualTo(false);
+		assertThat(f.existsNoFollow()).isEqualTo(false);
+		assertThat(f.lastModified()).isEqualTo(0);
+		assertThat(f.getLastModifiedNoFollow()).isEqualTo(0);
+	}
 
 	private void compareAttributes(final File source, final File target) {
 		assertThat(source.isDirectory()).isEqualTo(target.isDirectory());

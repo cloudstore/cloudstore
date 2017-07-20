@@ -137,21 +137,16 @@ public class NioFile extends IoFile implements File {
 		return currentTarget;
 	}
 
-	@Override
-	public long lastModified() {
-		try {
-			final BasicFileAttributes attributes = Files.readAttributes(
-					ioFile.toPath(), BasicFileAttributes.class);
-			return attributes.lastModifiedTime().toMillis();
-		} catch (final NoSuchFileException x) {
-			return 0; // be compatible with old, classic java.io.File.
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+// *not* overriding lastModified(), because I see no advantages of the Files.readAttributes(...) over the classic
+// java.io.File.lastModified() -- and of cource because of: https://github.com/cloudstore/cloudstore/issues/68
+//	@Override
+//	public long lastModified() { ... }
 
 	@Override
 	public long getLastModifiedNoFollow() {
+		if (! existsNoFollow()) { // for symmetry reasons with lastModified() -- see also https://github.com/cloudstore/cloudstore/issues/68
+			return 0;
+		}
 		try {
 			final BasicFileAttributes attributes = Files.readAttributes(
 					ioFile.toPath(), BasicFileAttributes.class,
@@ -192,7 +187,7 @@ public class NioFile extends IoFile implements File {
 		final FileTime lastModifiedTime = FileTime.fromMillis(lastModified);
 		try {
 			Files.getFileAttributeView(ioFile.toPath(), BasicFileAttributeView.class).setTimes(lastModifiedTime, null, null);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			logger.error("Setting the lastModified timestamp of '"+ ioFile +"' failed with the following error: " + e, e);
 			return false;
 		}
@@ -200,7 +195,7 @@ public class NioFile extends IoFile implements File {
 	}
 
 	@Override
-	public void setLastModifiedNoFollow(final long lastModified) {
+	public boolean setLastModifiedNoFollow(final long lastModified) {
 		final Path path = ioFile.toPath().toAbsolutePath();
 		final List<Throwable> errors = new ArrayList<>();
 
@@ -209,7 +204,7 @@ public class NioFile extends IoFile implements File {
 			Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS)
 			.setTimes(lastModifiedTime, null, null);
 
-			return;
+			return true;
 		} catch (final IOException e) {
 			errors.add(e);
 		}
@@ -241,7 +236,7 @@ public class NioFile extends IoFile implements File {
 						processExitCode, stdOutString));
 			}
 
-			return;
+			return true;
 		} catch (IOException | InterruptedException e) {
 			errors.add(e);
 		}
@@ -252,6 +247,7 @@ public class NioFile extends IoFile implements File {
 				logger.error("" + error, error);
 			}
 		}
+		return false;
 	}
 
 	@Override

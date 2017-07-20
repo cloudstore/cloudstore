@@ -97,7 +97,7 @@ public interface File extends Serializable {
 	URI toURI();
 	RandomAccessFile createRandomAccessFile(String mode) throws FileNotFoundException;
 	boolean isFile();
-	void setLastModifiedNoFollow(long time);
+	boolean setLastModifiedNoFollow(long time);
 	String relativize(File target) throws IOException;
 
 	boolean setExecutable(boolean executable, boolean ownerOnly);
