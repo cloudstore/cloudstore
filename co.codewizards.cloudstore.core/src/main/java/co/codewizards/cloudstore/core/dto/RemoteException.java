@@ -24,7 +24,6 @@ public class RemoteException extends RuntimeException
 
 		if (error != null) {
 			this.errorClassName = error.getClassName();
-//			initStackTrace(); // doesn't work lazily :-( - elements are missing then - have to init eagerly. Marco :-)
 
 			if (! suppressCause) {
 				if (error.getCause() != null)
