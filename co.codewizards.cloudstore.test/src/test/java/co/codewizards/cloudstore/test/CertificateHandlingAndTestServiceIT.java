@@ -26,7 +26,6 @@ import co.codewizards.cloudstore.rest.client.request.TestRequest;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
-import co.codewizards.cloudstore.rest.client.ssl.HostnameVerifierAllowingAll;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
 import co.codewizards.cloudstore.rest.server.service.TestService;
 
@@ -39,7 +38,7 @@ import co.codewizards.cloudstore.rest.server.service.TestService;
 public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 	private static final Logger logger = LoggerFactory.getLogger(CertificateHandlingAndTestServiceIT.class);
 	private ClientBuilder clientBuilder;
-	
+
 	static File getRandomTrustStoreFile() throws IOException {
 		final File dir = createFile(ConfigDir.getInstance().getFile(), "ssl.client");
 		dir.mkdirs();
@@ -47,7 +46,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		trustStoreFile.delete(); // It must not exist (reading it fails).
 		return trustStoreFile;
 	}
-	
+
 	@Before
 	public void setUp(){
 		clientBuilder = new ClientBuilderDefaultValuesDecorator();
@@ -84,7 +83,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		final DynamicX509TrustManagerCallback callback = new DynamicX509TrustManagerCallbackTrustingPermanently(handleCertificateExceptionCounter);
 		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
-		
+
 		try {
 			cloudStoreRestClient.execute(new TestRequest(true));
 			Assert.fail("cloudStoreRESTClient.testException() should have thrown a RemoteException, but it did not!");
@@ -94,16 +93,23 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 			assertThat(x).isInstanceOf(TestException.class);
 			assertThat(x.getMessage()).isEqualTo("Test");
 
-			assertThat(x.getCause()).isNotNull();
-			assertThat(x.getCause()).isInstanceOf(RemoteException.class);
+			assertThat(x.getStackTrace()).isNotNull();
+			assertThat(x.getStackTrace().length).isGreaterThan(0);
+			assertThat(x.getStackTrace()[0]).isNotNull();
+			assertThat(x.getStackTrace()[0].getClassName()).isEqualTo("co.codewizards.cloudstore.rest.server.service.TestService");
+			assertThat(x.getStackTrace()[0].getMethodName()).isEqualTo("test");
+			assertThat(x.getStackTrace()[0].getLineNumber()).isEqualTo(37);
 
-			final RemoteException rx = (RemoteException) x.getCause();
-			assertThat(rx.getErrorClassName()).isEqualTo(TestException.class.getName());
-			assertThat(rx.getMessage()).isEqualTo("Test");
-			assertThat(rx.getStackTrace()).isNotNull();
-			assertThat(rx.getStackTrace().length).isGreaterThan(0);
-			assertThat(rx.getStackTrace()[0]).isNotNull();
-			assertThat(rx.getStackTrace()[0].getClassName()).isEqualTo("co.codewizards.cloudstore.rest.server.service.TestService");
+//			assertThat(x.getCause()).isNotNull();
+//			assertThat(x.getCause()).isInstanceOf(RemoteException.class);
+//
+//			final RemoteException rx = (RemoteException) x.getCause();
+//			assertThat(rx.getErrorClassName()).isEqualTo(TestException.class.getName());
+//			assertThat(rx.getMessage()).isEqualTo("Test");
+//			assertThat(rx.getStackTrace()).isNotNull();
+//			assertThat(rx.getStackTrace().length).isGreaterThan(0);
+//			assertThat(rx.getStackTrace()[0]).isNotNull();
+//			assertThat(rx.getStackTrace()[0].getClassName()).isEqualTo("co.codewizards.cloudstore.rest.server.service.TestService");
 		}
 	}
 
@@ -122,7 +128,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 		};
 		clientBuilder.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
 		final CloudStoreRestClient cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
-		
+
 		try {
 			cloudStoreRestClient.execute(new TestRequest(false));
 			Assert.fail("The certificate was trusted - but it should *not* be!!!");
@@ -148,7 +154,7 @@ public class CertificateHandlingAndTestServiceIT extends AbstractIT {
 
 		clientBuilder = new ClientBuilderDefaultValuesDecorator()
 				.sslContext(SSLContextBuilder.create().trustStoreFile(trustStoreFile).callback(callback).build());
-		
+
 		cloudStoreRestClient = new CloudStoreRestClient(getSecureUrl(), clientBuilder);
 		cloudStoreRestClient.execute(new TestRequest(false));
 		assertThat(handleCertificateExceptionCounter[0]).isEqualTo(2);
