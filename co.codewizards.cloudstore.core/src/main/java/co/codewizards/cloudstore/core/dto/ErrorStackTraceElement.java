@@ -51,4 +51,14 @@ implements Serializable
 	public void setMethodName(String methodName) {
 		this.methodName = methodName;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '['
+				+ className
+				+ ", " + fileName
+				+ ", " + lineNumber
+				+ ", " + methodName
+				+ ']';
+	}
 }

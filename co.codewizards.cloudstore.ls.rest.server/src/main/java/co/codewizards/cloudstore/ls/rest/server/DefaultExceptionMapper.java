@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.Error;
-import co.codewizards.cloudstore.core.dto.ErrorStackTraceElement;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
@@ -35,7 +34,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 			MediaType.APPLICATION_XML_TYPE,
 			MediaType.APPLICATION_JSON_TYPE
 	));
-	
+
 	@Context
 	private HttpHeaders headers;
 
@@ -62,21 +61,6 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 		}
 
 		final Error error = new Error(throwable);
-		Error e = error;
-
-		Throwable t = throwable;
-		while (t != null) {
-			for (final StackTraceElement stackTraceElement : t.getStackTrace()) {
-				e.getStackTraceElements().add(new ErrorStackTraceElement(stackTraceElement));
-			}
-
-			t = t.getCause();
-			if (t != null) {
-				final Error oldE = e;
-				e = new Error(t);
-				oldE.setCause(e);
-			}
-		}
 		return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(getResponseMediaType())

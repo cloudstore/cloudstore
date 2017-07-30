@@ -13,49 +13,57 @@ public class RemoteException extends RuntimeException
 
 	public RemoteException(Error error)
 	{
+		this(error, false);
+	}
+
+	protected RemoteException(Error error, boolean suppressCause)
+	{
 		super(error == null ? null : error.getMessage());
 
 		this.error = error;
 
 		if (error != null) {
 			this.errorClassName = error.getClassName();
-			initStackTrace(); // doesn't work lazily :-( - elements are missing then - have to init eagerly. Marco :-)
-			if (error.getCause() != null)
-				initCause(new RemoteException(error.getCause()));
+//			initStackTrace(); // doesn't work lazily :-( - elements are missing then - have to init eagerly. Marco :-)
+
+			if (! suppressCause) {
+				if (error.getCause() != null)
+					initCause(new RemoteException(error.getCause()));
+			}
 		}
 	}
 
-	private boolean stackTraceInitialised = false;
-
-	private synchronized void initStackTrace() {
-		if (stackTraceInitialised)
-			return;
-
-		stackTraceInitialised = true;
-
-		if (error != null) {
-			int idx = -1;
-			StackTraceElement[] origStackTrace = getStackTrace();
-			StackTraceElement[] stackTrace = new StackTraceElement[origStackTrace.length + error.getStackTraceElements().size()];
-
-			for (ErrorStackTraceElement errorStackTraceElement : error.getStackTraceElements()) {
-				stackTrace[++idx] = new StackTraceElement(
-						errorStackTraceElement.getClassName(),
-						errorStackTraceElement.getMethodName(),
-						errorStackTraceElement.getFileName(),
-						errorStackTraceElement.getLineNumber()
-						);
-			}
-
-			if (origStackTrace != null) {
-				for (StackTraceElement stackTraceElement : origStackTrace) {
-					stackTrace[++idx] = stackTraceElement;
-				}
-			}
-
-			setStackTrace(stackTrace);
-		}
-	}
+//	private boolean stackTraceInitialised = false;
+//
+//	private synchronized void initStackTrace() {
+//		if (stackTraceInitialised)
+//			return;
+//
+//		stackTraceInitialised = true;
+//
+//		if (error != null) {
+//			int idx = -1;
+//			StackTraceElement[] origStackTrace = getStackTrace();
+//			StackTraceElement[] stackTrace = new StackTraceElement[origStackTrace.length + error.getStackTraceElements().size()];
+//
+//			for (ErrorStackTraceElement errorStackTraceElement : error.getStackTraceElements()) {
+//				stackTrace[++idx] = new StackTraceElement(
+//						errorStackTraceElement.getClassName(),
+//						errorStackTraceElement.getMethodName(),
+//						errorStackTraceElement.getFileName(),
+//						errorStackTraceElement.getLineNumber()
+//						);
+//			}
+//
+//			if (origStackTrace != null) {
+//				for (StackTraceElement stackTraceElement : origStackTrace) {
+//					stackTrace[++idx] = stackTraceElement;
+//				}
+//			}
+//
+//			setStackTrace(stackTrace);
+//		}
+//	}
 
 //	@Override
 //	public StackTraceElement[] getStackTrace() {

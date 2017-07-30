@@ -30,6 +30,16 @@ implements Serializable
 		if (throwable != null) {
 			this.message = throwable.getMessage();
 			this.className = throwable.getClass().getName();
+
+			for (final StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+				this.getStackTraceElements().add(new ErrorStackTraceElement(stackTraceElement));
+			}
+
+			Throwable cause = throwable.getCause();
+			if (cause != null) {
+				final Error errorCause = new Error(cause);
+				this.setCause(errorCause);
+			}
 		}
 	}
 
@@ -62,5 +72,15 @@ implements Serializable
 	}
 	public void setCause(Error cause) {
 		this.cause = cause;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '['
+				+ className
+				+ ", " + message
+				+ ", " + stackTraceElements
+				+ ", " + cause
+				+ ']';
 	}
 }
