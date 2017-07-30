@@ -94,18 +94,10 @@
 		</div>
 
 		<table class="homepagecolumns" border="0"><tbody>
-		<tr class="a">
+			<tr class="a">
 				<th align="left" colspan="2">
 					<h1>CloudStore synchronizes your data</h1>
 				</th>
-			</tr>
-			<tr class="b">
-				<td colspan="2"><font color="red">Important: You must manually upgrade!</font> The updater in version 0.9.6 is broken.
-				That's why, we temporarily disabled the auto-update (for the auto-update, the last official release still is 0.9.6).
-				We're going to enable the auto-update on 2016-09-01, again.
-				If you do not manually upgrade your installation until then,
-				<font color="red">you're going to face an endless loop!</font>
-				The bug is fixed since 0.9.7 (released on 2016-06-15).</td>
 			</tr>
 			<tr class="b">
 				<td colspan="2">CloudStore follows the Unix principle "Do one thing and do it well." Therefore the feature list
