@@ -1,8 +1,9 @@
 package co.codewizards.cloudstore.local.dto;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
-import co.codewizards.cloudstore.local.persistence.LocalRepository;
+import co.codewizards.cloudstore.local.persistence.Repository;
 
 public class RepositoryDtoConverter {
 
@@ -13,11 +14,11 @@ public class RepositoryDtoConverter {
 		return createObject(RepositoryDtoConverter.class);
 	}
 
-	public RepositoryDto toRepositoryDto(final LocalRepository localRepository) {
+	public RepositoryDto toRepositoryDto(final Repository repository) {
 		final RepositoryDto repositoryDto = createObject(RepositoryDto.class);
-		repositoryDto.setRepositoryId(localRepository.getRepositoryId());
-		repositoryDto.setRevision(localRepository.getRevision());
-		repositoryDto.setPublicKey(localRepository.getPublicKey());
+		repositoryDto.setRepositoryId(repository.getRepositoryId());
+		repositoryDto.setRevision(repository.getRevision());
+		repositoryDto.setPublicKey(repository.getPublicKey());
 		return repositoryDto;
 	}
 }

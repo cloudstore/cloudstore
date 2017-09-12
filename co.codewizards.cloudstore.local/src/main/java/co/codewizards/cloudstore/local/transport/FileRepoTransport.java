@@ -5,7 +5,6 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 
-import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +46,7 @@ import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.progress.LoggerProgressMonitor;
 import co.codewizards.cloudstore.core.progress.NullProgressMonitor;
@@ -183,7 +183,20 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	@Override
-	public ChangeSetDto getChangeSetDto(final boolean localSync) {
+	public RepositoryDto getClientRepositoryDto() {
+		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
+			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+			final RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(clientRepositoryId);
+			assertNotNull(remoteRepository, "remoteRepository[" + clientRepositoryId + "]");
+			final RepositoryDto repositoryDto = RepositoryDtoConverter.create().toRepositoryDto(remoteRepository);
+			transaction.commit();
+			return repositoryDto;
+		}
+	}
+
+	@Override
+	public ChangeSetDto getChangeSetDto(final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		if (localSync)
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
@@ -192,7 +205,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 			final ChangeSetDto changeSetDto = ChangeSetDtoBuilder
 					.create(transaction, this)
-					.buildChangeSetDto();
+					.buildChangeSetDto(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 
 			transaction.commit();
 			return changeSetDto;

@@ -36,6 +36,7 @@ import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.NormalFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDtoTreeNode;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.SymlinkDto;
 import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 import co.codewizards.cloudstore.core.oio.File;
@@ -149,7 +150,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			}
 			else { // THIS IS FOR TESTING ONLY!
 				logger.info("sync: locally syncing on *remote* side {} ('{}')", localRepositoryId, localRoot);
-				remoteRepoTransport.getChangeSetDto(true); // trigger the local sync on the remote side (we don't need the change set)
+				remoteRepoTransport.getChangeSetDto(true, null); // trigger the local sync on the remote side (we don't need the change set)
 
 				waitForAndCheckLocalSyncFuture();
 
@@ -220,7 +221,10 @@ public class RepoToRepoSync implements AutoCloseable {
 	protected void sync(final RepoTransport fromRepoTransport, final boolean fromRepoLocalSync, final RepoTransport toRepoTransport, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync);
+			RepositoryDto clientRepositoryDto = toRepoTransport.getClientRepositoryDto();
+			assertNotNull(clientRepositoryDto, "clientRepositoryDto");
+
+			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync, clientRepositoryDto.getRevision());
 			monitor.worked(8);
 
 			waitForAndCheckLocalSyncFutureIfExists();

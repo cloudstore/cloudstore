@@ -95,7 +95,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		changeSetResponse1 = repoTransport.getChangeSetDto(false);
+		changeSetResponse1 = repoTransport.getChangeSetDto(false, null);
 
 		repoTransport.close();
 
@@ -148,7 +148,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
+		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false, null);
 		repoTransport.close();
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDtos()).isNotNull().isNotEmpty();
@@ -188,7 +188,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
+		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false, null);
 		repoTransport.close();
 
 		assertThat(changeSetResponse2).isNotNull();
@@ -233,7 +233,7 @@ public class FileRepoTransportTest extends AbstractTest {
 		final RepoTransportFactory repoTransportFactory = RepoTransportFactoryRegistry.getInstance().getRepoTransportFactory(remoteRootURL);
 		final RepoTransport repoTransport = repoTransportFactory.createRepoTransport(remoteRootURL, localRepositoryId);
 
-		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false);
+		final ChangeSetDto changeSetResponse2 = repoTransport.getChangeSetDto(false, null);
 		repoTransport.close();
 		assertThat(changeSetResponse2).isNotNull();
 		assertThat(changeSetResponse2.getRepoFileDtos()).isNotNull().isEmpty();

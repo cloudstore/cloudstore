@@ -30,7 +30,8 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 	}
 
 	@GET
-	public ChangeSetDto getChangeSetDto(final @QueryParam("localSync") boolean localSync) {
+	public ChangeSetDto getChangeSetDto(@QueryParam("localSync") final boolean localSync,
+			@QueryParam("lastSyncToRemoteRepoLocalRepositoryRevisionSynced") final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
 			final String callIdentifier = ChangeSetDtoService.class.getName() + ".getChangeSetDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
@@ -45,7 +46,7 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 								@Override
 								public ChangeSetDto call() throws Exception { // called *A*synchronously
 									try {
-										final ChangeSetDto changeSetDto = getChangeSetDto(rt, localSync);
+										final ChangeSetDto changeSetDto = getChangeSetDto(rt, localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 										return changeSetDto;
 									} finally {
 										rt.close();
@@ -60,7 +61,7 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 		}
 	}
 
-	protected ChangeSetDto getChangeSetDto(final RepoTransport repoTransport, final boolean localSync) {
-		return repoTransport.getChangeSetDto(localSync);
+	protected ChangeSetDto getChangeSetDto(final RepoTransport repoTransport, final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+		return repoTransport.getChangeSetDto(localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 	}
 }

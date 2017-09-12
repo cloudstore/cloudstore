@@ -45,6 +45,7 @@ import co.codewizards.cloudstore.rest.client.request.EndPutFile;
 import co.codewizards.cloudstore.rest.client.request.EndSyncFromRepository;
 import co.codewizards.cloudstore.rest.client.request.EndSyncToRepository;
 import co.codewizards.cloudstore.rest.client.request.GetChangeSetDto;
+import co.codewizards.cloudstore.rest.client.request.GetClientRepositoryDto;
 import co.codewizards.cloudstore.rest.client.request.GetEncryptedSignedAuthToken;
 import co.codewizards.cloudstore.rest.client.request.GetFileData;
 import co.codewizards.cloudstore.rest.client.request.GetRepoFileDto;
@@ -109,6 +110,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
+	public RepositoryDto getClientRepositoryDto() {
+		getClientRepositoryIdOrFail();
+		return getClient().execute(new GetClientRepositoryDto(getRepositoryName()));
+	}
+
+	@Override
 	public void requestRepoConnection(final byte[] publicKey) {
 		final RepositoryDto repositoryDto = new RepositoryDto();
 		repositoryDto.setRepositoryId(getClientRepositoryIdOrFail());
@@ -123,11 +130,11 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	@Override
-	public ChangeSetDto getChangeSetDto(final boolean localSync) {
+	public ChangeSetDto getChangeSetDto(final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync));
+				return getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced));
 			} catch (final DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
 					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);

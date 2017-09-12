@@ -89,7 +89,7 @@ public class ChangeSetDtoBuilder {
 		return createObject(ChangeSetDtoBuilder.class, transaction, repoTransport);
 	}
 
-	public ChangeSetDto buildChangeSetDto() {
+	public ChangeSetDto buildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		logger.trace(">>> buildChangeSetDto >>>");
 
 		localRepository = null; remoteRepository = null;
@@ -112,7 +112,7 @@ public class ChangeSetDtoBuilder {
 
 		changeSetDto.setRepositoryDto(RepositoryDtoConverter.create().toRepositoryDto(localRepository));
 
-		prepareLastSyncToRemoteRepo();
+		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 		logger.info("buildChangeSetDto: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={} localRepositoryRevisionInProgress={}",
 				localRepository.getRepositoryId(), remoteRepository.getRepositoryId(),
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
@@ -148,13 +148,16 @@ public class ChangeSetDtoBuilder {
 		return changeSetDto;
 	}
 
-	protected void prepareLastSyncToRemoteRepo() {
+	protected void prepareLastSyncToRemoteRepo(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepo(remoteRepository);
 		if (lastSyncToRemoteRepo == null) {
 			lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
 			lastSyncToRemoteRepo.setRemoteRepository(remoteRepository);
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
+		}
+		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 		}
 		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
 		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);

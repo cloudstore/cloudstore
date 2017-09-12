@@ -11,10 +11,12 @@ public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 
 	private final String repositoryName;
 	private final boolean localSync;
+	private final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced;
 
-	public GetChangeSetDto(final String repositoryName, final boolean localSync) {
+	public GetChangeSetDto(final String repositoryName, final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
 		this.localSync = localSync;
+		this.lastSyncToRemoteRepoLocalRepositoryRevisionSynced = lastSyncToRemoteRepoLocalRepositoryRevisionSynced;
 	}
 
 	@Override
@@ -23,6 +25,9 @@ public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 
 		if (localSync)
 			webTarget = webTarget.queryParam("localSync", localSync);
+
+		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null)
+			webTarget = webTarget.queryParam("lastSyncToRemoteRepoLocalRepositoryRevisionSynced", lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 
 		final ChangeSetDto changeSetDto = assignCredentials(webTarget.request(MediaType.APPLICATION_XML)).get(ChangeSetDto.class);
 		return changeSetDto;

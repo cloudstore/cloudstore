@@ -221,9 +221,14 @@ public interface RepoTransport extends AutoCloseable {
 	 * @param localSync <code>true</code> indicates that the remote repository should perform a local sync
 	 * before calculating the change set. <code>false</code> indicates that the remote repository should
 	 * abstain from a local sync. This flag is a hint and the remote repository does not need to adhere it.
+	 * @param lastSyncToRemoteRepoLocalRepositoryRevisionSynced the last revision that was synced.
+	 * May be <code>null</code>. If it is <i>not</i> <code>null</code>, the property
+	 * {@code co.codewizards.cloudstore.local.persistence.LastSyncToRemoteRepo.localRepositoryRevisionSynced}
+	 * is overwritten by this value, before querying the changes. This causes all data modified in greater
+	 * (not equal) revisions to be included.
 	 * @return the change-set from the remote repository. Never <code>null</code>.
 	 */
-	ChangeSetDto getChangeSetDto(boolean localSync);
+	ChangeSetDto getChangeSetDto(boolean localSync, Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 
 	/**
 	 * Notifies the destination repository that this change-set is about to be synced into it.
@@ -335,10 +340,10 @@ public interface RepoTransport extends AutoCloseable {
 	/**
 	 * Marks the end of a synchronisation <b>from</b> the remote repository behind this {@code RepoTransport}.
 	 * <p>
-	 * This method should be invoked after all changes indicated by {@link #getChangeSetDto(boolean)} have
+	 * This method should be invoked after all changes indicated by {@link #getChangeSetDto(boolean, long)} have
 	 * been completely written into the client repository.
 	 * <p>
-	 * After this method was invoked, {@link #getChangeSetDto(boolean)} will return the new changes only.
+	 * After this method was invoked, {@link #getChangeSetDto(boolean, long)} will return the new changes only.
 	 * New changes means all those changes that were accumulated after its last invocation - not after the
 	 * invocation of this method! This method might be called some time after {@code getChangeSetDto(...)}
 	 * and it must be guaranteed that changes done between {@code getChangeSetDto(...)} and
@@ -366,4 +371,6 @@ public interface RepoTransport extends AutoCloseable {
 	void putParentConfigPropSetDto(ConfigPropSetDto parentConfigPropSetDto);
 
 	VersionInfoDto getVersionInfoDto();
+
+	RepositoryDto getClientRepositoryDto();
 }

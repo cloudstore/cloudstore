@@ -14,21 +14,18 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.local.transport.FileRepoTransport;
-import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
-import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
-import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.transport.RestRepoTransport;
 
 public class RestRepoTransportIT extends AbstractIT {
 
-	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
-		@Override
-		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
-			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
-			result.setTrusted(true);
-			return result;
-		}
-	}
+//	public static class TestDynamicX509TrustManagerCallback implements DynamicX509TrustManagerCallback {
+//		@Override
+//		public CheckServerTrustedCertificateExceptionResult handleCheckServerTrustedCertificateException(final CheckServerTrustedCertificateExceptionContext context) {
+//			final CheckServerTrustedCertificateExceptionResult result = new CheckServerTrustedCertificateExceptionResult();
+//			result.setTrusted(true);
+//			return result;
+//		}
+//	}
 
 	@Test
 	public void getRepositoryId_Rest() throws Exception {
