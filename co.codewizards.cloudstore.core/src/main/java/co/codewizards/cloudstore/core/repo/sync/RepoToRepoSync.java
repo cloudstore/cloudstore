@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,7 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private ExecutorService localSyncExecutor;
 	private Future<Void> localSyncFuture;
+	private final Set<UUID> lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds = new HashSet<>();
 
 	/**
 	 * Create an instance.
@@ -111,6 +113,7 @@ public class RepoToRepoSync implements AutoCloseable {
 		assertNotNull(monitor, "monitor");
 		monitor.beginTask("Synchronising...", 201);
 		try {
+			lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds.clear();
 			final VersionInfoDto clientVersionInfoDto = localRepoTransport.getVersionInfoDto();
 			final VersionInfoDto serverVersionInfoDto = remoteRepoTransport.getVersionInfoDto();
 			VersionCompatibilityValidator.getInstance().validate(clientVersionInfoDto, serverVersionInfoDto);
@@ -221,10 +224,14 @@ public class RepoToRepoSync implements AutoCloseable {
 	protected void sync(final RepoTransport fromRepoTransport, final boolean fromRepoLocalSync, final RepoTransport toRepoTransport, final ProgressMonitor monitor) {
 		monitor.beginTask("Synchronising...", 100);
 		try {
-			RepositoryDto clientRepositoryDto = toRepoTransport.getClientRepositoryDto();
-			assertNotNull(clientRepositoryDto, "clientRepositoryDto");
+			Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced = null;
+			if (lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds.add(fromRepoTransport.getRepositoryId())) {
+				RepositoryDto clientRepositoryDto = toRepoTransport.getClientRepositoryDto();
+				assertNotNull(clientRepositoryDto, "clientRepositoryDto");
+				lastSyncToRemoteRepoLocalRepositoryRevisionSynced = clientRepositoryDto.getRevision() < 0 ? null : clientRepositoryDto.getRevision();
+			}
 
-			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync, clientRepositoryDto.getRevision());
+			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 			monitor.worked(8);
 
 			waitForAndCheckLocalSyncFutureIfExists();
