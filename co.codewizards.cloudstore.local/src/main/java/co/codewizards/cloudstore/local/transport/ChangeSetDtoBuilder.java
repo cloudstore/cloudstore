@@ -60,6 +60,8 @@ public class ChangeSetDtoBuilder {
 	private final RepoTransport repoTransport;
 	private final UUID clientRepositoryId;
 
+	private static final UUID NULL_UUID = new UUID(0, 0);
+
 	/**
 	 * The path-prefix of the opposite side.
 	 * <p>
@@ -135,7 +137,9 @@ public class ChangeSetDtoBuilder {
 		}
 
 		final Collection<RepoFile> repoFiles = repoFileDao.getRepoFilesChangedAfterExclLastSyncFromRepositoryId(
-				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(), clientRepositoryId);
+				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
+				resyncMode ? NULL_UUID : clientRepositoryId);
+
 		RepoFile pathPrefixRepoFile = null; // the virtual root for the client
 		if (!pathPrefix.isEmpty()) {
 			pathPrefixRepoFile = repoFileDao.getRepoFile(getLocalRepoManager().getLocalRoot(), getPathPrefixFile());
@@ -148,6 +152,8 @@ public class ChangeSetDtoBuilder {
 		return changeSetDto;
 	}
 
+	private boolean resyncMode;
+
 	protected void prepareLastSyncToRemoteRepo(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepo(remoteRepository);
@@ -157,6 +163,9 @@ public class ChangeSetDtoBuilder {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
 		}
 		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
+			resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();
+			logger.warn("prepareLastSyncToRemoteRepo: Enabling resyncMode! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={} overwrites lastSyncToRemoteRepo.localRepositoryRevisionSynced={}",
+					lastSyncToRemoteRepoLocalRepositoryRevisionSynced, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 		}
 		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
