@@ -2,10 +2,13 @@ package co.codewizards.cloudstore.ls.core;
 
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class LsConfig {
+
+	private static final Uid PROCESS_ID = new Uid();
 
 	/**
 	 * {@link Config}-key controlling whether the local-server enabled.
@@ -126,5 +129,9 @@ public class LsConfig {
 						CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE,
 						DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE);
 		return emptyToNull(maxHeapSize);
+	}
+
+	public static Uid getProcessId() {
+		return PROCESS_ID;
 	}
 }

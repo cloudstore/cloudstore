@@ -379,4 +379,19 @@ public class LocalServerClient implements Invoker, Closeable {
 			}
 		});
 	}
+
+	protected Uid getLocalProcessId() {
+		return LsConfig.getProcessId();
+	}
+
+	protected Uid getRemoteProcessId() {
+		final Uid result = invokeStatic(LsConfig.class, "getProcessId");
+		return result;
+	}
+
+	public boolean isLocalServerInSeparateProcess() {
+		final Uid localProcessId = getLocalProcessId();
+		final Uid remoteProcessId = getRemoteProcessId();
+		return ! localProcessId.equals(remoteProcessId);
+	}
 }
