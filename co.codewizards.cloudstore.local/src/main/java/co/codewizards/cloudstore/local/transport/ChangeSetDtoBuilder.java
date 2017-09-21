@@ -164,9 +164,11 @@ public class ChangeSetDtoBuilder {
 		}
 		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
 			resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();
-			logger.warn("prepareLastSyncToRemoteRepo: Enabling resyncMode! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={} overwrites lastSyncToRemoteRepo.localRepositoryRevisionSynced={}",
-					lastSyncToRemoteRepoLocalRepositoryRevisionSynced, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
-			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+			if (resyncMode) {
+				logger.warn("prepareLastSyncToRemoteRepo: Enabling resyncMode! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={} overwrites lastSyncToRemoteRepo.localRepositoryRevisionSynced={}",
+						lastSyncToRemoteRepoLocalRepositoryRevisionSynced, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
+				lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+			}
 		}
 		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());
 		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.makePersistent(lastSyncToRemoteRepo);
