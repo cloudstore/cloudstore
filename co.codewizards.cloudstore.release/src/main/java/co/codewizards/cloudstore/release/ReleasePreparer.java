@@ -19,19 +19,18 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class ReleasePreparer {
 
-	// Set 'newMavenVersion' to the new desired  version. Then run the main method. It will update
+	// Set 'newMavenVersion' to the new desired version. Then run the main method. It will update
 	// all files accordingly.
 	//
-	// IMPORTANT: In org.cumulus4j.store/pom.xml the repository for deployment needs to be manually
-	// switched between release and snapshot versions!
-	//
-	// Don't forget:
-	//   * to register the new version in "whats-new.apt" and "releases/index.md.vm",
-	//   * to create a tag in SVN after check-in!
-	//   * to update the symlinks on the web-server after the release was successful.
+	// IMPORTANT: Don't forget:
+	//   * to register the new version in "whats-new.apt" and "releases/index.md.vm" *before* building;
+	//   * to create a branch in Git for every non-snapshot-release (after building);
+	//   * to PGP-sign the non-snapshot artifacts built locally and upload them together with their signatures;
+	//   * to update the symlinks on the web-server after the release was successful;
+	//   * to update the auto-update-meta-files on the web-server.
 
-	protected String newMavenVersion = "0.10.2";
-//	protected String newMavenVersion = "0.10.3-SNAPSHOT";
+//	protected String newMavenVersion = "0.10.2";
+	protected String newMavenVersion = "0.10.3-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.
