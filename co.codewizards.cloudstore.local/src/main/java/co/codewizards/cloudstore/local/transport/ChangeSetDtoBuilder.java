@@ -79,6 +79,7 @@ public class ChangeSetDtoBuilder {
 	private RemoteRepository remoteRepository;
 	private LastSyncToRemoteRepo lastSyncToRemoteRepo;
 	private Collection<Modification> modifications;
+	private boolean resyncMode;
 
 	protected ChangeSetDtoBuilder(final LocalRepoTransaction transaction, final RepoTransport repoTransport) {
 		this.transaction = assertNotNull(transaction, "transaction");
@@ -152,7 +153,9 @@ public class ChangeSetDtoBuilder {
 		return changeSetDto;
 	}
 
-	private boolean resyncMode;
+	protected boolean isResyncMode() {
+		return resyncMode;
+	}
 
 	protected void prepareLastSyncToRemoteRepo(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
