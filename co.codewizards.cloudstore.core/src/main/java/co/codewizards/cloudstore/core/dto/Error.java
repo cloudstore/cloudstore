@@ -76,11 +76,13 @@ implements Serializable
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + '['
-				+ className
-				+ ", " + message
-				+ ", " + stackTraceElements
-				+ ", " + cause
-				+ ']';
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "className=" + className
+				+ ", message=" + message
+				+ ", stackTraceElements=" + stackTraceElements
+				+ ", cause=" + cause;
 	}
 }

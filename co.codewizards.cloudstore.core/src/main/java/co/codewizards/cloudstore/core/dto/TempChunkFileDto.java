@@ -12,4 +12,13 @@ public class TempChunkFileDto {
 	public void setFileChunkDto(FileChunkDto fileChunkDto) {
 		this.fileChunkDto = fileChunkDto;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "fileChunkDto=" + fileChunkDto;
+	}
 }

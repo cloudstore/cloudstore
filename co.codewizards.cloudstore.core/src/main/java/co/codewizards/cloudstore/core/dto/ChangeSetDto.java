@@ -48,10 +48,13 @@ public class ChangeSetDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[repositoryDto=" + repositoryDto
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "repositoryDto=" + repositoryDto
 				+ ", repoFileDtos=" + repoFileDtos
 				+ ", modificationDtos=" + modificationDtos
-				+ ", parentConfigPropSetDto=" + parentConfigPropSetDto
-				+ "]";
+				+ ", parentConfigPropSetDto=" + parentConfigPropSetDto;
 	}
 }

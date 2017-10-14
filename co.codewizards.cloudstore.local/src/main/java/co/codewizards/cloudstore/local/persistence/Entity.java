@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+
 import java.util.Date;
 
 import javax.jdo.JDOHelper;
@@ -12,8 +14,6 @@ import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 
 /**
  * Base class of all persistence-capable (a.k.a. entity) classes.
@@ -100,7 +100,11 @@ public abstract class Entity implements AutoTrackChanged
 
 	@Override
 	public String toString() {
-		return String.format("%s[%s]", getClass().getSimpleName(), JDOHelper.getObjectId(this));
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "id=" + JDOHelper.getObjectId(this);
 	}
 
 	/**

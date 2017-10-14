@@ -87,6 +87,15 @@ public class RepoFileDto implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("%s[%d, '%s']", this.getClass().getSimpleName(), id, name);
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "id=" + id
+				+ ", parentId=" + parentId
+				+ ", name=" + name
+				+ ", localRevision=" + localRevision
+				+ ", lastModified=" + lastModified
+				+ ", neededAsParent=" + neededAsParent;
 	}
 }

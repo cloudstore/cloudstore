@@ -16,9 +16,12 @@ public class DeleteModificationDto extends ModificationDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[id=" + getId()
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "id=" + getId()
 				+ ", localRevision=" + getLocalRevision()
-				+ ", path=" + path
-				+ "]";
+				+ ", path=" + path;
 	}
 }

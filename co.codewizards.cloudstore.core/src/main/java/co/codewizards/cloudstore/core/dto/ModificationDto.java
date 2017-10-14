@@ -24,8 +24,11 @@ public class ModificationDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[id=" + id
-				+ ", localRevision=" + localRevision
-				+ "]";
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "id=" + id
+				+ ", localRevision=" + localRevision;
 	}
 }

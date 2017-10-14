@@ -46,9 +46,11 @@ public class VersionInfoDto {
 
 	@Override
 	public String toString() {
-		return VersionInfoDto.class.getSimpleName()
-				+ "[localVersion=" + localVersion
-				+ ", minimumRemoteVersion=" + minimumRemoteVersion
-				+ ']';
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "localVersion=" + localVersion
+				+ ", minimumRemoteVersion=" + minimumRemoteVersion;
 	}
 }

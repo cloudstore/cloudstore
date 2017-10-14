@@ -40,4 +40,15 @@ public class FileChunkDto {
 	public void setSha1(String sha1) {
 		this.sha1 = sha1;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "offset=" + offset
+				+ ", length=" + length
+				+ ", sha1=" + sha1;
+	}
 }

@@ -84,10 +84,9 @@ public class FileInProgressMarker extends Entity {
 	}
 
 	@Override
-	public String toString() {
-		return String.format("%s[%s]{fromRepositoryId=\"%s\", toRepositoryId=\"%s\", path=\"%s\"}",
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + String.format(", fromRepositoryId=\"%s\", toRepositoryId=\"%s\", path=\"%s\"",
 				getClass().getSimpleName(), JDOHelper.getObjectId(this),
 				fromRepositoryId, toRepositoryId, path);
 	}
-
 }

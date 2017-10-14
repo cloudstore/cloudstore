@@ -65,14 +65,9 @@ public class NormalFileDto extends RepoFileDto {
 	}
 
 	@Override
-	public String toString() {
-		return this.getClass().getSimpleName() + "[id=" + getId()
-				+ ", name=" + getName()
-				+ ", parentId=" + getParentId()
-				+ ", localRevision=" + getLocalRevision()
-				+ ", lastModified=" + getLastModified()
+	protected String toString_getProperties() {
+		return super.toString_getProperties()
 				+ ", length=" + length
-				+ ", sha1=" + sha1
-				+ "]";
+				+ ", sha1=" + sha1;
 	}
 }

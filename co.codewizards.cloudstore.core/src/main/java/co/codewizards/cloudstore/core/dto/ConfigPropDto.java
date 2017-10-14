@@ -21,8 +21,10 @@ public class ConfigPropDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[key=" + key
-				+ ", value=" + value
-				+ "]";
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "key=" + key + ", value=" + value;
 	}
 }

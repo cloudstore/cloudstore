@@ -29,7 +29,7 @@ public class ReleasePreparer {
 	//   * to update the symlinks on the web-server after the release was successful;
 	//   * to update the auto-update-meta-files on the web-server.
 
-//	protected String newMavenVersion = "0.10.2";
+//	protected String newMavenVersion = "0.10.3";
 	protected String newMavenVersion = "0.10.3-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

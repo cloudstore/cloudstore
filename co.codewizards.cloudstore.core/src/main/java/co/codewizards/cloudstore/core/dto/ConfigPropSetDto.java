@@ -49,7 +49,10 @@ public class ConfigPropSetDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[configPropDtos=" + configPropDtos
-				+ "]";
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "configPropDtos=" + configPropDtos;
 	}
 }

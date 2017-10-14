@@ -25,10 +25,13 @@ public class CopyModificationDto extends ModificationDto {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + "[id=" + getId()
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "id=" + getId()
 				+ ", localRevision=" + getLocalRevision()
 				+ ", fromPath=" + fromPath
-				+ ", toPath=" + toPath
-				+ "]";
+				+ ", toPath=" + toPath;
 	}
 }

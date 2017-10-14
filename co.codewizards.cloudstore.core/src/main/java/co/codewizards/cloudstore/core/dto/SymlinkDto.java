@@ -16,4 +16,10 @@ public class SymlinkDto extends RepoFileDto {
 	public void setTarget(final String target) {
 		this.target = target;
 	}
+
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties()
+				+ ", target=" + target;
+	}
 }

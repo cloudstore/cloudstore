@@ -54,11 +54,13 @@ implements Serializable
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + '['
-				+ className
-				+ ", " + fileName
-				+ ", " + lineNumber
-				+ ", " + methodName
-				+ ']';
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "className=" + className
+				+ ", fileName=" + fileName
+				+ ", lineNumber=" + lineNumber
+				+ ", methodName=" + methodName;
 	}
 }
