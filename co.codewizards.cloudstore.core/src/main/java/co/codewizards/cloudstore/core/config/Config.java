@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -7,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
+import co.codewizards.cloudstore.core.util.ISO8601;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -196,6 +198,20 @@ public interface Config {
 	boolean getPropertyAsBoolean(final String key, final boolean defaultValue);
 
 	/**
+	 * Gets the property identified by the given key.
+	 * <p>
+	 * The date must be {@link ISO8601}-parseable. If it is not parseable, a warning is logged and the
+	 * default value is returned.
+	 * @param key the key identifying the property. Must not be <code>null</code>.
+	 * @param defaultValue the default value to fall back to, if neither this {@code Config}'s
+	 * internal {@code Properties} nor any of its parents contains a matching entry or
+	 * if this entry's value cannot be parsed as an {@link ISO8601}-encoded date+time value.
+	 * May be <code>null</code>.
+	 * @return the property's value. Never <code>null</code> unless {@code defaultValue} is <code>null</code>.
+	 */
+	Date getPropertyAsDate(String key, Date defaultValue);
+
+	/**
 	 * Gets a version number that is guaranteed to be changed whenever the underlying files change.
 	 * <p>
 	 * It is <i>not</i> guaranteed to be incremented! Depending on the underlying change, a newer
@@ -239,4 +255,5 @@ public interface Config {
 	 * @return the keys found together with capturing groups. Never <code>null</code>.
 	 */
 	Map<String, List<String>> getKey2GroupsMatching(Pattern regex);
+
 }

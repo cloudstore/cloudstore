@@ -13,6 +13,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -33,6 +34,7 @@ import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.util.ISO8601;
 
 /**
  * Configuration of CloudStore supporting inheritance of settings.
@@ -585,6 +587,20 @@ public class ConfigImpl implements Config {
 			logger.warn("getPropertyAsBoolean: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
 			return defaultValue;
 		}
+	}
+
+	@Override
+	public Date getPropertyAsDate(final String key, final Date defaultValue) {
+		final String sval = getPropertyAsNonEmptyTrimmedString(key, null);
+		if (sval == null)
+			return defaultValue;
+
+		Date date = ISO8601.parseDate(sval);
+		if (date == null) {
+			logger.warn("getPropertyAsDate: One of the properties files %s contains the key '%s' with the illegal value '%s'. Falling back to default value '%s'!", propertiesFiles, key, sval, defaultValue);
+			return defaultValue;
+		}
+		return date;
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final ConfigImpl config) {
