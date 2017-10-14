@@ -13,6 +13,12 @@ public class ISO8601Test {
 		Calendar cal = ISO8601.parse("2017-03-27T23:57:42.987Z");
 		assertThat(cal).isNotNull();
 		assertThat(cal.get(Calendar.YEAR)).isEqualTo(2017);
+
+		cal = ISO8601.parse("2017-03-27T23:57:42.987+07:00");
+		assertThat(cal).isNotNull();
+
+		cal = ISO8601.parse("2017-03-27T23:57:42.987-03:30");
+		assertThat(cal).isNotNull();
 	}
 
 }
