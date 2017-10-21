@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.lang.System.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.net.MalformedURLException;
@@ -13,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.UrlUtil;
 
 /**
  * @author Sebastian Schefczyk
@@ -148,5 +148,41 @@ public class UrlUtilTest {
 		final File file = UrlUtil.getFile(url);
 		assertTrue(file.exists());
 		assertEquals(fileFromString, file);
+	}
+
+	@Test
+	public void duplicateSlashes() throws Exception {
+		URL url = new URL("http://host.domain.tld/aaa//bb/ccc///d/");
+		URL canonicalizedURL = UrlUtil.canonicalizeURL(url);
+		assertThat(canonicalizedURL.toString()).isEqualTo("http://host.domain.tld/aaa/bb/ccc/d");
+
+		url = new URL("file:////");
+		canonicalizedURL = UrlUtil.canonicalizeURL(url);
+		assertThat(canonicalizedURL.toString()).isEqualTo("file:/");
+	}
+
+	@Test
+	public void rootHost() throws Exception {
+		URL url = new URL("http://host.domain.tld/");
+		URL canonicalizedURL = UrlUtil.canonicalizeURL(url);
+		assertThat(canonicalizedURL.toString()).isEqualTo("http://host.domain.tld");
+	}
+
+	@Test
+	public void rootFile() throws Exception {
+		File rootFile = createFile("/");
+		System.out.println("rootFile=" + rootFile);
+
+		URL rootUrl = rootFile.toURI().toURL();
+		System.out.println("rootUrl=" + rootUrl);
+
+		File rootFile2 = UrlUtil.getFile(rootUrl);
+		System.out.println("rootFile2=" + rootFile2);
+
+		URL canonicalizedRootURL = UrlUtil.canonicalizeURL(rootUrl);
+		System.out.println("canonicalizedRootURL=" + canonicalizedRootURL);
+
+		File rootFile3 = UrlUtil.getFile(canonicalizedRootURL);
+		System.out.println("rootFile3=" + rootFile3);
 	}
 }

@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -25,6 +26,14 @@ public final class UrlUtil {
 
 	private UrlUtil() { }
 
+	/**
+	 * Turns the given {@code url} into a canonical form.
+	 * <p>
+	 *
+	 * @param url the URL to be canonicalized. May be <code>null</code>.
+	 * @return the canonicalized URL. Never <code>null</code>, unless the given {@code url}
+	 * is <code>null</code>.
+	 */
 	public static URL canonicalizeURL(final URL url) {
 		if (url == null)
 			return null;
@@ -43,8 +52,19 @@ public final class UrlUtil {
 			 result = null;
 		}
 
+		int duplicateSlashIndex = path.indexOf("//");
+		while (duplicateSlashIndex >= 0) {
+			path = path.substring(0, duplicateSlashIndex) + path.substring(duplicateSlashIndex + 1);
+
+			duplicateSlashIndex = path.indexOf("//");
+			result = null;
+		}
+
 		if (result == null) {
-			final String file = query == null ? path : path + '?' + query;
+			String file = query == null ? path : path + '?' + query;
+			if (isEmpty(url.getHost()) && isEmpty(file))
+				file = "/";
+
 			try {
 				result = new URL(url.getProtocol(), url.getHost(), url.getPort(), file);
 			} catch (final MalformedURLException e) {
