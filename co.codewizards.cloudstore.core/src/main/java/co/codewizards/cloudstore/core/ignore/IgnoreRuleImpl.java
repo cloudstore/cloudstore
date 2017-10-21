@@ -95,6 +95,9 @@ public class IgnoreRuleImpl implements IgnoreRule {
 				case '.':
 					res.append("\\.");
 					break;
+				case '+':
+					res.append("\\+");
+					break;
 				case '?':
 					res.append('.');
 					break;
