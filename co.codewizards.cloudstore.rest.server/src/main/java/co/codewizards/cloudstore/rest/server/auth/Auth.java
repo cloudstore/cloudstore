@@ -3,12 +3,10 @@ package co.codewizards.cloudstore.rest.server.auth;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import com.google.common.util.concurrent.AbstractService;
-
 /**
  * Authentication information (username + password). Can be obtained in every
- * REST service by sub-classing {@link AbstractService} and using
- * {@link AbstractService#getAuth()} or {@link AbstractService#authenticate(String)}.
+ * REST service by sub-classing {@code AbstractService} and using
+ * {@code AbstractService.getAuth()} or {@code AbstractService.authenticate(String)}.
  *
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */

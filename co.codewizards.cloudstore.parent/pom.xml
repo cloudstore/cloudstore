@@ -56,6 +56,7 @@
 		<datanucleus.javadoc.version>4.0</datanucleus.javadoc.version>
 		<apache.directory.server.version>2.0.0-M20</apache.directory.server.version>
 		<jmockit.version>1.24</jmockit.version>
+		<jaxb.version>2.3.0</jaxb.version>
 	</properties>
 
 	<repositories>
@@ -413,6 +414,31 @@
 				<version>${datanucleus-rdbms.version}</version>
 			</dependency>
 			<!-- END datanucleus -->
+
+			<!-- BEGIN JAXB + activation - needed since Java9
+			see: https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j
+			-->
+			<dependency>
+				<groupId>javax.xml.bind</groupId>
+				<artifactId>jaxb-api</artifactId>
+				<version>${jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.xml.bind</groupId>
+				<artifactId>jaxb-impl</artifactId>
+				<version>${jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.xml.bind</groupId>
+				<artifactId>jaxb-core</artifactId>
+				<version>${jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.activation</groupId>
+				<artifactId>activation</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+			<!-- END JAXB + activation - needed since Java9 -->
 
 			<!-- END third party -->
 		</dependencies>
