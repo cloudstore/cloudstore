@@ -44,7 +44,7 @@ import co.codewizards.cloudstore.core.util.AssertUtil;
 			value = "SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)") // TODO this necessary == null is IMHO a DN bug!
 })
 @FetchGroups({
-	@FetchGroup(name = FetchGroupConst.CHANGE_SET_DTO, members = {@Persistent(name = "parent", recursionDepth = 3)})
+	@FetchGroup(name = FetchGroupConst.CHANGE_SET_DTO, members = {@Persistent(name = "parent")})
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);
