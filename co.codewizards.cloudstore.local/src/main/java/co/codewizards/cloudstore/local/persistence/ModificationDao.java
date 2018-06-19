@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.local.persistence;
 
 import java.util.Collection;
 
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import org.slf4j.Logger;
@@ -22,13 +23,17 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 */
 	public Collection<Modification> getModificationsAfter(final RemoteRepository remoteRepository, final long localRevision) {
 		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
-		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
+		final PersistenceManager pm = pm();
+		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
+		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
+			clearFetchGroups();
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
 			logger.debug("getModificationsAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
+			fetchPlanBackup.restore(pm);
 			startTimestamp = System.currentTimeMillis();
 			modifications = load(modifications);
 			logger.debug("getModificationsAfter: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
@@ -36,18 +41,23 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 			return modifications;
 		} finally {
 			query.closeAll();
+			fetchPlanBackup.restore(pm);
 		}
 	}
 
 	public Collection<Modification> getModificationsBeforeOrEqual(final RemoteRepository remoteRepository, final long localRevision) {
 		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
-		final Query query = pm().newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
+		final PersistenceManager pm = pm();
+		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
+		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
 		try {
+			clearFetchGroups();
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
 			logger.debug("getModificationsBeforeOrEqual: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
+			fetchPlanBackup.restore(pm);
 			startTimestamp = System.currentTimeMillis();
 			modifications = load(modifications);
 			logger.debug("getModificationsBeforeOrEqual: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
@@ -55,6 +65,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 			return modifications;
 		} finally {
 			query.closeAll();
+			fetchPlanBackup.restore(pm);
 		}
 	}
 

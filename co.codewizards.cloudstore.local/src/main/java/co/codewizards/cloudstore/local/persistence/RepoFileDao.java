@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import org.slf4j.Logger;
@@ -127,8 +128,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 		final Query query = pm().newNamedQuery(getEntityClass(), "getChildRepoFiles_parent");
 		try {
 			@SuppressWarnings("unchecked")
-			final
-			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(parent);
+			final Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(parent);
 			return load(repoFiles);
 		} finally {
 			query.closeAll();
@@ -149,13 +149,17 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 */
 	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(final long localRevision, final UUID exclLastSyncFromRepositoryId) {
 		assertNotNull(exclLastSyncFromRepositoryId, "exclLastSyncFromRepositoryId");
-		final Query query = pm().newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
+		final PersistenceManager pm = pm();
+		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
+		final Query query = pm.newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
+			clearFetchGroups();
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision, exclLastSyncFromRepositoryId.toString());
 			logger.debug("getRepoFilesChangedAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
+			fetchPlanBackup.restore(pm);
 			startTimestamp = System.currentTimeMillis();
 			repoFiles = load(repoFiles);
 			logger.debug("getRepoFilesChangedAfter: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
@@ -163,6 +167,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 			return repoFiles;
 		} finally {
 			query.closeAll();
+			fetchPlanBackup.restore(pm);
 		}
 	}
 

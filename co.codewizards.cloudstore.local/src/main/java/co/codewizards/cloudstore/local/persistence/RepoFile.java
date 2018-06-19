@@ -12,6 +12,8 @@ import java.util.UUID;
 import javax.jdo.JDOHelper;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.NullValue;
@@ -28,18 +30,21 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @PersistenceCapable
-@Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP)
-@Unique(name="RepoFile_parent_name", members={"parent", "name"})
+@Discriminator(strategy = DiscriminatorStrategy.VALUE_MAP)
+@Unique(name = "RepoFile_parent_name", members = {"parent", "name"})
 @Indices({
-	@Index(name="RepoFile_parent", members={"parent"}),
-	@Index(name="RepoFile_localRevision", members={"localRevision"})
+	@Index(name = "RepoFile_parent", members = {"parent"}),
+	@Index(name = "RepoFile_localRevision", members = {"localRevision"})
 })
 @Queries({
-	@Query(name="getChildRepoFile_parent_name", value="SELECT UNIQUE WHERE this.parent == :parent && this.name == :name"),
-	@Query(name="getChildRepoFiles_parent", value="SELECT WHERE this.parent == :parent"),
+	@Query(name = "getChildRepoFile_parent_name", value = "SELECT UNIQUE WHERE this.parent == :parent && this.name == :name"),
+	@Query(name = "getChildRepoFiles_parent", value = "SELECT WHERE this.parent == :parent"),
 	@Query(
-			name="getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId",
-			value="SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)") // TODO this necessary == null is IMHO a DN bug!
+			name = "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId",
+			value = "SELECT WHERE this.localRevision > :localRevision && (this.lastSyncFromRepositoryId == null || this.lastSyncFromRepositoryId != :lastSyncFromRepositoryId)") // TODO this necessary == null is IMHO a DN bug!
+})
+@FetchGroups({
+	@FetchGroup(name = FetchGroupConst.CHANGE_SET_DTO, members = {@Persistent(name = "parent", recursionDepth = 3)})
 })
 public abstract class RepoFile extends Entity implements AutoTrackLocalRevision {
 	private static final Logger logger = LoggerFactory.getLogger(RepoFile.class);

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
@@ -248,7 +249,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 		for (final E entity : entities) {
 			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
 			if (entityIDs == null) {
-				entityIDs = new HashSet<>();
+				entityIDs = new TreeSet<>();
 				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
 			}
 			entityIDs.add(entity.getId());
@@ -308,5 +309,10 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			daoClass2DaoInstance.put(daoClass, dao);
 		}
 		return dao;
+	}
+
+	protected void clearFetchGroups() {
+		// Workaround for missing ID, if there is really no fetch-group at all.
+		pm().getFetchPlan().setGroup(FetchGroupConst.OBJECT_ID);
 	}
 }

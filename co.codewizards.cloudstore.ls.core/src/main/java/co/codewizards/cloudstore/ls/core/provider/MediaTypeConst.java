@@ -5,13 +5,11 @@ import javax.ws.rs.core.MediaType;
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at nightlabs dot de
  */
-public class MediaTypeConst
+public interface MediaTypeConst
 {
-	public final static String APPLICATION_JAVA_NATIVE = "application/java-native"; //$NON-NLS-1$
-	public static final MediaType APPLICATION_JAVA_NATIVE_TYPE = new MediaType("application", "java-native"); //$NON-NLS-1$ //$NON-NLS-2$
+	String APPLICATION_JAVA_NATIVE = "application/java-native"; //$NON-NLS-1$
+	MediaType APPLICATION_JAVA_NATIVE_TYPE = new MediaType("application", "java-native"); //$NON-NLS-1$ //$NON-NLS-2$
 
-	public final static String APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF = "application/java-native+oref"; //$NON-NLS-1$
-	public static final MediaType APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE = new MediaType("application", "java-native+oref"); //$NON-NLS-1$ //$NON-NLS-2$
-
-	protected MediaTypeConst() { }
+	String APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF = "application/java-native+oref"; //$NON-NLS-1$
+	MediaType APPLICATION_JAVA_NATIVE_WITH_OBJECT_REF_TYPE = new MediaType("application", "java-native+oref"); //$NON-NLS-1$ //$NON-NLS-2$
 }
