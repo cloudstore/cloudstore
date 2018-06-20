@@ -22,6 +22,7 @@ import co.codewizards.cloudstore.core.auth.SignedAuthToken;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenDecrypter;
 import co.codewizards.cloudstore.core.auth.SignedAuthTokenIO;
 import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DateTime;
@@ -63,8 +64,17 @@ import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
 public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
 
-	private final long changeSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
-	private final long fileChunkSetTimeout = 60L * 60L * 1000L; // TODO make configurable!
+	public static final String CONFIG_KEY_GET_CHANGE_SET_DTO_TIMEOUT = "getChangeSetDtoTimeout";
+	public static final long CONFIG_DEFAULT_GET_CHANGE_SET_DTO_TIMEOUT = 60L * 60L * 1000L;
+
+	public static final String CONFIG_KEY_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT = "getRepoFileDtoWithFileChunkDtosTimeout";
+	public static final long CONFIG_DEFAULT_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT = 60L * 60L * 1000L;
+
+	private final long changeSetTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
+			CONFIG_KEY_GET_CHANGE_SET_DTO_TIMEOUT, CONFIG_DEFAULT_GET_CHANGE_SET_DTO_TIMEOUT);
+
+	private final long fileChunkSetTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
+			CONFIG_KEY_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT, CONFIG_DEFAULT_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT);
 
 	private UUID repositoryId; // server-repository
 	private byte[] publicKey;
