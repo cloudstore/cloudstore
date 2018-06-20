@@ -33,7 +33,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.util.AssertUtil;
-import co.codewizards.cloudstore.local.LocalRepoTransactionImpl;
+import co.codewizards.cloudstore.local.ContextWithPersistenceManager;
 import co.codewizards.cloudstore.local.dto.DeleteModificationDtoConverter;
 import co.codewizards.cloudstore.local.dto.RepoFileDtoConverter;
 import co.codewizards.cloudstore.local.dto.RepositoryDtoConverter;
@@ -122,7 +122,7 @@ public class ChangeSetDtoBuilder {
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
 
-		((LocalRepoTransactionImpl)transaction).getPersistenceManager().getFetchPlan()
+		((ContextWithPersistenceManager)transaction).getPersistenceManager().getFetchPlan()
 		.setGroups(FetchPlan.DEFAULT, FetchGroupConst.CHANGE_SET_DTO);
 
 		modifications = modificationDao.getModificationsAfter(remoteRepository, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
