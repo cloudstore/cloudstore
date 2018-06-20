@@ -34,7 +34,7 @@ public class ChangeSetDtoService extends AbstractServiceWithRepoToRepoAuth
 			@QueryParam("lastSyncToRemoteRepoLocalRepositoryRevisionSynced") final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final RepoTransport[] repoTransport = new RepoTransport[] { authenticateAndCreateLocalRepoTransport() };
 		try {
-			final String callIdentifier = ChangeSetDtoService.class.getName() + ".getChangeSetDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync;
+			final String callIdentifier = ChangeSetDtoService.class.getName() + ".getChangeSetDto|" + repositoryName + '|' + getAuth().getUserName() + '|' + localSync + '|' + lastSyncToRemoteRepoLocalRepositoryRevisionSynced;
 			return DeferrableExecutor.getInstance().call(
 					callIdentifier,
 					new CallableProvider<ChangeSetDto>() {
