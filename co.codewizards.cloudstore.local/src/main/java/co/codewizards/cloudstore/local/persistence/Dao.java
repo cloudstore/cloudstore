@@ -39,6 +39,8 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Class<E> entityClass;
 	private final Class<D> daoClass;
 	private DaoProvider daoProvider;
+	private static final int LOAD_PACKAGE_SIZE = 1000;
+	private static final int LOAD_DTOS_PACKAGE_SIZE = 1000;
 
 	/**
 	 * Instantiate the Dao.
@@ -268,7 +270,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			for (final Long entityID : entityIDs) {
 				++idx;
 				entityIDSubSet.add(entityID);
-				if (idx > 200) {
+				if (idx > LOAD_PACKAGE_SIZE) {
 					idx = -1;
 					populateLoadResult(result, query, entityIDSubSet);
 				}
@@ -318,7 +320,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			for (final Long entityID : entityIDs) {
 				++idx;
 				entityIDSubSet.add(entityID);
-				if (idx > 200) {
+				if (idx > LOAD_DTOS_PACKAGE_SIZE) {
 					idx = -1;
 					populateLoadDtosResult(result, query, entityIDSubSet);
 				}
