@@ -201,6 +201,13 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 			getLocalRepoManager().localSync(new LoggerProgressMonitor(logger));
 
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
+			ChangeSetDtoBuilder
+					.create(transaction, this)
+					.prepareBuildChangeSetDto(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+
+			transaction.commit();
+		}
+		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
 			// We use a WRITE tx, because we write the LastSyncToRemoteRepo!
 
 			final ChangeSetDto changeSetDto = ChangeSetDtoBuilder

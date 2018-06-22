@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.rest.client;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static co.codewizards.cloudstore.core.util.ExceptionUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 
 import java.net.MalformedURLException;
@@ -146,7 +147,7 @@ public class CloudStoreRestClient {
 
 	public <R> R execute(final Request<R> request) {
 		assertNotNull(request, "request");
-		RuntimeException firstException = null;
+		Throwable firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
 		while (true) {
@@ -168,17 +169,27 @@ public class CloudStoreRestClient {
 						throw new IllegalStateException("result == null, but request.resultNullable == false!");
 
 					return result;
-				} catch (final RuntimeException x) {
+				} catch (final RuntimeException e) {
+					Throwable exception;
+					try {
+						exception = handleAndRethrowException(e);
+					} catch (Throwable y) {
+						exception = y;
+					}
+					if (exception instanceof DeferredCompletionException) { // immediately rethrow => no retries!
+						logger.info("Caught DeferredCompletionException => immediately rethrowing.");
+						throw (DeferredCompletionException) exception;
+					}
+
 					if (firstException == null)
-						firstException = x;
+						firstException = exception;
 
 					markClientBroken(); // make sure we do not reuse this client
-					if (++retryCounter > retryMax || !retryExecuteAfterException(x)) {
-						logger.warn("execute: invocation failed (will NOT retry): " + x, x);
-						handleAndRethrowException(firstException); // TODO maybe we should make a MultiCauseException?!
-						throw firstException;
+					if (++retryCounter > retryMax || !retryExecuteAfterException(exception)) {
+						logger.warn("execute: invocation failed (will NOT retry): " + exception, exception);
+						throw handleAndRethrowException(firstException); // TODO maybe we should make a MultiCauseException?!
 					}
-					logger.warn("execute: invocation failed (will retry): " + x, x);
+					logger.warn("execute: invocation failed (will retry): " + exception, exception);
 
 					// Wait a bit before retrying (increasingly longer).
 					try { Thread.sleep(retryCounter * 1000L); } catch (Exception y) { doNothing(); }
@@ -190,7 +201,7 @@ public class CloudStoreRestClient {
 		}
 	}
 
-	private boolean retryExecuteAfterException(final Exception x) {
+	private boolean retryExecuteAfterException(final Throwable x) {
 		// If the user explicitly denied trust, we do not retry, because we don't want to ask the user
 		// multiple times.
 		if (ExceptionUtil.getCause(x, CallbackDeniedTrustException.class) != null)
@@ -300,7 +311,7 @@ public class CloudStoreRestClient {
 		clientRef.broken = true;
 	}
 
-	public void handleAndRethrowException(final RuntimeException x)
+	public RuntimeException handleAndRethrowException(final Throwable x)
 	{
 		Response response = null;
 		if (x instanceof WebApplicationException)
@@ -309,7 +320,7 @@ public class CloudStoreRestClient {
 			response = ((ResponseProcessingException)x).getResponse();
 
 		if (response == null)
-			throw x;
+			throw throwThrowableAsRuntimeExceptionIfNeeded(x);
 
 		Error error = null;
 		try {
@@ -332,7 +343,7 @@ public class CloudStoreRestClient {
 			throw new RemoteException(error);
 		}
 
-		throw x;
+		throw throwThrowableAsRuntimeExceptionIfNeeded(x);
 	}
 
 	public CredentialsProvider getCredentialsProvider() {

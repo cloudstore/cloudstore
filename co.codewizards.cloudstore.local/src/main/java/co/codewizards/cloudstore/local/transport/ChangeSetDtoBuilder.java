@@ -93,6 +93,21 @@ public class ChangeSetDtoBuilder {
 		return createObject(ChangeSetDtoBuilder.class, transaction, repoTransport);
 	}
 
+	public void prepareBuildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+		localRepository = null; remoteRepository = null;
+		lastSyncToRemoteRepo = null; modifications = null;
+
+		final LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
+		final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
+		final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
+		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+
+		localRepository = localRepositoryDao.getLocalRepositoryOrFail();
+		remoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
+
+		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+	}
+
 	public ChangeSetDto buildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		logger.trace(">>> buildChangeSetDto >>>");
 
@@ -105,9 +120,11 @@ public class ChangeSetDtoBuilder {
 		final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 		final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
 		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
+		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 
 		localRepository = localRepositoryDao.getLocalRepositoryOrFail();
 		remoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
+		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepoOrFail(remoteRepository);
 
 		logger.trace("localRepositoryId: {}", localRepository.getRepositoryId());
 		logger.trace("remoteRepositoryId: {}", remoteRepository.getRepositoryId());
@@ -116,7 +133,7 @@ public class ChangeSetDtoBuilder {
 
 		changeSetDto.setRepositoryDto(RepositoryDtoConverter.create().toRepositoryDto(localRepository));
 
-		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+//		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 		logger.info("buildChangeSetDto: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={} localRepositoryRevisionInProgress={}",
 				localRepository.getRepositoryId(), remoteRepository.getRepositoryId(),
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),

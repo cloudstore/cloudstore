@@ -5,6 +5,7 @@ import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import javax.jdo.PersistenceManager;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.context.ExtensibleContextSupport;
+import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -30,6 +32,8 @@ import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
 
 public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWithLocalRepoManager, ContextWithPersistenceManager {
 	private static final Logger logger = LoggerFactory.getLogger(LocalRepoTransactionImpl.class);
+
+	public static final long LOCK_TIMEOUT = 5 * 60 * 1000;
 
 	private final LocalRepoManager localRepoManager;
 	private final PersistenceManagerFactory persistenceManagerFactory;
@@ -55,7 +59,14 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	}
 
 	private void begin() {
-		lock.lock();
+		boolean locked = false;
+		try {
+			locked = lock.tryLock(LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			// ignore
+		}
+		if (! locked)
+			throw new TimeoutException(String.format("Starting %s transaction on '%s' within timeout (%s ms) failed! ", write ? "write" : "read", localRepoManager.getLocalRoot(), LOCK_TIMEOUT));
 		try {
 			if (isActive())
 				throw new IllegalStateException("Transaction is already active!");

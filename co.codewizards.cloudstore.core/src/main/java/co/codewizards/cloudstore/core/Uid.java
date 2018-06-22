@@ -88,6 +88,20 @@ public class Uid implements Comparable<Uid>, Serializable {
 		this.lo = lo;
 	}
 
+	/**
+	 * Creates a new {@code Uid} instance from the binary data in {@code bytes}.
+	 * <p>
+	 * If the given {@code bytes} is <code>null</code> or empty (array-length 0), this method returns <code>null</code>.
+	 * Otherwise, it creates an instance using the {@link #Uid(byte[])} constructor.
+	 * @param bytes the raw binary data of the Uid. May be <code>null</code>. If not <code>null</code>,
+	 * its length must be exactly 0 (treated the same a <code>null</code>) or {@value #LENGTH_BYTES}.
+	 * @return an {@code Uid} instance created from the given {@code bytes} or <code>null</code>, if the input
+	 * is <code>null</code> or empty (array-length 0).
+	 */
+	public static final Uid valueOf(final byte[] bytes) {
+		return bytes == null || bytes.length == 0 ? null : new Uid(bytes);
+	}
+
 	public Uid(final byte[] bytes) {
 		if (assertNotNull(bytes, "bytes").length != LENGTH_BYTES)
 			throw new IllegalArgumentException("bytes.length != " + LENGTH_BYTES);
@@ -115,11 +129,24 @@ public class Uid implements Comparable<Uid>, Serializable {
 	/**
 	 * Creates a new {@code Uid} instance from the encoded value in {@code uidString}.
 	 * <p>
+	 * If the given {@code uidString} is <code>null</code> or empty, this method returns <code>null</code>.
+	 * Otherwise, it creates an instance using the {@link #Uid(String)} constructor.
+	 * @param uidString the string-encoded value of the Uid. May be <code>null</code>.
+	 * @return an {@code Uid} instance created from the given {@code uidString} or <code>null</code>, if the input
+	 * is <code>null</code> or empty.
+	 */
+	public static final Uid valueOf(final String uidString) {
+		return uidString == null || uidString.isEmpty() ? null : new Uid(uidString);
+	}
+
+	/**
+	 * Creates a new {@code Uid} instance from the encoded value in {@code uidString}.
+	 * <p>
 	 * This constructor is symmetric to the {@link #toString()} method: The output of {@code toString()} can
 	 * be passed to this constructor to create a new instance with the same value as (and thus being
 	 * {@linkplain #equals(Object) equal} to) the first instance.
 	 *
-	 * @param uidString the string-encoded value of the Uid.
+	 * @param uidString the string-encoded value of the Uid. Must not be <code>null</code>.
 	 * @see #toString()
 	 */
 	public Uid(final String uidString) {

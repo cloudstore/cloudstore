@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -23,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.local.DaoProvider;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.ContextWithPersistenceManager;
 
 /**
@@ -213,7 +213,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public <P extends E> P makePersistent(final P entity)
 	{
-		AssertUtil.assertNotNull(entity, "entity");
+		assertNotNull(entity, "entity");
 		try {
 			final P result = pm().makePersistent(entity);
 			logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(result));
@@ -226,14 +226,14 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public void deletePersistent(final E entity)
 	{
-		AssertUtil.assertNotNull(entity, "entity");
+		assertNotNull(entity, "entity");
 		logger.debug("deletePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		pm().deletePersistent(entity);
 	}
 
 	public void deletePersistentAll(final Collection<? extends E> entities)
 	{
-		AssertUtil.assertNotNull(entities, "entities");
+		assertNotNull(entities, "entities");
 		if (logger.isDebugEnabled()) {
 			for (final E entity : entities) {
 				logger.debug("deletePersistentAll: entityID={}", JDOHelper.getObjectId(entity));
@@ -243,9 +243,9 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected Collection<E> load(final Collection<E> entities) {
-		AssertUtil.assertNotNull(entities, "entities");
-		final Collection<E> result = new ArrayList<>();
+		assertNotNull(entities, "entities");
 		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+		int entitiesSize = 0;
 		for (final E entity : entities) {
 			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
 			if (entityIDs == null) {
@@ -253,8 +253,10 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
 			}
 			entityIDs.add(entity.getId());
+			++entitiesSize;
 		}
 
+		final Collection<E> result = new ArrayList<>(entitiesSize);
 		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
 			final Class<? extends Entity> entityClass = me.getKey();
 			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
@@ -282,6 +284,56 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 		@SuppressWarnings("unchecked")
 		final Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
+		result.addAll(c);
+		query.closeAll();
+		entityIDSubSet.clear();
+	}
+
+	protected <T> List<T> loadDtos(final Collection<E> entities, final Class<T> dtoClass, final String queryResult) {
+		assertNotNull(entities, "entities");
+		assertNotNull(dtoClass, "dtoClass");
+		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+		int entitiesSize = 0;
+		for (final E entity : entities) {
+			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
+			if (entityIDs == null) {
+				entityIDs = new TreeSet<>();
+				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+			}
+			entityIDs.add(entity.getId());
+			++entitiesSize;
+		}
+
+		final List<T> result = new ArrayList<>(entitiesSize);
+		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
+			final Class<? extends Entity> entityClass = me.getKey();
+			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
+			query.setResultClass(dtoClass);
+			query.setResult(queryResult);
+			query.setFilter(":entityIDs.contains(this.id)");
+
+			final Set<Long> entityIDs = me.getValue();
+			int idx = -1;
+			final Set<Long> entityIDSubSet = new HashSet<>(300);
+			for (final Long entityID : entityIDs) {
+				++idx;
+				entityIDSubSet.add(entityID);
+				if (idx > 200) {
+					idx = -1;
+					populateLoadDtosResult(result, query, entityIDSubSet);
+				}
+			}
+			populateLoadDtosResult(result, query, entityIDSubSet);
+		}
+		return result;
+	}
+
+	private <T> void populateLoadDtosResult(final Collection<T> result, final Query query, final Set<Long> entityIDSubSet) {
+		if (entityIDSubSet.isEmpty())
+			return;
+
+		@SuppressWarnings("unchecked")
+		final Collection<T> c = (Collection<T>) query.execute(entityIDSubSet);
 		result.addAll(c);
 		query.closeAll();
 		entityIDSubSet.clear();
