@@ -1,5 +1,8 @@
 package co.codewizards.cloudstore.core.concurrent;
 
+import co.codewizards.cloudstore.core.exception.ApplicationException;
+
+@ApplicationException
 public class DeferredCompletionException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 

@@ -23,10 +23,10 @@ import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.concurrent.DeferredCompletionException;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
+import co.codewizards.cloudstore.core.exception.ApplicationException;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.rest.client.request.Request;
 import co.codewizards.cloudstore.rest.client.ssl.CallbackDeniedTrustException;
@@ -176,9 +176,16 @@ public class CloudStoreRestClient {
 					} catch (Throwable y) {
 						exception = y;
 					}
-					if (exception instanceof DeferredCompletionException) { // immediately rethrow => no retries!
-						logger.info("Caught DeferredCompletionException => immediately rethrowing.");
-						throw (DeferredCompletionException) exception;
+
+					final Throwable applicationException = getApplicationException(exception);
+					if (applicationException != null) { // immediately rethrow => no retries!
+						if (applicationException == exception)
+							logger.info("Caught {} => immediately rethrowing.", exception.getClass().getName());
+						else
+							logger.info("Caught {} wrapped in {} => immediately rethrowing.", applicationException.getClass().getName(), exception.getClass().getName());
+
+						logger.debug("execute: " + exception, exception);
+						throw throwThrowableAsRuntimeExceptionIfNeeded(exception);
 					}
 
 					if (firstException == null)
@@ -199,6 +206,20 @@ public class CloudStoreRestClient {
 				request.setCloudStoreRestClient(null);
 			}
 		}
+	}
+
+	private Throwable getApplicationException(final Throwable exception) {
+		assertNotNull(exception, "exception");
+
+		Throwable x = exception;
+		while (x != null) {
+			final ApplicationException appEx = x.getClass().getAnnotation(ApplicationException.class);
+			if (appEx != null)
+				return x;
+
+			x = x.getCause();
+		}
+		return null;
 	}
 
 	private boolean retryExecuteAfterException(final Throwable x) {
@@ -311,7 +332,7 @@ public class CloudStoreRestClient {
 		clientRef.broken = true;
 	}
 
-	public RuntimeException handleAndRethrowException(final Throwable x)
+	protected RuntimeException handleAndRethrowException(final Throwable x)
 	{
 		Response response = null;
 		if (x instanceof WebApplicationException)
@@ -328,14 +349,15 @@ public class CloudStoreRestClient {
 			if (response.hasEntity())
 				error = response.readEntity(Error.class);
 
-			if (error != null && DeferredCompletionException.class.getName().equals(error.getClassName()))
-				logger.debug("handleException: " + x, x);
-			else
-				logger.error("handleException: " + x, x);
+// Commented this out due to log-pollution. We log the error a bit later, anyway.
+//			if (error != null && DeferredCompletionException.class.getName().equals(error.getClassName()))
+			logger.trace("handleAndRethrowException: " + x, x);
+//			else
+//				logger.error("handleAndRethrowException: " + x, x);
 
 		} catch (final Exception y) {
-			logger.error("handleException: " + x, x);
-			logger.error("handleException: " + y, y);
+			logger.error("handleAndRethrowException: " + x, x);
+			logger.error("handleAndRethrowException: " + y, y);
 		}
 
 		if (error != null) {
