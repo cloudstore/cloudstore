@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -17,6 +18,8 @@ public class LastSyncToRemoteRepo extends Entity {
 	private RemoteRepository remoteRepository;
 	private long localRepositoryRevisionSynced = -1;
 	private long localRepositoryRevisionInProgress = -1;
+
+	@Column(defaultValue = "N")
 	private boolean resyncMode;
 
 	public RemoteRepository getRemoteRepository() {
