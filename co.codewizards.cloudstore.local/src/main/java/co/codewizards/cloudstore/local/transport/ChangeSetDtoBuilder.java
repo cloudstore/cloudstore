@@ -183,7 +183,7 @@ public class ChangeSetDtoBuilder {
 		if (lastSyncToRemoteRepo == null) {
 			lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
 			lastSyncToRemoteRepo.setRemoteRepository(remoteRepository);
-			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(Long.MIN_VALUE);
 		}
 		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
 			resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();

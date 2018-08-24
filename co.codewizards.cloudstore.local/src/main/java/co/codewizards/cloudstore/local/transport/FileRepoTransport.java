@@ -1277,7 +1277,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				throw new IllegalStateException(String.format("lastSyncToRemoteRepo.localRepositoryRevisionInProgress < 0 :: There is no sync in progress for the RemoteRepository with entityID=%s", clientRepositoryId));
 
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepo.getLocalRepositoryRevisionInProgress());
-			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(-1);
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(Long.MIN_VALUE);
 
 			pm.flush(); // prevent problems caused by batching, deletion and foreign keys
 			final Collection<Modification> modifications = modificationDao.getModificationsBeforeOrEqual(

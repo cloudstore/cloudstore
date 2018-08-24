@@ -228,7 +228,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			if (lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds.add(fromRepoTransport.getRepositoryId())) {
 				RepositoryDto clientRepositoryDto = toRepoTransport.getClientRepositoryDto();
 				assertNotNull(clientRepositoryDto, "clientRepositoryDto");
-				lastSyncToRemoteRepoLocalRepositoryRevisionSynced = clientRepositoryDto.getRevision() < 0 ? null : clientRepositoryDto.getRevision();
+				lastSyncToRemoteRepoLocalRepositoryRevisionSynced = clientRepositoryDto.getRevision() == Long.MIN_VALUE ? null : clientRepositoryDto.getRevision();
 			}
 
 			final ChangeSetDto changeSetDto = fromRepoTransport.getChangeSetDto(fromRepoLocalSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced);

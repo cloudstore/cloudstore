@@ -13,7 +13,7 @@ import co.codewizards.cloudstore.core.oio.File;
 @SuppressWarnings("serial")
 @XmlRootElement
 public class RepoFileDto implements Serializable {
-	private long id = -1;
+	private long id = Long.MIN_VALUE;
 
 	private Long parentId;
 

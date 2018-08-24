@@ -23,7 +23,7 @@ public class RepositoryDto {
 
 	private byte[] publicKey;
 
-	private long revision = -1;
+	private long revision = Long.MIN_VALUE;
 
 	public UUID getRepositoryId() {
 		return repositoryId;

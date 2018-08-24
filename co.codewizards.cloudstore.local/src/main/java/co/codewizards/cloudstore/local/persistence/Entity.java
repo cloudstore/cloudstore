@@ -25,7 +25,7 @@ public abstract class Entity implements AutoTrackChanged
 {
 	@PrimaryKey
 	@Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
-	private long id = -1;
+	private long id = Long.MIN_VALUE;
 
 	// We always initialise this, though the value might be overwritten when DataNucleus loads
 	// the object's data from the DB. There's no need to defer the Date instantiation.

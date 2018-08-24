@@ -15,8 +15,8 @@ public class LastSyncToRemoteRepo extends Entity {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RemoteRepository remoteRepository;
-	private long localRepositoryRevisionSynced = -1;
-	private long localRepositoryRevisionInProgress = -1;
+	private long localRepositoryRevisionSynced = Long.MIN_VALUE;
+	private long localRepositoryRevisionInProgress = Long.MIN_VALUE;
 
 	public RemoteRepository getRemoteRepository() {
 		return remoteRepository;
