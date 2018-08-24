@@ -173,10 +173,6 @@ public class ChangeSetDtoBuilder {
 		return changeSetDto;
 	}
 
-	protected boolean isResyncMode() {
-		return resyncMode;
-	}
-
 	protected void prepareLastSyncToRemoteRepo(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		final LastSyncToRemoteRepoDao lastSyncToRemoteRepoDao = transaction.getDao(LastSyncToRemoteRepoDao.class);
 		lastSyncToRemoteRepo = lastSyncToRemoteRepoDao.getLastSyncToRemoteRepo(remoteRepository);
@@ -186,7 +182,7 @@ public class ChangeSetDtoBuilder {
 			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
 		}
 		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
-			resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();
+			boolean resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();
 			if (resyncMode) {
 				lastSyncToRemoteRepo.setResyncMode(true);
 				logger.warn("prepareLastSyncToRemoteRepo: Enabling resyncMode! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={} overwrites lastSyncToRemoteRepo.localRepositoryRevisionSynced={}",
@@ -194,7 +190,6 @@ public class ChangeSetDtoBuilder {
 				lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 			} else {
 				if (lastSyncToRemoteRepo.isResyncMode()) {
-					resyncMode = true;
 					logger.warn("prepareLastSyncToRemoteRepo: resyncMode still active! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={}",
 							lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 				}
