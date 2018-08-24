@@ -183,14 +183,21 @@ public class ChangeSetDtoBuilder {
 		if (lastSyncToRemoteRepo == null) {
 			lastSyncToRemoteRepo = new LastSyncToRemoteRepo();
 			lastSyncToRemoteRepo.setRemoteRepository(remoteRepository);
-			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(Long.MIN_VALUE);
+			lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(-1);
 		}
 		if (lastSyncToRemoteRepoLocalRepositoryRevisionSynced != null) {
 			resyncMode = lastSyncToRemoteRepoLocalRepositoryRevisionSynced.longValue() != lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced();
 			if (resyncMode) {
+				lastSyncToRemoteRepo.setResyncMode(true);
 				logger.warn("prepareLastSyncToRemoteRepo: Enabling resyncMode! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={} overwrites lastSyncToRemoteRepo.localRepositoryRevisionSynced={}",
 						lastSyncToRemoteRepoLocalRepositoryRevisionSynced, lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced());
 				lastSyncToRemoteRepo.setLocalRepositoryRevisionSynced(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+			} else {
+				if (lastSyncToRemoteRepo.isResyncMode()) {
+					resyncMode = true;
+					logger.warn("prepareLastSyncToRemoteRepo: resyncMode still active! lastSyncToRemoteRepoLocalRepositoryRevisionSynced={}",
+							lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+				}
 			}
 		}
 		lastSyncToRemoteRepo.setLocalRepositoryRevisionInProgress(localRepository.getRevision());

@@ -15,8 +15,9 @@ public class LastSyncToRemoteRepo extends Entity {
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
 	private RemoteRepository remoteRepository;
-	private long localRepositoryRevisionSynced = Long.MIN_VALUE;
-	private long localRepositoryRevisionInProgress = Long.MIN_VALUE;
+	private long localRepositoryRevisionSynced = -1;
+	private long localRepositoryRevisionInProgress = -1;
+	private boolean resyncMode;
 
 	public RemoteRepository getRemoteRepository() {
 		return remoteRepository;
@@ -49,5 +50,12 @@ public class LastSyncToRemoteRepo extends Entity {
 	public void setLocalRepositoryRevisionInProgress(long localRepositoryRevisionInProgress) {
 		if (! equal(this.localRepositoryRevisionInProgress, localRepositoryRevisionInProgress))
 			this.localRepositoryRevisionInProgress = localRepositoryRevisionInProgress;
+	}
+
+	public boolean isResyncMode() {
+		return resyncMode;
+	}
+	public void setResyncMode(boolean resyncMode) {
+		this.resyncMode = resyncMode;
 	}
 }
