@@ -1144,7 +1144,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 						raf.close();
 					}
 				} catch (final IOException e) {
-					throw new RuntimeException(e);
+					throw new RuntimeException(String.format("Setting file '%s' to length %d failed: %s",
+							destFile.getAbsolutePath(), length, e), e);
 				}
 
 				if (destFile != file) {
