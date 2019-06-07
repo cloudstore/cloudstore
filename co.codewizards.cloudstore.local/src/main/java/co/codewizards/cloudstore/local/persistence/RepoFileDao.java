@@ -149,6 +149,7 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 	 */
 	public Collection<RepoFile> getRepoFilesChangedAfterExclLastSyncFromRepositoryId(final long localRevision, final UUID exclLastSyncFromRepositoryId) {
 		assertNotNull(exclLastSyncFromRepositoryId, "exclLastSyncFromRepositoryId");
+		logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: localRevision={} exclLastSyncFromRepositoryId={}", localRevision, exclLastSyncFromRepositoryId);
 		final PersistenceManager pm = pm();
 		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
 		final Query query = pm.newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
@@ -157,12 +158,12 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 			long startTimestamp = System.currentTimeMillis();
 			@SuppressWarnings("unchecked")
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision, exclLastSyncFromRepositoryId.toString());
-			logger.debug("getRepoFilesChangedAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
 
 			fetchPlanBackup.restore(pm);
 			startTimestamp = System.currentTimeMillis();
 			repoFiles = load(repoFiles);
-			logger.debug("getRepoFilesChangedAfter: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
+			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
 
 			return repoFiles;
 		} finally {

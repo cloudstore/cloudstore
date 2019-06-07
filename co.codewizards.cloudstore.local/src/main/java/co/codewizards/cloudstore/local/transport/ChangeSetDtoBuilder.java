@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
+import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
@@ -80,7 +82,6 @@ public class ChangeSetDtoBuilder {
 	private RemoteRepository remoteRepository;
 	private LastSyncToRemoteRepo lastSyncToRemoteRepo;
 	private Collection<Modification> modifications;
-	private boolean resyncMode;
 
 	protected ChangeSetDtoBuilder(final LocalRepoTransaction transaction, final RepoTransport repoTransport) {
 		this.transaction = assertNotNull(transaction, "transaction");
@@ -93,22 +94,28 @@ public class ChangeSetDtoBuilder {
 		return createObject(ChangeSetDtoBuilder.class, transaction, repoTransport);
 	}
 
-	public void prepareBuildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+	public RepositoryDto prepareBuildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
 		localRepository = null; remoteRepository = null;
 		lastSyncToRemoteRepo = null; modifications = null;
 
 		final LocalRepositoryDao localRepositoryDao = transaction.getDao(LocalRepositoryDao.class);
 		final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
-		final ModificationDao modificationDao = transaction.getDao(ModificationDao.class);
-		final RepoFileDao repoFileDao = transaction.getDao(RepoFileDao.class);
 
 		localRepository = localRepositoryDao.getLocalRepositoryOrFail();
 		remoteRepository = remoteRepositoryDao.getRemoteRepositoryOrFail(clientRepositoryId);
 
+		// We must already read + return the RepositoryDto in this method, because the revision will already
+		// be incremented when buildChangeSetDto(...) is called!
+		// And we must do this, *BEFORE* changing anything, i.e. before prepareLastSyncToRemoteRepo(...)!
+		RepositoryDto repositoryDto = RepositoryDtoConverter.create().toRepositoryDto(localRepository);
+
 		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+
+		return repositoryDto;
 	}
 
-	public ChangeSetDto buildChangeSetDto(Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+	public ChangeSetDto buildChangeSetDto(RepositoryDto repositoryDto) {
+		requireNonNull(repositoryDto, "repositoryDto");
 		logger.trace(">>> buildChangeSetDto >>>");
 
 		localRepository = null; remoteRepository = null;
@@ -131,7 +138,7 @@ public class ChangeSetDtoBuilder {
 //		logger.trace("remoteRepository.localPathPrefix: {}", remoteRepository.getLocalPathPrefix()); // same as pathPrefix
 		logger.trace("pathPrefix: {}", pathPrefix);
 
-		changeSetDto.setRepositoryDto(RepositoryDtoConverter.create().toRepositoryDto(localRepository));
+		changeSetDto.setRepositoryDto(repositoryDto);
 
 //		prepareLastSyncToRemoteRepo(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
 		logger.info("buildChangeSetDto: localRepositoryId={} remoteRepositoryId={} localRepositoryRevisionSynced={} localRepositoryRevisionInProgress={}",
@@ -159,7 +166,7 @@ public class ChangeSetDtoBuilder {
 
 		final Collection<RepoFile> repoFiles = repoFileDao.getRepoFilesChangedAfterExclLastSyncFromRepositoryId(
 				lastSyncToRemoteRepo.getLocalRepositoryRevisionSynced(),
-				resyncMode ? NULL_UUID : clientRepositoryId);
+				lastSyncToRemoteRepo.isResyncMode() ? NULL_UUID : clientRepositoryId);
 
 		RepoFile pathPrefixRepoFile = null; // the virtual root for the client
 		if (!pathPrefix.isEmpty()) {
