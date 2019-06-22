@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,7 +141,37 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 
 	@Override
 	public Iterator<RepoFileDtoTreeNode> iterator() {
-		return getFlattenedTreeList().iterator();
+		return new MyIterator(getFlattenedTreeList().iterator());
+	}
+
+	private class MyIterator implements Iterator<RepoFileDtoTreeNode> {
+		private final Iterator<RepoFileDtoTreeNode> delegate;
+		private RepoFileDtoTreeNode current;
+
+		public MyIterator(final Iterator<RepoFileDtoTreeNode> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return delegate.hasNext();
+		}
+
+		@Override
+		public RepoFileDtoTreeNode next() {
+			return current = delegate.next();
+		}
+
+		@Override
+		public void remove() {
+			if (current != null) {
+				RepoFileDtoTreeNode p = current.getParent();
+				if (p != null && p.children != null) {
+					p.children.remove(current);
+				}
+			}
+			delegate.remove();
+		}
 	}
 
 	public int size() {
@@ -149,7 +180,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 
 	private List<RepoFileDtoTreeNode> getFlattenedTreeList() {
 		if (flattenedTreeList == null) {
-			final List<RepoFileDtoTreeNode> list = new ArrayList<RepoFileDtoTreeNode>();
+			final List<RepoFileDtoTreeNode> list = new LinkedList<RepoFileDtoTreeNode>();
 			flattenTree(list, this);
 			flattenedTreeList = list;
 		}
