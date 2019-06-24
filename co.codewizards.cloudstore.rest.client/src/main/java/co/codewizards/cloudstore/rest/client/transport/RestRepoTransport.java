@@ -1,10 +1,17 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,8 +36,11 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.dto.RepoFileDto;
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 import co.codewizards.cloudstore.core.dto.VersionInfoDto;
+import co.codewizards.cloudstore.core.dto.jaxb.ChangeSetDtoIo;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.oio.FileFilter;
+import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
@@ -61,7 +71,7 @@ import co.codewizards.cloudstore.rest.client.request.RequestRepoConnection;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
 import co.codewizards.cloudstore.rest.client.ssl.SSLContextBuilder;
 
-public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider {
+public class RestRepoTransport extends AbstractRepoTransport implements CredentialsProvider, ContextWithLocalRepoManager {
 	private static final Logger logger = LoggerFactory.getLogger(RestRepoTransport.class);
 
 	public static final String CONFIG_KEY_GET_CHANGE_SET_DTO_TIMEOUT = "getChangeSetDtoTimeout";
@@ -76,11 +86,18 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	private final long fileChunkSetTimeout = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
 			CONFIG_KEY_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT, CONFIG_DEFAULT_GET_REPO_FILE_DTO_WITH_FILE_CHUNK_DTOS_TIMEOUT);
 
+//	public static final String CHANGE_SET_DTO_CACHE_FILE_NAME_TEMPLATE = "ChangeSetDto.${serverRepositoryId}.${lastRevisionSynced}.xml.gz";
+	public static final String CHANGE_SET_DTO_CACHE_FILE_NAME_PREFIX = "ChangeSetDto.";
+	public static final String CHANGE_SET_DTO_CACHE_FILE_NAME_SUFFIX = ".xml.gz";
+	public static final String TMP_FILE_NAME_SUFFIX = ".tmp";
+
 	private UUID repositoryId; // server-repository
 	private byte[] publicKey;
 	private String repositoryName; // server-repository
 	private CloudStoreRestClient client;
 	private final Map<UUID, AuthToken> clientRepositoryId2AuthToken = new HashMap<UUID, AuthToken>(1); // should never be more ;-)
+	private LocalRepoManager localRepoManager;
+	private File localRepoTmpDir;
 
 	protected DynamicX509TrustManagerCallback getDynamicX509TrustManagerCallback() {
 		final RestRepoTransportFactory repoTransportFactory = (RestRepoTransportFactory) getRepoTransportFactory();
@@ -141,15 +158,47 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public ChangeSetDto getChangeSetDto(final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+		File changeSetDtoCacheFile = null;
+		ChangeSetDto result = null;
+
+		try {
+			changeSetDtoCacheFile = getChangeSetDtoCacheFile(lastSyncToRemoteRepoLocalRepositoryRevisionSynced);
+			if (changeSetDtoCacheFile.isFile() && changeSetDtoCacheFile.length() > 0) {
+				ChangeSetDtoIo changeSetDtoIo = createObject(ChangeSetDtoIo.class);
+				result = changeSetDtoIo.deserializeWithGz(changeSetDtoCacheFile);
+				logger.info("getChangeSetDto: Read ChangeSetDto-cache-file: {}", changeSetDtoCacheFile.getAbsolutePath());
+				return result;
+			} else {
+				logger.info("getChangeSetDto: ChangeSetDto-cache-file NOT found: {}", changeSetDtoCacheFile.getAbsolutePath());
+			}
+		} catch (Exception x) {
+			result = null;
+			logger.error("getChangeSetDto: Reading ChangeSetDto-cache-file failed: " + x, x);
+		}
+
 		final long beginTimestamp = System.currentTimeMillis();
 		while (true) {
 			try {
-				return getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced));
+				result = getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced));
 			} catch (final DeferredCompletionException x) {
 				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
 					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);
 
-				logger.info("getChangeSet: Got DeferredCompletionException; will retry.");
+				logger.info("getChangeSetDto: Got DeferredCompletionException; will retry.");
+			}
+
+			if (result != null) {
+				if (changeSetDtoCacheFile != null) {
+					File tmpFile = changeSetDtoCacheFile.getParentFile().createFile(changeSetDtoCacheFile.getName() + TMP_FILE_NAME_SUFFIX);
+					ChangeSetDtoIo changeSetDtoIo = createObject(ChangeSetDtoIo.class);
+					changeSetDtoIo.serializeWithGz(result, tmpFile);
+					if (! tmpFile.renameTo(changeSetDtoCacheFile)) {
+						logger.error("getChangeSetDto: Could not rename temporary file to active ChangeSetDto-cache-file: {}", changeSetDtoCacheFile.getAbsolutePath());
+					} else {
+						logger.info("getChangeSetDto: Wrote ChangeSetDto-cache-file: {}", changeSetDtoCacheFile.getAbsolutePath());
+					}
+				}
+				return result;
 			}
 		}
 	}
@@ -233,6 +282,14 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	@Override
 	public void endSyncFromRepository() {
+		for (final File file : getChangeSetDtoCacheFiles(true)) {
+			file.delete();
+		}
+		File tmpDir = this.localRepoTmpDir;
+		if (tmpDir != null) {
+			tmpDir.delete(); // deletes only, if empty.
+			this.localRepoTmpDir = null; // null this in order to ensure that it is re-created by getLocalRepoTmpDir().
+		}
 		getClient().execute(new EndSyncFromRepository(getRepositoryId().toString()));
 	}
 
@@ -390,5 +447,79 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	public VersionInfoDto getVersionInfoDto() {
 		final VersionInfoDto versionInfoDto = getClient().execute(new GetVersionInfoDto());
 		return versionInfoDto;
+	}
+
+	protected File getChangeSetDtoCacheFile(final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
+		String fileName = CHANGE_SET_DTO_CACHE_FILE_NAME_PREFIX
+				+ getRepositoryId() + "."
+				+ lastSyncToRemoteRepoLocalRepositoryRevisionSynced
+				+ CHANGE_SET_DTO_CACHE_FILE_NAME_SUFFIX;
+		return getLocalRepoTmpDir().createFile(fileName);
+	}
+
+	protected List<File> getChangeSetDtoCacheFiles(final boolean includeTmpFiles) {
+		File[] fileArray = getLocalRepoTmpDir().listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File file) {
+				if (! file.getName().startsWith(CHANGE_SET_DTO_CACHE_FILE_NAME_PREFIX))
+					return false;
+
+				if (file.getName().endsWith(CHANGE_SET_DTO_CACHE_FILE_NAME_SUFFIX))
+					return true;
+
+				if (includeTmpFiles && file.getName().endsWith(CHANGE_SET_DTO_CACHE_FILE_NAME_SUFFIX + TMP_FILE_NAME_SUFFIX))
+					return true;
+				else
+					return false;
+			}
+		});
+		return fileArray == null ? Collections.<File>emptyList() : Arrays.asList(fileArray);
+	}
+
+	protected File getLocalRepoTmpDir() {
+		if (localRepoTmpDir == null) {
+			try {
+				final File metaDir = getLocalRepoMetaDir();
+				if (! metaDir.isDirectory()) {
+					if (metaDir.isFile())
+						throw new IOException(String.format("Path '%s' already exists as ordinary file! It should be a directory!", metaDir.getAbsolutePath()));
+					else
+						throw new IOException(String.format("Directory '%s' does not exist!", metaDir.getAbsolutePath()));
+				}
+
+				final File tmpDir = metaDir.createFile(LocalRepoManager.REPO_TEMP_DIR_NAME);
+				if (! tmpDir.isDirectory()) {
+					tmpDir.mkdir();
+
+					if (! tmpDir.isDirectory()) {
+						if (tmpDir.isFile())
+							throw new IOException(String.format("Cannot create directory '%s', because this path already exists as an ordinary file!", tmpDir.getAbsolutePath()));
+						else
+							throw new IOException(String.format("Creating directory '%s' failed for an unknown reason (permissions? disk full?)!", tmpDir.getAbsolutePath()));
+					}
+				}
+				this.localRepoTmpDir = tmpDir;
+			} catch (RuntimeException x) {
+				throw x;
+			} catch (Exception x) {
+				throw new RuntimeException(x);
+			}
+		}
+		return localRepoTmpDir;
+	}
+
+	protected File getLocalRepoMetaDir() {
+		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootOrFail(getClientRepositoryIdOrFail());
+		return createFile(localRoot, LocalRepoManager.META_DIR_NAME);
+	}
+
+	@Override
+	public LocalRepoManager getLocalRepoManager() {
+		if (localRepoManager == null) {
+			logger.debug("getLocalRepoManager: Creating a new LocalRepoManager.");
+			final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRoot(getClientRepositoryIdOrFail());
+			localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
+		}
+		return localRepoManager;
 	}
 }

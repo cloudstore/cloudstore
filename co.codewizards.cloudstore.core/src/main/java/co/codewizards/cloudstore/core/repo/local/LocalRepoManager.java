@@ -20,8 +20,20 @@ public interface LocalRepoManager extends AutoCloseable {
 	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20000;
 
 	String META_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-repo";
+	/**
+	 * Temporary directory potentially inside every directory.
+	 * <p>
+	 * For example: <code>${repo}/Accounting/2019/.cloudstore-tmp/</code>
+	 */
 	String TEMP_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-tmp";
 	String TEMP_NEW_FILE_PREFIX = "." + APP_ID_SIMPLE_ID + "-new_";
+
+	/**
+	 * Repository-wide global directory inside the meta-directory.
+	 * <p>
+	 * For example: <code>${repo}/.cloudstore-repo/tmp/</code>
+	 */
+	String REPO_TEMP_DIR_NAME = "tmp";
 
 	String REPOSITORY_LOCK_FILE_NAME = APP_ID_SIMPLE_ID + "-repository.lock";
 	String REPOSITORY_PROPERTIES_FILE_NAME = APP_ID_SIMPLE_ID + "-repository.properties";
