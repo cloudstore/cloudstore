@@ -7,12 +7,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.UUID;
 
-import mockit.Invocation;
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
-import net.jcip.annotations.NotThreadSafe;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +23,11 @@ import co.codewizards.cloudstore.core.repo.sync.RepoToRepoSync;
 import co.codewizards.cloudstore.local.persistence.FileInProgressMarker;
 import co.codewizards.cloudstore.local.persistence.FileInProgressMarkerDao;
 import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
+import mockit.Invocation;
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * TODO rewrite this entire test! It is currently based on pretty fragile multi-threading. It might be better to use a different approach. Marco :-)
@@ -318,6 +317,12 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		final String newFileName = "ee-renamed";
 		moveFile(remoteRoot, file, createFile(remoteRoot, newFileName));
 
+		// Because of the newly introduced ChangeSetDto-cache, the next repo-to-repo-sync would not yet work on
+		// the new data. Hence, we delete the cache, now.
+		// TODO when rewriting this entire test-class, this should be handled correctly! See class-comment above.
+		// See: https://github.com/subshare/subshare/issues/75
+		getLocalRootWithPathPrefix().createFile(".cloudstore-repo", "tmp").deleteRecursively();
+
 		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
 			// because the chunk will be moved, the move operation is also observed as create/delete; so for the first
@@ -386,6 +391,12 @@ public class SyncAbortIT extends AbstractRepoAwareIT {
 		final String fileName2 = "f2";
 		final File file0 = createFileWithChunks(remoteRoot, remoteRoot, fileName0, 2);
 		final File file2 = createFileWithChunks(remoteRoot, remoteRoot, fileName2, 2);
+
+		// Because of the newly introduced ChangeSetDto-cache, the next repo-to-repo-sync would not yet work on
+		// the new data. Hence, we delete the cache, now.
+		// TODO when rewriting this entire test-class, this should be handled correctly! See class-comment above.
+		// See: https://github.com/subshare/subshare/issues/75
+		getLocalRootWithPathPrefix().createFile(".cloudstore-repo", "tmp").deleteRecursively();
 
 		try (RepoToRepoSync repoToRepoSync = RepoToRepoSync.create(getLocalRootWithPathPrefix(),
 				remoteRootURLWithPathPrefix);) {
