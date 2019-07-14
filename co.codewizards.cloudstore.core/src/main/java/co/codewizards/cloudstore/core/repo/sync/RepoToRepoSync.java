@@ -70,8 +70,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	protected File localRoot;
 	protected URL remoteRoot;
 	protected LocalRepoManager localRepoManager;
-	protected final LocalRepoTransportRef localRepoTransport = new LocalRepoTransportRef();
-	protected final RepoTransportRef remoteRepoTransport = new RepoTransportRef();
+	protected final LocalRepoTransportRef localRepoTransport;
+	protected final RepoTransportRef remoteRepoTransport;
 	protected UUID localRepositoryId;
 	protected UUID remoteRepositoryId;
 
@@ -91,7 +91,17 @@ public class RepoToRepoSync implements AutoCloseable {
 	protected RepoToRepoSync(File localRoot, final URL remoteRoot) {
 		this.localRoot = requireNonNull(localRoot, "localRoot");
 		this.remoteRoot = requireNonNull(remoteRoot, "remoteRoot");
+		localRepoTransport = createLocalRepoTransportRef();
+		remoteRepoTransport = createRemoteRepoTransportRef();
 		init();
+	}
+
+	protected LocalRepoTransportRef createLocalRepoTransportRef() {
+		return new LocalRepoTransportRef();
+	}
+
+	protected RepoTransportRef createRemoteRepoTransportRef() {
+		return new RepoTransportRef();
 	}
 
 	protected void init() {
