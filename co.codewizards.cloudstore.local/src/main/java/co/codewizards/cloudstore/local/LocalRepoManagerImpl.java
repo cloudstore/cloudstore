@@ -40,6 +40,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -91,6 +92,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	protected final String id = Integer.toHexString(System.identityHashCode(this));
 
 	private long closeDeferredMillis = Long.MIN_VALUE;
+	private long maxOpenMillis = Long.MIN_VALUE;
 	private static final long lockTimeoutMillis = 30000; // TODO make configurable!
 
 	private static final long remoteRepositoryRequestExpiryAge = 24 * 60 * 60 * 1000L;
@@ -115,6 +117,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private Timer closeDeferredTimer;
 	private TimerTask closeDeferredTimerTask;
 	private final Lock lock = new ReentrantLock();
+	private final long created = System.currentTimeMillis();
 
 	private LocalRepoMetaDataImpl localRepoMetaDataImpl;
 
@@ -646,17 +649,32 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	protected long getCloseDeferredMillis() {
 		if (closeDeferredMillis < 0) {
+			@SuppressWarnings("deprecation")
 			long closeDeferredMillis = PropertiesUtil.getSystemPropertyValueAsLong(
-					SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, DEFAULT_CLOSE_DEFERRED_MILLIS);
-
+					SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, -1);
 			if (closeDeferredMillis < 0) {
-				logger.warn("System property '{}': closeDeferredMillis {} is less than 0! Using default {} instead!",
-						SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS, closeDeferredMillis, DEFAULT_CLOSE_DEFERRED_MILLIS);
-				closeDeferredMillis = DEFAULT_CLOSE_DEFERRED_MILLIS;
+				closeDeferredMillis = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
+						CONFIG_KEY_CLOSE_DEFERRED_MILLIS, DEFAULT_CLOSE_DEFERRED_MILLIS);
 			}
 			this.closeDeferredMillis = closeDeferredMillis;
+			logger.info("[{}]getCloseDeferredMillis: closeDeferredMillis={}", id, closeDeferredMillis);
 		}
 		return closeDeferredMillis;
+	}
+
+	protected long getMaxOpenMillis() {
+		if (maxOpenMillis < 0) {
+			maxOpenMillis = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
+					CONFIG_KEY_MAX_OPEN_MILLIS, DEFAULT_MAX_OPEN_MILLIS);
+			logger.info("[{}]getMaxOpenMillis: maxOpenMillis={}", id, maxOpenMillis);
+		}
+		return maxOpenMillis;
+	}
+
+	@Override
+	public boolean isMaxOpenMillisExceeded() {
+		final long openMillis = System.currentTimeMillis() - created;
+		return openMillis > getMaxOpenMillis();
 	}
 
 	@Override
@@ -678,7 +696,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 
 		final long closeDeferredMillis = getCloseDeferredMillis();
-		if (closeDeferredMillis > 0) {
+		if (closeDeferredMillis > 0 && ! isMaxOpenMillisExceeded()) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
 			lock.lock();
 			try {
@@ -700,8 +718,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				lock.unlock();
 			}
 		}
-		else
+		else {
+			logger.info("[{}]close: Closing real LocalRepoManager immediately.", id, closeDeferredMillis);
 			_close();
+		}
 	}
 
 	private void _close() {

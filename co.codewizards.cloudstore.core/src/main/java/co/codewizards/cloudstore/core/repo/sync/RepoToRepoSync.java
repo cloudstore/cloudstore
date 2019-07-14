@@ -2,9 +2,9 @@ package co.codewizards.cloudstore.core.repo.sync;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,7 +47,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.CollisionException;
-import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -68,13 +67,13 @@ public class RepoToRepoSync implements AutoCloseable {
 	 */
 	private static final boolean TEST_INVERSE = false;
 
-	protected final File localRoot;
-	protected final URL remoteRoot;
-	protected final LocalRepoManager localRepoManager;
-	protected final LocalRepoTransport localRepoTransport;
-	protected final RepoTransport remoteRepoTransport;
-	protected final UUID localRepositoryId;
-	protected final UUID remoteRepositoryId;
+	protected File localRoot;
+	protected URL remoteRoot;
+	protected LocalRepoManager localRepoManager;
+	protected final LocalRepoTransportRef localRepoTransport = new LocalRepoTransportRef();
+	protected final RepoTransportRef remoteRepoTransport = new RepoTransportRef();
+	protected UUID localRepositoryId;
+	protected UUID remoteRepositoryId;
 
 	private ExecutorService localSyncExecutor;
 	private Future<Void> localSyncFuture;
@@ -90,10 +89,16 @@ public class RepoToRepoSync implements AutoCloseable {
 	 * must be referenced here.
 	 */
 	protected RepoToRepoSync(File localRoot, final URL remoteRoot) {
-		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(assertNotNull(localRoot, "localRoot"));
-		this.remoteRoot = UrlUtil.canonicalizeURL(assertNotNull(remoteRoot, "remoteRoot"));
+		this.localRoot = requireNonNull(localRoot, "localRoot");
+		this.remoteRoot = requireNonNull(remoteRoot, "remoteRoot");
+		init();
+	}
+
+	protected void init() {
+		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(requireNonNull(localRoot, "localRoot"));
+		remoteRoot = UrlUtil.canonicalizeURL(requireNonNull(remoteRoot, "remoteRoot"));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
-		this.localRoot = localRoot = createFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
+		localRoot = createFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
 		localRepositoryId = localRepoManager.getRepositoryId();
 		if (localRepositoryId == null)
@@ -101,8 +106,8 @@ public class RepoToRepoSync implements AutoCloseable {
 
 		remoteRepositoryId = localRepoManager.getRemoteRepositoryIdOrFail(remoteRoot);
 
-		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
-		localRepoTransport = (LocalRepoTransport) createRepoTransport(localRoot, remoteRepositoryId);
+		remoteRepoTransport.setDelegate(createRepoTransport(remoteRoot, localRepositoryId));
+		localRepoTransport.setDelegate(createRepoTransport(localRoot, remoteRepositoryId));
 	}
 
 	public static RepoToRepoSync create(final File localRoot, final URL remoteRoot) {
@@ -110,7 +115,7 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	public void sync(final ProgressMonitor monitor) {
-		assertNotNull(monitor, "monitor");
+		requireNonNull(monitor, "monitor");
 		monitor.beginTask("Synchronising...", 201);
 		try {
 			lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds.clear();
@@ -185,13 +190,13 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	private void waitForAndCheckLocalSyncFuture() {
 		try {
-			assertNotNull(localSyncFuture, "localSyncFuture").get();
+			requireNonNull(localSyncFuture, "localSyncFuture").get();
 		} catch (final RuntimeException e) {
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
-		assertNotNull(localSyncExecutor, "localSyncExecutor").shutdown();
+		requireNonNull(localSyncExecutor, "localSyncExecutor").shutdown();
 		localSyncFuture = null;
 		localSyncExecutor = null;
 	}
@@ -227,7 +232,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced = null;
 			if (lastSyncToRemoteRepoLocalRepositoryRevisionSyncedUpdatedInFromRepositoryIds.add(fromRepoTransport.getRepositoryId())) {
 				RepositoryDto clientRepositoryDto = toRepoTransport.getClientRepositoryDto();
-				assertNotNull(clientRepositoryDto, "clientRepositoryDto");
+				requireNonNull(clientRepositoryDto, "clientRepositoryDto");
 				lastSyncToRemoteRepoLocalRepositoryRevisionSynced = clientRepositoryDto.getRevision() == Long.MIN_VALUE ? null : clientRepositoryDto.getRevision();
 			}
 
@@ -281,10 +286,10 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	protected void syncParentConfigPropSetDto(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport,
 			final ConfigPropSetDto parentConfigPropSetDto, final ProgressMonitor monitor) {
-		assertNotNull(fromRepoTransport, "fromRepoTransport");
-		assertNotNull(toRepoTransport, "toRepoTransport");
+		requireNonNull(fromRepoTransport, "fromRepoTransport");
+		requireNonNull(toRepoTransport, "toRepoTransport");
 		// parentConfigPropSetDto may be null!
-		assertNotNull(monitor, "monitor");
+		requireNonNull(monitor, "monitor");
 
 		monitor.beginTask("Synchronising parent-config...", 1);
 		try {
@@ -301,12 +306,12 @@ public class RepoToRepoSync implements AutoCloseable {
 			final RepoFileDtoTreeNode repoFileDtoTree,
 			final Class<?>[] repoFileDtoClassesIncl, final Class<?>[] repoFileDtoClassesExcl, final boolean filesInProgressOnly,
 			final ProgressMonitor monitor) {
-		assertNotNull(fromRepoTransport, "fromRepoTransport");
-		assertNotNull(toRepoTransport, "toRepoTransport");
-		assertNotNull(repoFileDtoTree, "repoFileDtoTree");
-		assertNotNull(repoFileDtoClassesIncl, "repoFileDtoClassesIncl");
-		assertNotNull(repoFileDtoClassesExcl, "repoFileDtoClassesExcl");
-		assertNotNull(monitor, "monitor");
+		requireNonNull(fromRepoTransport, "fromRepoTransport");
+		requireNonNull(toRepoTransport, "toRepoTransport");
+		requireNonNull(repoFileDtoTree, "repoFileDtoTree");
+		requireNonNull(repoFileDtoClassesIncl, "repoFileDtoClassesIncl");
+		requireNonNull(repoFileDtoClassesExcl, "repoFileDtoClassesExcl");
+		requireNonNull(monitor, "monitor");
 
 		final Map<Class<?>, Boolean> repoFileDtoClass2Included = new HashMap<Class<?>, Boolean>();
 		final Map<Class<?>, Boolean> repoFileDtoClass2Excluded = new HashMap<Class<?>, Boolean>();
@@ -376,6 +381,7 @@ public class RepoToRepoSync implements AutoCloseable {
 					throw new IllegalStateException("Unsupported RepoFileDto type: " + repoFileDto);
 
 				markDone(fromRepoTransport, toRepoTransport, repoFileDto);
+				reinitIfMaxOpenMillisExceeded();
 			}
 		} finally {
 			monitor.done();
@@ -483,9 +489,9 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	protected void applyDeleteModification(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final DeleteModificationDto deleteModificationDto) {
-		assertNotNull(fromRepoTransport, "fromRepoTransport");
-		assertNotNull(toRepoTransport, "toRepoTransport");
-		assertNotNull(deleteModificationDto, "deleteModificationDto");
+		requireNonNull(fromRepoTransport, "fromRepoTransport");
+		requireNonNull(toRepoTransport, "toRepoTransport");
+		requireNonNull(deleteModificationDto, "deleteModificationDto");
 
 		try {
 			delete(fromRepoTransport, toRepoTransport, deleteModificationDto);
@@ -754,8 +760,24 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	@Override
 	public void close() {
-		localRepoManager.close();
-		localRepoTransport.close();
-		remoteRepoTransport.close();
+		if (localRepoTransport.getDelegate() != null) {
+			localRepoTransport.close();
+			localRepoTransport.setDelegate(null);
+		}
+		if (remoteRepoTransport.getDelegate() != null) {
+			remoteRepoTransport.close();
+			remoteRepoTransport.setDelegate(null);
+		}
+		if (localRepoManager != null) {
+			localRepoManager.close();
+			localRepoManager = null;
+		}
+	}
+
+	protected void reinitIfMaxOpenMillisExceeded() {
+		if (localRepoManager.isMaxOpenMillisExceeded()) {
+			close();
+			init();
+		}
 	}
 }

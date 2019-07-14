@@ -16,8 +16,16 @@ public interface LocalRepoManager extends AutoCloseable {
 	String SYSTEM_PROPERTY_KEY_SIZE = APP_ID_SIMPLE_ID + ".repository.asymmetricKey.size";
 	int DEFAULT_KEY_SIZE = 4096;
 
+	/**
+	 * @deprecated replaced by {@link #CONFIG_KEY_CLOSE_DEFERRED_MILLIS}.
+	 */
+	@Deprecated
 	String SYSTEM_PROPERTY_CLOSE_DEFERRED_MILLIS = APP_ID_SIMPLE_ID + ".localRepoManager.closeDeferredMillis";
-	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20000;
+	String CONFIG_KEY_CLOSE_DEFERRED_MILLIS = "localRepoManager.closeDeferredMillis";
+	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20L * 1000L;
+
+	String CONFIG_KEY_MAX_OPEN_MILLIS = "localRepoManager.maxOpenMillis";
+	long DEFAULT_MAX_OPEN_MILLIS = 20L * 60L * 1000L; // 20 minutes
 
 	String META_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-repo";
 	/**
@@ -118,6 +126,8 @@ public interface LocalRepoManager extends AutoCloseable {
 	 */
 	@Override
 	void close();
+
+	boolean isMaxOpenMillisExceeded();
 
 	/**
 	 * Begin a JDO transaction for read operations only in the underlying database.
