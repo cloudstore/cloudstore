@@ -1,8 +1,13 @@
 package co.codewizards.cloudstore.core.util;
 
+import static java.util.Objects.*;
+
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
 
 public class DerbyUtil {
@@ -16,10 +21,12 @@ public class DerbyUtil {
 	 */
 	private static final int DERBY_ERROR_CODE_SHUTDOWN_DATABASE_WAS_NOT_RUNNING = 40000;
 
+	public static final String DERBY_PROPERTIES_PREFIX = "derby.";
+
 	private DerbyUtil() { }
 
 	public static void shutdownDerbyDatabase(String connectionURL) {
-		String shutdownConnectionURL = AssertUtil.assertNotNull(connectionURL, "connectionURL") + ";shutdown=true";
+		String shutdownConnectionURL = requireNonNull(connectionURL, "connectionURL") + ";shutdown=true";
 		try {
 			DriverManager.getConnection(shutdownConnectionURL);
 		} catch (SQLException e) {
@@ -32,6 +39,17 @@ public class DerbyUtil {
 	}
 
 	public static void setLogFile(File file) {
-		System.setProperty("derby.stream.error.file", AssertUtil.assertNotNull(file, "file").getAbsolutePath());
+
+		// First pass all config-properties whose key starts with "derby." as system-property
+		// to Derby for diagnostic reasons.
+		Config config = ConfigImpl.getInstance();
+		Pattern regex = Pattern.compile(Pattern.quote(DERBY_PROPERTIES_PREFIX) + ".*");
+		for (String key : config.getKey2GroupsMatching(regex).keySet()) {
+			String value = config.getProperty(key, null);
+			System.setProperty(key, value);
+		}
+
+		// Then set the actual derby-log-file.
+		System.setProperty("derby.stream.error.file", requireNonNull(file, "file").getAbsolutePath());
 	}
 }
