@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -419,8 +419,8 @@ public final class PropertiesUtil
 	}
 
 	public static long getPropertyValueAsLong(final Properties properties, final String key, long defaultValue) {
-		assertNotNull(properties, "properties");
-		assertNotNull(key, "key");
+		requireNonNull(properties, "properties");
+		requireNonNull(key, "key");
 
 		final String value = properties.getProperty(key);
 		if (value == null)
@@ -452,7 +452,7 @@ public final class PropertiesUtil
 	 * @return the env var name. Never <code>null</code>.
 	 */
 	public static String systemPropertyToEnvironmentVariable(final String key) {
-		assertNotNull(key, "key");
+		requireNonNull(key, "key");
 
 		if (key.isEmpty())
 			throw new IllegalArgumentException("key is an empty string! At least one character is required!");

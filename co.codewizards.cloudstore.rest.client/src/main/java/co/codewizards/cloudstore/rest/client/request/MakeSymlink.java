@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Date;
 
@@ -17,9 +17,9 @@ public class MakeSymlink extends VoidRequest {
 	protected final Date lastModified;
 
 	public MakeSymlink(final String repositoryName, final String path, final String target, final Date lastModified) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.path = assertNotNull(path, "path");
-		this.target = assertNotNull(target, "target");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.path = requireNonNull(path, "path");
+		this.target = requireNonNull(target, "target");
 		this.lastModified = lastModified;
 	}
 

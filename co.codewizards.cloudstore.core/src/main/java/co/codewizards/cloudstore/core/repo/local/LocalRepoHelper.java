@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
-
 
 public final class LocalRepoHelper {
 
@@ -31,7 +29,7 @@ public final class LocalRepoHelper {
 	 * @return the repository's local root. Is <code>null</code>, if {@code file} is not located inside a repository.
 	 */
 	public static File getLocalRootContainingFile(final File file) {
-		File parentFile = AssertUtil.assertNotNull(file, "file");
+		File parentFile = requireNonNull(file, "file");
 		while (parentFile != null) {
 			final File parentMetaDir = createFile(parentFile, LocalRepoManager.META_DIR_NAME);
 			if (parentMetaDir.exists())
@@ -43,7 +41,7 @@ public final class LocalRepoHelper {
 	}
 
 	public static Collection<File> getLocalRootsContainedInDirectory(File directory) {
-		assertNotNull(directory, "directory");
+		requireNonNull(directory, "directory");
 		directory = directory.getAbsoluteFile();
 
 		if (! directory.isDirectory())

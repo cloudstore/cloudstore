@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.ls.core;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,7 +113,7 @@ public class LocalServerPropertiesManager {
 	}
 
 	public void setPassword(final String password) {
-		assertNotNull(password, "password");
+		requireNonNull(password, "password");
 		getLocalServerProperties().setProperty(PROPERTY_KEY_PASSWORD, password);
 	}
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +14,7 @@ class InStream extends InputStream implements IInputStream {
 	}
 
 	protected InStream(final InputStream in) {
-		this.in = assertNotNull(in, "in");
+		this.in = requireNonNull(in, "in");
 	}
 
 	@Override
@@ -68,7 +68,7 @@ class InStream extends InputStream implements IInputStream {
 		protected final IInputStream in;
 
 		protected InverseInStream(final IInputStream in) {
-			this.in = assertNotNull(in, "in");
+			this.in = requireNonNull(in, "in");
 		}
 
 		@Override

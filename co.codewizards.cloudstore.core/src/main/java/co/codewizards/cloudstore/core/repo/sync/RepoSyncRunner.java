@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.Date;
@@ -27,7 +27,7 @@ class RepoSyncRunner implements Runnable {
 	private Date syncFinished;
 
 	public RepoSyncRunner(final RepoSyncQueueItem repoSyncQueueItem) {
-		this.repoSyncQueueItem = assertNotNull(repoSyncQueueItem, "repoSyncQueueItem");
+		this.repoSyncQueueItem = requireNonNull(repoSyncQueueItem, "repoSyncQueueItem");
 	}
 
 	public RepoSyncQueueItem getSyncQueueItem() {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.util.Set;
@@ -22,8 +22,8 @@ public class ClassInfo implements Serializable {
 
 	public ClassInfo(final int classId, final String className, final Set<String> interfaceNames, final boolean equalsOverridden) {
 		this.classId = classId;
-		this.className = assertNotNull(className, "className");
-		this.interfaceNames = assertNotNull(interfaceNames, "interfaceNames");
+		this.className = requireNonNull(className, "className");
+		this.interfaceNames = requireNonNull(interfaceNames, "interfaceNames");
 		this.equalsOverridden = equalsOverridden;
 	}
 

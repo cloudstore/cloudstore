@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -65,7 +65,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 
 	@Override
 	public UUID startSync(final File file) {
-		assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		final File localRoot = LocalRepoHelper.getLocalRootContainingFile(file);
 		if (localRoot == null)
 			throw new IllegalArgumentException("File is not located inside a local repository: " + file);
@@ -87,7 +87,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private synchronized void startSyncWithNextSyncQueueItem(final UUID repositoryId) {
-		assertNotNull(repositoryId, "repositoryId");
+		requireNonNull(repositoryId, "repositoryId");
 		if (!repositoryId2SyncRunner.containsKey(repositoryId)) {
 			final RepoSyncQueueItem nextSyncQueueItem = pollSyncQueueItem(repositoryId);
 			if (nextSyncQueueItem != null) {
@@ -113,7 +113,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 		private final RepoSyncRunner repoSyncRunner;
 
 		public WrapperRunnable(final RepoSyncRunner repoSyncRunner) {
-			this.repoSyncRunner = assertNotNull(repoSyncRunner, "repoSyncRunner");
+			this.repoSyncRunner = requireNonNull(repoSyncRunner, "repoSyncRunner");
 			this.repositoryId = repoSyncRunner.getSyncQueueItem().repositoryId;
 		}
 
@@ -138,7 +138,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private void registerSyncSuccess(final RepoSyncRunner repoSyncRunner) {
-		assertNotNull(repoSyncRunner, "repoSyncRunner");
+		requireNonNull(repoSyncRunner, "repoSyncRunner");
 
 		final List<RepoSyncState> statesAdded = new ArrayList<RepoSyncState>();
 		final List<RepoSyncState> statesRemoved;
@@ -167,8 +167,8 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private void registerSyncError(final RepoSyncRunner repoSyncRunner, final Throwable exception) {
-		assertNotNull(repoSyncRunner, "repoSyncRunner");
-		assertNotNull(exception, "exception");
+		requireNonNull(repoSyncRunner, "repoSyncRunner");
+		requireNonNull(exception, "exception");
 
 		final List<RepoSyncState> statesAdded = new ArrayList<RepoSyncState>();
 		final List<RepoSyncState> statesRemoved;
@@ -214,8 +214,8 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private synchronized List<RepoSyncState> evictOldStates(final UUID localRepositoryId, final File localRoot) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
-		assertNotNull(localRoot, "localRoot");
+		requireNonNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRoot, "localRoot");
 		final List<RepoSyncState> evicted = new ArrayList<RepoSyncState>();
 		final Config config = ConfigImpl.getInstanceForDirectory(localRoot);
 		final int syncStatesMaxSize = config.getPropertyAsPositiveOrZeroInt(CONFIG_KEY_SYNC_STATES_MAX_SIZE, DEFAULT_SYNC_STATES_MAX_SIZE);
@@ -235,7 +235,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private int getSyncStatesSizeForServerRepositoryId(final List<RepoSyncState> repoSyncStates, final UUID serverRepositoryId) {
-		assertNotNull(serverRepositoryId, "serverRepositoryId");
+		requireNonNull(serverRepositoryId, "serverRepositoryId");
 		int result = 0;
 		for (RepoSyncState repoSyncState : repoSyncStates) {
 			if (serverRepositoryId.equals(repoSyncState.getServerRepositoryId()))
@@ -245,7 +245,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private synchronized RepoSyncQueueItem pollSyncQueueItem(UUID repositoryId) {
-		assertNotNull(repositoryId, "repositoryId");
+		requireNonNull(repositoryId, "repositoryId");
 		for (Iterator<RepoSyncQueueItem> it = syncQueue.iterator(); it.hasNext(); ) {
 			final RepoSyncQueueItem repoSyncQueueItem = it.next();
 			if (repositoryId.equals(repoSyncQueueItem.repositoryId)) {
@@ -258,7 +258,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 
 	@Override
 	public synchronized List<RepoSyncState> getStates(final UUID localRepositoryId) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRepositoryId, "localRepositoryId");
 		final List<RepoSyncState> list = repositoryId2SyncStates.get(localRepositoryId);
 		if (list == null)
 			return Collections.emptyList();
@@ -268,7 +268,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 
 	@Override
 	public synchronized Set<RepoSyncActivity> getActivities(final UUID localRepositoryId) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRepositoryId, "localRepositoryId");
 		final Set<RepoSyncActivity> activities = repositoryId2SyncActivities.get(localRepositoryId);
 		if (activities == null)
 			return Collections.emptySet();
@@ -277,7 +277,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private void updateActivities(final UUID localRepositoryId) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRepositoryId, "localRepositoryId");
 
 		final List<RepoSyncActivity> activitiesAdded = new ArrayList<RepoSyncActivity>();
 		final List<RepoSyncActivity> activitiesRemoved = new ArrayList<RepoSyncActivity>();
@@ -331,7 +331,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private synchronized List<RepoSyncActivity> _findActivities(final UUID localRepositoryId, final RepoSyncActivityType activityType) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRepositoryId, "localRepositoryId");
 		final Set<RepoSyncActivity> activities = repositoryId2SyncActivities.get(localRepositoryId);
 		if (activities == null)
 			return Collections.emptyList();
@@ -346,7 +346,7 @@ public class RepoSyncDaemonImpl implements RepoSyncDaemon {
 	}
 
 	private synchronized List<RepoSyncQueueItem> _findQueueItems(final UUID localRepositoryId) {
-		assertNotNull(localRepositoryId, "localRepositoryId");
+		requireNonNull(localRepositoryId, "localRepositoryId");
 		final List<RepoSyncQueueItem> result = new ArrayList<RepoSyncQueueItem>(2);
 		for (final RepoSyncQueueItem queueItem : syncQueue) {
 			if (localRepositoryId.equals(queueItem.repositoryId))

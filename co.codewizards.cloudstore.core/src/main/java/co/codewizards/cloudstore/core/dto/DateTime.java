@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static java.util.Objects.*;
 
 import java.util.Date;
 
@@ -45,7 +45,7 @@ public class DateTime {
 	 * @see #toString()
 	 */
 	public DateTime(String dateString) {
-		date = ISO8601.parseDate(assertNotNull(dateString, "dateString"));
+		date = ISO8601.parseDate(requireNonNull(dateString, "dateString"));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class DateTime {
 	 * @param date the date to be cloned and wrapped in the new {@code DateTime} instance. Must not be <code>null</code>.
 	 */
 	public DateTime(Date date) {
-		this.date = (Date) assertNotNull(date, "date").clone();
+		this.date = (Date) requireNonNull(date, "date").clone();
 	}
 
 	/**

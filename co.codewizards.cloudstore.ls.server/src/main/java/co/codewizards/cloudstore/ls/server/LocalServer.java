@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.ls.server;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.DebugUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.LsConfig;
 import co.codewizards.cloudstore.ls.rest.server.LocalServerRest;
@@ -366,7 +366,7 @@ public class LocalServer {
 	private ServletContextHandler createServletContextHandler() {
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		final ServletContainer servletContainer = new ServletContainer(AssertUtil.assertNotNull(createResourceConfig(), "createResourceConfig()"));
+		final ServletContainer servletContainer = new ServletContainer(requireNonNull(createResourceConfig(), "createResourceConfig()"));
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 //		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;

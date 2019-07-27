@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -12,7 +12,7 @@ public class GetFileData extends AbstractRequest<byte[]> {
 	private final int length;
 
 	public GetFileData(final String repositoryName, final String path, final long offset, final int length) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
 		this.path = path;
 		this.offset = offset;
 		this.length = length;

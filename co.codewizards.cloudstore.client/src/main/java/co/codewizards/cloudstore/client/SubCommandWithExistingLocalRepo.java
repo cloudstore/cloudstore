@@ -1,13 +1,13 @@
 package co.codewizards.cloudstore.client;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static java.util.Objects.*;
 
 import org.kohsuke.args4j.Argument;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
@@ -38,7 +38,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	@Override
 	public void prepare() throws Exception {
 		super.prepare();
-		AssertUtil.assertNotNull(local, "local");
+		requireNonNull(local, "local");
 
 		String repositoryName;
 		final int slashIndex = local.indexOf('/');
@@ -78,7 +78,7 @@ public abstract class SubCommandWithExistingLocalRepo extends SubCommand {
 	}
 
 	protected void assertLocalRootNotNull() {
-		AssertUtil.assertNotNull(localRoot, "localRoot");
+		requireNonNull(localRoot, "localRoot");
 	}
 
 }

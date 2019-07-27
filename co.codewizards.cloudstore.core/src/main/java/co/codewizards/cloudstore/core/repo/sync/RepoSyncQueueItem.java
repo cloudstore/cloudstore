@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.util.UUID;
 
@@ -13,8 +13,8 @@ class RepoSyncQueueItem {
 	// TODO later, we should allow for syncing only a certain directory or even file
 
 	public RepoSyncQueueItem(final UUID repositoryId, final File localRoot) {
-		this.repositoryId = assertNotNull(repositoryId, "repositoryId");
-		this.localRoot = assertNotNull(localRoot, "localRoot");
+		this.repositoryId = requireNonNull(repositoryId, "repositoryId");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 	}
 
 	@Override

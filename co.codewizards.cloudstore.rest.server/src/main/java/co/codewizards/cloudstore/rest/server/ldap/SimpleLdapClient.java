@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.rest.server.ldap;
 
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,7 @@ public class SimpleLdapClient implements LdapClient{
 	public SimpleLdapClient(final List<String> templates, final String url){
 		this.templates = assertNotEmpty(templates, "templates");
 		validateTemplates(templates);
-		this.url = assertNotNull(url, "url");
+		this.url = requireNonNull(url, "url");
 	}
 
 	@Override

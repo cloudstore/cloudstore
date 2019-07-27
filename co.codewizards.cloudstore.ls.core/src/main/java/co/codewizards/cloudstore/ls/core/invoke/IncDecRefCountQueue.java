@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -77,7 +77,7 @@ public class IncDecRefCountQueue {
 	private final Invoker invoker;
 
 	public IncDecRefCountQueue(final Invoker invoker) {
-		this.invoker = assertNotNull(invoker, "invoker");
+		this.invoker = requireNonNull(invoker, "invoker");
 		incDecRefCountTimer.schedule(incDecRefCountTimerTask, INC_DEC_REF_COUNT_PERIOD_MS, INC_DEC_REF_COUNT_PERIOD_MS);
 	}
 

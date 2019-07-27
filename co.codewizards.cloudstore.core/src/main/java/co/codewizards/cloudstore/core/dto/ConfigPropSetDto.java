@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class ConfigPropSetDto {
 	}
 
 	public ConfigPropSetDto(final Properties properties) {
-		assertNotNull(properties, "properties");
+		requireNonNull(properties, "properties");
 		configPropDtos = new ArrayList<>(properties.size());
 		for (final Map.Entry<Object, Object> me : properties.entrySet()) {
 			final ConfigPropDto configPropDto = new ConfigPropDto();

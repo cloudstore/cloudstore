@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static java.util.Objects.*;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -12,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_move/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -35,7 +36,7 @@ public class MoveService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void move(@PathParam("path") String path, @QueryParam("to") final String toPath)
 	{
-		AssertUtil.assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.move(path, toPath);

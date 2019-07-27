@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke.refjanitor;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -64,7 +64,7 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 		else
 			return;
 
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 
 		if ("addPropertyChangeListener".equals(methodName))
 			trackAddPropertyChangeListener(bean, property, listener);
@@ -73,7 +73,7 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private synchronized FaultTolerantPropertyChangeListener getFaultTolerantPropertyChangeListenerOrCreate(final PropertyChangeListener listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 
 		final WeakReference<FaultTolerantPropertyChangeListener> ref = originalListener2FaultTolerantPropertyChangeListenerRef.get(listener);
 		FaultTolerantPropertyChangeListener faultTolerantListener = ref == null ? null : ref.get();
@@ -85,7 +85,7 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private synchronized FaultTolerantPropertyChangeListener getFaultTolerantPropertyChangeListener(final PropertyChangeListener listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 
 		final WeakReference<FaultTolerantPropertyChangeListener> ref = originalListener2FaultTolerantPropertyChangeListenerRef.get(listener);
 		final FaultTolerantPropertyChangeListener faultTolerantListener = ref == null ? null : ref.get();
@@ -118,8 +118,8 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private void tryRemovePropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
-		assertNotNull(bean, "bean");
-		assertNotNull(listener, "listener");
+		requireNonNull(bean, "bean");
+		requireNonNull(listener, "listener");
 
 		final FaultTolerantPropertyChangeListener faultTolerantPropertyChangeListener = getFaultTolerantPropertyChangeListener(listener);
 		if (faultTolerantPropertyChangeListener == null)
@@ -136,8 +136,8 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private synchronized void trackAddPropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
-		assertNotNull(bean, "bean");
-		assertNotNull(listener, "listener");
+		requireNonNull(bean, "bean");
+		requireNonNull(listener, "listener");
 
 		Map<Object, List<IdentityWeakReference<PropertyChangeListener>>> property2ListenerRefs = bean2Property2ListenerRefs.get(bean);
 		if (property2ListenerRefs == null) {
@@ -160,8 +160,8 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private synchronized void trackRemovePropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
-		assertNotNull(bean, "bean");
-		assertNotNull(listener, "listener");
+		requireNonNull(bean, "bean");
+		requireNonNull(listener, "listener");
 
 		final Map<Object, List<IdentityWeakReference<PropertyChangeListener>>> property2ListenerRefs = bean2Property2ListenerRefs.get(bean);
 		if (property2ListenerRefs == null)
@@ -184,7 +184,7 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 	}
 
 	private void expunge(final List<IdentityWeakReference<PropertyChangeListener>> listenerRefs) {
-		assertNotNull(listenerRefs, "listenerRefs");
+		requireNonNull(listenerRefs, "listenerRefs");
 		for (final Iterator<IdentityWeakReference<PropertyChangeListener>> it = listenerRefs.iterator(); it.hasNext();) {
 			final IdentityWeakReference<PropertyChangeListener> ref = it.next();
 			if (ref.get() == null)
@@ -198,7 +198,7 @@ public class PropertyChangeListenerJanitor extends AbstractReferenceJanitor {
 		private final PropertyChangeListener delegate;
 
 		public FaultTolerantPropertyChangeListener(final PropertyChangeListener delegate) {
-			this.delegate = assertNotNull(delegate, "delegate");
+			this.delegate = requireNonNull(delegate, "delegate");
 		}
 
 		@Override

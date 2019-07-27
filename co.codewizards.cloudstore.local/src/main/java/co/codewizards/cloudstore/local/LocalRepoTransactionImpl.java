@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +25,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPostCloseEv
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPostCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPreCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionPreCloseListener;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
 import co.codewizards.cloudstore.local.persistence.LocalRepositoryDao;
@@ -51,8 +50,8 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 	private final CopyOnWriteArrayList<LocalRepoTransactionPostCloseListener> postCloseListeners = new CopyOnWriteArrayList<>();
 
 	public LocalRepoTransactionImpl(final LocalRepoManagerImpl localRepoManager, final boolean write) {
-		this.localRepoManager = AssertUtil.assertNotNull(localRepoManager, "localRepoManager");
-		this.persistenceManagerFactory = AssertUtil.assertNotNull(localRepoManager.getPersistenceManagerFactory(), "localRepoManager.persistenceManagerFactory");
+		this.localRepoManager = requireNonNull(localRepoManager, "localRepoManager");
+		this.persistenceManagerFactory = requireNonNull(localRepoManager.getPersistenceManagerFactory(), "localRepoManager.persistenceManagerFactory");
 		this.lock = localRepoManager.getLock();
 		this.write = write;
 		begin();
@@ -205,7 +204,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public <D> D getDao(final Class<D> daoClass) {
-		assertNotNull(daoClass, "daoClass");
+		requireNonNull(daoClass, "daoClass");
 
 		@SuppressWarnings("unchecked")
 		D dao = (D) daoClass2Dao.get(daoClass);
@@ -259,11 +258,11 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 	@Override
 	public void addPreCloseListener(LocalRepoTransactionPreCloseListener listener) {
-		preCloseListeners.add(assertNotNull(listener, "listener"));
+		preCloseListeners.add(requireNonNull(listener, "listener"));
 	}
 	@Override
 	public void addPostCloseListener(LocalRepoTransactionPostCloseListener listener) {
-		postCloseListeners.add(assertNotNull(listener, "listener"));
+		postCloseListeners.add(requireNonNull(listener, "listener"));
 	}
 
 	protected void firePreCloseListeners(final boolean commit) {

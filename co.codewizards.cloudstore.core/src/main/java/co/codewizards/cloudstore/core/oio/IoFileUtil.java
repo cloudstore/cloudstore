@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.oio;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -50,7 +50,7 @@ public class IoFileUtil {
 
 	public static File[] listRoots() {
 		final java.io.File[] roots = java.io.File.listRoots();
-		assertNotNull(roots, "java.io.File.listRoots()");
+		requireNonNull(roots, "java.io.File.listRoots()");
 		final File[] result = new File[roots.length];
 		for (int i = 0; i < roots.length; i++)
 			result[i] = createFile(roots[i]);

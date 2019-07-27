@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static java.util.Objects.*;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -13,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_makeSymlink/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -40,8 +41,8 @@ public class MakeSymlinkService extends AbstractServiceWithRepoToRepoAuth
 	@Path("{path:.*}")
 	public void makeSymlink(@PathParam("path") String path)
 	{
-		AssertUtil.assertNotNull(path, "path");
-		AssertUtil.assertNotNull(target, "target");
+		requireNonNull(path, "path");
+		requireNonNull(target, "target");
 		try (final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();) {
 			path = repoTransport.unprefixPath(path);
 			repoTransport.makeSymlink(path, target, lastModified == null ? null : lastModified.toDate());

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
@@ -60,7 +60,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable>
 	}
 
 	private Throwable getApplicationException(final Throwable exception) {
-		assertNotNull(exception, "exception");
+		requireNonNull(exception, "exception");
 
 		Throwable x = exception;
 		while (x != null) {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.ldap;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,11 +46,11 @@ public class QueryLdapClient implements LdapClient{
 	private final char[] adminPassword;
 
 	public QueryLdapClient(String query, String queryDn, String url, String bindDn, char[] password) {
-		this.query = assertNotNull(query, "query");
-		this.queryDn = assertNotNull(queryDn, "queryDn");
-		this.url = assertNotNull(url, "url");
-		this.adminDn = assertNotNull(bindDn, "bindDn");
-		this.adminPassword = assertNotNull(password, "password");
+		this.query = requireNonNull(query, "query");
+		this.queryDn = requireNonNull(queryDn, "queryDn");
+		this.url = requireNonNull(url, "url");
+		this.adminDn = requireNonNull(bindDn, "bindDn");
+		this.adminPassword = requireNonNull(password, "password");
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.core.Response;
 
@@ -10,7 +10,7 @@ public class EndSyncToRepository extends VoidRequest {
 	private final long fromLocalRevision;
 
 	public EndSyncToRepository(final String repositoryName, final long fromLocalRevision) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
 		this.fromLocalRevision = fromLocalRevision;
 	}
 

@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.ls.server.cproc;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -48,7 +48,7 @@ public class LocalServerMain {
 		return localServerClass;
 	}
 	public static void setLocalServerClass(final Class<? extends LocalServer> localServerClass) {
-		LocalServerMain.localServerClass = assertNotNull(localServerClass, "localServerClass");
+		LocalServerMain.localServerClass = requireNonNull(localServerClass, "localServerClass");
 	}
 
 	protected static Constructor<? extends LocalServer> getLocalServerConstructor() throws NoSuchMethodException, SecurityException {

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.server;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRef;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectRefConverter;
@@ -12,13 +13,13 @@ class ObjectRefConverterImpl implements ObjectRefConverter {
 	private InverseInvoker inverseInvoker;
 
 	public ObjectRefConverterImpl(final ObjectManager objectManager) {
-		this.objectManager = assertNotNull(objectManager, "objectManager");
+		this.objectManager = requireNonNull(objectManager, "objectManager");
 	}
 
 	@Override
 	public Object convertToObjectRefIfNeeded(Object object) {
 		if (object instanceof RemoteObjectProxy)
-			return assertNotNull(((RemoteObjectProxy)object).getObjectRef(), "object.getObjectRef()");
+			return requireNonNull(((RemoteObjectProxy)object).getObjectRef(), "object.getObjectRef()");
 		else
 			return objectManager.getObjectRefOrObject(object);
 	}

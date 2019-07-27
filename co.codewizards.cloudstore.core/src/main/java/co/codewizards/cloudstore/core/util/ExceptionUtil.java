@@ -1,14 +1,14 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 public final class ExceptionUtil {
 
 	private ExceptionUtil() { }
 
 	public static <T extends Throwable> T getCause(final Throwable throwable, final Class<T> searchClass) {
-		assertNotNull(throwable, "throwable");
-		assertNotNull(searchClass, "searchClass");
+		requireNonNull(throwable, "throwable");
+		requireNonNull(searchClass, "searchClass");
 
 		Throwable cause = throwable;
 		while (cause != null) {
@@ -21,7 +21,7 @@ public final class ExceptionUtil {
 	}
 
 	public static RuntimeException throwThrowableAsRuntimeExceptionIfNeeded(final Throwable throwable) {
-		assertNotNull(throwable, "throwable");
+		requireNonNull(throwable, "throwable");
 		if (throwable instanceof Error)
 			throw (Error) throwable;
 

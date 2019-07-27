@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.dto.AbstractInverseServiceRequest;
@@ -12,13 +12,13 @@ public class InverseMethodInvocationRequest extends AbstractInverseServiceReques
 	private final Uid delayedResponseId;
 
 	public InverseMethodInvocationRequest(final MethodInvocationRequest methodInvocationRequest) {
-		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		this.methodInvocationRequest = requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 		this.delayedResponseId = null;
 	}
 
 	public InverseMethodInvocationRequest(final Uid delayedResponseId) {
 		this.methodInvocationRequest = null;
-		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
+		this.delayedResponseId = requireNonNull(delayedResponseId, "delayedResponseId");
 	}
 
 	public MethodInvocationRequest getMethodInvocationRequest() {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.ignore;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.regex.Pattern;
 
@@ -85,7 +85,7 @@ public class IgnoreRuleImpl implements IgnoreRule {
 	}
 
 	private static String convertPatternToRegex(final String pattern) {
-		assertNotNull(pattern, "pattern");
+		requireNonNull(pattern, "pattern");
 //		return pattern.replaceAll("\\.", "\\\\.").replaceAll("\\?", ".").replaceAll("\\*", ".*");
 		// We better iterate *once* than calling replaceAll - which needs to do some iteration - again and again.
 		final StringBuilder res = new StringBuilder();

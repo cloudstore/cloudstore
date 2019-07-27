@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.ignore;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	private static final Map<File, IgnoreRuleManagerImpl> file2IgnoreRuleManager = new WeakHashMap<>();
 
 	protected IgnoreRuleManagerImpl(File directory) {
-		this.directory = assertNotNull(directory, "directory");
+		this.directory = requireNonNull(directory, "directory");
 		config = ConfigImpl.getInstanceForDirectory(this.directory);
 	}
 
@@ -74,7 +74,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	public static IgnoreRuleManager getInstanceForDirectory(final File directory) {
-		assertNotNull(directory, "directory");
+		requireNonNull(directory, "directory");
 		cleanFileRefs();
 
 		File irm_dir = null;
@@ -97,7 +97,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 				fileSoftRefs.add(new SoftReference<File>(directory));
 				irm_dir = irm.directory;
 			}
-			assertNotNull(irm_dir, "irm_dir");
+			requireNonNull(irm_dir, "irm_dir");
 		}
 		refreshFileHardRefAndCleanOldHardRefs(irm_dir);
 		return irm;
@@ -139,7 +139,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 
 	@Override
 	public boolean isIgnored(final File file) {
-		final String fileName = assertNotNull(file, "file").getName();
+		final String fileName = requireNonNull(file, "file").getName();
 
 		if (! directory.equals(file.getParentFile()))
 			throw new IllegalArgumentException(String.format("file '%s' is not located within parent-directory '%s'!",
@@ -163,7 +163,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	private IgnoreRule loadIgnoreRule(final String ignoreRuleId) {
-		assertNotNull(ignoreRuleId, "ignoreRuleId");
+		requireNonNull(ignoreRuleId, "ignoreRuleId");
 		String namePattern = config.getProperty(getConfigKeyNamePattern(ignoreRuleId), null);
 		final String nameRegex = config.getProperty(getConfigKeyNameRegex(ignoreRuleId), null);
 
@@ -202,12 +202,12 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	private String getConfigKeyIgnorePrefix(String ignoreRuleId) {
-		assertNotNull(ignoreRuleId, "ignoreRuleId");
+		requireNonNull(ignoreRuleId, "ignoreRuleId");
 		return "ignore[" + ignoreRuleId + "].";
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final IgnoreRuleManagerImpl ignoreRuleManager) {
-		final File dir = assertNotNull(ignoreRuleManager, "ignoreRuleManager").directory;
+		final File dir = requireNonNull(ignoreRuleManager, "ignoreRuleManager").directory;
 		if (dir != null)
 			refreshFileHardRefAndCleanOldHardRefs(dir);
 	}
@@ -217,7 +217,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 	}
 
 	private static final void refreshFileHardRefAndCleanOldHardRefs(final File dir) {
-		assertNotNull(dir, "dir");
+		requireNonNull(dir, "dir");
 		synchronized (fileHardRefs) {
 			// make sure the current dir is at the end of fileHardRefs
 			fileHardRefs.remove(dir);

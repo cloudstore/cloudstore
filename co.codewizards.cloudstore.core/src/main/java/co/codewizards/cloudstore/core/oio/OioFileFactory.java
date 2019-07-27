@@ -1,10 +1,9 @@
 package co.codewizards.cloudstore.core.oio;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.net.URI;
-
 
 /**
  * @author Sebastian Schefczyk
@@ -24,7 +23,7 @@ public class OioFileFactory {
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
 	public static File createFile(final String parent, final String ... children) {
-		assertNotNull(parent, "parent");
+		requireNonNull(parent, "parent");
 
 		final FileFactory fileFactory = OioRegistry.getInstance().getFileFactory();
 		File result = null;
@@ -45,7 +44,7 @@ public class OioFileFactory {
 
 	/** Factory method, substitutes the constructor of {@link java.io.File}. */
 	public static File createFile(final File parent, final String ... children) {
-		assertNotNull(parent, "parent");
+		requireNonNull(parent, "parent");
 
 		final FileFactory fileFactory = OioRegistry.getInstance().getFileFactory();
 		File result = parent;

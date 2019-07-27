@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static java.util.Objects.*;
+
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
@@ -24,7 +26,6 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPassword;
 import co.codewizards.cloudstore.rest.server.auth.TransientRepoPasswordManager;
 
@@ -45,8 +46,8 @@ public class EncryptedSignedAuthTokenService
 	@Path("{clientRepositoryId}")
 	public EncryptedSignedAuthToken getEncryptedSignedAuthToken(@PathParam("clientRepositoryId") final UUID clientRepositoryId)
 	{
-		AssertUtil.assertNotNull(repositoryName, "repositoryName");
-		AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
+		requireNonNull(repositoryName, "repositoryName");
+		requireNonNull(clientRepositoryId, "clientRepositoryId");
 		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {

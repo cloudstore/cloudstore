@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -215,7 +215,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public <P extends E> P makePersistent(final P entity)
 	{
-		assertNotNull(entity, "entity");
+		requireNonNull(entity, "entity");
 		try {
 			final P result = pm().makePersistent(entity);
 			logger.debug("makePersistent: entityID={}", JDOHelper.getObjectId(result));
@@ -228,14 +228,14 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	public void deletePersistent(final E entity)
 	{
-		assertNotNull(entity, "entity");
+		requireNonNull(entity, "entity");
 		logger.debug("deletePersistent: entityID={}", JDOHelper.getObjectId(entity));
 		pm().deletePersistent(entity);
 	}
 
 	public void deletePersistentAll(final Collection<? extends E> entities)
 	{
-		assertNotNull(entities, "entities");
+		requireNonNull(entities, "entities");
 		if (logger.isDebugEnabled()) {
 			for (final E entity : entities) {
 				logger.debug("deletePersistentAll: entityID={}", JDOHelper.getObjectId(entity));
@@ -245,7 +245,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected Collection<E> load(final Collection<E> entities) {
-		assertNotNull(entities, "entities");
+		requireNonNull(entities, "entities");
 		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		int entitiesSize = 0;
 		for (final E entity : entities) {
@@ -292,8 +292,8 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected <T> List<T> loadDtos(final Collection<E> entities, final Class<T> dtoClass, final String queryResult) {
-		assertNotNull(entities, "entities");
-		assertNotNull(dtoClass, "dtoClass");
+		requireNonNull(entities, "entities");
+		requireNonNull(dtoClass, "dtoClass");
 		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
 		int entitiesSize = 0;
 		for (final E entity : entities) {
@@ -344,7 +344,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);
 
 	protected <T extends Dao<?, ?>> T getDao(final Class<T> daoClass) {
-		assertNotNull(daoClass, "daoClass");
+		requireNonNull(daoClass, "daoClass");
 
 		final DaoProvider daoProvider = getDaoProvider();
 		if (daoProvider != null)

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.updater;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static java.util.Objects.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -20,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class TarGzFile {
 	private static final Logger logger = LoggerFactory.getLogger(TarGzFile.class);
@@ -30,7 +30,7 @@ public class TarGzFile {
 	private FileFilter fileFilter;
 
 	public TarGzFile(final File tarGzFile) {
-		this.tarGzFile = AssertUtil.assertNotNull(tarGzFile, "tarGzFile");
+		this.tarGzFile = requireNonNull(tarGzFile, "tarGzFile");
 	}
 
 	/**

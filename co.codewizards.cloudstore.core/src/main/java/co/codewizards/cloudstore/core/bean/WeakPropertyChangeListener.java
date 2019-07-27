@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.bean;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -29,7 +29,7 @@ public class WeakPropertyChangeListener implements PropertyChangeListener {
 	public WeakPropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
 		expunge();
 
-		this.bean = assertNotNull(bean, "bean");
+		this.bean = requireNonNull(bean, "bean");
 		this.property = property;
 
 		listenerRef = new WeakReference<PropertyChangeListener>(listener, listenerRefQueue);

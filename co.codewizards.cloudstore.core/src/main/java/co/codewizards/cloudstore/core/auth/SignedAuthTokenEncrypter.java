@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.auth;
 
+import static java.util.Objects.*;
+
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -13,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigImpl;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class SignedAuthTokenEncrypter {
 	private static final Logger logger = LoggerFactory.getLogger(SignedAuthTokenEncrypter.class);
@@ -26,7 +27,7 @@ public class SignedAuthTokenEncrypter {
 	private PublicKey publicKey;
 
 	public SignedAuthTokenEncrypter(final byte[] publicKeyData) {
-		AssertUtil.assertNotNull(publicKeyData, "publicKeyData");
+		requireNonNull(publicKeyData, "publicKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.repo.local;
 
+import static java.util.Objects.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,8 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class LocalRepoTransactionListenerRegistry {
 
@@ -18,7 +18,7 @@ public class LocalRepoTransactionListenerRegistry {
 	private static List<Class<? extends LocalRepoTransactionListener>> listenerClasses;
 
 	public LocalRepoTransactionListenerRegistry(final LocalRepoTransaction transaction) {
-		this.transaction = AssertUtil.assertNotNull(transaction, "transaction");
+		this.transaction = requireNonNull(transaction, "transaction");
 		this.listeners = createListeners();
 
 		for (final LocalRepoTransactionListener listener : listeners)

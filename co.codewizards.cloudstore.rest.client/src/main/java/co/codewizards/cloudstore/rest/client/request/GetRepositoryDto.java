@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.core.dto.RepositoryDto;
 
 public class GetRepositoryDto extends AbstractRequest<RepositoryDto> {
@@ -8,7 +9,7 @@ public class GetRepositoryDto extends AbstractRequest<RepositoryDto> {
 	private final String repositoryName;
 
 	public GetRepositoryDto(final String repositoryName) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
 	}
 
 	@Override

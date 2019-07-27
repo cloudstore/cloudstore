@@ -2,8 +2,8 @@ package co.codewizards.cloudstore.server;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +55,6 @@ import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
@@ -118,7 +117,7 @@ public class CloudStoreServer implements Runnable {
 		return cloudStoreServerClass;
 	}
 	protected static void setCloudStoreServerClass(final Class<? extends CloudStoreServer> cloudStoreServerClass) {
-		assertNotNull(cloudStoreServerClass, "cloudStoreServerClass");
+		requireNonNull(cloudStoreServerClass, "cloudStoreServerClass");
 		CloudStoreServer.cloudStoreServerClass = cloudStoreServerClass;
 	}
 
@@ -344,7 +343,7 @@ public class CloudStoreServer implements Runnable {
 	private ServletContextHandler createServletContextHandler() {
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-		final ServletContainer servletContainer = new ServletContainer(AssertUtil.assertNotNull(createResourceConfig(), "createResourceConfig()"));
+		final ServletContainer servletContainer = new ServletContainer(requireNonNull(createResourceConfig(), "createResourceConfig()"));
 		context.addServlet(new ServletHolder(servletContainer), "/*");
 //		context.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class)); // Does not work :-( Using GZip...Interceptor instead ;-)
 		return context;

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -14,10 +14,10 @@ public class PutFileData extends VoidRequest {
 	private final byte[] fileData;
 
 	public PutFileData(final String repositoryName, final String path, final long offset, final byte[] fileData) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.path = assertNotNull(path, "path");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.path = requireNonNull(path, "path");
 		this.offset = offset;
-		this.fileData = assertNotNull(fileData, "fileData");
+		this.fileData = requireNonNull(fileData, "fileData");
 	}
 
 	@Override

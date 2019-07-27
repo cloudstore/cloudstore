@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -8,14 +8,12 @@ import java.security.Signature;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
-
 public class AuthTokenSigner {
 	public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 	private PrivateKey privateKey;
 
 	public AuthTokenSigner(byte[] privateKeyData) {
-		AssertUtil.assertNotNull(privateKeyData, "privateKeyData");
+		requireNonNull(privateKeyData, "privateKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -29,7 +27,7 @@ public class AuthTokenSigner {
 	}
 
 	public SignedAuthToken sign(byte[] authTokenData) {
-		AssertUtil.assertNotNull(authTokenData, "authTokenData");
+		requireNonNull(authTokenData, "authTokenData");
 		Signature signingEngine;
 		try {
 			signingEngine = Signature.getInstance(SIGNATURE_ALGORITHM);

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
@@ -11,8 +12,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Unique;
 import javax.jdo.listener.LoadCallback;
 import javax.jdo.listener.StoreCallback;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
@@ -93,7 +92,7 @@ public class FileChunk extends Entity implements Comparable<FileChunk>, StoreCal
 
 	@Override
 	public int compareTo(final FileChunk other) {
-		AssertUtil.assertNotNull(other, "other");
+		requireNonNull(other, "other");
 
 		if (this.normalFile != other.normalFile) {
 			final long thisRepoFileId = this.normalFile == null ? 0 : this.normalFile.getId();

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Date;
 
@@ -123,7 +123,7 @@ public abstract class Entity implements AutoTrackChanged
 	 * @param created the timestamp of the creation of this entity. Must not be <code>null</code>.
 	 */
 	protected void setCreated(final Date created) {
-		assertNotNull(created, "created");
+		requireNonNull(created, "created");
 		this.created = created;
 	}
 
@@ -133,7 +133,7 @@ public abstract class Entity implements AutoTrackChanged
 	}
 	@Override
 	public void setChanged(final Date changed) {
-		assertNotNull(created, "created");
+		requireNonNull(created, "created");
 		this.changed = changed;
 	}
 

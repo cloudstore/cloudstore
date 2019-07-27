@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -14,8 +14,8 @@ public class PutParentConfigPropSetDto extends VoidRequest {
 	private final ConfigPropSetDto parentConfigPropSetDto;
 
 	public PutParentConfigPropSetDto(final String repositoryName, final ConfigPropSetDto parentConfigPropSetDto) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.parentConfigPropSetDto = assertNotNull(parentConfigPropSetDto, "parentConfigPropSetDto");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.parentConfigPropSetDto = requireNonNull(parentConfigPropSetDto, "parentConfigPropSetDto");
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.oio.nio;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,13 +38,13 @@ public final class NioFileUtil {
 	}
 
 	static String toPathString(final Path path) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 
 	static String toPathString(final java.io.File file) {
 		final Path path = file.toPath();
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 

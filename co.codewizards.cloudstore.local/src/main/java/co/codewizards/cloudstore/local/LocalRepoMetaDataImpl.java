@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class LocalRepoMetaDataImpl implements LocalRepoMetaData {
 		return localRepoManager;
 	}
 	protected LocalRepoManager getLocalRepoManagerOrFail() {
-		return assertNotNull(localRepoManager, "localRepoManager");
+		return requireNonNull(localRepoManager, "localRepoManager");
 	}
 	protected void setLocalRepoManager(LocalRepoManager localRepoManager) {
 		this.localRepoManager = localRepoManager;
@@ -53,7 +53,7 @@ public class LocalRepoMetaDataImpl implements LocalRepoMetaData {
 
 	@Override
 	public RepoFileDto getRepoFileDto(final String path, final int depth) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 
 		final RepoFileDto result;
 		try (final LocalRepoTransaction tx = beginReadTransaction();) {

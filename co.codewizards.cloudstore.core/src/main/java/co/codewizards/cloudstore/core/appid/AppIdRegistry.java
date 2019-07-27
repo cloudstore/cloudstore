@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.appid;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
-import static co.codewizards.cloudstore.core.util.AssertUtil.assertNotNull;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static java.util.Objects.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -50,8 +50,8 @@ public class AppIdRegistry {
 	}
 
 	public void copyResourceResolvingAppId(final Reader reader, final Writer writer) throws IOException {
-		assertNotNull(writer, "writer");
-		assertNotNull(reader, "reader");
+		requireNonNull(writer, "writer");
+		requireNonNull(reader, "reader");
 
 		final AppId appId = getAppIdOrFail();
 		Map<String, Object> variables = new HashMap<>();

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.provider;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +39,7 @@ implements MessageBodyReader<Object>
 	private SecurityContext securityContext;
 
 	public JavaNativeWithObjectRefMessageBodyReader(final ObjectRefConverterFactory objectRefConverterFactory) {
-		this.objectRefConverterFactory = assertNotNull(objectRefConverterFactory, "objectRefConverterFactory");
+		this.objectRefConverterFactory = requireNonNull(objectRefConverterFactory, "objectRefConverterFactory");
 	}
 
 	@Override
@@ -87,7 +87,7 @@ implements MessageBodyReader<Object>
 
 		public ResolvingObjectInputStream(final InputStream in, final ObjectRefConverter objectRefConverter) throws IOException {
 			super(in);
-			this.objectRefConverter = assertNotNull(objectRefConverter, "objectRefConverter");
+			this.objectRefConverter = requireNonNull(objectRefConverter, "objectRefConverter");
 			enableResolveObject(true);
 		}
 

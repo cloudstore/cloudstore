@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 		new MockUp<CloudStoreUpdaterCore>() {
 			@Mock
 			Version getRemoteVersion(Invocation invocation) {
-				return assertNotNull(remoteVersion, "remoteVersion");
+				return requireNonNull(remoteVersion, "remoteVersion");
 			}
 		};
 	}
@@ -106,7 +106,7 @@ public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 	}
 
 	private void assertThatInstallationIs(String expectedArtifactId, String expectedVersion) throws IOException {
-		assertNotNull(installationDir, "installationDir");
+		requireNonNull(installationDir, "installationDir");
 
 		File installationPropertiesFile = installationDir.createFile("installation.properties");
 		assertThat(installationPropertiesFile.getIoFile()).exists();

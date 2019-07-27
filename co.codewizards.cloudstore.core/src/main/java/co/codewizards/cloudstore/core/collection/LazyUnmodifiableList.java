@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.collection;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -175,7 +175,7 @@ public abstract class LazyUnmodifiableList<E> implements List<E> {
 
 	protected List<E> getElements() {
 		if (elements == null)
-			elements = Collections.unmodifiableList(new ArrayList<E>(assertNotNull(loadElements(), getClass().getName() + ".loadElements()")));
+			elements = Collections.unmodifiableList(new ArrayList<E>(requireNonNull(loadElements(), getClass().getName() + ".loadElements()")));
 
 		return elements;
 	}

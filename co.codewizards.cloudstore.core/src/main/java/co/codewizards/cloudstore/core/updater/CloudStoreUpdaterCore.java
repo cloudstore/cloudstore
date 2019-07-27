@@ -2,8 +2,8 @@ package co.codewizards.cloudstore.core.updater;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.UrlUtil.*;
+import static java.util.Objects.*;
 
 import java.io.BufferedReader;
 import java.io.FileFilter;
@@ -30,7 +30,6 @@ import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.core.version.LocalVersionInIdeHelper;
@@ -119,7 +118,7 @@ public class CloudStoreUpdaterCore {
 			else {
 				final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
 				// cannot use resolve(...), because it invokes this method ;-)
-				assertNotNull(artifactId, "artifactId");
+				requireNonNull(artifactId, "artifactId");
 				final Map<String, Object> variables = new HashMap<>(1);
 				variables.put("artifactId", artifactId);
 				final String resolvedRemoteVersionURL = IOUtil.replaceTemplateVariables(remoteVersionURL, variables);
@@ -204,9 +203,9 @@ public class CloudStoreUpdaterCore {
 	 * @return
 	 */
 	protected String resolve(final String template) {
-		assertNotNull(template, "template");
+		requireNonNull(template, "template");
 		final String artifactId = getInstallationProperties().getProperty(INSTALLATION_PROPERTIES_ARTIFACT_ID);
-		assertNotNull(artifactId, "artifactId");
+		requireNonNull(artifactId, "artifactId");
 
 		final Version remoteVersion = getRemoteVersion();
 
@@ -295,8 +294,8 @@ public class CloudStoreUpdaterCore {
 		public final DateTime remoteVersionTimestamp;
 
 		public RemoteVersionCache(final Version remoteVersion, final DateTime remoteVersionTimestamp) {
-			this.remoteVersion = AssertUtil.assertNotNull(remoteVersion, "remoteVersion");
-			this.remoteVersionTimestamp = AssertUtil.assertNotNull(remoteVersionTimestamp, "remoteVersionTimestamp");
+			this.remoteVersion = requireNonNull(remoteVersion, "remoteVersion");
+			this.remoteVersionTimestamp = requireNonNull(remoteVersionTimestamp, "remoteVersionTimestamp");
 		}
 	}
 

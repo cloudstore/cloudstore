@@ -1,8 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
-import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
 import java.io.IOException;
@@ -28,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.AuthConstants;
 import co.codewizards.cloudstore.core.dto.Error;
+import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -200,7 +200,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected UUID getClientRepositoryIdFromUserName(final String userName) {
-		if (assertNotNull(userName, "userName").startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
+		if (requireNonNull(userName, "userName").startsWith(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX)) {
 			final String repositoryIdString = userName.substring(AuthConstants.USER_NAME_REPOSITORY_ID_PREFIX.length());
 			final UUID clientRepositoryId = UUID.fromString(repositoryIdString);
 			return clientRepositoryId;
@@ -251,7 +251,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	}
 
 	protected URL getLocalRootURL(final UUID clientRepositoryId) {
-		assertNotNull(repositoryName, "repositoryName");
+		requireNonNull(repositoryName, "repositoryName");
 		final File localRoot = LocalRepoRegistryImpl.getInstance().getLocalRootForRepositoryNameOrFail(repositoryName);
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {

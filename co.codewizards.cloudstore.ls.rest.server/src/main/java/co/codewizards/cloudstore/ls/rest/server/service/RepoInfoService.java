@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.server.service;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collection;
 
@@ -49,10 +49,10 @@ public class RepoInfoService
 	@POST
 	public RepoInfoResponseDto run(final RepoInfoRequestDto repoInfoRequestDto)
 	{
-		assertNotNull(repoInfoRequestDto, "repoInfoRequestDto");
+		requireNonNull(repoInfoRequestDto, "repoInfoRequestDto");
 		repoInfoResponseDto = new RepoInfoResponseDto();
 
-		final File localRoot = createFile(assertNotNull(repoInfoRequestDto.getLocalRoot(), ""));
+		final File localRoot = createFile(requireNonNull(repoInfoRequestDto.getLocalRoot(), ""));
 		final LocalRepoManager localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRoot);
 		try {
 			try ( LocalRepoTransaction transaction = localRepoManager.beginReadTransaction(); ) {

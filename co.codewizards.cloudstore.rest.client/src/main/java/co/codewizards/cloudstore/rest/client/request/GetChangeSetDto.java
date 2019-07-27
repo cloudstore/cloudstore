@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -14,7 +14,7 @@ public class GetChangeSetDto extends AbstractRequest<ChangeSetDto> {
 	private final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced;
 
 	public GetChangeSetDto(final String repositoryName, final boolean localSync, final Long lastSyncToRemoteRepoLocalRepositoryRevisionSynced) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
 		this.localSync = localSync;
 		this.lastSyncToRemoteRepoLocalRepositoryRevisionSynced = lastSyncToRemoteRepoLocalRepositoryRevisionSynced;
 	}

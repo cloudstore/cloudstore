@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.auth;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -11,13 +11,11 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
-
 public class SignedAuthTokenDecrypter {
 	private PrivateKey privateKey;
 
 	public SignedAuthTokenDecrypter(final byte[] privateKeyData) {
-		AssertUtil.assertNotNull(privateKeyData, "privateKeyData");
+		requireNonNull(privateKeyData, "privateKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -31,9 +29,9 @@ public class SignedAuthTokenDecrypter {
 	}
 
 	public byte[] decrypt(final EncryptedSignedAuthToken encryptedSignedAuthToken) {
-		AssertUtil.assertNotNull(encryptedSignedAuthToken, "encryptedSignedAuthToken");
-		AssertUtil.assertNotNull(encryptedSignedAuthToken.getEncryptedSignedAuthTokenData(), "encryptedSignedAuthToken.encryptedSignedAuthTokenData");
-		AssertUtil.assertNotNull(encryptedSignedAuthToken.getEncryptedSymmetricKey(), "encryptedSignedAuthToken.encryptedSymmetricKey");
+		requireNonNull(encryptedSignedAuthToken, "encryptedSignedAuthToken");
+		requireNonNull(encryptedSignedAuthToken.getEncryptedSignedAuthTokenData(), "encryptedSignedAuthToken.encryptedSignedAuthTokenData");
+		requireNonNull(encryptedSignedAuthToken.getEncryptedSymmetricKey(), "encryptedSignedAuthToken.encryptedSymmetricKey");
 		try {
 			final Cipher asymCipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA1ANDMGF1PADDING");
 			asymCipher.init(Cipher.DECRYPT_MODE, privateKey);

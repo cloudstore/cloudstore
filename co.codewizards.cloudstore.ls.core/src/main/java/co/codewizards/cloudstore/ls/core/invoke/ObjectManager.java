@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
@@ -112,7 +112,7 @@ public class ObjectManager {
 	}
 
 	public static synchronized ObjectManager getInstance(final Uid clientId) {
-		assertNotNull(clientId, "clientId");
+		requireNonNull(clientId, "clientId");
 		ObjectManager objectManager = clientId2ObjectManager.get(clientId);
 		if (objectManager == null) {
 			objectManager = new ObjectManager(clientId);
@@ -200,7 +200,7 @@ public class ObjectManager {
 	}
 
 	protected ObjectManager(final Uid clientId) {
-		this.clientId = assertNotNull(clientId, "clientId");
+		this.clientId = requireNonNull(clientId, "clientId");
 		classManager = new ClassManager(clientId);
 		referenceJanitorRegistry = new ReferenceJanitorRegistry(this);
 		logger.debug("[{}].<init>: Created ObjectManager.", clientId);
@@ -288,7 +288,7 @@ public class ObjectManager {
 	}
 
 	public synchronized ObjectRef getObjectRef(final Object object) {
-		assertNotNull(object, "object");
+		requireNonNull(object, "object");
 		assertNotInstanceOfObjectRef(object);
 		final ObjectRef objectRef = object2ObjectRef.get(object);
 		updateLastUseDate();
@@ -305,14 +305,14 @@ public class ObjectManager {
 	}
 
 	public synchronized Object getObject(final ObjectRef objectRef) {
-		assertNotNull(objectRef, "objectRef");
+		requireNonNull(objectRef, "objectRef");
 		final Object object = objectRef2Object.get(objectRef);
 		updateLastUseDate();
 		return object;
 	}
 
 	private synchronized void remove(final ObjectRef objectRef) {
-		assertNotNull(objectRef, "objectRef");
+		requireNonNull(objectRef, "objectRef");
 
 		if (!objectRef2Object.containsKey(objectRef))
 			throw new IllegalStateException("!objectRef2Object.containsKey(objectRef): " + objectRef);
@@ -326,8 +326,8 @@ public class ObjectManager {
 	}
 
 	public synchronized void incRefCount(final Object object, final Uid refId) {
-		assertNotNull(object, "object");
-		assertNotNull(refId, "refId");
+		requireNonNull(object, "object");
+		requireNonNull(refId, "refId");
 
 		int refCountBefore;
 		int refCountAfter;
@@ -343,7 +343,7 @@ public class ObjectManager {
 		else {
 			final Set<Uid> refIds = objectRef2RefIds.get(objectRef);
 			refCountBefore = refIds.size();
-			assertNotNull(refIds, "objectRef2RefIds.get(" + objectRef + ")");
+			requireNonNull(refIds, "objectRef2RefIds.get(" + objectRef + ")");
 			refIds.add(refId);
 			refCountAfter = refIds.size();
 		}
@@ -354,8 +354,8 @@ public class ObjectManager {
 	}
 
 	public synchronized void decRefCount(final Object object, final Uid refId) {
-		assertNotNull(object, "object");
-		assertNotNull(refId, "refId");
+		requireNonNull(object, "object");
+		requireNonNull(refId, "refId");
 
 		int refCountBefore = 0;
 		int refCountAfter = 0;

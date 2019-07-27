@@ -3,8 +3,8 @@ package co.codewizards.cloudstore.local;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
+import static java.util.Objects.*;
 
 import java.io.InputStream;
 import java.sql.Connection;
@@ -42,7 +42,7 @@ public class JdbcConnectionFactory {
 	private String connectionPassword;
 
 	public JdbcConnectionFactory(final File localRoot) {
-		this.localRoot = assertNotNull(localRoot, "localRoot");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 

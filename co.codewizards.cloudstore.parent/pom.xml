@@ -37,9 +37,8 @@
 		<slf4j.version>1.7.7</slf4j.version>
 		<logback.version>1.0.13</logback.version>
 		<jersey.version>2.5.1</jersey.version>
-		<!-- <jetty.version>9.1.0.v20131115</jetty.version> -->
-		<!-- <jetty.version>9.1.5.v20140505</jetty.version> -->
-		<jetty.version>9.3.24.v20180605</jetty.version>
+		<!-- <jetty.version>9.3.24.v20180605</jetty.version> -->
+		<jetty.version>9.4.12.v20180830</jetty.version>
 
 		<!-- Always aggregate. -->
 		<aggregate>true</aggregate>
@@ -358,7 +357,7 @@
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-compress</artifactId>
-				<version>1.7</version> <!-- 1.8 is broken :-( https://issues.apache.org/jira/browse/COMPRESS-278 -->
+				<version>1.18</version>
 			</dependency>
 
 			<dependency>

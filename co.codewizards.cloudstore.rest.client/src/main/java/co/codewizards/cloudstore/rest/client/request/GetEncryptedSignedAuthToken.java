@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.UUID;
 
@@ -14,8 +14,8 @@ public class GetEncryptedSignedAuthToken extends AbstractRequest<EncryptedSigned
 	private final UUID clientRepositoryId;
 
 	public GetEncryptedSignedAuthToken(final String repositoryName, final UUID clientRepositoryId) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.clientRepositoryId = assertNotNull(clientRepositoryId, "clientRepositoryId");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.clientRepositoryId = requireNonNull(clientRepositoryId, "clientRepositoryId");
 	}
 
 	@Override

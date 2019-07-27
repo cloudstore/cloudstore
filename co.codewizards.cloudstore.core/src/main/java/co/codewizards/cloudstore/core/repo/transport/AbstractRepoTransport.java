@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public void setRepoTransportFactory(final RepoTransportFactory repoTransportFactory) {
-		this.repoTransportFactory = assertNotNull(repoTransportFactory, "repoTransportFactory");
+		this.repoTransportFactory = requireNonNull(repoTransportFactory, "repoTransportFactory");
 	}
 
 	@Override
@@ -116,7 +116,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String prefixPath(final String path) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		if ("".equals(path) || SLASH.equals(path))
 			return getPathPrefix();
 		if (path.startsWith(SLASH))
@@ -127,7 +127,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 
 	@Override
 	public String unprefixPath(String path) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return path;
@@ -146,7 +146,7 @@ public abstract class AbstractRepoTransport implements RepoTransport {
 	}
 
 	protected boolean isPathUnderPathPrefix(final String path) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		final String pathPrefix = getPathPrefix();
 		if (pathPrefix.isEmpty())
 			return true;

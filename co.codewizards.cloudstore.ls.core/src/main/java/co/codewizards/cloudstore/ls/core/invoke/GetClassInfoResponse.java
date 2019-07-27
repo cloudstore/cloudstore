@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.ls.core.dto.AbstractInverseServiceResponse;
 
 /**
@@ -14,7 +15,7 @@ public class GetClassInfoResponse extends AbstractInverseServiceResponse {
 
 	public GetClassInfoResponse(final GetClassInfoRequest request, final ClassInfo classInfo) {
 		super(request);
-		this.classInfo = assertNotNull(classInfo, "classInfo");
+		this.classInfo = requireNonNull(classInfo, "classInfo");
 	}
 
 	public ClassInfo getClassInfo() {

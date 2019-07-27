@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ExceptionUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -83,8 +83,8 @@ public class CloudStoreRestClient {
 	 * The base-URL is automatically determined by cutting sub-paths, step by step.
 	 */
 	public CloudStoreRestClient(final URL url, final ClientBuilder clientBuilder) {
-		this.url = assertNotNull(url, "url");
-		this.clientBuilder = assertNotNull(clientBuilder, "clientBuilder");
+		this.url = requireNonNull(url, "url");
+		this.clientBuilder = requireNonNull(clientBuilder, "clientBuilder");
 	}
 
 	/**
@@ -95,11 +95,11 @@ public class CloudStoreRestClient {
 	 */
 	public CloudStoreRestClient(final String url, final ClientBuilder clientBuilder) {
 		try{
-			this.url = assertNotNull(new URL(url), "url");
+			this.url = requireNonNull(new URL(url), "url");
 		} catch (MalformedURLException e){
 			throw new IllegalStateException("url is invalid", e);
 		}
-		this.clientBuilder = assertNotNull(clientBuilder, "clientBuilder");
+		this.clientBuilder = requireNonNull(clientBuilder, "clientBuilder");
 	}
 
 	private void determineBaseUrl() {
@@ -146,7 +146,7 @@ public class CloudStoreRestClient {
 	}
 
 	public <R> R execute(final Request<R> request) {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		Throwable firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 2; // *re*-try: 2 retries means 3 invocations in total
@@ -209,7 +209,7 @@ public class CloudStoreRestClient {
 	}
 
 	private Throwable getApplicationException(final Throwable exception) {
-		assertNotNull(exception, "exception");
+		requireNonNull(exception, "exception");
 
 		Throwable x = exception;
 		while (x != null) {
@@ -261,7 +261,7 @@ public class CloudStoreRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = assertNotNull(client, "client");
+			this.client = requireNonNull(client, "client");
 		}
 	}
 

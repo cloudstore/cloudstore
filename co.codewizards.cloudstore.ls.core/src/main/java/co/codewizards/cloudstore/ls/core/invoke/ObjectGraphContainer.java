@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,7 +22,7 @@ public class ObjectGraphContainer implements Serializable {
 	private IdentityHashMap<Object, ForceNonTransientContainer> transientFieldOwnerObject2ForceNonTransientContainer = new IdentityHashMap<Object, ForceNonTransientContainer>();
 
 	public ObjectGraphContainer(final Object root) {
-		this.root = assertNotNull(root, "root");
+		this.root = requireNonNull(root, "root");
 	}
 
 	public Object getRoot() {
@@ -30,7 +30,7 @@ public class ObjectGraphContainer implements Serializable {
 	}
 
 	public void putForceNonTransientContainer(final ForceNonTransientContainer forceNonTransientContainer) {
-		assertNotNull(forceNonTransientContainer, "forceNonTransientContainer");
+		requireNonNull(forceNonTransientContainer, "forceNonTransientContainer");
 		transientFieldOwnerObject2ForceNonTransientContainer.put(forceNonTransientContainer.getTransientFieldOwnerObject(), forceNonTransientContainer);
 	}
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.core.Response;
 
@@ -11,9 +11,9 @@ public class Copy extends VoidRequest {
 	private final String toPath;
 
 	public Copy(final String repositoryName, final String fromPath, final String toPath) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.fromPath = assertNotNull(fromPath, "fromPath");
-		this.toPath = assertNotNull(toPath, "toPath");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.fromPath = requireNonNull(fromPath, "fromPath");
+		this.toPath = requireNonNull(toPath, "toPath");
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static java.util.Objects.*;
+
 import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
@@ -7,8 +9,6 @@ import javax.jdo.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class ModificationDao extends Dao<Modification, ModificationDao> {
 	private static final Logger logger = LoggerFactory.getLogger(ModificationDao.class);
@@ -22,7 +22,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	 * @return those {@link Modification}s matching the given criteria. Never <code>null</code>, but maybe empty.
 	 */
 	public Collection<Modification> getModificationsAfter(final RemoteRepository remoteRepository, final long localRevision) {
-		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
+		requireNonNull(remoteRepository, "remoteRepository");
 		final PersistenceManager pm = pm();
 		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
 		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
@@ -46,7 +46,7 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 	}
 
 	public Collection<Modification> getModificationsBeforeOrEqual(final RemoteRepository remoteRepository, final long localRevision) {
-		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
+		requireNonNull(remoteRepository, "remoteRepository");
 		final PersistenceManager pm = pm();
 		final FetchPlanBackup fetchPlanBackup = FetchPlanBackup.createFrom(pm);
 		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");

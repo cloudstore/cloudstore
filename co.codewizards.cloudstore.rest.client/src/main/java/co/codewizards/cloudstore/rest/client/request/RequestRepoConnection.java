@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -14,11 +14,11 @@ public class RequestRepoConnection extends VoidRequest {
 	private final RepositoryDto clientRepositoryDto;
 
 	public RequestRepoConnection(final String repositoryName, final String pathPrefix, final RepositoryDto clientRepositoryDto) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
 		this.pathPrefix = pathPrefix;
-		this.clientRepositoryDto = assertNotNull(clientRepositoryDto, "clientRepositoryDto");
-		assertNotNull(clientRepositoryDto.getRepositoryId(), "clientRepositoryDto.repositoryId");
-		assertNotNull(clientRepositoryDto.getPublicKey(), "clientRepositoryDto.publicKey");
+		this.clientRepositoryDto = requireNonNull(clientRepositoryDto, "clientRepositoryDto");
+		requireNonNull(clientRepositoryDto.getRepositoryId(), "clientRepositoryDto.repositoryId");
+		requireNonNull(clientRepositoryDto.getPublicKey(), "clientRepositoryDto.publicKey");
 	}
 
 	@Override

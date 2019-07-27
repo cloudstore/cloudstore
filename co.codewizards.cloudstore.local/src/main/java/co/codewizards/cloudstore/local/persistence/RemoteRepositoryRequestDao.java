@@ -1,13 +1,13 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static java.util.Objects.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
 import javax.jdo.Query;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RemoteRepositoryRequestDao extends Dao<RemoteRepositoryRequest, RemoteRepositoryRequestDao> {
 
@@ -31,7 +31,7 @@ public class RemoteRepositoryRequestDao extends Dao<RemoteRepositoryRequest, Rem
 	}
 
 	public Collection<RemoteRepositoryRequest> getRemoteRepositoryRequestsChangedBefore(final Date changed) {
-		AssertUtil.assertNotNull(changed, "changed");
+		requireNonNull(changed, "changed");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepositoryRequestsChangedBefore_changed");
 		try {
 			@SuppressWarnings("unchecked")

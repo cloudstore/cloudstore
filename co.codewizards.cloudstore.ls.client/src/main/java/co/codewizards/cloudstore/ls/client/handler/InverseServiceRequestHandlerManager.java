@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.client.handler;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,7 +20,7 @@ public class InverseServiceRequestHandlerManager {
 		public final int priority;
 
 		public HandlerClass(final Class<? extends InverseServiceRequestHandler> handlerClass, final int priority) {
-			this.handlerClass = assertNotNull(handlerClass, "handlerClass");
+			this.handlerClass = requireNonNull(handlerClass, "handlerClass");
 			this.priority = priority;
 		}
 
@@ -55,7 +55,7 @@ public class InverseServiceRequestHandlerManager {
 	}
 
 	public InverseServiceRequestHandler getInverseServiceRequestHandler(Class<?> requestClass) {
-		assertNotNull(requestClass, "requestClass");
+		requireNonNull(requestClass, "requestClass");
 
 		final Class<? extends InverseServiceRequestHandler> handlerClass = getInverseServiceRequestHandlerClass(requestClass);
 		if (handlerClass == null)
@@ -77,7 +77,7 @@ public class InverseServiceRequestHandlerManager {
 	}
 
 	private synchronized SortedSet<HandlerClass> getInverseServiceRequestHandlerClasses(final Class<?> requestClass) {
-		assertNotNull(requestClass, "requestClass");
+		requireNonNull(requestClass, "requestClass");
 
 		if (requestType2HandlerClass.isEmpty()) {
 			final Iterator<InverseServiceRequestHandler> iterator = ServiceLoader.load(InverseServiceRequestHandler.class).iterator();
@@ -114,12 +114,12 @@ public class InverseServiceRequestHandlerManager {
 	}
 
 	public InverseServiceRequestHandler getInverseServiceRequestHandlerOrFail(final InverseServiceRequest request) {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		return getInverseServiceRequestHandlerOrFail(request.getClass());
 	}
 
 	private InverseServiceRequestHandler newInstance(Class<? extends InverseServiceRequestHandler> handlerClass) {
-		assertNotNull(handlerClass, "handlerClass");
+		requireNonNull(handlerClass, "handlerClass");
 		try {
 			return handlerClass.newInstance();
 		} catch (final InstantiationException | IllegalAccessException e) {

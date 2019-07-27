@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.version;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 
@@ -16,14 +16,14 @@ public class VersionCompatibilityValidator {
 
 	public void validate(final VersionInfoDto clientVersionInfoDto, final VersionInfoDto serverVersionInfoDto)
 	throws VersionCompatibilityException {
-		assertNotNull(clientVersionInfoDto, "clientVersionInfoDto");
-		assertNotNull(serverVersionInfoDto, "serverVersionInfoDto");
+		requireNonNull(clientVersionInfoDto, "clientVersionInfoDto");
+		requireNonNull(serverVersionInfoDto, "serverVersionInfoDto");
 
-		final Version clientVersion = assertNotNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
-		final Version minimumServerVersion = assertNotNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
+		final Version clientVersion = requireNonNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
+		final Version minimumServerVersion = requireNonNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
 
-		final Version serverVersion = assertNotNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
-		final Version minimumClientVersion = assertNotNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
+		final Version serverVersion = requireNonNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
+		final Version minimumClientVersion = requireNonNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
 
 		if (serverVersion.compareTo(minimumServerVersion) < 0)
 			throw new ServerTooOldException(clientVersionInfoDto, serverVersionInfoDto,

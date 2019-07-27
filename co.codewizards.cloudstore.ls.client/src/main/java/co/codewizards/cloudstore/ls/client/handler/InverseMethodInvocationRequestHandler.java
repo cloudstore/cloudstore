@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.client.handler;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.ls.core.invoke.ClassManager;
@@ -21,7 +21,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 
 	@Override
 	public InverseMethodInvocationResponse handle(final InverseMethodInvocationRequest request) throws Exception {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 
 		final MethodInvocationRequest methodInvocationRequest = request.getMethodInvocationRequest();
 		if (methodInvocationRequest != null) {
@@ -39,7 +39,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 	}
 
 	private MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) throws Exception {
-		assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 
 		final ObjectManager objectManager = getLocalServerClient().getObjectManager();
 		final ClassManager classManager = objectManager.getClassManager();
@@ -115,7 +115,7 @@ public class InverseMethodInvocationRequestHandler extends AbstractInverseServic
 	}
 
 	private MethodInvocationResponse getDelayedMethodInvocationResponse(final Uid delayedResponseId) throws Exception {
-		assertNotNull(delayedResponseId, "delayedResponseId");
+		requireNonNull(delayedResponseId, "delayedResponseId");
 		return invokeMethodExecutor.getDelayedResponse(delayedResponseId);
 	}
 }

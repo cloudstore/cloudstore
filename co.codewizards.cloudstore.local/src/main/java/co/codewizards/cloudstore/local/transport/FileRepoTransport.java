@@ -2,8 +2,8 @@ package co.codewizards.cloudstore.local.transport;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static java.util.Objects.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -60,7 +60,6 @@ import co.codewizards.cloudstore.core.repo.transport.DeleteModificationCollision
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
 import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.TransferDoneMarkerType;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
@@ -123,7 +122,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 	@Override
 	public void requestRepoConnection(final byte[] publicKey) {
-		assertNotNull(publicKey, "publicKey");
+		requireNonNull(publicKey, "publicKey");
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction();
 		try {
@@ -188,7 +187,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginReadTransaction(); ) {
 			final RemoteRepositoryDao remoteRepositoryDao = transaction.getDao(RemoteRepositoryDao.class);
 			final RemoteRepository remoteRepository = remoteRepositoryDao.getRemoteRepository(clientRepositoryId);
-			assertNotNull(remoteRepository, "remoteRepository[" + clientRepositoryId + "]");
+			requireNonNull(remoteRepository, "remoteRepository[" + clientRepositoryId + "]");
 			final RepositoryDto repositoryDto = RepositoryDtoConverter.create().toRepositoryDto(remoteRepository);
 			transaction.commit();
 			return repositoryDto;
@@ -242,7 +241,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	@Override
 	public void makeSymlink(String path, final String target, final Date lastModified) {
 		path = prefixPath(path);
-		AssertUtil.assertNotNull(target, "target");
+		requireNonNull(target, "target");
 		final File file = getFile(path);
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
 		try ( final LocalRepoTransaction transaction = getLocalRepoManager().beginWriteTransaction(); ) {
@@ -365,7 +364,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 				final LocalRepoSync localRepoSync = LocalRepoSync.create(transaction);
 				final RepoFile toRepoFile = localRepoSync.sync(toFile, new NullProgressMonitor(), true);
-				AssertUtil.assertNotNull(toRepoFile, "toRepoFile");
+				requireNonNull(toRepoFile, "toRepoFile");
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
 				ParentFileLastModifiedManager.getInstance().restoreParentFileLastModified(toParentFile);
@@ -409,7 +408,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				if (fromRepoFile != null)
 					localRepoSync.deleteRepoFile(fromRepoFile);
 
-				assertNotNull(toRepoFile, "toRepoFile");
+				requireNonNull(toRepoFile, "toRepoFile");
 
 				toRepoFile.setLastSyncFromRepositoryId(getClientRepositoryIdOrFail());
 			} finally {
@@ -548,7 +547,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 //	private List<FileChunkDto> toFileChunkDtos(final Set<FileChunk> fileChunks) {
 //		final long startTimestamp = System.currentTimeMillis();
-//		final List<FileChunkDto> result = new ArrayList<FileChunkDto>(AssertUtil.assertNotNull("fileChunks", fileChunks).size());
+//		final List<FileChunkDto> result = new ArrayList<FileChunkDto>(requireNonNull("fileChunks", fileChunks).size());
 //		for (final FileChunk fileChunk : fileChunks) {
 //			final FileChunkDto fileChunkDto = toFileChunkDto(fileChunk);
 //			if (fileChunkDto != null)
@@ -568,7 +567,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //	private List<RepoFileDto> toRepoFileDtos(final Collection<RepoFile> fileChunks) {
 //		final long startTimestamp = System.currentTimeMillis();
 //		final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
-//		final List<RepoFileDto> result = new ArrayList<RepoFileDto>(AssertUtil.assertNotNull("fileChunks", fileChunks).size());
+//		final List<RepoFileDto> result = new ArrayList<RepoFileDto>(requireNonNull("fileChunks", fileChunks).size());
 //		for (final RepoFile fileChunk : fileChunks) {
 //			final RepoFileDto fileChunkDto = toRepoFileDto(fileChunk);
 //			if (fileChunkDto != null)
@@ -588,8 +587,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 
 
 	protected void mkDir(final LocalRepoTransaction transaction, final UUID clientRepositoryId, final File file, final Date lastModified) {
-		AssertUtil.assertNotNull(transaction, "transaction");
-		AssertUtil.assertNotNull(file, "file");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(file, "file");
 
 		final File localRoot = getLocalRepoManager().getLocalRoot();
 		final File parentFile = localRoot.equals(file) ? null : file.getParentFile();
@@ -653,8 +652,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @return the {@link RepoFile} that was created/updated for the given {@code file}.
 	 */
 	protected RepoFile syncRepoFile(final LocalRepoTransaction transaction, final File file) {
-		assertNotNull(transaction, "transaction");
-		assertNotNull(file, "file");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(file, "file");
 		return LocalRepoSync.create(transaction)
 				.sync(file, new NullProgressMonitor(), false); // recursiveChildren==false, because we only need this one single Directory object in the DB, and we MUST NOT consume time with its children.
 	}
@@ -664,7 +663,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @return the file in the local repository. Never <code>null</code>.
 	 */
 	protected File getFile(String path) {
-		path = AssertUtil.assertNotNull(path, "path").replace('/', FILE_SEPARATOR_CHAR);
+		path = requireNonNull(path, "path").replace('/', FILE_SEPARATOR_CHAR);
 		final File file = createFile(getLocalRepoManager().getLocalRoot(), path);
 		return file;
 	}
@@ -776,10 +775,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param file the file that is to be copied (i.e. overwritten). Must not be <code>null</code>. This may be a directory or a symlink, too!
 	 */
 	protected void handleFileTypeCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final Class<? extends RepoFileDto> fromFileType) {
-		assertNotNull(transaction, "transaction");
-		assertNotNull(fromRepositoryId, "fromRepositoryId");
-		assertNotNull(file, "file");
-		assertNotNull(fromFileType, "fromFileType");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(file, "file");
+		requireNonNull(fromFileType, "fromFileType");
 
 		Class<? extends RepoFileDto> toFileType;
 		if (file.isSymbolicLink())
@@ -824,10 +823,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param normalFileOrSymlink the DB entity corresponding to {@code file}. Must not be <code>null</code>.
 	 */
 	protected void detectAndHandleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
-		assertNotNull(transaction, "transaction");
-		assertNotNull(fromRepositoryId, "fromRepositoryId");
-		assertNotNull(file, "file");
-		assertNotNull(normalFileOrSymlink, "normalFileOrSymlink");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(file, "file");
+		requireNonNull(normalFileOrSymlink, "normalFileOrSymlink");
 		if (detectFileCollision(transaction, fromRepositoryId, file, normalFileOrSymlink)) {
 			final File collisionFile = handleFileCollision(transaction, fromRepositoryId, file);
 
@@ -842,9 +841,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	protected File handleFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file) {
-		assertNotNull(transaction, "transaction");
-		assertNotNull(fromRepositoryId, "fromRepositoryId");
-		assertNotNull(file, "file");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(file, "file");
 		final File collisionFile = IOUtil.createCollisionFile(file);
 		file.renameTo(collisionFile);
 		if (file.existsNoFollow())
@@ -854,9 +853,9 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	protected boolean detectFileCollisionRecursively(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File fileOrDirectory) {
-		AssertUtil.assertNotNull(transaction, "transaction");
-		AssertUtil.assertNotNull(fromRepositoryId, "fromRepositoryId");
-		AssertUtil.assertNotNull(fileOrDirectory, "fileOrDirectory");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(fileOrDirectory, "fileOrDirectory");
 
 		// we handle symlinks before invoking exists() below, because this method and most other File methods resolve symlinks!
 		if (fileOrDirectory.isSymbolicLink()) {
@@ -901,10 +900,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @return <code>true</code>, if there is a collision; <code>false</code>, if there is none.
 	 */
 	protected boolean detectFileCollision(final LocalRepoTransaction transaction, final UUID fromRepositoryId, final File file, final RepoFile normalFileOrSymlink) {
-		AssertUtil.assertNotNull(transaction, "transaction");
-		AssertUtil.assertNotNull(fromRepositoryId, "fromRepositoryId");
-		AssertUtil.assertNotNull(file, "file");
-		AssertUtil.assertNotNull(normalFileOrSymlink, "normalFileOrSymlink");
+		requireNonNull(transaction, "transaction");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(file, "file");
+		requireNonNull(normalFileOrSymlink, "normalFileOrSymlink");
 
 		if (!file.existsNoFollow()) {
 			logger.debug("detectFileCollision: path='{}': return false, because destination file does not exist.", normalFileOrSymlink.getPath());
@@ -975,10 +974,10 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	private void writeTempChunkFileToDestFile(final File destFile, final File tempChunkFile, final TempChunkFileDto tempChunkFileDto) {
-		AssertUtil.assertNotNull(destFile, "destFile");
-		AssertUtil.assertNotNull(tempChunkFile, "tempChunkFile");
-		AssertUtil.assertNotNull(tempChunkFileDto, "tempChunkFileDto");
-		final long offset = AssertUtil.assertNotNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto").getOffset();
+		requireNonNull(destFile, "destFile");
+		requireNonNull(tempChunkFile, "tempChunkFile");
+		requireNonNull(tempChunkFileDto, "tempChunkFileDto");
+		final long offset = requireNonNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto").getOffset();
 		final byte[] fileData = new byte[(int) tempChunkFile.length()];
 		try {
 			final InputStream in = castStream(tempChunkFile.createInputStream());
@@ -1014,8 +1013,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	private void writeFileDataToDestFile(final File destFile, final long offset, final byte[] fileData) {
-		AssertUtil.assertNotNull(destFile, "destFile");
-		AssertUtil.assertNotNull(fileData, "fileData");
+		requireNonNull(destFile, "destFile");
+		requireNonNull(fileData, "fileData");
 		try {
 			final RandomAccessFile raf = destFile.createRandomAccessFile("rw");
 			try {
@@ -1031,7 +1030,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	private String sha1(final byte[] data) {
-		AssertUtil.assertNotNull(data, "data");
+		requireNonNull(data, "data");
 		try {
 			final byte[] hash = HashUtil.hash(HashUtil.HASH_ALGORITHM_SHA, new ByteArrayInputStream(data));
 			return HashUtil.encodeHexStr(hash);
@@ -1045,7 +1044,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	private final Map<File, FileWriteStrategy> file2FileWriteStrategy = new WeakHashMap<>();
 
 	private FileWriteStrategy getFileWriteStrategy(final File file) {
-		AssertUtil.assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		synchronized (file2FileWriteStrategy) {
 			FileWriteStrategy fileWriteStrategy = file2FileWriteStrategy.get(file);
 			if (fileWriteStrategy == null) {
@@ -1059,7 +1058,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	@Override
 	public void endPutFile(String path, final Date lastModified, final long length, final String sha1) {
 		path = prefixPath(path);
-		AssertUtil.assertNotNull(lastModified, "lastModified");
+		requireNonNull(lastModified, "lastModified");
 		final File file = getFile(path);
 		final File parentFile = file.getParentFile();
 		final UUID clientRepositoryId = getClientRepositoryIdOrFail();
@@ -1108,7 +1107,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 							throw new IllegalStateException("No meta-data (tempChunkFileDtoFile) for file: " + (tempChunkFile == null ? null : tempChunkFile.getAbsolutePath()));
 
 						final TempChunkFileDto tempChunkFileDto = tempChunkFileDtoIo.deserialize(tempChunkFileDtoFile);
-						final long offset = AssertUtil.assertNotNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto").getOffset();
+						final long offset = requireNonNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto").getOffset();
 
 						if (fileIn != null) {
 							// The following might fail, if *file* was truncated during the transfer. In this case,
@@ -1193,7 +1192,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	 * @param length the number of bytes to be skipped. Must not be negative (i.e. <code>length &gt;= 0</code>).
 	 */
 	private void skipOrFail(final InputStream in, final long length) {
-		AssertUtil.assertNotNull(in, "in");
+		requireNonNull(in, "in");
 		if (length < 0)
 			throw new IllegalArgumentException("length < 0");
 
@@ -1223,8 +1222,8 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 	private void writeFileDataToDestFile(final File destFile, final long offset, final InputStream in, final long length) {
-		AssertUtil.assertNotNull(destFile, "destFile");
-		AssertUtil.assertNotNull(in, "in");
+		requireNonNull(destFile, "destFile");
+		requireNonNull(in, "in");
 		if (offset < 0)
 			throw new IllegalArgumentException("offset < 0");
 

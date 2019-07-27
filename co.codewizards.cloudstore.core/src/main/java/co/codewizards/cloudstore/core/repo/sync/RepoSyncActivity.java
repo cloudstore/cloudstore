@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -16,9 +16,9 @@ public class RepoSyncActivity implements Serializable {
 	private final RepoSyncActivityType activityType;
 
 	public RepoSyncActivity(final UUID localRepositoryId, final File localRoot, final RepoSyncActivityType activityType) {
-		this.localRepositoryId = assertNotNull(localRepositoryId, "localRepositoryId");
-		this.localRoot = assertNotNull(localRoot, "localRoot");
-		this.activityType = assertNotNull(activityType, "activityType");
+		this.localRepositoryId = requireNonNull(localRepositoryId, "localRepositoryId");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
+		this.activityType = requireNonNull(activityType, "activityType");
 	}
 
 	public UUID getLocalRepositoryId() {

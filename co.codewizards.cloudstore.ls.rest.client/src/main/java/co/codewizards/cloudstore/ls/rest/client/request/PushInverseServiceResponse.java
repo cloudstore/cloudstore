@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -14,7 +14,7 @@ public class PushInverseServiceResponse extends VoidRequest {
 	private final InverseServiceResponse response;
 
 	public PushInverseServiceResponse(final InverseServiceResponse response) {
-		this.response = assertNotNull(response, "response");
+		this.response = requireNonNull(response, "response");
 	}
 
 	@Override

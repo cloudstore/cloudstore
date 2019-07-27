@@ -1,11 +1,9 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.UUID;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public abstract class AbstractRepoTransportFactory implements RepoTransportFactory {
 
@@ -16,7 +14,7 @@ public abstract class AbstractRepoTransportFactory implements RepoTransportFacto
 
 	@Override
 	public RepoTransport createRepoTransport(URL remoteRoot, UUID clientRepositoryId) {
-		AssertUtil.assertNotNull(remoteRoot, "remoteRoot");
+		requireNonNull(remoteRoot, "remoteRoot");
 		// clientRepositoryId may be null!
 		RepoTransport repoTransport = _createRepoTransport();
 		if (repoTransport == null)

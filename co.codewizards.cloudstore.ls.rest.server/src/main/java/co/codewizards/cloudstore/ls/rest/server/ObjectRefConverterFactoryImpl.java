@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.server;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.security.Principal;
 
@@ -15,8 +15,8 @@ class ObjectRefConverterFactoryImpl implements ObjectRefConverterFactory {
 
 	@Override
 	public ObjectRefConverter createObjectRefConverter(final SecurityContext securityContext) {
-		final Principal userPrincipal = assertNotNull(securityContext, "securityContext").getUserPrincipal();
-		assertNotNull(userPrincipal, "securityContext.userPrincipal");
+		final Principal userPrincipal = requireNonNull(securityContext, "securityContext").getUserPrincipal();
+		requireNonNull(userPrincipal, "securityContext.userPrincipal");
 
 		final Uid clientId = new Uid(securityContext.getUserPrincipal().getName());
 		final ObjectManager objectManager = ObjectManager.getInstance(clientId);

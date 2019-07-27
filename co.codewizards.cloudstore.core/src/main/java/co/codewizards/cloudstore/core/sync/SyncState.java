@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.net.URL;
@@ -25,12 +25,12 @@ public class SyncState implements Serializable {
 	private final Date syncFinished;
 
 	public SyncState(final URL url, final Severity severity, final String message, final Error error, final Date syncStarted, final Date syncFinished) {
-		this.url = assertNotNull(url, "url");
-		this.severity = assertNotNull(severity, "severity");
+		this.url = requireNonNull(url, "url");
+		this.severity = requireNonNull(severity, "severity");
 		this.message = message;
 		this.error = error;
-		this.syncStarted = assertNotNull(syncStarted, "syncStarted");
-		this.syncFinished = assertNotNull(syncFinished, "syncFinished");
+		this.syncStarted = requireNonNull(syncStarted, "syncStarted");
+		this.syncFinished = requireNonNull(syncFinished, "syncFinished");
 	}
 
 	/**

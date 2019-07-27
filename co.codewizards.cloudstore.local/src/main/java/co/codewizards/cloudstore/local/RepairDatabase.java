@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local;
 
+import static java.util.Objects.*;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepairDatabase implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(RepairDatabase.class);
@@ -24,7 +25,7 @@ public class RepairDatabase implements Runnable {
 	private Statement statement;
 
 	public RepairDatabase(File localRoot) {
-		this.localRoot = AssertUtil.assertNotNull(localRoot, "localRoot");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 	}
 
 	@Override

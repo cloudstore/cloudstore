@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.client.util;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.io.ByteArrayInputStream;
 import co.codewizards.cloudstore.core.io.IByteArrayInputStream;
@@ -18,14 +18,14 @@ public final class ByteArrayInputStreamLs {
 	}
 
 	public static IByteArrayInputStream create(byte[] data) {
-		assertNotNull(data, "data");
+		requireNonNull(data, "data");
 		return LocalServerClient.getInstance().invokeConstructor(ByteArrayInputStream.class,
 				new Class<?>[] { byte[].class },
 				data);
 	}
 
 	public static IByteArrayInputStream create(byte[] data, int offset, int length) {
-		assertNotNull(data, "data");
+		requireNonNull(data, "data");
 		return LocalServerClient.getInstance().invokeConstructor(ByteArrayInputStream.class,
 				new Class<?>[] { byte[].class, int.class, int.class },
 				data, offset, length);

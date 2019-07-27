@@ -1,14 +1,12 @@
-
 package co.codewizards.cloudstore.core.oio;
 
+import static java.util.Objects.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
-
-import co.codewizards.cloudstore.core.oio.IoFileRelativePathUtil;
 
 /**
  * @author Sebastian Schefczyk
@@ -27,7 +25,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(testDir, fileName);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
         assertTrue(fileName.getAbsolutePath().endsWith(relPath));
         assertEquals("subFolder/fileName", relPath);
     }
@@ -42,7 +40,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(testDir, fileName);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
         assertTrue(fileName.getAbsolutePath().endsWith(relPath));
         assertEquals("subFolder/fileName", relPath);
     }
@@ -55,7 +53,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(baseDir, testFile1, true, File.separatorChar);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
         assertEquals("subFolder1/fileName1", relPath);
     }
 
@@ -66,7 +64,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(baseDir, testFile1, true, File.separatorChar);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
         assertEquals(STEP_UP + "subFolder1/fileName1", relPath);
     }
 
@@ -77,7 +75,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(baseDir, testFile1, false, File.separatorChar);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
 //        assertEquals("subFolder1/fileName", relPath);
         assertEquals("../subFolder1/fileName", relPath); // like java.nio.Path.relativize
     }
@@ -89,7 +87,7 @@ public class IoFileRelativePathUtilTest {
 
         final String relPath = IoFileRelativePathUtil.getRelativePath(baseDir, testFile1, false, File.separatorChar);
 
-        assertNotNull(relPath);
+        requireNonNull(relPath);
 //        assertEquals("../subFolder1/fileName1", relPath);
         assertEquals("../../subFolder1/fileName1", relPath); // like java.nio.Path.relativize
     }

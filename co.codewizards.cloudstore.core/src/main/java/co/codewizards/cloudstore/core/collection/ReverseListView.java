@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.collection;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -26,7 +26,7 @@ public final class ReverseListView<E> implements List<E> {
 	private final List<E> list;
 
 	public ReverseListView(final List<E> list) {
-		this.list = assertNotNull(list, "list");
+		this.list = requireNonNull(list, "list");
 	}
 
 	@Override

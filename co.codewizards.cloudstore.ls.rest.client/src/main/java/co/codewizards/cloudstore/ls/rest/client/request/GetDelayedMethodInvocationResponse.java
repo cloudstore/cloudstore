@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.WebTarget;
 
@@ -13,7 +13,7 @@ public class GetDelayedMethodInvocationResponse extends AbstractRequest<MethodIn
 	private final Uid delayedResponseId;
 
 	public GetDelayedMethodInvocationResponse(final Uid delayedResponseId) {
-		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
+		this.delayedResponseId = requireNonNull(delayedResponseId, "delayedResponseId");
 	}
 
 	@Override

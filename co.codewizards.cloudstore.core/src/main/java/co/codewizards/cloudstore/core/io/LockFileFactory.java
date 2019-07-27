@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Factory creating {@link LockFile} instances.
@@ -79,7 +78,7 @@ public class LockFileFactory {
 	 * @see LockFile#release()
 	 */
 	public LockFile acquire(File file, final long timeoutMillis) throws TimeoutException {
-		AssertUtil.assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		try {
 			file = file.getCanonicalFile();
 		} catch (final IOException e) {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -14,7 +14,7 @@ public class InvokeMethod extends AbstractRequest<MethodInvocationResponse> {
 	private final MethodInvocationRequest methodInvocationRequest;
 
 	public InvokeMethod(MethodInvocationRequest methodInvocationRequest) {
-		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		this.methodInvocationRequest = requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 	}
 
 	@Override

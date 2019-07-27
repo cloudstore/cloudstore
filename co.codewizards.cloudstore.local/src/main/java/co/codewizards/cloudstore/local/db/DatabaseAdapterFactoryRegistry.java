@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.db;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static co.codewizards.cloudstore.local.db.DatabaseAdapterFactory.*;
+import static java.util.Objects.*;
 
 import java.util.ServiceLoader;
 import java.util.SortedMap;
@@ -77,7 +77,7 @@ public class DatabaseAdapterFactoryRegistry {
 		SortedMap<String, DatabaseAdapterFactory> result = new TreeMap<String, DatabaseAdapterFactory>();
 		for (final DatabaseAdapterFactory a : ServiceLoader.load(DatabaseAdapterFactory.class)) {
 			final String name = a.getName();
-			assertNotNull(name, String.format("%s.getName()", a.getClass().getName()));
+			requireNonNull(name, String.format("%s.getName()", a.getClass().getName()));
 			if (name.indexOf(' ') >= 0)
 				throw new IllegalStateException(
 						String.format("%s.getName() returned a symbolic name containing a space!", a.getClass().getName()));

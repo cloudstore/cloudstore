@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.client.handler;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
@@ -35,8 +35,8 @@ public class InverseServiceRequestHandlerThread extends Thread {
 	private final Executor executor = Executors.newCachedThreadPool();
 
 	public InverseServiceRequestHandlerThread(final LocalServerClient localServerClient) {
-		this.localServerClientRef = new WeakReference<LocalServerClient>(assertNotNull(localServerClient, "localServerClient"));
-		this.localServerRestClientRef = new WeakReference<LocalServerRestClient>(assertNotNull(localServerClient.getLocalServerRestClient(), "localServerRestClient"));
+		this.localServerClientRef = new WeakReference<LocalServerClient>(requireNonNull(localServerClient, "localServerClient"));
+		this.localServerRestClientRef = new WeakReference<LocalServerRestClient>(requireNonNull(localServerClient.getLocalServerRestClient(), "localServerRestClient"));
 		setName(getClass().getSimpleName() + '-' + nextThreadId.getAndIncrement());
 		setDaemon(true);
 	}
@@ -79,14 +79,14 @@ public class InverseServiceRequestHandlerThread extends Thread {
 		private final InverseServiceRequest inverseServiceRequest;
 
 		public HandlerRunnable(final InverseServiceRequest inverseServiceRequest) {
-			this.inverseServiceRequest = assertNotNull(inverseServiceRequest, "inverseServiceRequest");
+			this.inverseServiceRequest = requireNonNull(inverseServiceRequest, "inverseServiceRequest");
 		}
 
 		@Override
 		public void run() {
-			assertNotNull(inverseServiceRequest, "inverseServiceRequest");
+			requireNonNull(inverseServiceRequest, "inverseServiceRequest");
 			final Uid requestId = inverseServiceRequest.getRequestId();
-			assertNotNull(requestId, "inverseServiceRequest.requestId");
+			requireNonNull(requestId, "inverseServiceRequest.requestId");
 
 			final LocalServerRestClient localServerRestClient = getLocalServerRestClientOrFail();
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util.childprocess;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,8 +74,8 @@ public class DumpStreamThread extends Thread
 	private DumpStreamThread(final InputStream inputStream, final OutputStream outputStream,
 			final Logger childProcessLogger, final String childProcessLoggerName)
 	{
-		assertNotNull(inputStream, "inputStream");
-		assertNotNull(outputStream, "outputStream");
+		requireNonNull(inputStream, "inputStream");
+		requireNonNull(outputStream, "outputStream");
 
 		this.inputStream = inputStream;
 		this.outputStream = outputStream;

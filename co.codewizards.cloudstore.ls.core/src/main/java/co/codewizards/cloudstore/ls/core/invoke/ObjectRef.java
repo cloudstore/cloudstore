@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 
@@ -42,7 +42,7 @@ public class ObjectRef implements Serializable {
 	private ClassInfo classInfo;
 
 	public ObjectRef(final Uid clientId, final int classId, final long objectId) {
-		this.clientId = assertNotNull(clientId, "clientId");
+		this.clientId = requireNonNull(clientId, "clientId");
 		this.classId = classId;
 		this.objectId = objectId;
 	}

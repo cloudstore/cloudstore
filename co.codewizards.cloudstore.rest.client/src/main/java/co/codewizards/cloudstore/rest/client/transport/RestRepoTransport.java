@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.rest.client.transport;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -45,7 +46,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.AbstractRepoTransport;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.rest.client.ClientBuilderDefaultValuesDecorator;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.CredentialsProvider;
@@ -128,7 +128,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public byte[] getPublicKey() {
 		getRepositoryId(); // ensure, the public key is loaded
-		return AssertUtil.assertNotNull(publicKey, "publicKey");
+		return requireNonNull(publicKey, "publicKey");
 	}
 
 	@Override
@@ -342,8 +342,8 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 				verifier.verify(signedAuthToken);
 
 				authToken = new AuthTokenIO().deserialise(signedAuthToken.getAuthTokenData());
-				final Date expiryDate = AssertUtil.assertNotNull(authToken.getExpiryDateTime(), "authToken.expiryDateTime").toDate();
-				final Date renewalDate = AssertUtil.assertNotNull(authToken.getRenewalDateTime(), "authToken.renewalDateTime").toDate();
+				final Date expiryDate = requireNonNull(authToken.getExpiryDateTime(), "authToken.expiryDateTime").toDate();
+				final Date renewalDate = requireNonNull(authToken.getRenewalDateTime(), "authToken.renewalDateTime").toDate();
 				if (!renewalDate.before(expiryDate))
 					throw new IllegalArgumentException(
 							String.format("Invalid AuthToken: renewalDateTime >= expiryDateTime :: renewalDateTime=%s expiryDateTime=%s",
@@ -365,7 +365,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	}
 
 	private boolean isAfterRenewalDate(final AuthToken authToken) {
-		AssertUtil.assertNotNull(authToken, "authToken");
+		requireNonNull(authToken, "authToken");
 		return System.currentTimeMillis() > authToken.getRenewalDateTime().getMillis();
 	}
 

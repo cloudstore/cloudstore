@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.ls.server.cproc;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
@@ -181,7 +181,7 @@ public class LocalServerProcessLauncher {
 
 	private File getJavaExecutableFile() {
 		final String javaHome = System.getProperty("java.home");
-		assertNotNull(javaHome, "javaHome");
+		requireNonNull(javaHome, "javaHome");
 
 		File file = createFile(javaHome, "bin", "java").getAbsoluteFile();
 		if (file.isFile()) {
@@ -207,7 +207,7 @@ public class LocalServerProcessLauncher {
 		// Should return an URL like this:
 		// jar:file:/home/mn/.../co.codewizards.cloudstore.ls.server.cproc-0.9.7-SNAPSHOT.jar!/co/codewizards/cloudstore/ls/server/cproc/
 		final URL url = this.getClass().getResource("");
-		assertNotNull(url, "url");
+		requireNonNull(url, "url");
 
 		final String urlString = url.toString();
 		logger.debug("getThisJarFile: url='{}'", urlString);

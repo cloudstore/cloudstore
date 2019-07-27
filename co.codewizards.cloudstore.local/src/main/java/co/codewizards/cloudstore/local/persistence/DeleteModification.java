@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static java.util.Objects.*;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
@@ -14,8 +15,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @PersistenceCapable
 @Inheritance(strategy=InheritanceStrategy.NEW_TABLE)
@@ -54,7 +53,7 @@ public class DeleteModification extends Modification {
 		return path;
 	}
 	public void setPath(final String path) {
-		AssertUtil.assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		if (path.isEmpty())
 			throw new IllegalArgumentException("path is empty! path must start with '/' and thus has a minimum length of 1 char!");
 

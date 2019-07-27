@@ -1,15 +1,13 @@
 package co.codewizards.cloudstore.core.oio.nio;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
-import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -24,6 +22,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.IoFile;
 import co.codewizards.cloudstore.core.util.childprocess.DumpStreamThread;
@@ -179,7 +178,7 @@ public class NioFile extends IoFile implements File {
 	}
 
 	private static String toPathString(final Path path) {
-		assertNotNull(path, "path");
+		requireNonNull(path, "path");
 		return path.toString().replace(java.io.File.separatorChar, '/');
 	}
 

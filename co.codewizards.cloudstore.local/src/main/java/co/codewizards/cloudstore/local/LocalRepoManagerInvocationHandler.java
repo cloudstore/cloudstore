@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -35,7 +35,7 @@ class LocalRepoManagerInvocationHandler implements InvocationHandler {
 			"toString"));
 
 	public LocalRepoManagerInvocationHandler(final LocalRepoManagerImpl localRepoManagerImpl) {
-		this.localRepoManagerImpl = assertNotNull(localRepoManagerImpl, "localRepoManagerImpl");
+		this.localRepoManagerImpl = requireNonNull(localRepoManagerImpl, "localRepoManagerImpl");
 	}
 
 	@Override

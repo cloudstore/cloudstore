@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.Uid;
 
@@ -8,7 +8,7 @@ public class DelayedMethodInvocationResponse extends MethodInvocationResponse {
 	private static final long serialVersionUID = 1L;
 
 	public DelayedMethodInvocationResponse(Uid delayedResponseId) {
-		super(assertNotNull(delayedResponseId, "delayedResponseId"), null);
+		super(requireNonNull(delayedResponseId, "delayedResponseId"), null);
 	}
 
 	@Override

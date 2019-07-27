@@ -1,8 +1,9 @@
 package co.codewizards.cloudstore.client;
 
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.core.dto.DateTime;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.ls.core.dto.RemoteRepositoryDto;
 import co.codewizards.cloudstore.ls.core.dto.RemoteRepositoryRequestDto;
@@ -20,7 +21,7 @@ public class RepoInfoSubCommand extends SubCommandWithExistingLocalRepo
 	public RepoInfoSubCommand() { }
 
 	protected RepoInfoSubCommand(final File localRoot) {
-		this.localRoot = AssertUtil.assertNotNull(localRoot, "localRoot");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 		this.localFile = this.localRoot;
 		this.local = localRoot.getPath();
 	}

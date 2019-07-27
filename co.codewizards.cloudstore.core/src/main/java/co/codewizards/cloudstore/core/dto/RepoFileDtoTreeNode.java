@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static java.util.Objects.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,8 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 
@@ -39,7 +39,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	 * @throws IllegalArgumentException if the given {@code repoFileDtos} does not meet the criteria stated above.
 	 */
 	public static RepoFileDtoTreeNode createTree(final Collection<RepoFileDto> repoFileDtos) throws IllegalArgumentException {
-		AssertUtil.assertNotNull(repoFileDtos, "repoFileDtos");
+		requireNonNull(repoFileDtos, "repoFileDtos");
 		if (repoFileDtos.isEmpty())
 			return null;
 
@@ -87,7 +87,7 @@ public class RepoFileDtoTreeNode implements Iterable<RepoFileDtoTreeNode> {
 	private List<RepoFileDtoTreeNode> flattenedTreeList;
 
 	protected RepoFileDtoTreeNode(final RepoFileDto repoFileDto) {
-		this.repoFileDto = AssertUtil.assertNotNull(repoFileDto, "repoFileDto");
+		this.repoFileDto = requireNonNull(repoFileDto, "repoFileDto");
 	}
 
 	public RepoFileDto getRepoFileDto() {

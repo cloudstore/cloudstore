@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.dto;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,6 @@ import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.FileChunk;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
@@ -45,14 +45,14 @@ public class RepoFileDtoConverter {
 	}
 
 	protected RepoFileDtoConverter(final LocalRepoTransaction transaction) {
-		this.transaction = AssertUtil.assertNotNull(transaction, "transaction");
-		this.localRepoManager = AssertUtil.assertNotNull(transaction.getLocalRepoManager(), "transaction.localRepoManager");
+		this.transaction = requireNonNull(transaction, "transaction");
+		this.localRepoManager = requireNonNull(transaction.getLocalRepoManager(), "transaction.localRepoManager");
 		this.repoFileDao = this.transaction.getDao(RepoFileDao.class);
 	}
 
 	public RepoFileDto toRepoFileDto(final RepoFile repoFile, final int depth) {
-		AssertUtil.assertNotNull(repoFileDao, "repoFileDao");
-		AssertUtil.assertNotNull(repoFile, "repoFile");
+		requireNonNull(repoFileDao, "repoFileDao");
+		requireNonNull(repoFile, "repoFile");
 		final RepoFileDto repoFileDto;
 		if (repoFile instanceof NormalFile) {
 			final NormalFile normalFile = (NormalFile) repoFile;
@@ -88,7 +88,7 @@ public class RepoFileDtoConverter {
 						logger.warn("toRepoFileDto: Ignoring corrupt tempChunkFileDtoFile '" + tempChunkFileDtoFile.getAbsolutePath() + "': " + x, x);
 						continue;
 					}
-					normalFileDto.getTempFileChunkDtos().add(AssertUtil.assertNotNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto"));
+					normalFileDto.getTempFileChunkDtos().add(requireNonNull(tempChunkFileDto.getFileChunkDto(), "tempChunkFileDto.fileChunkDto"));
 				}
 			}
 		}

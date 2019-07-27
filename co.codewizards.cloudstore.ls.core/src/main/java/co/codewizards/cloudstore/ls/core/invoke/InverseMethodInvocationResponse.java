@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.ls.core.dto.AbstractInverseServiceResponse;
 
 public class InverseMethodInvocationResponse extends AbstractInverseServiceResponse {
@@ -10,7 +11,7 @@ public class InverseMethodInvocationResponse extends AbstractInverseServiceRespo
 
 	public InverseMethodInvocationResponse(final InverseMethodInvocationRequest request, final MethodInvocationResponse methodInvocationResponse) {
 		super(request);
-		this.methodInvocationResponse = assertNotNull(methodInvocationResponse, "methodInvocationResponse");
+		this.methodInvocationResponse = requireNonNull(methodInvocationResponse, "methodInvocationResponse");
 	}
 
 	public MethodInvocationResponse getMethodInvocationResponse() {

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.rest.client.ssl;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -11,7 +11,6 @@ import javax.net.ssl.TrustManager;
 
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public final class SSLContextBuilder {
 
@@ -71,8 +70,8 @@ public final class SSLContextBuilder {
 	}
 
 	private SSLContext getSSLContext(final File trustStoreFile, final DynamicX509TrustManagerCallback callback) throws GeneralSecurityException {
-		AssertUtil.assertNotNull(trustStoreFile, "trustStoreFile");
-		AssertUtil.assertNotNull(callback, "callback");
+		requireNonNull(trustStoreFile, "trustStoreFile");
+		requireNonNull(callback, "callback");
 		final TrustManager[] trustManagers = new TrustManager[] {
 				new DynamicX509TrustManager(trustStoreFile, callback)
 		};
@@ -85,8 +84,8 @@ public final class SSLContextBuilder {
 	}
 
 	private SSLContext getSSLContext(final URL remoteURL, final DynamicX509TrustManagerCallback callback) throws GeneralSecurityException {
-		AssertUtil.assertNotNull(remoteURL, "remoteURL");
-		AssertUtil.assertNotNull(callback, "callback");
+		requireNonNull(remoteURL, "remoteURL");
+		requireNonNull(callback, "callback");
 
 		String trustStoreFileName = remoteURL.getHost();
 		if (remoteURL.getPort() >= 0)

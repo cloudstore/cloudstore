@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -29,12 +29,12 @@ public class MethodInvocationRequest implements Serializable {
 	}
 
 	public static MethodInvocationRequest forConstructorInvocation(final String className, final String[] argumentTypeNames, final Object ... arguments) {
-		return new MethodInvocationRequest(assertNotNull(className, "className"), null, null, argumentTypeNames, arguments);
+		return new MethodInvocationRequest(requireNonNull(className, "className"), null, null, argumentTypeNames, arguments);
 	}
 
 	public static MethodInvocationRequest forStaticInvocation(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
 		return new MethodInvocationRequest(
-				assertNotNull(className, "className"), null, assertNotNull(methodName, "methodName"), argumentTypeNames, arguments);
+				requireNonNull(className, "className"), null, requireNonNull(methodName, "methodName"), argumentTypeNames, arguments);
 	}
 
 	public static MethodInvocationRequest forObjectInvocation(final Object object, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
@@ -47,7 +47,7 @@ public class MethodInvocationRequest implements Serializable {
 				throw new IllegalArgumentException(String.format("argumentTypeNames.length != arguments.length :: %d != %d", argumentTypeNames.length, argumentsLength));
 		}
 		return new MethodInvocationRequest(
-				null, assertNotNull(object, "object"), assertNotNull(methodName, "methodName"), argumentTypeNames, arguments);
+				null, requireNonNull(object, "object"), requireNonNull(methodName, "methodName"), argumentTypeNames, arguments);
 	}
 
 	public String getClassName() {

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Date;
 
@@ -16,8 +16,8 @@ public class MakeDirectory extends VoidRequest {
 	protected final Date lastModified;
 
 	public MakeDirectory(final String repositoryName, final String path, final Date lastModified) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.path = assertNotNull(path, "path");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.path = requireNonNull(path, "path");
 		this.lastModified = lastModified;
 	}
 

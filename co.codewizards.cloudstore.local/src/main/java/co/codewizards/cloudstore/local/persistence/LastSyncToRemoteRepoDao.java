@@ -1,13 +1,13 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import javax.jdo.Query;
+import static java.util.Objects.*;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
+import javax.jdo.Query;
 
 public class LastSyncToRemoteRepoDao extends Dao<LastSyncToRemoteRepo, LastSyncToRemoteRepoDao> {
 
 	public LastSyncToRemoteRepo getLastSyncToRemoteRepo(final RemoteRepository remoteRepository) {
-		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
+		requireNonNull(remoteRepository, "remoteRepository");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getLastSyncToRemoteRepo_remoteRepository");
 		try {
 			final LastSyncToRemoteRepo lastSyncToRemoteRepo = (LastSyncToRemoteRepo) query.execute(remoteRepository);

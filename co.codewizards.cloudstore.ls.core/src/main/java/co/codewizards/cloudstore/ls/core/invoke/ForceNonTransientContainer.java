@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -16,8 +16,8 @@ public class ForceNonTransientContainer implements Serializable {
 	private final Map<String, Object> transientFieldName2Value;
 
 	public ForceNonTransientContainer(final Object transientFieldOwnerObject, Map<String, Object> transientFieldName2Value) {
-		this.transientFieldOwnerObject = assertNotNull(transientFieldOwnerObject, "transientFieldOwnerObject");
-		this.transientFieldName2Value = new NoObjectRefMap<String, Object>(assertNotNull(transientFieldName2Value, "transientFieldName2Value"));
+		this.transientFieldOwnerObject = requireNonNull(transientFieldOwnerObject, "transientFieldOwnerObject");
+		this.transientFieldName2Value = new NoObjectRefMap<String, Object>(requireNonNull(transientFieldName2Value, "transientFieldName2Value"));
 	}
 
 	public Object getTransientFieldOwnerObject() {

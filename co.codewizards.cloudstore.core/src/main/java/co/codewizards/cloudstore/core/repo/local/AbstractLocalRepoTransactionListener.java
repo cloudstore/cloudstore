@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.local;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
+import static java.util.Objects.*;
 
 public abstract class AbstractLocalRepoTransactionListener implements LocalRepoTransactionListener {
 
@@ -18,7 +18,7 @@ public abstract class AbstractLocalRepoTransactionListener implements LocalRepoT
 
 	protected LocalRepoTransaction getTransactionOrFail() {
 		final LocalRepoTransaction transaction = getTransaction();
-		AssertUtil.assertNotNull(transaction, "transaction");
+		requireNonNull(transaction, "transaction");
 		return transaction;
 	}
 

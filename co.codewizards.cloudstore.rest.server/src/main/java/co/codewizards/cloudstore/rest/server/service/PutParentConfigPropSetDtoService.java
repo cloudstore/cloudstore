@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
@@ -27,7 +27,7 @@ public class PutParentConfigPropSetDtoService extends AbstractServiceWithRepoToR
 
 	@PUT
 	public void beginPutFile(final ConfigPropSetDto parentConfigPropSetDto) {
-		assertNotNull(parentConfigPropSetDto, "parentConfigPropSetDto");
+		requireNonNull(parentConfigPropSetDto, "parentConfigPropSetDto");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			repoTransport.putParentConfigPropSetDto(parentConfigPropSetDto);

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
+import static java.util.Objects.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,7 +11,6 @@ import java.util.Map;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
 import co.codewizards.cloudstore.core.dto.DeleteModificationDto;
 import co.codewizards.cloudstore.core.dto.ModificationDto;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class ModificationDtoSet {
 
@@ -18,7 +18,7 @@ public class ModificationDtoSet {
 	private final Map<String, List<CopyModificationDto>> fromPath2CopyModificationDtos;
 
 	public ModificationDtoSet(final Collection<ModificationDto> modificationDtos) {
-		AssertUtil.assertNotNull(modificationDtos, "modificationDtos");
+		requireNonNull(modificationDtos, "modificationDtos");
 		path2DeleteModificationDtos = new HashMap<String, List<DeleteModificationDto>>();
 		fromPath2CopyModificationDtos = new HashMap<String, List<CopyModificationDto>>();
 		for (final ModificationDto modificationDto : modificationDtos) {

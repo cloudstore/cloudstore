@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.client.util;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.io.IInputStream;
 import co.codewizards.cloudstore.core.io.IOutputStream;
@@ -21,19 +21,19 @@ public class FileLs {
 	}
 
 	public static IInputStream createInputStream(final File file) {
-		assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		IInputStream in = LocalServerClient.getInstance().invoke(file, "createInputStream");
 		return in;
 	}
 
 	public static IOutputStream createOutputStream(final File file) {
-		assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		IOutputStream out = LocalServerClient.getInstance().invoke(file, "createOutputStream");
 		return out;
 	}
 
 	public static IOutputStream createOutputStream(final File file, boolean append) {
-		assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		IOutputStream out = LocalServerClient.getInstance().invoke(file, "createOutputStream", append);
 		return out;
 	}

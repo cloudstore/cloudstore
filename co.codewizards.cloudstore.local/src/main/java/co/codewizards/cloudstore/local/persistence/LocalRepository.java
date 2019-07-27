@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -76,7 +76,7 @@ public class LocalRepository extends Repository {
 	@Override
 	public void jdoPreStore() {
 		super.jdoPreStore();
-		final PersistenceManager pm = assertNotNull(JDOHelper.getPersistenceManager(this), "JDOHelper.getPersistenceManager(this)");
+		final PersistenceManager pm = requireNonNull(JDOHelper.getPersistenceManager(this), "JDOHelper.getPersistenceManager(this)");
 		final Iterator<LocalRepository> iterator = pm.getExtent(LocalRepository.class).iterator();
 		if (iterator.hasNext()) {
 			final LocalRepository persistentInstance = iterator.next();

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.auth;
 
 import static co.codewizards.cloudstore.core.auth.AuthTokenSigner.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -9,13 +9,11 @@ import java.security.Signature;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
-
 public class AuthTokenVerifier {
 	private PublicKey publicKey;
 
 	public AuthTokenVerifier(byte[] publicKeyData) {
-		AssertUtil.assertNotNull(publicKeyData, "publicKeyData");
+		requireNonNull(publicKeyData, "publicKeyData");
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -29,9 +27,9 @@ public class AuthTokenVerifier {
 	}
 
 	public void verify(SignedAuthToken signedAuthToken) {
-		AssertUtil.assertNotNull(signedAuthToken, "signedAuthToken");
-		AssertUtil.assertNotNull(signedAuthToken.getAuthTokenData(), "signedAuthToken.authTokenData");
-		AssertUtil.assertNotNull(signedAuthToken.getSignature(), "signedAuthToken.signature");
+		requireNonNull(signedAuthToken, "signedAuthToken");
+		requireNonNull(signedAuthToken.getAuthTokenData(), "signedAuthToken.authTokenData");
+		requireNonNull(signedAuthToken.getSignature(), "signedAuthToken.signature");
 		try {
 			Signature verificationEngine = Signature.getInstance(SIGNATURE_ALGORITHM);
 			verificationEngine.initVerify(publicKey);

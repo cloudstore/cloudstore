@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class ClassInfoMap {
 	}
 
 	public synchronized ClassInfo putClassInfo(final ClassInfo classInfo) {
-		assertNotNull(classInfo, "classInfo");
+		requireNonNull(classInfo, "classInfo");
 		return classId2ClassInfo.put(classInfo.getClassId(), classInfo);
 	}
 }

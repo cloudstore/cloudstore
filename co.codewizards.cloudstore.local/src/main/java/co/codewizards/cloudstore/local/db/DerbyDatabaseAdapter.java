@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.db;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
+import static java.util.Objects.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,7 +32,7 @@ public class DerbyDatabaseAdapter extends AbstractDatabaseAdapter {
 		initProperties();
 		initDriverClass();
 
-		connectionURL = assertNotNull(connectionURL, "connectionURL").trim() + ";create=true";
+		connectionURL = requireNonNull(connectionURL, "connectionURL").trim() + ";create=true";
 		Connection connection = createConnection();
 		connection.close();
 	}

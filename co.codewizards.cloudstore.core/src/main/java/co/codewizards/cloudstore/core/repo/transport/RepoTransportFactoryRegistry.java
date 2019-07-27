@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.transport;
 
-import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -9,8 +9,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
-
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 public class RepoTransportFactoryRegistry {
 
@@ -103,7 +101,7 @@ public class RepoTransportFactoryRegistry {
 	}
 
 	public <F extends RepoTransportFactory> F getRepoTransportFactory(Class<F> factoryClass) {
-		AssertUtil.assertNotNull(factoryClass, "factoryClass");
+		requireNonNull(factoryClass, "factoryClass");
 		List<RepoTransportFactory> repoTransportFactories = getRepoTransportFactories();
 		for (RepoTransportFactory repoTransportFactory : repoTransportFactories) {
 			if (factoryClass.isInstance(repoTransportFactory)) {

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ public class ClassManager {
 //	}
 
 	public ClassManager(final Uid clientId) {
-		this.clientId = assertNotNull(clientId, "clientId");
+		this.clientId = requireNonNull(clientId, "clientId");
 		logger.debug("[{}].<init>: Created ClassManager.", clientId);
 	}
 
@@ -72,7 +72,7 @@ public class ClassManager {
 	}
 
 	public synchronized int getClassId(final Class<?> clazz) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		Integer classId = class2ClassId.get(clazz);
 		if (classId == null)
 			return -1;
@@ -81,7 +81,7 @@ public class ClassManager {
 	}
 
 	public synchronized int getClassIdOrCreate(final Class<?> clazz) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		Integer classId = class2ClassId.get(clazz);
 		if (classId == null) {
 			classId = nextClassId();
@@ -150,7 +150,7 @@ public class ClassManager {
 	}
 
 	protected Set<String> getInterfaceNames(Class<?> clazz) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		final Set<String> interfaceNames = new LinkedHashSet<>();
 		populateInterfaceNames(interfaceNames, clazz);
 		return interfaceNames;
@@ -169,7 +169,7 @@ public class ClassManager {
 	}
 
 	public Class<?>[] getClassesOrFail(final String[] classNames) {
-		assertNotNull(classNames, "classNames");
+		requireNonNull(classNames, "classNames");
 		final Class<?>[] classes = new Class<?>[classNames.length];
 
 		for (int i = 0; i < classNames.length; i++)
@@ -179,7 +179,7 @@ public class ClassManager {
 	}
 
 	public Class<?> getClassOrFail(final String className) {
-		assertNotNull(className, "className");
+		requireNonNull(className, "className");
 
 		Class<?> clazz = primitiveClassName2Class.get(className);
 		if (clazz != null)

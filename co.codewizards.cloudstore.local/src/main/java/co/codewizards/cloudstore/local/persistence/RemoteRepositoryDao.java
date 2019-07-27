@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.Collection;
@@ -10,12 +11,11 @@ import java.util.UUID;
 
 import javax.jdo.Query;
 
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryDao> {
 	public RemoteRepository getRemoteRepository(final UUID repositoryId) {
-		AssertUtil.assertNotNull(repositoryId, "repositoryId");
+		requireNonNull(repositoryId, "repositoryId");
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepository_repositoryId");
 		try {
 			final RemoteRepository remoteRepository = (RemoteRepository) query.execute(repositoryId.toString());
@@ -26,7 +26,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 	}
 
 	public RemoteRepository getRemoteRepository(URL remoteRoot) {
-		AssertUtil.assertNotNull(remoteRoot, "remoteRoot");
+		requireNonNull(remoteRoot, "remoteRoot");
 		remoteRoot = UrlUtil.canonicalizeURL(remoteRoot);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getRemoteRepository_remoteRootSha1");
 		try {
@@ -72,7 +72,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 
 	@Override
 	public void deletePersistent(final RemoteRepository entity) {
-		AssertUtil.assertNotNull(entity, "entity");
+		requireNonNull(entity, "entity");
 		deleteDependentObjects(entity);
 		pm().flush();
 		super.deletePersistent(entity);
@@ -80,7 +80,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 
 	@Override
 	public void deletePersistentAll(final Collection<? extends RemoteRepository> entities) {
-		AssertUtil.assertNotNull(entities, "entities");
+		requireNonNull(entities, "entities");
 		for (final RemoteRepository remoteRepository : entities) {
 			deleteDependentObjects(remoteRepository);
 		}
@@ -89,7 +89,7 @@ public class RemoteRepositoryDao extends Dao<RemoteRepository, RemoteRepositoryD
 	}
 
 	protected void deleteDependentObjects(final RemoteRepository remoteRepository) {
-		AssertUtil.assertNotNull(remoteRepository, "remoteRepository");
+		requireNonNull(remoteRepository, "remoteRepository");
 
 		final ModificationDao modificationDao = getDao(ModificationDao.class);
 		modificationDao.deletePersistentAll(modificationDao.getModifications(remoteRepository));

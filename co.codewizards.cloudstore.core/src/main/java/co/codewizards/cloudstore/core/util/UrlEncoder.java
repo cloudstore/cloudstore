@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.CharArrayWriter;
 import java.io.UnsupportedEncodingException;
@@ -130,8 +130,8 @@ public final class UrlEncoder {
      */
     @Deprecated
 	public static String encode(String s, String enc) throws UnsupportedEncodingException {
-    	assertNotNull(s, "s");
-    	assertNotNull(enc, "enc");
+    	requireNonNull(s, "s");
+    	requireNonNull(enc, "enc");
     	Charset charset;
     	try {
             charset = Charset.forName(enc);
@@ -165,8 +165,8 @@ public final class UrlEncoder {
      */
     @Deprecated
 	public static String encode(String s, Charset charset) {
-    	assertNotNull(s, "s");
-    	assertNotNull(charset, "charset");
+    	requireNonNull(s, "s");
+    	requireNonNull(charset, "charset");
 
         boolean needToChange = false;
         StringBuffer out = new StringBuffer(s.length());

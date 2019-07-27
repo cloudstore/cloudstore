@@ -2,8 +2,8 @@ package co.codewizards.cloudstore.updater;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.FileFilter;
 import java.io.IOException;
@@ -35,7 +35,6 @@ import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class CloudStoreUpdater extends CloudStoreUpdaterCore {
@@ -85,7 +84,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		return cloudStoreUpdaterClass;
 	}
 	protected static void setCloudStoreUpdaterClass(final Class<? extends CloudStoreUpdater> cloudStoreUpdaterClass) {
-		assertNotNull(cloudStoreUpdaterClass, "cloudStoreUpdaterClass");
+		requireNonNull(cloudStoreUpdaterClass, "cloudStoreUpdaterClass");
 		CloudStoreUpdater.cloudStoreUpdaterClass = cloudStoreUpdaterClass;
 	}
 
@@ -351,7 +350,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		private final Collection<File> files;
 
 		public FileFilterTrackingExtractedFiles(final Collection<File> files) {
-			this.files = assertNotNull(files, "files");
+			this.files = requireNonNull(files, "files");
 		}
 
 		@Override
@@ -384,8 +383,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	}
 
 	private void populateFilesRecursively(final File fileOrDir, final Set<File> files) {
-		AssertUtil.assertNotNull(fileOrDir, "fileOrDir");
-		AssertUtil.assertNotNull(files, "files");
+		requireNonNull(fileOrDir, "fileOrDir");
+		requireNonNull(files, "files");
 		files.add(fileOrDir);
 		final File[] children = fileOrDir.listFiles();
 		if (children != null) {
@@ -395,8 +394,8 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	}
 
 	private void deleteAllExcept(final File fileOrDir, final Set<File> keepFiles) {
-		AssertUtil.assertNotNull(fileOrDir, "fileOrDir");
-		AssertUtil.assertNotNull(keepFiles, "keepFiles");
+		requireNonNull(fileOrDir, "fileOrDir");
+		requireNonNull(keepFiles, "keepFiles");
 		if (keepFiles.contains(fileOrDir)) {
 			logger.debug("deleteAllExcept: Keeping: {}", fileOrDir);
 			final File[] children = fileOrDir.listFiles();
@@ -501,7 +500,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 	@Override
 	protected File getInstallationDir() {
 		if (installationDirFile == null) {
-			final String path = IOUtil.simplifyPath(createFile(AssertUtil.assertNotNull(installationDir, "installationDir")));
+			final String path = IOUtil.simplifyPath(createFile(requireNonNull(installationDir, "installationDir")));
 			final File f = createFile(path);
 			if (!f.exists())
 				throw new IllegalArgumentException(String.format("installationDir '%s' (specified as '%s') does not exist!", f, installationDir));

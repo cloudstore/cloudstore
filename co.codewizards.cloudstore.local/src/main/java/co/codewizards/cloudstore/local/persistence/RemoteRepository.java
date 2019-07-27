@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.UUID;
@@ -87,7 +87,7 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 		return localPathPrefix;
 	}
 	public void setLocalPathPrefix(final String localPathPrefix) {
-		assertNotNull(localPathPrefix, "localPathPrefix");
+		requireNonNull(localPathPrefix, "localPathPrefix");
 
 		if (!localPathPrefix.isEmpty() && !localPathPrefix.startsWith("/"))
 			throw new IllegalArgumentException("localPathPrefix must start with '/' but does not: " + localPathPrefix);

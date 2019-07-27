@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.local.db;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return factory;
 	}
 	public AbstractDatabaseAdapterFactory getFactoryOrFail() {
-		return assertNotNull(factory, "factory");
+		return requireNonNull(factory, "factory");
 	}
 	protected void setFactory(AbstractDatabaseAdapterFactory factory) {
 		this.factory = factory;
@@ -49,7 +49,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return repositoryId;
 	}
 	public UUID getRepositoryIdOrFail() {
-		return assertNotNull(repositoryId, "repositoryId");
+		return requireNonNull(repositoryId, "repositoryId");
 	}
 	@Override
 	public void setRepositoryId(UUID repositoryId) {
@@ -61,7 +61,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 		return localRoot;
 	}
 	public File getLocalRootOrFail() {
-		return assertNotNull(localRoot, "localRoot");
+		return requireNonNull(localRoot, "localRoot");
 	}
 	@Override
 	public void setLocalRoot(File localRoot) {

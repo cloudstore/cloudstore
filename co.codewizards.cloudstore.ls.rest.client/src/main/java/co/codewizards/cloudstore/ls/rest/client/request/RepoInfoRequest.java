@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -14,7 +14,7 @@ public class RepoInfoRequest extends AbstractRequest<RepoInfoResponseDto> {
 	private final RepoInfoRequestDto repoInfoRequestDto;
 
 	public RepoInfoRequest(final RepoInfoRequestDto repoInfoRequestDto) {
-		this.repoInfoRequestDto = assertNotNull(repoInfoRequestDto, "repoInfoRequestDto");
+		this.repoInfoRequestDto = requireNonNull(repoInfoRequestDto, "repoInfoRequestDto");
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.client;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -12,7 +12,7 @@ class ObjectRefConverterFactoryImpl implements ObjectRefConverterFactory {
 	private final LocalServerClient localServerClient;
 
 	public ObjectRefConverterFactoryImpl(final LocalServerClient localServerClient) {
-		this.localServerClient = assertNotNull(localServerClient, "localServerClient");
+		this.localServerClient = requireNonNull(localServerClient, "localServerClient");
 	}
 
 	@Override

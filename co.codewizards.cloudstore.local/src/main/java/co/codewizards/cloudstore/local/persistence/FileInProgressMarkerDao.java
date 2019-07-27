@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +12,6 @@ import javax.jdo.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  *
@@ -38,9 +37,9 @@ public class FileInProgressMarkerDao extends Dao<FileInProgressMarker, FileInPro
 	 * @return <code>null</code> if none was found.
 	 */
 	public FileInProgressMarker getFileInProgressMarker(final UUID fromRepositoryId, final UUID toRepositoryId, final String path) {
-		assertNotNull(fromRepositoryId, "fromRepositoryId");
-		assertNotNull(toRepositoryId, "toRepositoryId");
-		assertNotNull(path, "path");
+		requireNonNull(fromRepositoryId, "fromRepositoryId");
+		requireNonNull(toRepositoryId, "toRepositoryId");
+		requireNonNull(path, "path");
 		final String pathSha1 = sha1(path);
 		final Query query = pm().newNamedQuery(getEntityClass(), "getFileInProgressMarker_fromRepositoryId_toRepositoryId_pathSha1");
 		try {

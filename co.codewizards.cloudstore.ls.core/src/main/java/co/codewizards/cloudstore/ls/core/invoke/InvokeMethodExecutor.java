@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,7 +68,7 @@ public class InvokeMethodExecutor {
 	}
 
 	public MethodInvocationResponse execute(final ExtMethodInvocationRequest extMethodInvocationRequest) throws Exception {
-		assertNotNull(extMethodInvocationRequest, "extMethodInvocationRequest");
+		requireNonNull(extMethodInvocationRequest, "extMethodInvocationRequest");
 
 		InvocationFilterRegistry.getInstance().assertCanInvoke(extMethodInvocationRequest);
 
@@ -99,7 +99,7 @@ public class InvokeMethodExecutor {
 				throwError(error);
 
 			final Uid delayedResponseId = invocationRunnable.getDelayedResponseId();
-			assertNotNull(delayedResponseId, "delayedResponseId");
+			requireNonNull(delayedResponseId, "delayedResponseId");
 			delayedResponseId2InvocationRunnable.put(delayedResponseId, invocationRunnable);
 
 			return new DelayedMethodInvocationResponse(delayedResponseId);
@@ -107,7 +107,7 @@ public class InvokeMethodExecutor {
 	}
 
 	public MethodInvocationResponse getDelayedResponse(final Uid delayedResponseId) throws Exception {
-		assertNotNull(delayedResponseId, "delayedResponseId");
+		requireNonNull(delayedResponseId, "delayedResponseId");
 
 		long schedEvTiSt = System.currentTimeMillis() + 240000; // scheduled eviction in 4 minutes
 		final InvocationRunnable invocationRunnable = delayedResponseId2InvocationRunnable.get(delayedResponseId);
@@ -151,7 +151,7 @@ public class InvokeMethodExecutor {
 	}
 
 	private static void throwError(final Throwable error) throws Exception {
-		assertNotNull(error, "error");
+		requireNonNull(error, "error");
 		if (error instanceof RuntimeException)
 			throw (RuntimeException) error;
 		else if (error instanceof Error)
@@ -169,7 +169,7 @@ public class InvokeMethodExecutor {
 		private Uid delayedResponseId;
 
 		public InvocationRunnable(final ExtMethodInvocationRequest extMethodInvocationRequest) {
-			this.extMethodInvocationRequest = assertNotNull(extMethodInvocationRequest, "extMethodInvocationRequest");
+			this.extMethodInvocationRequest = requireNonNull(extMethodInvocationRequest, "extMethodInvocationRequest");
 		}
 
 		@Override
@@ -221,7 +221,7 @@ public class InvokeMethodExecutor {
 			synchronized (this) {
 				if (this.error == null) {
 					methodInvocationResponse = MethodInvocationResponse.forInvocation(resultObject, filterWritableArguments(arguments));
-					assertNotNull(methodInvocationResponse, "methodInvocationResponse");
+					requireNonNull(methodInvocationResponse, "methodInvocationResponse");
 				}
 
 				this.notifyAll(); // note: other threads only continue running, *after* this synchronized block is finished entirely!

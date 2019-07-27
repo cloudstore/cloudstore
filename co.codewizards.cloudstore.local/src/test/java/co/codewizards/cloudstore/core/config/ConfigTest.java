@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.config;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static java.util.Objects.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -15,7 +16,6 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.AbstractTest;
 
 public class ConfigTest extends AbstractTest {
@@ -212,8 +212,8 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {
-		AssertUtil.assertNotNull(propertiesFile, "propertiesFile");
-		AssertUtil.assertNotNull(key, "key");
+		requireNonNull(propertiesFile, "propertiesFile");
+		requireNonNull(key, "key");
 
 		final Properties properties = new Properties();
 		if (propertiesFile.exists()) {

@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.bean;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -12,7 +12,7 @@ public class BeanSupport<B, P extends PropertyBase> {
 	private final PropertyChangeSupport propertyChangeSupport;
 
 	public BeanSupport(final B bean) {
-		this.bean = assertNotNull(bean, "bean");
+		this.bean = requireNonNull(bean, "bean");
 		propertyChangeSupport = new PropertyChangeSupport(bean);
 	}
 
@@ -21,7 +21,7 @@ public class BeanSupport<B, P extends PropertyBase> {
 	}
 
 	public void setPropertyValue(final P property, final Object value) {
-		assertNotNull(property, "property");
+		requireNonNull(property, "property");
 
 		final Object old;
 		synchronized (getMutex()) {
@@ -52,29 +52,29 @@ public class BeanSupport<B, P extends PropertyBase> {
 	}
 
 	public void addPropertyChangeListener(final PropertyChangeListener listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 		propertyChangeSupport.addPropertyChangeListener(listener);
 	}
 
 	public void removePropertyChangeListener(final PropertyChangeListener listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 		propertyChangeSupport.removePropertyChangeListener(listener);
 	}
 
 	public void addPropertyChangeListener(final P property, final PropertyChangeListener listener) {
-		assertNotNull(property, "property");
-		assertNotNull(listener, "listener");
+		requireNonNull(property, "property");
+		requireNonNull(listener, "listener");
 		propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
 	}
 
 	public void removePropertyChangeListener(final P property, final PropertyChangeListener listener) {
-		assertNotNull(property, "property");
-		assertNotNull(listener, "listener");
+		requireNonNull(property, "property");
+		requireNonNull(listener, "listener");
 		propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
 	}
 
 	public void firePropertyChange(final P property, Object oldValue, Object newValue) {
-		assertNotNull(property, "property");
+		requireNonNull(property, "property");
 		propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
 	}
 }

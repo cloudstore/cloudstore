@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.core.collection;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,8 +37,8 @@ public abstract class ListMerger<E, K> {
 	 * @param dest the destination into which to write. Must not be <code>null</code>.
 	 */
 	public void merge(final List<E> source, final List<E> dest) {
-		this.source = assertNotNull(source, "source");
-		this.dest = assertNotNull(dest, "dest");
+		this.source = requireNonNull(source, "source");
+		this.dest = requireNonNull(dest, "dest");
 
 		populateSourceKey2element();
 		populateDestKey2element();

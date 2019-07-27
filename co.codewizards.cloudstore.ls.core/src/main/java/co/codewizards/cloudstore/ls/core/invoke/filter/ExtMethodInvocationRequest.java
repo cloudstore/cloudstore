@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke.filter;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
+
 import co.codewizards.cloudstore.ls.core.invoke.MethodInvocationRequest;
 import co.codewizards.cloudstore.ls.core.invoke.ObjectManager;
 
@@ -11,10 +12,10 @@ public class ExtMethodInvocationRequest {
 	private final Class<?> targetClass;
 
 	public ExtMethodInvocationRequest(final ObjectManager objectManager, final MethodInvocationRequest methodInvocationRequest, final Class<?> targetClass) {
-		this.objectManager = assertNotNull(objectManager, "objectManager");
-		this.methodInvocationRequest = assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		this.objectManager = requireNonNull(objectManager, "objectManager");
+		this.methodInvocationRequest = requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 		this.targetClass = targetClass == null ? methodInvocationRequest.getObject().getClass() : targetClass;
-		assertNotNull(this.targetClass, "this.targetClass");
+		requireNonNull(this.targetClass, "this.targetClass");
 	}
 
 	public ObjectManager getObjectManager() {

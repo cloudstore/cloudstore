@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static java.util.Objects.*;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -14,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.dto.DateTime;
 //import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 @Path("_endPutFile/{repositoryName}")
 @Consumes(MediaType.APPLICATION_XML)
@@ -35,8 +36,8 @@ public class EndPutFileService extends AbstractServiceWithRepoToRepoAuth
 			@QueryParam("length") final long length,
 			@QueryParam("sha1") final String sha1)
 	{
-		AssertUtil.assertNotNull(path, "path");
-		AssertUtil.assertNotNull(lastModified, "lastModified");
+		requireNonNull(path, "path");
+		requireNonNull(lastModified, "lastModified");
 		final RepoTransport repoTransport = authenticateAndCreateLocalRepoTransport();
 		try {
 			path = repoTransport.unprefixPath(path);

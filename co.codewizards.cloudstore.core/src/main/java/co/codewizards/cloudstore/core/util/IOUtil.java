@@ -2,7 +2,7 @@ package co.codewizards.cloudstore.core.util;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.BufferedInputStream;
 import java.io.FileFilter;
@@ -841,8 +841,8 @@ public final class IOUtil {
 	public static boolean compareInputStreams(final InputStream inputStream1, final InputStream inputStream2)
 	throws IOException
 	{
-		assertNotNull(inputStream1, "inputStream1");
-		assertNotNull(inputStream2, "inputStream2");
+		requireNonNull(inputStream1, "inputStream1");
+		requireNonNull(inputStream2, "inputStream2");
 
 		// We use a BufferedInputStream, if the given stream does not support mark. This is, because we assume that it is
 		// already using a buffer, if it does support mark. For example, ByteArrayInputStream and BufferedInputStream do support
@@ -1396,7 +1396,7 @@ public final class IOUtil {
 	}
 
 	public static void readOrFail(final InputStream in, final byte[] buf, int off, int len) throws IOException {
-		AssertUtil.assertNotNull(buf, "buf");
+		requireNonNull(buf, "buf");
 		if (off < 0)
 			throw new IllegalArgumentException("off < 0");
 
@@ -1429,7 +1429,7 @@ public final class IOUtil {
 		return bytes;
 	}
 	public static long bytesToLong(final byte[] bytes) {
-		assertNotNull(bytes, "bytes");
+		requireNonNull(bytes, "bytes");
 		if (bytes.length != 8)
 			throw new IllegalArgumentException("bytes.length != 8");
 
@@ -1448,7 +1448,7 @@ public final class IOUtil {
 		return bytes;
 	}
 	public static int bytesToInt(final byte[] bytes) {
-		assertNotNull(bytes, "bytes");
+		requireNonNull(bytes, "bytes");
 		if (bytes.length != 4)
 			throw new IllegalArgumentException("bytes.length != 4");
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +14,7 @@ class OutStream extends OutputStream implements IOutputStream {
 	}
 
 	protected OutStream(final OutputStream out) {
-		this.out = assertNotNull(out, "out");
+		this.out = requireNonNull(out, "out");
 	}
 
 	@Override
@@ -48,7 +48,7 @@ class OutStream extends OutputStream implements IOutputStream {
 		protected final IOutputStream out;
 
 		protected InverseOutStream(final IOutputStream out) {
-			this.out = assertNotNull(out, "out");
+			this.out = requireNonNull(out, "out");
 		}
 
 		@Override

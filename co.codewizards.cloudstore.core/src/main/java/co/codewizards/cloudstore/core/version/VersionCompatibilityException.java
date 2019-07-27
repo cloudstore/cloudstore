@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.version;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.dto.VersionInfoDto;
 
@@ -12,14 +12,14 @@ public class VersionCompatibilityException extends RuntimeException {
 
 	public VersionCompatibilityException(final VersionInfoDto clientVersionInfoDto, final VersionInfoDto serverVersionInfoDto, String message) {
 		super(message);
-		this.clientVersionInfoDto = assertNotNull(clientVersionInfoDto, "clientVersionInfoDto");
-		this.serverVersionInfoDto = assertNotNull(serverVersionInfoDto, "serverVersionInfoDto");
+		this.clientVersionInfoDto = requireNonNull(clientVersionInfoDto, "clientVersionInfoDto");
+		this.serverVersionInfoDto = requireNonNull(serverVersionInfoDto, "serverVersionInfoDto");
 
-		assertNotNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
-		assertNotNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
+		requireNonNull(clientVersionInfoDto.getLocalVersion(), "clientVersionInfoDto.localVersion");
+		requireNonNull(clientVersionInfoDto.getMinimumRemoteVersion(), "clientVersionInfoDto.minimumRemoteVersion");
 
-		assertNotNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
-		assertNotNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
+		requireNonNull(serverVersionInfoDto.getLocalVersion(), "serverVersionInfoDto.localVersion");
+		requireNonNull(serverVersionInfoDto.getMinimumRemoteVersion(), "serverVersionInfoDto.minimumRemoteVersion");
 	}
 
 	public VersionInfoDto getClientVersionInfoDto() {

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.server;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class InverseInvoker implements Invoker {
 	private volatile boolean diedOfTimeout;
 
 	public static InverseInvoker getInverseInvoker(final ObjectManager objectManager) {
-		assertNotNull(objectManager, "objectManager");
+		requireNonNull(objectManager, "objectManager");
 
 		synchronized (objectManager) {
 			InverseInvoker inverseInvoker = (InverseInvoker) objectManager.getContextObject(InverseInvoker.class.getName());
@@ -86,7 +86,7 @@ public class InverseInvoker implements Invoker {
 	}
 
 	private InverseInvoker(final ObjectManager objectManager) {
-		this.objectManager = assertNotNull(objectManager, "objectManager");
+		this.objectManager = requireNonNull(objectManager, "objectManager");
 	}
 
 	@Override
@@ -96,29 +96,29 @@ public class InverseInvoker implements Invoker {
 
 	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... arguments) {
-		assertNotNull(clazz, "clazz");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(clazz, "clazz");
+		requireNonNull(methodName, "methodName");
 		return invokeStatic(clazz.getName(), methodName, (String[]) null, arguments);
 	}
 
 	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final Object ... arguments) {
-		assertNotNull(className, "className");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(className, "className");
+		requireNonNull(methodName, "methodName");
 		return invokeStatic(className, methodName, (String[]) null, arguments);
 	}
 
 	@Override
 	public <T> T invokeStatic(final Class<?> clazz, final String methodName, final Class<?>[] argumentTypes, final Object ... arguments) {
-		assertNotNull(clazz, "clazz");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(clazz, "clazz");
+		requireNonNull(methodName, "methodName");
 		return invokeStatic(clazz.getName(), methodName, toClassNames(argumentTypes), arguments);
 	}
 
 	@Override
 	public <T> T invokeStatic(final String className, final String methodName, final String[] argumentTypeNames, final Object ... arguments) {
-		assertNotNull(className, "className");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(className, "className");
+		requireNonNull(methodName, "methodName");
 
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forStaticInvocation(
 				className, methodName, argumentTypeNames, arguments);
@@ -128,25 +128,25 @@ public class InverseInvoker implements Invoker {
 
 	@Override
 	public <T> T invokeConstructor(final Class<T> clazz, final Object ... arguments) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		return invokeConstructor(clazz.getName(), (String[]) null, arguments);
 	}
 
 	@Override
 	public <T> T invokeConstructor(final String className, final Object ... arguments) {
-		assertNotNull(className, "className");
+		requireNonNull(className, "className");
 		return invokeConstructor(className, (String[]) null, arguments);
 	}
 
 	@Override
 	public <T> T invokeConstructor(final Class<T> clazz, final Class<?>[] argumentTypes, final Object ... arguments) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		return invokeConstructor(clazz.getName(), toClassNames(argumentTypes), arguments);
 	}
 
 	@Override
 	public <T> T invokeConstructor(final String className, final String[] argumentTypeNames, final Object ... arguments) {
-		assertNotNull(className, "className");
+		requireNonNull(className, "className");
 
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forConstructorInvocation(
 				className, argumentTypeNames, arguments);
@@ -156,8 +156,8 @@ public class InverseInvoker implements Invoker {
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final Object ... arguments) {
-		assertNotNull(object, "object");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(object, "object");
+		requireNonNull(methodName, "methodName");
 
 		if (!(object instanceof RemoteObjectProxy))
 			throw new IllegalArgumentException("object is not an instance of RemoteObjectProxy!");
@@ -167,15 +167,15 @@ public class InverseInvoker implements Invoker {
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final Class<?>[] argumentTypes, final Object... arguments) {
-		assertNotNull(object, "object");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(object, "object");
+		requireNonNull(methodName, "methodName");
 		return invoke(object, methodName, toClassNames(argumentTypes), arguments);
 	}
 
 	@Override
 	public <T> T invoke(final Object object, final String methodName, final String[] argumentTypeNames, final Object... arguments) {
-		assertNotNull(object, "object");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(object, "object");
+		requireNonNull(methodName, "methodName");
 
 		final MethodInvocationRequest methodInvocationRequest = MethodInvocationRequest.forObjectInvocation(
 				object, methodName, argumentTypeNames, arguments);
@@ -184,12 +184,12 @@ public class InverseInvoker implements Invoker {
 	}
 
 	private <T> T invoke(final MethodInvocationRequest methodInvocationRequest) {
-		assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 
 		InverseMethodInvocationResponse inverseMethodInvocationResponse = performInverseServiceRequest(
 				new InverseMethodInvocationRequest(methodInvocationRequest));
 
-		assertNotNull(inverseMethodInvocationResponse, "inverseMethodInvocationResponse");
+		requireNonNull(inverseMethodInvocationResponse, "inverseMethodInvocationResponse");
 
 		MethodInvocationResponse methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
 
@@ -200,7 +200,7 @@ public class InverseInvoker implements Invoker {
 			inverseMethodInvocationResponse = performInverseServiceRequest(
 					new InverseMethodInvocationRequest(delayedResponseId));
 
-			assertNotNull(inverseMethodInvocationResponse, "inverseMethodInvocationResponse");
+			requireNonNull(inverseMethodInvocationResponse, "inverseMethodInvocationResponse");
 
 			methodInvocationResponse = inverseMethodInvocationResponse.getMethodInvocationResponse();
 		}
@@ -291,13 +291,13 @@ public class InverseInvoker implements Invoker {
 	 * {@link #PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS}.
 	 */
 	public <T extends InverseServiceResponse> T performInverseServiceRequest(final InverseServiceRequest request) throws TimeoutException {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 
 		if (diedOfTimeout)
 			throw new IllegalStateException(String.format("InverseInvoker[%s] died of timeout, already!", objectManager.getClientId()));
 
 		final Uid requestId = request.getRequestId();
-		assertNotNull(requestId, "request.requestId");
+		requireNonNull(requestId, "request.requestId");
 
 		synchronized (requestId2InverseServiceResponse) {
 			if (!requestIdsWaitingForResponse.add(requestId))
@@ -399,10 +399,10 @@ public class InverseInvoker implements Invoker {
 	}
 
 	public void pushInverseServiceResponse(final InverseServiceResponse response) {
-		assertNotNull(response, "response");
+		requireNonNull(response, "response");
 
 		final Uid requestId = response.getRequestId();
-		assertNotNull(requestId, "response.requestId");
+		requireNonNull(requestId, "response.requestId");
 
 		synchronized (requestId2InverseServiceResponse) {
 			if (!requestIdsWaitingForResponse.contains(requestId))

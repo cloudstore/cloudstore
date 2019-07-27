@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 import java.util.Date;
@@ -20,9 +20,9 @@ public class RepoSyncState extends SyncState {
 
 	public RepoSyncState(UUID localRepositoryId, UUID serverRepositoryId, File localRoot, URL url, Severity severity, String message, Error error, Date syncStarted, Date syncFinished) {
 		super(url, severity, message, error, syncStarted, syncFinished);
-		this.localRepositoryId = assertNotNull(localRepositoryId, "localRepositoryId");
-		this.serverRepositoryId = assertNotNull(serverRepositoryId, "serverRepositoryId");
-		this.localRoot = assertNotNull(localRoot, "localRoot");
+		this.localRepositoryId = requireNonNull(localRepositoryId, "localRepositoryId");
+		this.serverRepositoryId = requireNonNull(serverRepositoryId, "serverRepositoryId");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 	}
 
 	public UUID getLocalRepositoryId() {

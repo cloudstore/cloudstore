@@ -36,7 +36,7 @@
 //	}
 //
 //	protected void setLocal(final String local) throws IOException {
-//		assertNotNull("local", local);
+//		requireNonNull("local", local);
 //
 //		String repositoryName;
 //		final int slashIndex = local.indexOf('/');
@@ -73,6 +73,6 @@
 //	}
 //
 //	protected void assertLocalRootNotNull() {
-//		AssertUtil.assertNotNull("localRoot", localRoot);
+//		requireNonNull("localRoot", localRoot);
 //	}
 //}

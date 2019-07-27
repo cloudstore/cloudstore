@@ -1,14 +1,14 @@
 package co.codewizards.cloudstore.core.oio;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 public class FileFilterWrapper implements java.io.FileFilter {
 
 	private final FileFilter fileFilter;
 
 	public FileFilterWrapper(final FileFilter fileFilter) {
-		this.fileFilter = assertNotNull(fileFilter, "fileFilter");
+		this.fileFilter = requireNonNull(fileFilter, "fileFilter");
 	}
 
 	@Override

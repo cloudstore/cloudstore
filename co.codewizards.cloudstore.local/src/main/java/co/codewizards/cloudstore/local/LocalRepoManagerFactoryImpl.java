@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
@@ -23,7 +24,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 /**
  * Registry of {@link LocalRepoManager}s.
@@ -136,7 +136,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	}
 
 	private File canonicalize(File localRoot) {
-		AssertUtil.assertNotNull(localRoot, "localRoot");
+		requireNonNull(localRoot, "localRoot");
 		try {
 			localRoot = localRoot.getCanonicalFile();
 		} catch (final IOException e) {
@@ -153,7 +153,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	}
 
 	private void postLocalRepoManagerBackendClose(final LocalRepoManagerImpl localRepoManager) {
-		AssertUtil.assertNotNull(localRepoManager, "localRepoManager");
+		requireNonNull(localRepoManager, "localRepoManager");
 		synchronized (this) {
 			final LocalRepoManagerImpl localRepoManager2 = localRoot2LocalRepoManagerImpl.remove(localRepoManager.getLocalRoot());
 			if (localRepoManager != localRepoManager2) {

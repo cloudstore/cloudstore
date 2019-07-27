@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke.refjanitor;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ public class ReferenceJanitorRegistry {
 	private final List<ReferenceJanitor> referenceJanitors;
 
 	public ReferenceJanitorRegistry(final ObjectManager objectManager) {
-		this.objectManager = assertNotNull(objectManager, "objectManager");
+		this.objectManager = requireNonNull(objectManager, "objectManager");
 		referenceJanitors = loadReferenceJanitors();
 	}
 

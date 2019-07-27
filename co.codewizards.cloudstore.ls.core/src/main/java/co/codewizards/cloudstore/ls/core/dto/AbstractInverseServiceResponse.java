@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.dto;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.Uid;
 
@@ -10,11 +10,11 @@ public abstract class AbstractInverseServiceResponse implements InverseServiceRe
 	private final Uid requestId;
 
 	public AbstractInverseServiceResponse(InverseServiceRequest request) {
-		this(assertNotNull(assertNotNull(request, "request").getRequestId(), "request.requestId"));
+		this(requireNonNull(requireNonNull(request, "request").getRequestId(), "request.requestId"));
 	}
 
 	public AbstractInverseServiceResponse(Uid requestId) {
-		this.requestId = assertNotNull(requestId, "requestId");
+		this.requestId = requireNonNull(requestId, "requestId");
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.service;
 
+import static java.util.Objects.*;
+
 import java.net.URL;
 
 import javax.ws.rs.Consumes;
@@ -16,7 +18,6 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.UrlUtil;
 
 @Path("_requestRepoConnection/{repositoryName}")
@@ -42,8 +43,8 @@ public class RequestRepoConnectionService
 	@Consumes(MediaType.APPLICATION_XML)
 	public void requestConnection(@PathParam("pathPrefix") final String pathPrefix, final RepositoryDto clientRepositoryDto)
 	{
-		AssertUtil.assertNotNull(pathPrefix, "pathPrefix");
-		AssertUtil.assertNotNull(clientRepositoryDto, "repositoryDto");
+		requireNonNull(pathPrefix, "pathPrefix");
+		requireNonNull(clientRepositoryDto, "repositoryDto");
 
 		URL localRootURL = LocalRepoRegistryImpl.getInstance().getLocalRootURLForRepositoryNameOrFail(repositoryName);
 		localRootURL = UrlUtil.appendNonEncodedPath(localRootURL, pathPrefix);

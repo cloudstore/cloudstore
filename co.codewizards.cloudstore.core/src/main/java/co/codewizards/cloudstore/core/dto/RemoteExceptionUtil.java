@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -79,8 +79,8 @@ public final class RemoteExceptionUtil {
 	}
 
 	private static void initStackTrace(Throwable throwable, Error error, boolean replaceOriginalStackTrace) {
-		assertNotNull(throwable, "throwable");
-		assertNotNull(error, "error");
+		requireNonNull(throwable, "throwable");
+		requireNonNull(error, "error");
 
 		int idx = -1;
 		StackTraceElement[] origStackTrace = replaceOriginalStackTrace ? new StackTraceElement[0] : throwable.getStackTrace();

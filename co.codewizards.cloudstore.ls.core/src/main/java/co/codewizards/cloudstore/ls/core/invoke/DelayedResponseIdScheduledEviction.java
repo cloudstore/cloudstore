@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import co.codewizards.cloudstore.core.Uid;
 
@@ -12,7 +12,7 @@ public class DelayedResponseIdScheduledEviction implements Comparable<DelayedRes
 
 	public DelayedResponseIdScheduledEviction(final long scheduledEvictionTimestamp, final Uid delayedResponseId) {
 		this.scheduledEvictionTimestamp = scheduledEvictionTimestamp;
-		this.delayedResponseId = assertNotNull(delayedResponseId, "delayedResponseId");
+		this.delayedResponseId = requireNonNull(delayedResponseId, "delayedResponseId");
 	}
 
 	public Uid getDelayedResponseId() {

@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.server.service;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,7 +31,7 @@ public class InvokeMethodService extends AbstractService {
 
 	@POST
 	public MethodInvocationResponse performMethodInvocation(final MethodInvocationRequest methodInvocationRequest) throws Throwable {
-		assertNotNull(methodInvocationRequest, "methodInvocationRequest");
+		requireNonNull(methodInvocationRequest, "methodInvocationRequest");
 
 		// *always* acquiring to make sure the lastUseDate is updated - and to make things easy: we have what we need.
 		final InverseInvoker inverseInvoker = getInverseInvoker();
@@ -69,7 +69,7 @@ public class InvokeMethodService extends AbstractService {
 	@GET
 	@Path("{delayedResponseId}")
 	public MethodInvocationResponse getDelayedMethodInvocationResponse(@PathParam("delayedResponseId") final Uid delayedResponseId) throws Throwable {
-		assertNotNull(delayedResponseId, "delayedResponseId");
+		requireNonNull(delayedResponseId, "delayedResponseId");
 		// *always* acquiring to make sure the lastUseDate is updated - and to make things easy: we have what we need.
 		getInverseInvoker().getObjectManager();
 

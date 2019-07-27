@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.local.transport;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
-import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.createObject;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
-import static co.codewizards.cloudstore.core.util.HashUtil.sha1;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.HashUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,7 +21,6 @@ import co.codewizards.cloudstore.core.dto.TempChunkFileDto;
 import co.codewizards.cloudstore.core.dto.jaxb.TempChunkFileDtoIo;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.IOUtil;
 
 public class TempChunkFileManager {
@@ -41,8 +41,8 @@ public class TempChunkFileManager {
 	}
 
 	public void writeFileDataToTempChunkFile(final File destFile, final long offset, final byte[] fileData) {
-		AssertUtil.assertNotNull(destFile, "destFile");
-		AssertUtil.assertNotNull(fileData, "fileData");
+		requireNonNull(destFile, "destFile");
+		requireNonNull(fileData, "fileData");
 		try {
 			final File tempChunkFile = createTempChunkFile(destFile, offset);
 			final File tempChunkFileDtoFile = getTempChunkFileDtoFile(tempChunkFile);
@@ -215,7 +215,7 @@ public class TempChunkFileManager {
 	}
 
 	public File getTempDir(final File destFile) {
-		AssertUtil.assertNotNull(destFile, "destFile");
+		requireNonNull(destFile, "destFile");
 		final File parentDir = destFile.getParentFile();
 		return createFile(parentDir, LocalRepoManager.TEMP_DIR_NAME);
 	}
@@ -227,8 +227,8 @@ public class TempChunkFileManager {
 	 * @return the Dto. Never <code>null</code>.
 	 */
 	public TempChunkFileDto createTempChunkFileDto(final long offset, final File tempChunkFile, final String sha1) {
-		AssertUtil.assertNotNull(tempChunkFile, "tempChunkFile");
-		AssertUtil.assertNotNull(sha1, "sha1");
+		requireNonNull(tempChunkFile, "tempChunkFile");
+		requireNonNull(sha1, "sha1");
 
 		if (!tempChunkFile.exists())
 			throw new IllegalArgumentException("The tempChunkFile does not exist: " + tempChunkFile.getAbsolutePath());

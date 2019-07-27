@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke.filter;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,7 +76,7 @@ public class InvocationFilterRegistry {
 	}
 
 	public boolean canInvoke(final ExtMethodInvocationRequest extMethodInvocationRequest) {
-		assertNotNull(extMethodInvocationRequest, "extMethodInvocationRequest");
+		requireNonNull(extMethodInvocationRequest, "extMethodInvocationRequest");
 		for (final InvocationFilter invocationFilter : getInvocationFilters()) {
 			final Boolean result = invocationFilter.canInvoke(extMethodInvocationRequest);
 			if (result != null)

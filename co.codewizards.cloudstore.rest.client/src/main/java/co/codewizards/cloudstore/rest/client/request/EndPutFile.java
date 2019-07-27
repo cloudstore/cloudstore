@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client.request;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.ws.rs.core.Response;
 
@@ -15,9 +15,9 @@ public class EndPutFile extends VoidRequest {
 	protected final String sha1;
 
 	public EndPutFile(final String repositoryName, final String path, final DateTime lastModified, final long length, final String sha1) {
-		this.repositoryName = assertNotNull(repositoryName, "repositoryName");
-		this.path = assertNotNull(path, "path");
-		this.lastModified = assertNotNull(lastModified, "lastModified");
+		this.repositoryName = requireNonNull(repositoryName, "repositoryName");
+		this.path = requireNonNull(path, "path");
+		this.lastModified = requireNonNull(lastModified, "lastModified");
 		this.length = length;
 		this.sha1 = sha1;
 	}

@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.rest.client;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +27,6 @@ import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.Error;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.dto.RemoteExceptionUtil;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyReader;
 import co.codewizards.cloudstore.ls.core.provider.JavaNativeMessageBodyWriter;
@@ -151,7 +151,7 @@ public class LocalServerRestClient {
 //	}
 
 	public <R> R execute(final Request<R> request) {
-		AssertUtil.assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		RuntimeException firstException = null;
 		int retryCounter = 0; // *re*-try: first (normal) invocation is 0, first re-try is 1
 		final int retryMax = 1; // *re*-try: 1 retries means 2 invocations in total
@@ -241,7 +241,7 @@ public class LocalServerRestClient {
 		public boolean broken;
 
 		public ClientRef(final Client client) {
-			this.client = AssertUtil.assertNotNull(client, "client");
+			this.client = requireNonNull(client, "client");
 		}
 	}
 

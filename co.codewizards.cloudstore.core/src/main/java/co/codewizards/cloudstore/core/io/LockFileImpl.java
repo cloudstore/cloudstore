@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.core.io;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 
 class LockFileImpl implements LockFile {
 	private static final Logger logger = LoggerFactory.getLogger(LockFileImpl.class);
@@ -39,8 +39,8 @@ class LockFileImpl implements LockFile {
 	private final Object mutex = this;
 
 	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
-		this.lockFileFactory = AssertUtil.assertNotNull(lockFileFactory, "lockFileFactory");
-		this.file = AssertUtil.assertNotNull(file, "file");
+		this.lockFileFactory = requireNonNull(lockFileFactory, "lockFileFactory");
+		this.file = requireNonNull(file, "file");
 //		this.mutex = lockFileFactory.mutex;
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}

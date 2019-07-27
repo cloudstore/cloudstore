@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,8 +19,8 @@ public class PersistencePropertiesProvider {
 	private final File localRoot;
 
 	public PersistencePropertiesProvider(final UUID repositoryId, final File localRoot) {
-		this.repositoryId = assertNotNull(repositoryId, "repositoryId");
-		this.localRoot = assertNotNull(localRoot, "localRoot");
+		this.repositoryId = requireNonNull(repositoryId, "repositoryId");
+		this.localRoot = requireNonNull(localRoot, "localRoot");
 		if (!localRoot.isDirectory())
 			throw new IllegalArgumentException("The given localRoot is not an existing directory: " + localRoot.getAbsolutePath());
 	}

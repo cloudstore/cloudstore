@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
+import static java.util.Objects.*;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -14,7 +16,6 @@ import java.util.UUID;
 import co.codewizards.cloudstore.core.auth.AuthToken;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.DateTime;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.core.util.PasswordUtil;
 
 public class TransientRepoPasswordManager {
@@ -59,8 +60,8 @@ public class TransientRepoPasswordManager {
 	}
 
 	public synchronized TransientRepoPassword getCurrentAuthRepoPassword(final UUID serverRepositoryId, final UUID clientRepositoryId) {
-		AssertUtil.assertNotNull(serverRepositoryId, "serverRepositoryId");
-		AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
+		requireNonNull(serverRepositoryId, "serverRepositoryId");
+		requireNonNull(clientRepositoryId, "clientRepositoryId");
 
 		Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
 		if (clientRepositoryId2AuthRepoPasswordSet == null) {
@@ -87,9 +88,9 @@ public class TransientRepoPasswordManager {
 	}
 
 	public synchronized boolean isPasswordValid(final UUID serverRepositoryId, final UUID clientRepositoryId, final char[] password) {
-		AssertUtil.assertNotNull(serverRepositoryId, "serverRepositoryId");
-		AssertUtil.assertNotNull(clientRepositoryId, "clientRepositoryId");
-		AssertUtil.assertNotNull(password, "password");
+		requireNonNull(serverRepositoryId, "serverRepositoryId");
+		requireNonNull(clientRepositoryId, "clientRepositoryId");
+		requireNonNull(password, "password");
 		final Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
 		if (clientRepositoryId2AuthRepoPasswordSet == null)
 			return false;
@@ -119,10 +120,10 @@ public class TransientRepoPasswordManager {
 			final UUID clientRepositoryId = oldestAuthRepoPassword.getClientRepositoryId();
 
 			final Map<UUID, SortedSet<TransientRepoPassword>> clientRepositoryId2AuthRepoPasswordSet = serverRepositoryId2ClientRepositoryId2AuthRepoPasswordSet.get(serverRepositoryId);
-			AssertUtil.assertNotNull(clientRepositoryId2AuthRepoPasswordSet, "clientRepositoryId2AuthRepoPasswordSet");
+			requireNonNull(clientRepositoryId2AuthRepoPasswordSet, "clientRepositoryId2AuthRepoPasswordSet");
 
 			final SortedSet<TransientRepoPassword> authRepoPasswordSet = clientRepositoryId2AuthRepoPasswordSet.get(clientRepositoryId);
-			AssertUtil.assertNotNull(authRepoPasswordSet, "authRepoPasswordSet");
+			requireNonNull(authRepoPasswordSet, "authRepoPasswordSet");
 
 			authRepoPasswordSet.remove(oldestAuthRepoPassword);
 
@@ -188,12 +189,12 @@ public class TransientRepoPasswordManager {
 	};
 
 	private boolean isAfterRenewalDateOrInEarlyRenewalPeriod(final TransientRepoPassword transientRepoPassword) {
-		AssertUtil.assertNotNull(transientRepoPassword, "authRepoPassword");
+		requireNonNull(transientRepoPassword, "authRepoPassword");
 		return System.currentTimeMillis() + getEarlyRenewalPeriod() > transientRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
 	}
 
 	private boolean isExpired(final TransientRepoPassword transientRepoPassword) {
-		AssertUtil.assertNotNull(transientRepoPassword, "authRepoPassword");
+		requireNonNull(transientRepoPassword, "authRepoPassword");
 		return System.currentTimeMillis() > transientRepoPassword.getAuthToken().getExpiryDateTime().getMillis();
 	}
 

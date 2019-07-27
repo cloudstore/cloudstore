@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -21,8 +21,8 @@ public class RemoteObjectProxyInvocationHandler implements InvocationHandler {
 	protected final boolean equalsOverridden;
 
 	public RemoteObjectProxyInvocationHandler(final Invoker invoker, final ObjectRef objectRef) {
-		this.invoker = assertNotNull(invoker, "invoker");
-		this.objectRef = assertNotNull(objectRef, "objectRef");
+		this.invoker = requireNonNull(invoker, "invoker");
+		this.objectRef = requireNonNull(objectRef, "objectRef");
 
 		if (logger.isDebugEnabled())
 			logger.debug("[{}]<init>: {} refId={}", getThisId(), objectRef, refId);
