@@ -6,8 +6,6 @@ import java.util.Arrays;
 
 import javax.ws.rs.WebApplicationException;
 
-import net.jcip.annotations.NotThreadSafe;
-
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
@@ -23,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import co.codewizards.cloudstore.rest.server.auth.Auth;
+import net.jcip.annotations.NotThreadSafe;
 
 @RunWith(FrameworkRunner.class)
 @CreateLdapServer(transports =
@@ -118,13 +117,13 @@ public class SimpleLdapClientTest extends AbstractLdapTestUnit{
 		assertThat(username).isEqualTo(USER_NAME);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void when_url_is_null_then_throw_IllegalArgumentException(){
+	@Test(expected = NullPointerException.class)
+	public void when_url_is_null_then_throw_NullPointerException(){
 		new SimpleLdapClient(Arrays.asList("cn=${login},ou=system"), null);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void when_templates_are_null_then_throw_IllegalArgumentException(){
+	@Test(expected = NullPointerException.class)
+	public void when_templates_are_null_then_throw_NullPointerExcetpion(){
 		new SimpleLdapClient(null, "ldap://localhost:"+ ldapServer.getPort());
 	}
 

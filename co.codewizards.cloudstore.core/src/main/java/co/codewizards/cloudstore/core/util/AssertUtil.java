@@ -12,6 +12,16 @@ public final class AssertUtil {
 
 	private AssertUtil() { }
 
+	public static final <T> T assertNotNull(final T object, final String name, final String additionalInfoTemplate, final Object ... additionalInfoArgs) {
+		if (additionalInfoTemplate == null)
+			return requireNonNull(object, name);
+
+		if (object == null)
+			throw new IllegalArgumentException(String.format("%s == null :: ", name) + String.format(additionalInfoTemplate, additionalInfoArgs));
+
+		return object;
+	}
+
 	public static final <T> T[] assertNotNullAndNoNullElement(final T[] array, final String name) {
 		requireNonNull(array, name);
 		for (int i = 0; i < array.length; i++) {
