@@ -25,7 +25,7 @@ public interface LocalRepoManager extends AutoCloseable {
 	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20L * 1000L;
 
 	String CONFIG_KEY_MAX_OPEN_MILLIS = "localRepoManager.maxOpenMillis";
-	long DEFAULT_MAX_OPEN_MILLIS = 20L * 60L * 1000L; // 20 minutes
+	long DEFAULT_MAX_OPEN_MILLIS = 3L * 60L * 60L * 1000L; // 3 hours
 
 	String META_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-repo";
 	/**

@@ -7,11 +7,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.jdo.JDOHelper;
@@ -39,8 +39,8 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Class<E> entityClass;
 	private final Class<D> daoClass;
 	private DaoProvider daoProvider;
-	private static final int LOAD_PACKAGE_SIZE = 1000;
-	private static final int LOAD_DTOS_PACKAGE_SIZE = 1000;
+
+	private static final int LOAD_ID_RANGE_PACKAGE_SIZE = 100;
 
 	/**
 	 * Instantiate the Dao.
@@ -246,99 +246,193 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 	protected Collection<E> load(final Collection<E> entities) {
 		requireNonNull(entities, "entities");
-		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+		final Map<Class<? extends Entity>, SortedSet<Long>> entityClass2EntityIds = new HashMap<>();
 		int entitiesSize = 0;
 		for (final E entity : entities) {
-			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
-			if (entityIDs == null) {
-				entityIDs = new TreeSet<>();
-				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+			SortedSet<Long> entityIds = entityClass2EntityIds.get(entity.getClass());
+			if (entityIds == null) {
+				entityIds = new TreeSet<>();
+				entityClass2EntityIds.put(entity.getClass(), entityIds);
 			}
-			entityIDs.add(entity.getId());
+			entityIds.add(entity.getId());
 			++entitiesSize;
 		}
 
 		final Collection<E> result = new ArrayList<>(entitiesSize);
-		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
+		for (final Map.Entry<Class<? extends Entity>, SortedSet<Long>> me : entityClass2EntityIds.entrySet()) {
 			final Class<? extends Entity> entityClass = me.getKey();
 			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
-			query.setFilter(":entityIDs.contains(this.id)");
+			query.setFilter(buildIdRangePackageFilter());
 
-			final Set<Long> entityIDs = me.getValue();
-			int idx = -1;
-			final Set<Long> entityIDSubSet = new HashSet<>(300);
-			for (final Long entityID : entityIDs) {
-				++idx;
-				entityIDSubSet.add(entityID);
-				if (idx > LOAD_PACKAGE_SIZE) {
-					idx = -1;
-					populateLoadResult(result, query, entityIDSubSet);
-				}
+			final SortedSet<Long> entityIds = me.getValue();
+
+			List<List<IdRange>> idRangePackages = buildIdRangePackages(entityIds);
+			for (List<IdRange> idRangePackage : idRangePackages) {
+				@SuppressWarnings("unchecked")
+				final Collection<E> c = (Collection<E>) query.executeWithMap(buildIdRangePackageQueryMap(idRangePackage));
+				result.addAll(c);
+				query.closeAll();
 			}
-			populateLoadResult(result, query, entityIDSubSet);
 		}
 		return result;
-	}
-
-	private void populateLoadResult(final Collection<E> result, final Query query, final Set<Long> entityIDSubSet) {
-		if (entityIDSubSet.isEmpty())
-			return;
-
-		@SuppressWarnings("unchecked")
-		final Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
-		result.addAll(c);
-		query.closeAll();
-		entityIDSubSet.clear();
 	}
 
 	protected <T> List<T> loadDtos(final Collection<E> entities, final Class<T> dtoClass, final String queryResult) {
 		requireNonNull(entities, "entities");
 		requireNonNull(dtoClass, "dtoClass");
-		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+		final Map<Class<? extends Entity>, SortedSet<Long>> entityClass2EntityIDs = new HashMap<>();
 		int entitiesSize = 0;
 		for (final E entity : entities) {
-			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
-			if (entityIDs == null) {
-				entityIDs = new TreeSet<>();
-				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+			SortedSet<Long> entityIds = entityClass2EntityIDs.get(entity.getClass());
+			if (entityIds == null) {
+				entityIds = new TreeSet<>();
+				entityClass2EntityIDs.put(entity.getClass(), entityIds);
 			}
-			entityIDs.add(entity.getId());
+			entityIds.add(entity.getId());
 			++entitiesSize;
 		}
 
 		final List<T> result = new ArrayList<>(entitiesSize);
-		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
+		for (final Map.Entry<Class<? extends Entity>, SortedSet<Long>> me : entityClass2EntityIDs.entrySet()) {
 			final Class<? extends Entity> entityClass = me.getKey();
 			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
 			query.setResultClass(dtoClass);
 			query.setResult(queryResult);
-			query.setFilter(":entityIDs.contains(this.id)");
+			query.setFilter(buildIdRangePackageFilter());
 
-			final Set<Long> entityIDs = me.getValue();
-			int idx = -1;
-			final Set<Long> entityIDSubSet = new HashSet<>(300);
-			for (final Long entityID : entityIDs) {
-				++idx;
-				entityIDSubSet.add(entityID);
-				if (idx > LOAD_DTOS_PACKAGE_SIZE) {
-					idx = -1;
-					populateLoadDtosResult(result, query, entityIDSubSet);
-				}
+			final SortedSet<Long> entityIds = me.getValue();
+
+			List<List<IdRange>> idRangePackages = buildIdRangePackages(entityIds);
+			for (List<IdRange> idRangePackage : idRangePackages) {
+				@SuppressWarnings("unchecked")
+				final Collection<T> c = (Collection<T>) query.executeWithMap(buildIdRangePackageQueryMap(idRangePackage));
+				result.addAll(c);
+				query.closeAll();
 			}
-			populateLoadDtosResult(result, query, entityIDSubSet);
 		}
 		return result;
 	}
 
-	private <T> void populateLoadDtosResult(final Collection<T> result, final Query query, final Set<Long> entityIDSubSet) {
-		if (entityIDSubSet.isEmpty())
-			return;
+	protected static final class IdRange {
+		public static final long EMPTY_ID = -1;
 
-		@SuppressWarnings("unchecked")
-		final Collection<T> c = (Collection<T>) query.execute(entityIDSubSet);
-		result.addAll(c);
-		query.closeAll();
-		entityIDSubSet.clear();
+		public long fromIdIncl = EMPTY_ID;
+		public long toIdIncl = EMPTY_ID;
+
+		@Override
+		public String toString() {
+			return "[" + fromIdIncl + ',' + toIdIncl + ']';
+		}
+	}
+
+	protected String buildIdRangePackageFilter() {
+		StringBuilder filter = new StringBuilder();
+		for (int idx = 0; idx < LOAD_ID_RANGE_PACKAGE_SIZE; ++idx) {
+			if (idx > 0) {
+				filter.append(" || ");
+			}
+			filter.append("(:fromId").append(idx).append(" <= this.id && this.id <= :toId").append(idx).append(")");
+		}
+		return filter.toString();
+	}
+
+	/**
+	 * Build the query-argument-map corresponding to {@link #buildIdRangePackageFilter()}.
+	 * @param idRangePackage the id-range-package for which to build the argument-map. Never <code>null</code>.
+	 * @return the query-argument-map used by {@link Query#executeWithMap(Map)}. Never <code>null</code>.
+	 */
+	protected Map<String, Object> buildIdRangePackageQueryMap(List<IdRange> idRangePackage) {
+		requireNonNull(idRangePackage, "idRangePackage");
+		if (idRangePackage.size() != LOAD_ID_RANGE_PACKAGE_SIZE)
+			throw new IllegalArgumentException("idRangePackage.size() != LOAD_ID_RANGE_PACKAGE_SIZE :: " + idRangePackage.size() + " != " + LOAD_ID_RANGE_PACKAGE_SIZE);
+
+		Map<String, Object> map = new HashMap<>(LOAD_ID_RANGE_PACKAGE_SIZE * 2);
+		int idx = -1;
+		for (IdRange idRange : idRangePackage) {
+			++idx;
+			map.put("fromId" + idx, idRange.fromIdIncl);
+			map.put("toId" + idx, idRange.toIdIncl);
+		}
+		return map;
+	}
+
+	/**
+	 * Organise the given entity-IDs in {@link IdRange}s, which itself are grouped into packages.
+	 * <p>
+	 * Each package, i.e. each element in the returned main {@code List} has a fixed size of
+	 * {@value #LOAD_ID_RANGE_PACKAGE_SIZE} elements.
+	 *
+	 * @param entityIds entity-IDs to be organised in ranges. Must not be <code>null</code>.
+	 * @return id-range-packages. Never <code>null</code>.
+	 */
+	protected static List<List<IdRange>> buildIdRangePackages(SortedSet<Long> entityIds) {
+		return buildIdRangePackages(entityIds, LOAD_ID_RANGE_PACKAGE_SIZE);
+	}
+
+	/**
+	 * @deprecated Only used for junit-test! Use {@link #buildIdRangePackages(SortedSet)} instead! Don't use this method directly!
+	 */
+	@Deprecated
+	protected static List<List<IdRange>> buildIdRangePackages(SortedSet<Long> entityIds, int idRangePackageSize) {
+		requireNonNull(entityIds, "entityIds");
+		LinkedList<List<IdRange>> result = new LinkedList<List<IdRange>>();
+
+		if (entityIds.isEmpty()) {
+			return result;
+		}
+
+		List<IdRange> idRangePackage = new ArrayList<>(idRangePackageSize);
+		result.add(idRangePackage);
+		IdRange idRange = new IdRange();
+		idRangePackage.add(idRange);
+
+		for (Iterator<Long> it = entityIds.iterator(); it.hasNext();) {
+			long entityId = it.next();
+
+			if (idRange.fromIdIncl != IdRange.EMPTY_ID
+					&& (idRange.toIdIncl + 1 != entityId || ! it.hasNext())) {
+
+				if (idRange.toIdIncl +1 == entityId) {
+					idRange.toIdIncl = entityId;
+					entityId = IdRange.EMPTY_ID;
+				}
+
+				if (idRangePackage.size() >= idRangePackageSize) {
+					idRangePackage = new ArrayList<>(idRangePackageSize);
+					result.add(idRangePackage);
+				}
+				idRange = new IdRange();
+				idRangePackage.add(idRange);
+			}
+
+			if (idRange.fromIdIncl == IdRange.EMPTY_ID) {
+				idRange.fromIdIncl = entityId;
+			}
+			idRange.toIdIncl = entityId;
+		}
+
+		if (isIdRangePackageEmpty(idRangePackage)) {
+			// Remove, if it is empty.
+			List<IdRange> removed = result.removeLast();
+			if (idRangePackage != removed)
+				throw new IllegalStateException("idRangePackage != removed");
+		} else {
+			// Fill to fixed size, if it is not empty.
+			while (idRangePackage.size() < idRangePackageSize) {
+				idRangePackage.add(new IdRange());
+			}
+		}
+		return result;
+	}
+
+	private static boolean isIdRangePackageEmpty(List<IdRange> idRangePackage) {
+		requireNonNull(idRangePackage, "idRangePackage");
+
+		if (idRangePackage.isEmpty())
+			return true;
+
+		IdRange idRange = idRangePackage.get(0);
+		return idRange.fromIdIncl == IdRange.EMPTY_ID;
 	}
 
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);
