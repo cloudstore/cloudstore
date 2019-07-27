@@ -47,6 +47,7 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoHelper;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.CollisionException;
+import co.codewizards.cloudstore.core.repo.transport.LocalRepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
@@ -69,9 +70,9 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	protected File localRoot;
 	protected URL remoteRoot;
-	protected LocalRepoManager localRepoManager;
-	protected final LocalRepoTransportRef localRepoTransport;
-	protected final RepoTransportRef remoteRepoTransport;
+	protected final LocalRepoManager localRepoManager;
+	protected final LocalRepoTransport localRepoTransport;
+	protected final RepoTransport remoteRepoTransport;
 	protected UUID localRepositoryId;
 	protected UUID remoteRepositoryId;
 
@@ -90,23 +91,9 @@ public class RepoToRepoSync implements AutoCloseable {
 	 */
 	protected RepoToRepoSync(File localRoot, final URL remoteRoot) {
 		this.localRoot = requireNonNull(localRoot, "localRoot");
-		this.remoteRoot = requireNonNull(remoteRoot, "remoteRoot");
-		localRepoTransport = createLocalRepoTransportRef();
-		remoteRepoTransport = createRemoteRepoTransportRef();
-		init();
-	}
+		this.remoteRoot = UrlUtil.canonicalizeURL(requireNonNull(remoteRoot, "remoteRoot"));
 
-	protected LocalRepoTransportRef createLocalRepoTransportRef() {
-		return new LocalRepoTransportRef();
-	}
-
-	protected RepoTransportRef createRemoteRepoTransportRef() {
-		return new RepoTransportRef();
-	}
-
-	protected void init() {
 		final File localRootWithoutPathPrefix = LocalRepoHelper.getLocalRootContainingFile(requireNonNull(localRoot, "localRoot"));
-		remoteRoot = UrlUtil.canonicalizeURL(requireNonNull(remoteRoot, "remoteRoot"));
 		localRepoManager = LocalRepoManagerFactory.Helper.getInstance().createLocalRepoManagerForExistingRepository(localRootWithoutPathPrefix);
 		localRoot = createFile(localRootWithoutPathPrefix, localRepoManager.getLocalPathPrefixOrFail(remoteRoot));
 
@@ -116,8 +103,8 @@ public class RepoToRepoSync implements AutoCloseable {
 
 		remoteRepositoryId = localRepoManager.getRemoteRepositoryIdOrFail(remoteRoot);
 
-		remoteRepoTransport.setDelegate(createRepoTransport(remoteRoot, localRepositoryId));
-		localRepoTransport.setDelegate(createRepoTransport(localRoot, remoteRepositoryId));
+		remoteRepoTransport = createRepoTransport(remoteRoot, localRepositoryId);
+		localRepoTransport = (LocalRepoTransport) createRepoTransport(localRoot, remoteRepositoryId);
 	}
 
 	public static RepoToRepoSync create(final File localRoot, final URL remoteRoot) {
@@ -391,7 +378,6 @@ public class RepoToRepoSync implements AutoCloseable {
 					throw new IllegalStateException("Unsupported RepoFileDto type: " + repoFileDto);
 
 				markDone(fromRepoTransport, toRepoTransport, repoFileDto);
-				reinitIfMaxOpenMillisExceeded();
 			}
 		} finally {
 			monitor.done();
@@ -770,24 +756,8 @@ public class RepoToRepoSync implements AutoCloseable {
 
 	@Override
 	public void close() {
-		if (localRepoTransport.getDelegate() != null) {
-			localRepoTransport.close();
-			localRepoTransport.setDelegate(null);
-		}
-		if (remoteRepoTransport.getDelegate() != null) {
-			remoteRepoTransport.close();
-			remoteRepoTransport.setDelegate(null);
-		}
-		if (localRepoManager != null) {
-			localRepoManager.close();
-			localRepoManager = null;
-		}
-	}
-
-	protected void reinitIfMaxOpenMillisExceeded() {
-		if (localRepoManager.isMaxOpenMillisExceeded()) {
-			close();
-			init();
-		}
+		localRepoTransport.close();
+		remoteRepoTransport.close();
+		localRepoManager.close();
 	}
 }

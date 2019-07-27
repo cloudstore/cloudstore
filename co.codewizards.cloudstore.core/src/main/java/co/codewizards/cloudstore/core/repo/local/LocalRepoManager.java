@@ -24,9 +24,6 @@ public interface LocalRepoManager extends AutoCloseable {
 	String CONFIG_KEY_CLOSE_DEFERRED_MILLIS = "localRepoManager.closeDeferredMillis";
 	long DEFAULT_CLOSE_DEFERRED_MILLIS = 20L * 1000L;
 
-	String CONFIG_KEY_MAX_OPEN_MILLIS = "localRepoManager.maxOpenMillis";
-	long DEFAULT_MAX_OPEN_MILLIS = 3L * 60L * 60L * 1000L; // 3 hours
-
 	String META_DIR_NAME = "." + APP_ID_SIMPLE_ID + "-repo";
 	/**
 	 * Temporary directory potentially inside every directory.
@@ -126,8 +123,6 @@ public interface LocalRepoManager extends AutoCloseable {
 	 */
 	@Override
 	void close();
-
-	boolean isMaxOpenMillisExceeded();
 
 	/**
 	 * Begin a JDO transaction for read operations only in the underlying database.

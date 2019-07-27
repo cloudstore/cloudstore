@@ -314,10 +314,10 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	}
 
 	protected static final class IdRange {
-		public static final long EMPTY_ID = -1;
+		public static final long NULL_ID = -1;
 
-		public long fromIdIncl = EMPTY_ID;
-		public long toIdIncl = EMPTY_ID;
+		public long fromIdIncl = NULL_ID;
+		public long toIdIncl = NULL_ID;
 
 		@Override
 		public String toString() {
@@ -388,13 +388,15 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 
 		for (Iterator<Long> it = entityIds.iterator(); it.hasNext();) {
 			long entityId = it.next();
+			if (entityId < 0)
+				throw new IllegalArgumentException("entityIds contains negative element! entityId = " + entityId);
 
-			if (idRange.fromIdIncl != IdRange.EMPTY_ID
+			if (idRange.fromIdIncl != IdRange.NULL_ID
 					&& (idRange.toIdIncl + 1 != entityId || ! it.hasNext())) {
 
 				if (idRange.toIdIncl +1 == entityId) {
 					idRange.toIdIncl = entityId;
-					entityId = IdRange.EMPTY_ID;
+					entityId = IdRange.NULL_ID;
 				}
 
 				if (idRangePackage.size() >= idRangePackageSize) {
@@ -405,7 +407,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 				idRangePackage.add(idRange);
 			}
 
-			if (idRange.fromIdIncl == IdRange.EMPTY_ID) {
+			if (idRange.fromIdIncl == IdRange.NULL_ID) {
 				idRange.fromIdIncl = entityId;
 			}
 			idRange.toIdIncl = entityId;
@@ -432,7 +434,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			return true;
 
 		IdRange idRange = idRangePackage.get(0);
-		return idRange.fromIdIncl == IdRange.EMPTY_ID;
+		return idRange.fromIdIncl == IdRange.NULL_ID;
 	}
 
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);

@@ -9,6 +9,8 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
+import co.codewizards.cloudstore.local.persistence.Dao.IdRange;
+
 @SuppressWarnings("deprecation")
 public class DaoTest {
 
@@ -30,6 +32,7 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(2);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
@@ -58,6 +61,7 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(3);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
@@ -85,6 +89,7 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(3);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
@@ -115,6 +120,7 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(3);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
@@ -150,6 +156,7 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(1);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
@@ -171,10 +178,23 @@ public class DaoTest {
 
 		assertThat(idRangePackages).hasSize(1);
 		for (List<Dao.IdRange> idRangePackage : idRangePackages) {
+			assertIdRangePackageValid(idRangePackage);
 			assertThat(idRangePackage).hasSize(idRangePackageSize);
 		}
 
 		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
+	}
+
+	private static void assertIdRangePackageValid(List<IdRange> idRangePackage) {
+		requireNonNull(idRangePackage, "idRangePackage");
+		for (IdRange idRange : idRangePackage) {
+			requireNonNull(idRange, "idRange");
+			if (idRange.fromIdIncl < 0 || idRange.toIdIncl < 0) {
+				assertThat(idRange.toIdIncl).isEqualTo(idRange.fromIdIncl);
+				assertThat(idRange.toIdIncl).isEqualTo(IdRange.NULL_ID);
+			}
+			assertThat(idRange.fromIdIncl).isLessThanOrEqualTo(idRange.toIdIncl);
+		}
 	}
 
 	private static void assertIdRangePackagesEqualEntityIds(List<List<Dao.IdRange>> idRangePackages, SortedSet<Long> entityIds) {

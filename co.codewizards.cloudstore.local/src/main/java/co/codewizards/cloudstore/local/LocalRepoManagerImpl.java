@@ -91,7 +91,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	protected final String id = Integer.toHexString(System.identityHashCode(this));
 
 	private long closeDeferredMillis = Long.MIN_VALUE;
-	private long maxOpenMillis = Long.MIN_VALUE;
 	private static final long lockTimeoutMillis = 30000; // TODO make configurable!
 
 	private static final long remoteRepositoryRequestExpiryAge = 24 * 60 * 60 * 1000L;
@@ -661,21 +660,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		return closeDeferredMillis;
 	}
 
-	protected long getMaxOpenMillis() {
-		if (maxOpenMillis < 0) {
-			maxOpenMillis = ConfigImpl.getInstance().getPropertyAsPositiveOrZeroLong(
-					CONFIG_KEY_MAX_OPEN_MILLIS, DEFAULT_MAX_OPEN_MILLIS);
-			logger.info("[{}]getMaxOpenMillis: maxOpenMillis={}", id, maxOpenMillis);
-		}
-		return maxOpenMillis;
-	}
-
-	@Override
-	public boolean isMaxOpenMillisExceeded() {
-		final long openMillis = System.currentTimeMillis() - created;
-		return openMillis > getMaxOpenMillis();
-	}
-
 	@Override
 	public void close() {
 		lock.lock();
@@ -695,7 +679,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 
 		final long closeDeferredMillis = getCloseDeferredMillis();
-		if (closeDeferredMillis > 0 && ! isMaxOpenMillisExceeded()) {
+		if (closeDeferredMillis > 0) {
 			logger.info("[{}]close: Deferring shut down of real LocalRepoManager {} ms.", id, closeDeferredMillis);
 			lock.lock();
 			try {
