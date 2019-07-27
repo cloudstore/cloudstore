@@ -41,6 +41,7 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private DaoProvider daoProvider;
 
 	private static final int LOAD_ID_RANGE_PACKAGE_SIZE = 100;
+	private static final int[] LOAD_ID_RANGE_PACKAGE_SIZES_SHRINKED = { 1, 10 };
 
 	/**
 	 * Instantiate the Dao.
@@ -262,11 +263,12 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 		for (final Map.Entry<Class<? extends Entity>, SortedSet<Long>> me : entityClass2EntityIds.entrySet()) {
 			final Class<? extends Entity> entityClass = me.getKey();
 			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
-			query.setFilter(buildIdRangePackageFilter());
 
 			final SortedSet<Long> entityIds = me.getValue();
-
 			List<List<IdRange>> idRangePackages = buildIdRangePackages(entityIds);
+			int idRangePackageSize = shrinkIdRangePackageSizeIfPossible(idRangePackages);
+			query.setFilter(buildIdRangePackageFilter(idRangePackageSize));
+
 			for (List<IdRange> idRangePackage : idRangePackages) {
 				@SuppressWarnings("unchecked")
 				final Collection<E> c = (Collection<E>) query.executeWithMap(buildIdRangePackageQueryMap(idRangePackage));
@@ -298,11 +300,12 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
 			query.setResultClass(dtoClass);
 			query.setResult(queryResult);
-			query.setFilter(buildIdRangePackageFilter());
 
 			final SortedSet<Long> entityIds = me.getValue();
-
 			List<List<IdRange>> idRangePackages = buildIdRangePackages(entityIds);
+			int idRangePackageSize = shrinkIdRangePackageSizeIfPossible(idRangePackages);
+			query.setFilter(buildIdRangePackageFilter(idRangePackageSize));
+
 			for (List<IdRange> idRangePackage : idRangePackages) {
 				@SuppressWarnings("unchecked")
 				final Collection<T> c = (Collection<T>) query.executeWithMap(buildIdRangePackageQueryMap(idRangePackage));
@@ -325,9 +328,32 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 		}
 	}
 
-	protected String buildIdRangePackageFilter() {
+	protected static int shrinkIdRangePackageSizeIfPossible(List<List<IdRange>> idRangePackages) {
+		requireNonNull(idRangePackages, "idRangePackages");
+		if (idRangePackages.size() == 1) {
+			List<IdRange> idRangePackage = idRangePackages.get(0);
+			int usedIdRangeCount = 0;
+			for (IdRange idRange : idRangePackage) {
+				if (idRange.fromIdIncl != IdRange.NULL_ID)
+					++usedIdRangeCount;
+			}
+			int result;
+			for (int idx = 0; idx < LOAD_ID_RANGE_PACKAGE_SIZES_SHRINKED.length; ++idx) {
+				result = LOAD_ID_RANGE_PACKAGE_SIZES_SHRINKED[idx];
+				if (result >= usedIdRangeCount) {
+					while (idRangePackage.size() > result)
+						idRangePackage.remove(idRangePackage.size() - 1);
+
+					return result;
+				}
+			}
+		}
+		return LOAD_ID_RANGE_PACKAGE_SIZE;
+	}
+
+	protected String buildIdRangePackageFilter(final int idRangePackageSize) {
 		StringBuilder filter = new StringBuilder();
-		for (int idx = 0; idx < LOAD_ID_RANGE_PACKAGE_SIZE; ++idx) {
+		for (int idx = 0; idx < idRangePackageSize; ++idx) {
 			if (idx > 0) {
 				filter.append(" || ");
 			}
@@ -343,10 +369,8 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	 */
 	protected Map<String, Object> buildIdRangePackageQueryMap(List<IdRange> idRangePackage) {
 		requireNonNull(idRangePackage, "idRangePackage");
-		if (idRangePackage.size() != LOAD_ID_RANGE_PACKAGE_SIZE)
-			throw new IllegalArgumentException("idRangePackage.size() != LOAD_ID_RANGE_PACKAGE_SIZE :: " + idRangePackage.size() + " != " + LOAD_ID_RANGE_PACKAGE_SIZE);
 
-		Map<String, Object> map = new HashMap<>(LOAD_ID_RANGE_PACKAGE_SIZE * 2);
+		Map<String, Object> map = new HashMap<>(idRangePackage.size() * 2);
 		int idx = -1;
 		for (IdRange idRange : idRangePackage) {
 			++idx;
