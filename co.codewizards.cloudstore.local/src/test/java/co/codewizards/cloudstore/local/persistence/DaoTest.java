@@ -4,15 +4,16 @@ import static java.util.Objects.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.junit.Test;
 
-import co.codewizards.cloudstore.local.persistence.Dao.IdRange;
-
 @SuppressWarnings("deprecation")
 public class DaoTest {
+
+	private static Random random = new Random();
 
 	@Test
 	public void buildIdRangePackages_0() {
@@ -210,6 +211,8 @@ public class DaoTest {
 		assertThat(idRangePackageSize).isEqualTo(10);
 		assertThat(idRangePackages).hasSize(1);
 		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
 	}
 
 	@Test
@@ -230,6 +233,8 @@ public class DaoTest {
 		assertThat(idRangePackageSize).isEqualTo(1);
 		assertThat(idRangePackages).hasSize(1);
 		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
 	}
 
 	@Test
@@ -259,6 +264,8 @@ public class DaoTest {
 		assertThat(idRangePackageSize).isEqualTo(10);
 		assertThat(idRangePackages).hasSize(1);
 		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
 	}
 
 	@Test
@@ -289,24 +296,164 @@ public class DaoTest {
 		assertThat(idRangePackageSize).isEqualTo(100);
 		assertThat(idRangePackages).hasSize(1);
 		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
 	}
 
-	private static void assertIdRangePackageValid(List<IdRange> idRangePackage) {
+	@Test
+	public void shrinkIdRangePackageSizeIfPossible_4() {
+		System.out.println();
+		System.out.println("*** shrinkIdRangePackageSizeIfPossible_4 ***");
+
+		SortedSet<Long> entityIds = getEntityIds(
+				11,12,13,14,
+				16,17,18,19,20,21
+				);
+
+		List<List<Dao.IdRange>> idRangePackages = Dao.buildIdRangePackages(entityIds);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackages).hasSize(1);
+
+		int idRangePackageSize = Dao.shrinkIdRangePackageSizeIfPossible(idRangePackages);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackageSize).isEqualTo(10);
+		assertThat(idRangePackages).hasSize(1);
+		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
+	}
+
+	@Test
+	public void shrinkIdRangePackageSizeIfPossible_5() {
+		System.out.println();
+		System.out.println("*** shrinkIdRangePackageSizeIfPossible_5 ***");
+
+		SortedSet<Long> entityIds = new TreeSet<>();
+
+		long id = 0;
+		int rangeCount = 0;
+		while (rangeCount < 100) {
+			++id;
+			entityIds.add(id);
+			if (random.nextInt(1000) < 300) {
+				id += 1 + random.nextInt(10);
+				++rangeCount;
+			}
+		}
+
+		List<List<Dao.IdRange>> idRangePackages = Dao.buildIdRangePackages(entityIds);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackages).hasSize(1);
+
+		int idRangePackageSize = Dao.shrinkIdRangePackageSizeIfPossible(idRangePackages);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackageSize).isEqualTo(100);
+		assertThat(idRangePackages).hasSize(1);
+		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
+	}
+
+	@Test
+	public void shrinkIdRangePackageSizeIfPossible_6() {
+		System.out.println();
+		System.out.println("*** shrinkIdRangePackageSizeIfPossible_6 ***");
+
+		SortedSet<Long> entityIds = new TreeSet<>();
+
+		long id = 0;
+		int rangeCount = 0;
+		while (rangeCount < 101) {
+			++id;
+			entityIds.add(id);
+			if (random.nextInt(1000) < 300) {
+				id += 1 + random.nextInt(10);
+				++rangeCount;
+			}
+		}
+
+		List<List<Dao.IdRange>> idRangePackages = Dao.buildIdRangePackages(entityIds);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackages).hasSize(2);
+
+		int idRangePackageSize = Dao.shrinkIdRangePackageSizeIfPossible(idRangePackages);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackageSize).isEqualTo(100);
+		assertThat(idRangePackages).hasSize(2);
+		assertThat(idRangePackages.get(0)).hasSize(idRangePackageSize);
+		assertThat(idRangePackages.get(1)).hasSize(idRangePackageSize);
+
+		assertThat(idRangePackages.get(0).get(99).fromIdIncl).isPositive();
+		assertThat(idRangePackages.get(0).get(99).toIdIncl).isPositive();
+
+		assertThat(idRangePackages.get(1).get(0).fromIdIncl).isPositive();
+		assertThat(idRangePackages.get(1).get(0).toIdIncl).isPositive();
+
+		assertThat(idRangePackages.get(1).get(1).fromIdIncl).isEqualTo(Dao.IdRange.NULL_ID);
+		assertThat(idRangePackages.get(1).get(1).toIdIncl).isEqualTo(Dao.IdRange.NULL_ID);
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
+	}
+
+	@Test
+	public void shrinkIdRangePackageSizeIfPossible_7() {
+		System.out.println();
+		System.out.println("*** shrinkIdRangePackageSizeIfPossible_7 ***");
+
+		SortedSet<Long> entityIds = new TreeSet<>();
+
+		long id = 0;
+		int rangeCount = 0;
+		while (rangeCount < 99) {
+			++id;
+			entityIds.add(id);
+			if (random.nextInt(1000) < 300) {
+				id += 1 + random.nextInt(10);
+				++rangeCount;
+			}
+		}
+
+		List<List<Dao.IdRange>> idRangePackages = Dao.buildIdRangePackages(entityIds);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackages).hasSize(1);
+
+		int idRangePackageSize = Dao.shrinkIdRangePackageSizeIfPossible(idRangePackages);
+		showIdRangePackages(idRangePackages);
+		assertThat(idRangePackageSize).isEqualTo(100);
+		assertThat(idRangePackages).hasSize(1);
+		List<Dao.IdRange> idRangePackage = idRangePackages.get(0);
+		assertThat(idRangePackage).hasSize(idRangePackageSize);
+
+		assertThat(idRangePackage.get(99).fromIdIncl).isEqualTo(Dao.IdRange.NULL_ID);
+		assertThat(idRangePackage.get(99).toIdIncl).isEqualTo(Dao.IdRange.NULL_ID);
+
+		assertThat(idRangePackage.get(98).fromIdIncl).isPositive();
+		assertThat(idRangePackage.get(98).toIdIncl).isPositive();
+
+		assertIdRangePackagesEqualEntityIds(idRangePackages, entityIds);
+	}
+
+	private static void assertIdRangePackageValid(List<Dao.IdRange> idRangePackage) {
 		requireNonNull(idRangePackage, "idRangePackage");
-		for (IdRange idRange : idRangePackage) {
+		for (Dao.IdRange idRange : idRangePackage) {
 			requireNonNull(idRange, "idRange");
 			if (idRange.fromIdIncl < 0 || idRange.toIdIncl < 0) {
 				assertThat(idRange.toIdIncl).isEqualTo(idRange.fromIdIncl);
-				assertThat(idRange.toIdIncl).isEqualTo(IdRange.NULL_ID);
+				assertThat(idRange.toIdIncl).isEqualTo(Dao.IdRange.NULL_ID);
 			}
 			assertThat(idRange.fromIdIncl).isLessThanOrEqualTo(idRange.toIdIncl);
 		}
 	}
 
 	private static void assertIdRangePackagesEqualEntityIds(List<List<Dao.IdRange>> idRangePackages, SortedSet<Long> entityIds) {
-		for (long id = 0; id < 1000; ++id) {
-			assertThat(isInIdRangePackages(idRangePackages, id)).isEqualTo(entityIds.contains(id));
+		boolean matching;
+		int matchingIdCount = 0;
+		for (long id = 0; id < 2000; ++id) {
+			assertThat(matching = isInIdRangePackages(idRangePackages, id)).isEqualTo(entityIds.contains(id));
+			if (matching)
+				++matchingIdCount;
 		}
+		assertThat(matchingIdCount).isEqualTo(entityIds.size());
 	}
 
 	private static boolean isInIdRangePackages(List<List<Dao.IdRange>> idRangePackages, long id) {
