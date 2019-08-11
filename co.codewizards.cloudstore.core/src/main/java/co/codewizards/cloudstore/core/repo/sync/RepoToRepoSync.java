@@ -392,9 +392,9 @@ public class RepoToRepoSync implements AutoCloseable {
 		}
 	}
 
-	protected DoneMarker getDoneMarker(final String doneDirNamePrefix) {
+	protected DoneMarker getDoneMarker(final String doneDirNamePrefix, UUID fromRepositoryId, UUID toRepositoryId) {
 		requireNonNull(doneDirNamePrefix, "doneDirNamePrefix");
-		final String doneDirName = doneDirNamePrefix + remoteRepositoryId + DONE_DIR_NAME_SUFFIX;
+		final String doneDirName = doneDirNamePrefix + fromRepositoryId + '.' + toRepositoryId + DONE_DIR_NAME_SUFFIX;
 		if (doneMarker != null) {
 			if (doneDirName.equals(doneMarker.getDoneDir().getName()))
 				return doneMarker;
@@ -463,7 +463,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	private boolean isDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDto repoFileDto) {
-		return getDoneMarker(FILE_DONE_DIR_NAME_PREFIX).isDone(repoFileDto.getId(), repoFileDto.getLocalRevision());
+		return getDoneMarker(FILE_DONE_DIR_NAME_PREFIX, fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId())
+				.isDone(repoFileDto.getId(), repoFileDto.getLocalRevision());
 
 //		return localRepoTransport.isTransferDone(
 //				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
@@ -471,7 +472,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	private void markDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final RepoFileDto repoFileDto) {
-		getDoneMarker(FILE_DONE_DIR_NAME_PREFIX).markDone(repoFileDto.getId(), repoFileDto.getLocalRevision());
+		getDoneMarker(FILE_DONE_DIR_NAME_PREFIX, fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId())
+		.markDone(repoFileDto.getId(), repoFileDto.getLocalRevision());
 
 //		localRepoTransport.markTransferDone(
 //				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
@@ -479,7 +481,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	private boolean isDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final ModificationDto modificationDto) {
-		return getDoneMarker(MODIFICATION_DONE_DIR_NAME_PREFIX).isDone(modificationDto.getId(), modificationDto.getLocalRevision());
+		return getDoneMarker(MODIFICATION_DONE_DIR_NAME_PREFIX, fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId())
+				.isDone(modificationDto.getId(), modificationDto.getLocalRevision());
 
 //		return localRepoTransport.isTransferDone(
 //				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
@@ -487,7 +490,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	private void markDone(final RepoTransport fromRepoTransport, final RepoTransport toRepoTransport, final ModificationDto modificationDto) {
-		getDoneMarker(MODIFICATION_DONE_DIR_NAME_PREFIX).markDone(modificationDto.getId(), modificationDto.getLocalRevision());
+		getDoneMarker(MODIFICATION_DONE_DIR_NAME_PREFIX, fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId())
+		.markDone(modificationDto.getId(), modificationDto.getLocalRevision());
 
 //		localRepoTransport.markTransferDone(
 //				fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(),
