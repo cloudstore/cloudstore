@@ -427,8 +427,8 @@ public class RepoToRepoSync implements AutoCloseable {
 	}
 
 	protected File getLocalRepoTmpDir() {
-		if (localRepoTmpDir == null) {
-			try {
+		try {
+			if (localRepoTmpDir == null) {
 				final File metaDir = getLocalRepoMetaDir();
 				if (! metaDir.isDirectory()) {
 					if (metaDir.isFile())
@@ -436,26 +436,25 @@ public class RepoToRepoSync implements AutoCloseable {
 					else
 						throw new IOException(String.format("Directory '%s' does not exist!", metaDir.getAbsolutePath()));
 				}
-
-				final File tmpDir = metaDir.createFile(LocalRepoManager.REPO_TEMP_DIR_NAME);
-				if (! tmpDir.isDirectory()) {
-					tmpDir.mkdir();
-
-					if (! tmpDir.isDirectory()) {
-						if (tmpDir.isFile())
-							throw new IOException(String.format("Cannot create directory '%s', because this path already exists as an ordinary file!", tmpDir.getAbsolutePath()));
-						else
-							throw new IOException(String.format("Creating directory '%s' failed for an unknown reason (permissions? disk full?)!", tmpDir.getAbsolutePath()));
-					}
-				}
-				this.localRepoTmpDir = tmpDir;
-			} catch (RuntimeException x) {
-				throw x;
-			} catch (Exception x) {
-				throw new RuntimeException(x);
+				this.localRepoTmpDir = metaDir.createFile(LocalRepoManager.REPO_TEMP_DIR_NAME);
 			}
+
+			if (! localRepoTmpDir.isDirectory()) {
+				localRepoTmpDir.mkdir();
+
+				if (! localRepoTmpDir.isDirectory()) {
+					if (localRepoTmpDir.isFile())
+						throw new IOException(String.format("Cannot create directory '%s', because this path already exists as an ordinary file!", localRepoTmpDir.getAbsolutePath()));
+					else
+						throw new IOException(String.format("Creating directory '%s' failed for an unknown reason (permissions? disk full?)!", localRepoTmpDir.getAbsolutePath()));
+				}
+			}
+			return localRepoTmpDir;
+		} catch (RuntimeException x) {
+			throw x;
+		} catch (Exception x) {
+			throw new RuntimeException(x);
 		}
-		return localRepoTmpDir;
 	}
 
 	protected File getLocalRepoMetaDir() {
