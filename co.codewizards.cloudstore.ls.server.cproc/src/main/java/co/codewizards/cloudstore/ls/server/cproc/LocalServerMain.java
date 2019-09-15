@@ -18,6 +18,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.DebugUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
 import co.codewizards.cloudstore.ls.server.LocalServer;
@@ -87,5 +88,6 @@ public class LocalServerMain {
 	    	doNothing();
 	    }
 	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+	    DebugUtil.logSystemProperties();
 	}
 }

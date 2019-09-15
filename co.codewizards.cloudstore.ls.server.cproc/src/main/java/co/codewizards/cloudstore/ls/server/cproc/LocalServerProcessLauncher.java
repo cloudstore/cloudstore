@@ -92,6 +92,8 @@ public class LocalServerProcessLauncher {
 		if (maxHeapSize != null) {
 			command.add("-Xmx" + maxHeapSize); // Warning: This might not be supported by the JVM! The -X... options are not standard. But what should we do instead?!
 		}
+		List<String> additionalVmArgs = LsConfig.getLocalServerProcessVmArgs();
+		command.addAll(additionalVmArgs);
 	}
 
 	private void populateConfigSystemProperties(final List<String> command) {

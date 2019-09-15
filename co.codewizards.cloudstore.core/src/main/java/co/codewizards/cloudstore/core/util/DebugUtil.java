@@ -1,5 +1,8 @@
 package co.codewizards.cloudstore.core.util;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,5 +62,22 @@ public final class DebugUtil {
 			return String.format("%.1f KiB", (double) size / KIB);
 
 		return String.format("%d B", size);
+	}
+
+	public static void logSystemProperties() {
+		if (! logger.isDebugEnabled()) {
+			return;
+		}
+		TreeMap<String, String> sortedSystemProperties = new TreeMap<>();
+		for (Map.Entry<Object, Object> me : System.getProperties().entrySet()) {
+			String key = String.valueOf(me.getKey());
+			String value = String.valueOf(me.getValue());
+			sortedSystemProperties.put(key, value);
+		}
+		logger.debug(">>> System properties BEGIN >>>");
+		for (Map.Entry<String, String> me : sortedSystemProperties.entrySet()) {
+			logger.debug("  * {} = {}", me.getKey(), me.getValue());
+		}
+		logger.debug("<<< System properties END <<<");
 	}
 }

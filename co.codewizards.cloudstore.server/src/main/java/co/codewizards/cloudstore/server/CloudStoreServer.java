@@ -55,6 +55,7 @@ import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
 import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.DebugUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
@@ -405,5 +406,6 @@ public class CloudStoreServer implements Runnable {
 	    	doNothing();
 	    }
 	    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+	    DebugUtil.logSystemProperties();
 	}
 }
