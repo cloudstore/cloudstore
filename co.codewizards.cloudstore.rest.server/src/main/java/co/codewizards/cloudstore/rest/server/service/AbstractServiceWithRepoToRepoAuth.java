@@ -21,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.glassfish.jersey.internal.util.Base64;
+import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,7 +160,7 @@ public abstract class AbstractServiceWithRepoToRepoAuth {
 	private byte[] getBasicAuthEncodedBA(final String basicAuthEncoded) {
 		byte[] basicAuthDecodedBA;
 		try {
-			basicAuthDecodedBA = Base64.decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_NAME_UTF_8));
+			basicAuthDecodedBA = Base64.getDecoder().decode(basicAuthEncoded.getBytes(IOUtil.CHARSET_NAME_UTF_8));
 		} catch (final UnsupportedEncodingException e1) {
 			throw new RuntimeException(e1);
 		}
