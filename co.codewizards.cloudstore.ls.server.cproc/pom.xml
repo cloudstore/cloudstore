@@ -55,6 +55,11 @@
 			<scope>compile</scope>
 		</dependency>
 		<!-- END logging -->
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

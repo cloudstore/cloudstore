@@ -34,8 +34,6 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
@@ -90,6 +88,8 @@ import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarker;
 import co.codewizards.cloudstore.local.persistence.TransferDoneMarkerDao;
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class FileRepoTransport extends AbstractRepoTransport implements LocalRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);

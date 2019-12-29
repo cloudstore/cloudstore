@@ -2,6 +2,9 @@ package co.codewizards.cloudstore.rest.client;
 
 import java.security.KeyStore;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -19,7 +22,7 @@ import co.codewizards.cloudstore.rest.shared.filter.GZIPClientRequestFilter;
 import co.codewizards.cloudstore.rest.shared.interceptor.GZIPReaderInterceptor;
 import co.codewizards.cloudstore.rest.shared.interceptor.GZIPWriterInterceptor;
 
-public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
+public class ClientBuilderDefaultValuesDecorator extends ClientBuilder {
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 1 * 60 * 1000;
 	private static final int DEFAULT_SOCKET_READ_TIMEOUT = 5 * 60 * 1000;
 
@@ -164,4 +167,27 @@ public class ClientBuilderDefaultValuesDecorator extends ClientBuilder{
 		return this;
 	}
 
+	@Override
+	public ClientBuilder executorService(ExecutorService executorService) {
+		builder.executorService(executorService);
+		return this;
+	}
+
+	@Override
+	public ClientBuilder scheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
+		builder.scheduledExecutorService(scheduledExecutorService);
+		return this;
+	}
+
+	@Override
+	public ClientBuilder connectTimeout(long timeout, TimeUnit unit) {
+		builder.connectTimeout(timeout, unit);
+		return this;
+	}
+
+	@Override
+	public ClientBuilder readTimeout(long timeout, TimeUnit unit) {
+		builder.readTimeout(timeout, unit);
+		return this;
+	}
 }

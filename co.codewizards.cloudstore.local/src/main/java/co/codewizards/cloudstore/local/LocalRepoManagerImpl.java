@@ -40,7 +40,6 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -75,6 +74,7 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 /**
  * Manager of a repository.

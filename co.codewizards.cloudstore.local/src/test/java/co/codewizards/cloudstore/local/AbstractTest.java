@@ -18,10 +18,11 @@ import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.DevMode;
 import co.codewizards.cloudstore.core.Uid;
-import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.IoFile;
 import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
@@ -34,9 +35,11 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 
 public abstract class AbstractTest {
 
+	private static final Logger logger = LoggerFactory.getLogger(AbstractTest.class);
 	protected static String jvmInstanceDir;
 
 	static {
@@ -72,11 +75,13 @@ public abstract class AbstractTest {
 
 	@Before
 	public void before() {
+		logger.debug(">>> === >>> === >>> {}.before() >>> === >>> === >>>", this.getClass().getName());
 		localRoot2FilesInRepo.clear();
 	}
 
 	@After
 	public void after() {
+		logger.debug("<<< === <<< === <<< {}.after() <<< === <<< === <<<", this.getClass().getName());
 	}
 
 	protected File createDirectory(final File parent, final String name) throws IOException {

@@ -1,4 +1,4 @@
-package co.codewizards.cloudstore.core.config;
+package co.codewizards.cloudstore.local.test.config;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
@@ -16,11 +16,20 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.transport.FileWriteStrategy;
+import co.codewizards.cloudstore.core.util.ReflectionUtil;
 import co.codewizards.cloudstore.local.AbstractTest;
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class ConfigTest extends AbstractTest {
 
 	private static final Object mutex = ConfigTest.class;
+	
+	private static File[] getPropertiesFiles(ConfigImpl config) {
+		File[] propertiesFiles = ReflectionUtil.getFieldValue(config, "propertiesFiles");
+		assertThat(propertiesFiles).isNotNull();
+		return propertiesFiles;
+	}
 
 	/**
 	 * Tests whether the global configuration file is named as documented on the
@@ -31,9 +40,10 @@ public class ConfigTest extends AbstractTest {
 	public void testGlobalConfigFileName() throws Exception {
 		synchronized (mutex) {
 			final ConfigImpl globalConfig = (ConfigImpl) ConfigImpl.getInstance();
-			assertThat(globalConfig.propertiesFiles.length).isEqualTo(1);
-			assertThat(globalConfig.propertiesFiles[0]).isNotNull();
-			assertThat(globalConfig.propertiesFiles[0].getName()).isEqualTo("cloudstore.properties");
+			File[] propertiesFiles = getPropertiesFiles(globalConfig);
+			assertThat(propertiesFiles.length).isEqualTo(1);
+			assertThat(propertiesFiles[0]).isNotNull();
+			assertThat(propertiesFiles[0].getName()).isEqualTo("cloudstore.properties");
 
 			deleteMainConfigFiles();
 		}
@@ -188,7 +198,8 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private void deleteMainConfigFiles() {
-		for (final File file : ((ConfigImpl) ConfigImpl.getInstance()).propertiesFiles) {
+		File[] propertiesFiles = getPropertiesFiles((ConfigImpl) ConfigImpl.getInstance());
+		for (final File file : propertiesFiles) {
 			file.delete();
 			assertThat(file.exists()).isFalse();
 		}
@@ -208,7 +219,8 @@ public class ConfigTest extends AbstractTest {
 	}
 
 	private static void setGlobalProperty(final String key, final String value) throws IOException {
-		setProperty(((ConfigImpl) ConfigImpl.getInstance()).propertiesFiles[0], key, value);
+		File[] propertiesFiles = getPropertiesFiles((ConfigImpl) ConfigImpl.getInstance());
+		setProperty(propertiesFiles[0], key, value);
 	}
 
 	private static void setProperty(final File propertiesFile, final String key, final String value) throws IOException {

@@ -15,11 +15,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
+import co.codewizards.cloudstore.core.config.Config;
 
 public class LocalRepoRegistryTest extends AbstractTest
 {

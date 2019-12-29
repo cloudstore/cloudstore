@@ -2,7 +2,9 @@ package co.codewizards.cloudstore.ls.rest.server;
 
 import javax.inject.Singleton;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+
+// import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 public class LocalServerRestBinder extends AbstractBinder {
 

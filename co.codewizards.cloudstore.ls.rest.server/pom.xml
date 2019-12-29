@@ -13,6 +13,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>javax.activation</groupId>
+			<artifactId>javax.activation-api</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>co.codewizards.cloudstore</groupId>
 			<artifactId>co.codewizards.cloudstore.ls.core</artifactId>
 		</dependency>
@@ -23,13 +28,13 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-server</artifactId>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-server</artifactId>
 		</dependency>
 	</dependencies>
 

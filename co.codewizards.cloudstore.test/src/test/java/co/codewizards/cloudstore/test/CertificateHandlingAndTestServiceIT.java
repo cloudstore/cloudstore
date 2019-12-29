@@ -15,11 +15,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.dto.RemoteException;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.ExceptionUtil;
 import co.codewizards.cloudstore.core.util.TestException;
+import co.codewizards.cloudstore.local.test.config.ConfigDir;
 import co.codewizards.cloudstore.rest.client.ClientBuilderDefaultValuesDecorator;
 import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.rest.client.request.TestRequest;

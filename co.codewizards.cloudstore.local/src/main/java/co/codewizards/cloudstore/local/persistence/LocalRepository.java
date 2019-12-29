@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Discriminator;
 import javax.jdo.annotations.DiscriminatorStrategy;
 import javax.jdo.annotations.Inheritance;
@@ -30,10 +31,10 @@ import javax.jdo.annotations.Persistent;
 @Discriminator(strategy=DiscriminatorStrategy.VALUE_MAP, value="LocalRepository")
 public class LocalRepository extends Repository {
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+//	@Persistent(nullValue=NullValue.EXCEPTION) // DN-bug: this column is created as "NOT NULL", even though multiple sub-classes of Repository use the same table.
 	private Directory root;
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+//	@Persistent(nullValue=NullValue.EXCEPTION) // DN-bug: this column is created as "NOT NULL", even though multiple sub-classes of Repository use the same table.
 	private byte[] privateKey;
 
 	@Join
@@ -76,6 +77,10 @@ public class LocalRepository extends Repository {
 	@Override
 	public void jdoPreStore() {
 		super.jdoPreStore();
+
+		requireNonNull(root, "root"); // manual check due to DN-bug -- see above.
+		requireNonNull(privateKey, "privateKey"); // manual check due to DN-bug -- see above.
+
 		final PersistenceManager pm = requireNonNull(JDOHelper.getPersistenceManager(this), "JDOHelper.getPersistenceManager(this)");
 		final Iterator<LocalRepository> iterator = pm.getExtent(LocalRepository.class).iterator();
 		if (iterator.hasNext()) {

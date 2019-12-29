@@ -1,19 +1,34 @@
 package co.codewizards.cloudstore.local.persistence;
 
-import static java.util.Objects.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
 public class DaoTest {
+	private static final Logger logger = LoggerFactory.getLogger(DaoTest.class);
 
 	private static Random random = new Random();
+
+	@BeforeClass
+	public static void beforeClass() {
+		logger.debug(">>> === >>> === >>> {}.beforeClass() >>> === >>> === >>>", DaoTest.class.getName());
+	}
+
+	@AfterClass
+	public static void afterClass() {
+		logger.debug("<<< === <<< === <<< {}.afterClass() <<< === <<< === <<<", DaoTest.class.getName());
+	}
 
 	@Test
 	public void buildIdRangePackages_0() {

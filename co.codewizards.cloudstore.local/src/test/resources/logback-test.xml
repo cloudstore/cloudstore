@@ -17,13 +17,15 @@
 	</logger>
 -->
 
+	<logger name="co.codewizards.cloudstore.local.persistence.DaoTest" level="ALL" />
+
 	<!-- BEGIN DataNucleus http://www.datanucleus.org/products/datanucleus/logging.html -->
 	<logger name="DataNucleus" level="INFO" />
 	<logger name="DataNucleus.General" level="INFO" />
-	<!--
 	<logger name="DataNucleus.Datastore" level="INFO" />
 	<logger name="DataNucleus.Datastore.Schema" level="INFO" />
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
+	<!--
 	<logger name="DataNucleus.Query" level="INFO" />
 	<logger name="DataNucleus.Datastore.Native" level="ALL" />
 	-->

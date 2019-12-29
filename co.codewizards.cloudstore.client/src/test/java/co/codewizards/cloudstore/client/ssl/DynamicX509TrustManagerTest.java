@@ -3,7 +3,7 @@ package co.codewizards.cloudstore.client.ssl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.local.test.config.ConfigDir;
 
 public class DynamicX509TrustManagerTest {
 	static {

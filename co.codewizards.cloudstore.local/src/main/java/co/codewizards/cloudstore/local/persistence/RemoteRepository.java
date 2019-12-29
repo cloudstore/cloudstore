@@ -43,7 +43,7 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 
 	private long localRevision;
 
-	@Persistent(nullValue=NullValue.EXCEPTION)
+//	@Persistent(nullValue=NullValue.EXCEPTION) // DN-bug: this column is created as "NOT NULL", even though multiple sub-classes of Repository use the same table.
 	private String localPathPrefix;
 
 	public RemoteRepository() { }
@@ -94,5 +94,12 @@ public class RemoteRepository extends Repository implements AutoTrackLocalRevisi
 
 		if (! equal(this.localPathPrefix, localPathPrefix))
 			this.localPathPrefix = localPathPrefix;
+	}
+	
+	@Override
+	public void jdoPreStore() {
+		super.jdoPreStore();
+
+		requireNonNull(localPathPrefix, "localPathPrefix"); // manual check due to DN-bug -- see above.
 	}
 }
