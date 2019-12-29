@@ -13,7 +13,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
-import co.codewizards.cloudstore.local.test.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 
 public abstract class AbstractTest {
 

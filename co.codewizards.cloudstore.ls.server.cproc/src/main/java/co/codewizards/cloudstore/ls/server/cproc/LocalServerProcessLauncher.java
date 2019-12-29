@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.local.test.config.Config;
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.LsConfig;
 

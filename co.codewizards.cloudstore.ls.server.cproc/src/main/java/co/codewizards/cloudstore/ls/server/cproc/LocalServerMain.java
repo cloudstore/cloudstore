@@ -19,7 +19,7 @@ import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
-import co.codewizards.cloudstore.local.test.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 
 public class LocalServerMain {

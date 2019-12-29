@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
-import co.codewizards.cloudstore.local.test.config.Config;
-import co.codewizards.cloudstore.local.test.config.ConfigImpl;
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class CloudStoreUpdaterTimer {
 

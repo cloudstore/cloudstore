@@ -9,7 +9,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.local.test.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.server.CloudStoreServer;
 
 public class CloudStoreServerTestSupport {

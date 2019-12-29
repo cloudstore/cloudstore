@@ -56,8 +56,8 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
-import co.codewizards.cloudstore.local.test.config.ConfigDir;
-import co.codewizards.cloudstore.local.test.config.ConfigImpl;
+import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
