@@ -38,4 +38,20 @@ open module co.codewizards.cloudstore.core {
 	exports co.codewizards.cloudstore.core.util.childprocess;
 	exports co.codewizards.cloudstore.core.version;
 
+	uses co.codewizards.cloudstore.core.appid.AppId;
+	uses co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProvider;
+	uses co.codewizards.cloudstore.core.objectfactory.ClassExtension;
+	uses co.codewizards.cloudstore.core.oio.FileFactory;
+	uses co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+	uses co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListener;
+	uses co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory;
+
+	provides co.codewizards.cloudstore.core.appid.AppId
+		with co.codewizards.cloudstore.core.appid.CloudStoreAppId;
+
+	provides co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProvider
+		with co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProviderImpl;
+
+	provides co.codewizards.cloudstore.core.oio.FileFactory
+		with co.codewizards.cloudstore.core.oio.IoFileFactory;
 }

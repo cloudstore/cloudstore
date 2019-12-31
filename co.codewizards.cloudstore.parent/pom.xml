@@ -99,6 +99,16 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</pluginRepository>
+		<pluginRepository>
+			<id>mvnrepository</id>
+			<url>https://mvnrepository.com/artifact/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
 	</pluginRepositories>
 
 	<distributionManagement>

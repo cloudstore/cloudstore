@@ -4,4 +4,6 @@ open module co.codewizards.cloudstore.core.oio.nio {
 
 	exports co.codewizards.cloudstore.core.oio.nio;
 
+	provides co.codewizards.cloudstore.core.oio.FileFactory
+		with co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
 }

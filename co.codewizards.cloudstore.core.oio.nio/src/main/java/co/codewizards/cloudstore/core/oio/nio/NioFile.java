@@ -233,7 +233,7 @@ public class NioFile extends IoFile implements File {
 		// http://stackoverflow.com/questions/17308363/symlink-lastmodifiedtime-in-java-1-7
 		// Therefore, we fall back to the touch command, if the above code failed.
 
-		final String timestamp = new SimpleDateFormat("YYYYMMddHHmm.ss").format(new Date(lastModified));
+		final String timestamp = new SimpleDateFormat("yyyyMMddHHmm.ss").format(new Date(lastModified));
 		final ProcessBuilder processBuilder = new ProcessBuilder("touch", "-c", "-h", "-m", "-t", timestamp, path.toString());
 		processBuilder.redirectErrorStream(true);
 		try {
