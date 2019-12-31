@@ -433,6 +433,12 @@
 				<artifactId>logback-classic</artifactId>
 				<version>${logback.version}</version>
 				<!-- <scope>provided</scope> -->
+				<exclusions>
+					<exclusion>
+						<groupId>edu.washington.cs.types.checker</groupId>
+						<artifactId>checker-framework</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<!-- END logging -->
 
@@ -451,6 +457,12 @@
 				<groupId>org.datanucleus</groupId>
 				<artifactId>javax.jdo</artifactId>
 				<version>${datanucleus-javax-jdo.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>javax.transaction</groupId>
+						<artifactId>transaction-api</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.datanucleus</groupId>
