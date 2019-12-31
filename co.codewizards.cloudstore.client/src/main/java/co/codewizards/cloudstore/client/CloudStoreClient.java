@@ -25,6 +25,7 @@ import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransportFactoryRegistry;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
+import co.codewizards.cloudstore.core.util.DebugUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
@@ -306,5 +307,6 @@ public class CloudStoreClient {
 			doNothing();
 		}
 		StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+		DebugUtil.logSystemProperties();
 	}
 }

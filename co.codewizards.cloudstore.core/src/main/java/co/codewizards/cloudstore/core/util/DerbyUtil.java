@@ -23,6 +23,10 @@ public class DerbyUtil {
 
 	public static final String DERBY_PROPERTIES_PREFIX = "derby.";
 
+	public static final String CONFIG_KEY_DERBY_LANGUAGE_STATEMENT_CACHE_SIZE = "derby.language.statementCacheSize";
+
+	public static final String DEFAULT_DERBY_LANGUAGE_STATEMENT_CACHE_SIZE = "500";
+
 	private DerbyUtil() { }
 
 	public static void shutdownDerbyDatabase(String connectionURL) {
@@ -39,9 +43,14 @@ public class DerbyUtil {
 	}
 
 	public static void setLogFile(File file) {
+		// First pass all config-properties whose key starts with "derby." as system-property.
+		setDerbyPropertiesAsSystemProperties();
 
-		// First pass all config-properties whose key starts with "derby." as system-property
-		// to Derby for diagnostic reasons.
+		// Then set the actual derby-log-file.
+		System.setProperty("derby.stream.error.file", requireNonNull(file, "file").getAbsolutePath());
+	}
+
+	protected static void setDerbyPropertiesAsSystemProperties() {
 		Config config = ConfigImpl.getInstance();
 		Pattern regex = Pattern.compile(Pattern.quote(DERBY_PROPERTIES_PREFIX) + ".*");
 		for (String key : config.getKey2GroupsMatching(regex).keySet()) {
@@ -49,7 +58,10 @@ public class DerbyUtil {
 			System.setProperty(key, value);
 		}
 
-		// Then set the actual derby-log-file.
-		System.setProperty("derby.stream.error.file", requireNonNull(file, "file").getAbsolutePath());
+		String derbyLanguageStatementCacheSize = config.getPropertyAsNonEmptyTrimmedString(
+				CONFIG_KEY_DERBY_LANGUAGE_STATEMENT_CACHE_SIZE,
+				DEFAULT_DERBY_LANGUAGE_STATEMENT_CACHE_SIZE);
+
+		System.setProperty(CONFIG_KEY_DERBY_LANGUAGE_STATEMENT_CACHE_SIZE, derbyLanguageStatementCacheSize);
 	}
 }

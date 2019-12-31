@@ -7,11 +7,11 @@ import co.codewizards.cloudstore.core.repo.local.ContextWithLocalRepoManager;
 
 public interface LocalRepoTransport extends RepoTransport, ContextWithLocalRepoManager {
 
-	boolean isTransferDone(UUID fromRepositoryId, UUID toRepositoryId, TransferDoneMarkerType transferDoneMarkerType,
-			long fromEntityId, long fromLocalRevision);
-
-	void markTransferDone(UUID fromRepositoryId, UUID toRepositoryId, TransferDoneMarkerType transferDoneMarkerType,
-			long fromEntityId, long fromLocalRevision);
+//	boolean isTransferDone(UUID fromRepositoryId, UUID toRepositoryId, TransferDoneMarkerType transferDoneMarkerType,
+//			long fromEntityId, long fromLocalRevision);
+//
+//	void markTransferDone(UUID fromRepositoryId, UUID toRepositoryId, TransferDoneMarkerType transferDoneMarkerType,
+//			long fromEntityId, long fromLocalRevision);
 
 	/**
 	 * Before transferring a file, mark it to be 'inProgress' for this specific from-to connection. In case of an

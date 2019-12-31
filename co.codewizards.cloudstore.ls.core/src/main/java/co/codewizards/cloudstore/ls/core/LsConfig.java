@@ -2,6 +2,13 @@ package co.codewizards.cloudstore.ls.core;
 
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
+
 import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
@@ -68,6 +75,8 @@ public class LsConfig {
 	 */
 	public static final String DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE = "";
 
+	public static final Pattern CONFIG_KEY_PATTERN_LOCAL_SERVER_PROCESS_VM_ARGS = Pattern.compile("localServerProcess\\.vmArgs\\[([^]]+)\\]");
+
 	private LsConfig() {
 	}
 
@@ -129,6 +138,19 @@ public class LsConfig {
 						CONFIG_KEY_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE,
 						DEFAULT_LOCAL_SERVER_PROCESS_MAX_HEAP_SIZE);
 		return emptyToNull(maxHeapSize);
+	}
+
+	public static List<String> getLocalServerProcessVmArgs() {
+		List<String> result = new ArrayList<String>();
+		Config config = ConfigImpl.getInstance();
+		Map<String, List<String>> key2GroupsMatching = config.getKey2GroupsMatching(CONFIG_KEY_PATTERN_LOCAL_SERVER_PROCESS_VM_ARGS);
+		SortedSet<String> keys = new TreeSet<>(key2GroupsMatching.keySet());
+		for (String key : keys) {
+			String value = config.getPropertyAsNonEmptyTrimmedString(key, null);
+			if (value != null && ! value.isEmpty())
+				result.add(value);
+		}
+		return result;
 	}
 
 	public static Uid getProcessId() {

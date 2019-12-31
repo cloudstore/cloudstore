@@ -21,8 +21,7 @@ public class CloudStorePersistenceCapableClassesProviderImpl extends
 				Repository.class,
 				RepoFile.class,
 				FileInProgressMarker.class,
-				Symlink.class,
-				TransferDoneMarker.class
+				Symlink.class
 		};
 	}
 
