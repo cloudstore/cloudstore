@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.concurrent;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static java.util.Objects.*;
 
 import java.lang.ref.WeakReference;
@@ -114,7 +115,7 @@ public class DeferrableExecutor {
 			try {
 				return delegate.call();
 			} finally {
-				callIdentifier2DoneDate.put(identifier, new Date());
+				callIdentifier2DoneDate.put(identifier, now());
 			}
 		}
 

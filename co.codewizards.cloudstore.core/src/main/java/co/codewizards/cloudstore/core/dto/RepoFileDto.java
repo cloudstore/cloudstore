@@ -1,11 +1,14 @@
 package co.codewizards.cloudstore.core.dto;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
+
 import java.io.Serializable;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.util.DateUtil;
 
 /**
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
@@ -64,7 +67,7 @@ public class RepoFileDto implements Serializable {
 		return lastModified;
 	}
 	public void setLastModified(final Date lastModified) {
-		this.lastModified = lastModified;
+		this.lastModified = copyDate(lastModified);
 	}
 
 	/**

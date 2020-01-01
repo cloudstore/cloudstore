@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.core.updater;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.UrlUtil.*;
 import static java.util.Objects.*;
 
@@ -140,7 +141,7 @@ public class CloudStoreUpdaterCore {
 					} finally {
 						in.close();
 					}
-					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(new Date())));
+					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(now())));
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}

@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
+
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -35,7 +37,7 @@ class DynamicX509TrustManagerCallbackSleepUntilTimeout implements DynamicX509Tru
 			try {
 				logger.warn("\n####################################################\n"
 						+ "###\n"
-						+ "###    This thread will sleep for " + sleepInMsec + " msec (" + new Date() + ")\n"
+						+ "###    This thread will sleep for " + sleepInMsec + " msec (" + now() + ")\n"
 						+ "###\n"
 						+ "####################################################");
 				// we are blocking the *first* invocation

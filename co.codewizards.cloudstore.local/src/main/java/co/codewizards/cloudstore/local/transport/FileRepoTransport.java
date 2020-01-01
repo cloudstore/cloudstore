@@ -2,6 +2,7 @@ package co.codewizards.cloudstore.local.transport;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static java.util.Objects.*;
 
@@ -146,7 +147,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				if (!remoteRepositoryRequest.getLocalPathPrefix().equals(localPathPrefix))
 					throw new IllegalStateException("Cannot modify the local path-prefix! Use 'dropRepoConnection' to drop the old request or wait until it expired.");
 
-				remoteRepositoryRequest.setChanged(new Date()); // make sure it is not deleted soon (the request expires after a while)
+				remoteRepositoryRequest.setChanged(now()); // make sure it is not deleted soon (the request expires after a while)
 			}
 			else {
 				final long remoteRepositoryRequestsCount = remoteRepositoryRequestDao.getObjectsCount();

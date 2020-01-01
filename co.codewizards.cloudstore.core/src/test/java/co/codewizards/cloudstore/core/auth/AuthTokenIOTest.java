@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.auth;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -40,8 +41,8 @@ public class AuthTokenIOTest {
 
 	public static AuthToken createAuthToken() {
 		final AuthToken authToken = new AuthToken();
-		authToken.setExpiryDateTime(new DateTime(new Date()));
-		authToken.setRenewalDateTime(new DateTime(new Date()));
+		authToken.setExpiryDateTime(new DateTime(now()));
+		authToken.setRenewalDateTime(new DateTime(now()));
 		authToken.setPassword("fadgfsdagasd");
 		return authToken;
 	}

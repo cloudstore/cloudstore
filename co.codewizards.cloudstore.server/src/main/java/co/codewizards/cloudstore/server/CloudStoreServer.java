@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.server;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.*;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.Util.*;
-import static java.util.Objects.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
+import static co.codewizards.cloudstore.core.util.Util.doNothing;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,15 +50,16 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.appid.AppIdRegistry;
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
+import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.util.DebugUtil;
 import co.codewizards.cloudstore.core.util.DerbyUtil;
 import co.codewizards.cloudstore.core.util.HashUtil;
 import co.codewizards.cloudstore.core.util.MainArgsUtil;
-import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.ls.server.LocalServer;
 import co.codewizards.cloudstore.rest.server.CloudStoreRest;
 
@@ -80,6 +81,7 @@ public class CloudStoreServer implements Runnable {
 	private static final String KEY_PASSWORD_STRING = "CloudStore-private-key";
 	private static final char[] KEY_PASSWORD_CHAR_ARRAY = KEY_PASSWORD_STRING.toCharArray();
 
+	public final Uid instanceId = new Uid();
 	private File keyStoreFile;
 	private final SecureRandom random = new SecureRandom();
 	private int securePort;
@@ -99,6 +101,7 @@ public class CloudStoreServer implements Runnable {
 	}
 
 	public CloudStoreServer(final String... args) {
+		logger.debug("[{}].<init>", instanceId);
 		BouncyCastleRegistrationUtil.registerBouncyCastleIfNeeded();
 	}
 
@@ -124,8 +127,11 @@ public class CloudStoreServer implements Runnable {
 
 	@Override
 	public void run() {
-		if (!running.compareAndSet(false, true))
-			throw new IllegalStateException("Server is already running!");
+		logger.debug("[{}].run: entered. securePort={}", instanceId, getSecurePort());
+		if (!running.compareAndSet(false, true)) {
+			logger.error("[{}].run: Server is already running!", instanceId);
+			throw new IllegalStateException(String.format("Server [%s] is already running!", instanceId));
+		}
 
 		LocalServer localServer = null;
 		try {
@@ -136,19 +142,26 @@ public class CloudStoreServer implements Runnable {
 					localServer = null;
 
 				server = createServer();
+				
+				logger.debug("[{}].run: Starting server (securePort={})...", instanceId, getSecurePort());
 				server.start();
 
 				updaterTimer = createUpdaterTimer();
 				updaterTimer.start();
 			}
 
+			logger.debug("[{}].run: before server.join()...", instanceId);
 			server.join();
+			logger.debug("[{}].run: after server.join().", instanceId);
 
 		} catch (final RuntimeException x) {
+			logger.error("[{}].run: failed: {}", instanceId, x);
 			throw x;
 		} catch (final Exception x) {
+			logger.error("[{}].run: failed: {}", instanceId, x);
 			throw new RuntimeException(x);
 		} finally {
+			logger.debug("[{}].run: entered finally-block.", instanceId);
 			synchronized (this) {
 				if (localServer != null) {
 					try {
@@ -162,6 +175,7 @@ public class CloudStoreServer implements Runnable {
 			}
 
 			running.set(false);
+			logger.debug("[{}].run: leaving finally-block.", instanceId);
 		}
 	}
 
@@ -299,6 +313,7 @@ public class CloudStoreServer implements Runnable {
 	}
 
 	protected Server createServer() {
+		logger.debug("[{}].createServer: securePort={}", instanceId, getSecurePort());
 		final QueuedThreadPool threadPool = new QueuedThreadPool();
 		threadPool.setMaxThreads(500);
 

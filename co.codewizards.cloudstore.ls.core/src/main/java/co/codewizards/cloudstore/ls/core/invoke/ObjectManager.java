@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -210,7 +211,7 @@ public class ObjectManager {
 		return lastUseDate;
 	}
 	private void updateLastUseDate() {
-		this.lastUseDate = new Date();
+		this.lastUseDate = now();
 	}
 
 	public boolean isNeverEvict() {

@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -104,9 +105,11 @@ public class CloudStoreRestClient {
 
 	private void determineBaseUrl() {
 		acquireClient();
+		final String hostUrl = getHostUrl();
+		logger.debug("determineBaseUrl: hostURL='{}': entered.", hostUrl);
 		try {
 			final Client client = getClientOrFail();
-			String url = getHostUrl();
+			String url = hostUrl;
 			for(String part : getPathParts()){
 				if(!part.isEmpty()) // part is always empty in first iteration
 					url += part + "/";
@@ -124,6 +127,12 @@ public class CloudStoreRestClient {
 
 			if (baseURL == null)
 				throw new IllegalStateException("baseURL not found!");
+
+			logger.debug("determineBaseUrl: hostURL='{}' => baseURL='{}'", hostUrl, baseURL);
+		} catch (Exception x) {
+			String message = String.format("Determining baseURL failed for hostURL='%s': %s", hostUrl, x.toString());
+			logger.error("determineBaseUrl: " + message);
+			throw new ProcessingException(message, x);
 		} finally {
 			releaseClient();
 		}

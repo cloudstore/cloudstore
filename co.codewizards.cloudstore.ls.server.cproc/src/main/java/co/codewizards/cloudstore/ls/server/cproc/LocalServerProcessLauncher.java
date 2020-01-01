@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.ls.server.cproc;
 
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
@@ -162,7 +163,7 @@ public class LocalServerProcessLauncher {
 	private File getProcessRedirectInputFile() {
 		final File tempDir = getTempDir();
 		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
-		final String now = df.format(new Date());
+		final String now = df.format(now());
 		final File file = tempDir.createFile(String.format("LocalServer.%s.in", now)).getAbsoluteFile();
 		logger.debug("getProcessRedirectInputFile: file='{}'", file);
 		return file;
@@ -175,7 +176,7 @@ public class LocalServerProcessLauncher {
 	private File getProcessRedirectOutputFile() {
 		final File tempDir = getTempDir();
 		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
-		final String now = df.format(new Date());
+		final String now = df.format(now());
 		final File file = tempDir.createFile(String.format("LocalServer.%s.out", now)).getAbsoluteFile();
 		logger.debug("getProcessRedirectOutputFile: file='{}'", file);
 		return file;

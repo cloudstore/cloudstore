@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static java.util.Objects.*;
 
 import java.util.Date;
@@ -33,10 +34,10 @@ public abstract class Entity implements AutoTrackChanged
 	// putting them into a LinkedList (preventing optimizer short-cuts), so the LinkedList
 	// overhead is included in this time).
 	@Persistent(nullValue=NullValue.EXCEPTION)
-	private Date created = new Date();
+	private Date created = now();
 
 	@Persistent(nullValue=NullValue.EXCEPTION)
-	private Date changed = new Date();
+	private Date changed = now();
 
 	@NotPersistent
 	private transient int hashCode;

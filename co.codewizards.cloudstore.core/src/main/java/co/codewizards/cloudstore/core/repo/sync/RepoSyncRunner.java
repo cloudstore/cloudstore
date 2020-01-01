@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static java.util.Objects.*;
 
 import java.net.URL;
@@ -36,7 +37,7 @@ class RepoSyncRunner implements Runnable {
 
 	@Override
 	public void run() {
-		syncStarted = new Date();
+		syncStarted = now();
 		try {
 			remoteRepositoryId = null;
 			remoteRoot = null;
@@ -54,7 +55,7 @@ class RepoSyncRunner implements Runnable {
 			remoteRepositoryId = null;
 			remoteRoot = null;
 		} finally {
-			syncFinished = new Date();
+			syncFinished = now();
 		}
 	}
 

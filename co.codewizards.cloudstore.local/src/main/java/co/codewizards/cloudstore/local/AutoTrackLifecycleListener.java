@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.util.DateUtil.*;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,7 +86,7 @@ public class AutoTrackLifecycleListener extends AbstractLocalRepoTransactionList
 		// localRevision in the database (once per transaction).
 		final long localRevision = getTransactionOrFail().getLocalRevision();
 
-		final Date changed = new Date();
+		final Date changed = now();
 		final Object oid = JDOHelper.getObjectId(pc);
 		if (!defer && oid != null) { // there is no OID, yet, if the object is NEW (not yet persisted).
 			final Date oldLastChanged = oid2LastChanged.get(oid);
