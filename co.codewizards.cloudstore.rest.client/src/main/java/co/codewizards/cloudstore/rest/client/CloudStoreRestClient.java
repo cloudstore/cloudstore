@@ -104,9 +104,9 @@ public class CloudStoreRestClient {
 	}
 
 	private void determineBaseUrl() {
-		acquireClient();
 		final String hostUrl = getHostUrl();
 		logger.debug("determineBaseUrl: hostURL='{}': entered.", hostUrl);
+		acquireClient();
 		try {
 			final Client client = getClientOrFail();
 			String url = hostUrl;
@@ -124,11 +124,6 @@ public class CloudStoreRestClient {
 					doNothing();
 				}
 			}
-
-			if (baseURL == null)
-				throw new IllegalStateException("baseURL not found!");
-
-			logger.debug("determineBaseUrl: hostURL='{}' => baseURL='{}'", hostUrl, baseURL);
 		} catch (Exception x) {
 			String message = String.format("Determining baseURL failed for hostURL='%s': %s", hostUrl, x.toString());
 			logger.error("determineBaseUrl: " + message);
@@ -136,6 +131,14 @@ public class CloudStoreRestClient {
 		} finally {
 			releaseClient();
 		}
+
+		if (baseURL == null) {
+			String message = String.format("baseURL for hostURL='%s' not found!", hostUrl);
+			logger.error("determineBaseUrl: " + message);
+			throw new IllegalStateException(message);
+		}
+
+		logger.debug("determineBaseUrl: hostURL='{}' => baseURL='{}'", hostUrl, baseURL);
 	}
 
 	private List<String> getPathParts(){
