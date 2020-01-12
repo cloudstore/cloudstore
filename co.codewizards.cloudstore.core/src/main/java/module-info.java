@@ -1,10 +1,11 @@
 open module co.codewizards.cloudstore.core {
 
-	requires transitive java.base;
+//	requires transitive java.base; // https://bugs.openjdk.java.net/browse/JDK-8182734
 	requires transitive java.se;
 
 	requires transitive java.xml;
 	requires transitive java.xml.bind;
+	requires transitive com.sun.xml.bind;
 
 	requires transitive org.slf4j;
 

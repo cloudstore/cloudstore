@@ -438,6 +438,10 @@
 						<groupId>edu.washington.cs.types.checker</groupId>
 						<artifactId>checker-framework</artifactId>
 					</exclusion>
+					<exclusion>
+						<groupId>javax.activation</groupId>
+						<artifactId>activation</artifactId>
+					</exclusion>
 				</exclusions>
 			</dependency>
 			<!-- END logging -->
@@ -609,6 +613,42 @@
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
+<!--
+					<executions>
+						<execution>
+							<id>default-compile</id>
+							<configuration>
+								<!- compile everything to ensure module-info contains right entries
+								required when JAVA_HOME is JDK 8 or below ->
+								<jdkToolchain>
+									<version>9</version>
+								</jdkToolchain>
+								<release>9</release>
+							</configuration>
+						</execution>
+						<execution>
+							<id>base-compile</id>
+							<goals>
+								<goal>compile</goal>
+							</goals>
+							<!- recompile everything for target VM except the module-info.java ->
+							<configuration>
+								<excludes>
+									<exclude>module-info.java</exclude>
+								</excludes>
+							</configuration>
+						</execution>
+					</executions>
+					<!- defaults for compile and testCompile ->
+					<configuration>
+						<!- jdkToolchain required when JAVA_HOME is JDK 9 or above ->
+						<jdkToolchain>
+							<version>[1.7,9)</version>
+						</jdkToolchain>
+						<source>1.7</source>
+						<target>1.7</target>
+					</configuration>
+-->
 				</plugin>
 
 				<plugin>
