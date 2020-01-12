@@ -613,13 +613,12 @@
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
-<!--
 					<executions>
 						<execution>
 							<id>default-compile</id>
 							<configuration>
-								<!- compile everything to ensure module-info contains right entries
-								required when JAVA_HOME is JDK 8 or below ->
+								<!-- compile everything to ensure module-info contains right entries
+								required when JAVA_HOME is JDK 8 or below -->
 								<jdkToolchain>
 									<version>9</version>
 								</jdkToolchain>
@@ -631,7 +630,7 @@
 							<goals>
 								<goal>compile</goal>
 							</goals>
-							<!- recompile everything for target VM except the module-info.java ->
+							<!-- recompile everything for target VM except the module-info.java -->
 							<configuration>
 								<excludes>
 									<exclude>module-info.java</exclude>
@@ -639,16 +638,15 @@
 							</configuration>
 						</execution>
 					</executions>
-					<!- defaults for compile and testCompile ->
+					<!-- defaults for compile and testCompile -->
 					<configuration>
-						<!- jdkToolchain required when JAVA_HOME is JDK 9 or above ->
+						<!-- jdkToolchain required when JAVA_HOME is JDK 9 or above -->
 						<jdkToolchain>
 							<version>[1.7,9)</version>
 						</jdkToolchain>
 						<source>1.7</source>
 						<target>1.7</target>
 					</configuration>
--->
 				</plugin>
 
 				<plugin>
