@@ -53,6 +53,7 @@
 							<classesDirectory>${project.build.directory}/apidocs</classesDirectory>
 							<finalName>${project.artifactId}-javadoc.jar</finalName>
 							<outputDirectory>${project.build.directory}</outputDirectory>
+							<classifier>javadoc</classifier>
 						</configuration>
 					</execution>
 -->
@@ -67,6 +68,7 @@
 							<classesDirectory>${project.build.directory}/site</classesDirectory>
 							<finalName>${project.artifactId}-site.jar</finalName>
 							<outputDirectory>${project.build.directory}</outputDirectory>
+							<classifier>site</classifier>
 						</configuration>
 					</execution>
 				</executions>
