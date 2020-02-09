@@ -67,6 +67,15 @@
 
 	<repositories>
 		<repository>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>https://repo.maven.apache.org/maven2</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
 			<id>datanucleus-maven2-nightly</id>
 			<url>http://www.datanucleus.org/downloads/maven2-nightly</url>
 			<releases>
@@ -89,6 +98,18 @@
 	</repositories>
 
 	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>https://repo.maven.apache.org/maven2</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+		</pluginRepository>
 		<pluginRepository>
 			<id>datanucleus-maven2-nightly</id>
 			<url>http://www.datanucleus.org/downloads/maven2-nightly</url>
