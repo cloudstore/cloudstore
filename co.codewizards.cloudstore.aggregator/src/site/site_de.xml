@@ -38,7 +38,7 @@
 			<item name="Häufige Fragen (FAQ)" href="./documentation/faq.html" />
 			<item name="Sicherheit" href="./documentation/security.html" />
 			<item name="Entwicklung" href="./documentation/development.html" />
-<!-- Currently javadoc-generation fails for new module-architecture :-( simply disabling it -- not really needed.
+<!-- Currently javadoc-generation fails for new module-architecture :-( simply disabling it - not really needed.
 			<item name="Javadoc" href="./apidocs/index.html" />
 -->
 			<item name="Was ist neu?" href="./documentation/whats-new.html" />

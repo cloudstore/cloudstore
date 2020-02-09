@@ -40,7 +40,7 @@
 			<item name="Authentication using LDAP" href="./documentation/ldap.html" />
 			<item name="Configuration" href="./documentation/config.html" />
 			<item name="Development" href="./documentation/development.html" />
-<!-- Currently javadoc-generation fails for new module-architecture :-( simply disabling it -- not really needed.
+<!-- Currently javadoc-generation fails for new module-architecture :-( simply disabling it - not really needed.
 			<item name="Javadoc" href="./apidocs/index.html" />
 -->
 			<item name="What's new?" href="./documentation/whats-new.html" />
