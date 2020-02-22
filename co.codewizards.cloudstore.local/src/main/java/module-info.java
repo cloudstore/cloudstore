@@ -16,19 +16,25 @@ open module co.codewizards.cloudstore.local {
 
 	uses co.codewizards.cloudstore.local.db.DatabaseAdapterFactory;
 	uses co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
+	uses co.codewizards.cloudstore.local.dbupdate.DbUpdateStep;
 
 	provides co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory
 		with co.codewizards.cloudstore.local.LocalRepoManagerFactoryImpl;
-	
+
 	provides co.codewizards.cloudstore.core.repo.local.LocalRepoTransactionListener
 		with co.codewizards.cloudstore.local.AutoTrackLifecycleListener;
-	
+
 	provides co.codewizards.cloudstore.core.repo.transport.RepoTransportFactory
 		with co.codewizards.cloudstore.local.transport.FileRepoTransportFactory;
 
 	provides co.codewizards.cloudstore.local.db.DatabaseAdapterFactory
 		with co.codewizards.cloudstore.local.db.DerbyDatabaseAdapterFactory;
-	
+
 	provides co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider
 		with co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProviderImpl;
+
+	provides co.codewizards.cloudstore.local.dbupdate.DbUpdateStep
+		with
+			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep002,
+			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep003;
 }

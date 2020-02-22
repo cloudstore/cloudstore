@@ -66,6 +66,8 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.db.DatabaseAdapter;
 import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
+import co.codewizards.cloudstore.local.dbupdate.DbUpdateManager;
+import co.codewizards.cloudstore.local.dbupdate.DbUpdateStepRegistry;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.LocalRepository;
@@ -156,9 +158,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			}
 
 			initMetaDir(createRepository);
-
-			if (repositoryId == null)
-				repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
 
 			initPersistenceManagerFactory(createRepository);
 			deleteExpiredRemoteRepositoryRequests();
@@ -270,12 +269,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			metaDir.mkdir();
 
 			initLockFile();
-			createRepositoryPropertiesFile();
-
 			try {
 				try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter();) {
 					databaseAdapter.setRepositoryId(requireNonNull(repositoryId, "repositoryId"));
 					databaseAdapter.setLocalRoot(requireNonNull(localRoot, "localRoot"));
+
+					createRepositoryPropertiesFile(databaseAdapter);
 					databaseAdapter.createPersistencePropertiesFileAndDatabase();
 				}
 			} catch (Exception x) {
@@ -287,7 +286,17 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				throw new FileNoRepositoryException(localRoot);
 
 			initLockFile();
-			checkRepositoryPropertiesFile();
+			try {
+				repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
+				try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter();) {
+					databaseAdapter.setRepositoryId(requireNonNull(repositoryId, "repositoryId"));
+					databaseAdapter.setLocalRoot(requireNonNull(localRoot, "localRoot"));
+
+					checkRepositoryPropertiesFile(databaseAdapter, true);
+				}
+			} catch (Exception x) {
+				throw new LocalRepoManagerException(x);
+			}
 		}
 	}
 
@@ -306,8 +315,10 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				id, localRoot);
 	}
 
-	private void createRepositoryPropertiesFile() {
-		final int version = 2;
+	private void createRepositoryPropertiesFile(DatabaseAdapter databaseAdapter) {
+		requireNonNull(databaseAdapter, "databaseAdapter");
+		DbUpdateStepRegistry dbUpdateStepRegistry = new DbUpdateStepRegistry(); 
+		final int version = dbUpdateStepRegistry.getCurrentVersion();
 		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
 			repositoryProperties = new Properties();
@@ -319,36 +330,28 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		}
 	}
 
-	private void checkRepositoryPropertiesFile() throws LocalRepoManagerException {
-		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
-		if (!repositoryPropertiesFile.exists())
-			throw new RepositoryCorruptException(localRoot,
-					String.format("Meta-directory does not contain '%s'!", REPOSITORY_PROPERTIES_FILE_NAME));
-
-		try {
-			repositoryProperties = PropertiesUtil.load(repositoryPropertiesFile);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-		String version = repositoryProperties.getProperty(PROP_VERSION);
-		if (version == null || version.isEmpty())
-			throw new RepositoryCorruptException(localRoot,
-					String.format("Meta-file '%s' does not contain property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
-
-		version = version.trim();
-		int ver;
-		try {
-			ver = Integer.parseInt(version);
-		} catch (final NumberFormatException x) {
-			throw new RepositoryCorruptException(localRoot,
-					String.format("Meta-file '%s' contains an illegal value (not a number) for property '%s'!", REPOSITORY_PROPERTIES_FILE_NAME, PROP_VERSION));
+	private void checkRepositoryPropertiesFile(DatabaseAdapter databaseAdapter, boolean update) throws LocalRepoManagerException {
+		DbUpdateStepRegistry dbUpdateStepRegistry = new DbUpdateStepRegistry();
+		DbUpdateManager dbUpdateManager = new DbUpdateManager(localRoot, dbUpdateStepRegistry, databaseAdapter);
+		repositoryProperties = dbUpdateManager.readRepositoryProperties();
+		
+		int ver = dbUpdateManager.readRepositoryVersion();
+		
+		int currentVersion = dbUpdateStepRegistry.getCurrentVersion();
+		if (ver > currentVersion) {
+			throw new RepositoryCorruptException(localRoot, String.format("DB is too new: Repository is version %d and thus newer than expected version %d!", ver, currentVersion));
 		}
 
 		// Because version 1 was used by 0.9.0, we do not provide compatibility, yet. Maybe we add compatibility
 		// code converting version 1 into 2, later.
 		// Further, this check prevents old versions to work with a newer repo (and possibly corrupt it).
-		if (ver != 2)
-			throw new RepositoryCorruptException(localRoot, "Repository is not version 2!");
+		if (ver < currentVersion) {
+			if (update) {
+				dbUpdateManager.performUpdate();
+				checkRepositoryPropertiesFile(databaseAdapter, false);
+			} else
+				throw new RepositoryCorruptException(localRoot, String.format("DB-update failed: Repository is version %d and not expected version %d!", ver, currentVersion));
+		}
 	}
 
 	private void syncWithLocalRepoRegistry() {

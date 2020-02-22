@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.db;
 
+import java.sql.Connection;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.oio.File;
@@ -12,4 +13,5 @@ public interface DatabaseAdapter extends AutoCloseable {
 	void setLocalRoot(File localRoot);
 
 	void createPersistencePropertiesFileAndDatabase() throws Exception;
+	Connection createConnection() throws Exception;
 }

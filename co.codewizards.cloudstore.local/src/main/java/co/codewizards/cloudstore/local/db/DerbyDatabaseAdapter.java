@@ -48,6 +48,7 @@ public class DerbyDatabaseAdapter extends AbstractDatabaseAdapter {
 		}
 	}
 
+	@Override
 	public Connection createConnection() throws SQLException {
 		if (isEmpty(connectionUserName) && isEmpty(connectionPassword))
 			return DriverManager.getConnection(connectionURL);
