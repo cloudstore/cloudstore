@@ -42,10 +42,10 @@ public class CloudStoreUpdaterCore {
 	public static final String INSTALLATION_PROPERTIES_FILE_NAME = "installation.properties";
 	public static final String INSTALLATION_PROPERTIES_ARTIFACT_ID = "artifactId";
 	public static final String INSTALLATION_PROPERTIES_VERSION = "version";
-	public static final String remoteVersionURL = // "http://cloudstore.codewizards.co/update/${artifactId}/version";
-			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/version";
-	public static final String remoteUpdatePropertiesURL = // "http://cloudstore.codewizards.co/update/${artifactId}/update.0.properties";
-			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/update.0.properties";
+	public static final String remoteVersionURL = // "http://cloudstore.codewizards.co/update/${artifactId}/version.1";
+			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/version.1";
+	public static final String remoteUpdatePropertiesURL = // "http://cloudstore.codewizards.co/update/${artifactId}/update.1.properties";
+			AppIdRegistry.getInstance().getAppIdOrFail().getWebSiteBaseUrl() + "update/${artifactId}/update.1.properties";
 
 	/**
 	 * Configuration property key controlling whether we do a downgrade. By default, only an upgrade is done. If this
