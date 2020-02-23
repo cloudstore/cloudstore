@@ -12,6 +12,18 @@ To download the source codes please follow the [Development](../documentation/de
 
 $H$H$H Binaries
 
+$H$H$H$H Java 11 vs. Java 8
+
+Since version 1.0.0, CloudStore supports Java 11 and all its JARs contain a <code>module-java.class</code>.
+
+CloudStore 1.0.0 should work with both Java 11 and Java 8 (actually even Java 7 should still be supported). But this was
+not yet properly tested. Therefore, we currently do not (yet) automatically update from CloudStore 0.x.
+
+If you freshly download & install CloudStore 1.x and encounter problems with Java 8 (or 7), please give version 0.x
+a try. You find the newest 0.x-release on the [releases](http://cloudstore.codewizards.co/latest-stable/releases/)
+page.
+
+
 $H$H$H$H Client
 
 * tar.gz (recommended)

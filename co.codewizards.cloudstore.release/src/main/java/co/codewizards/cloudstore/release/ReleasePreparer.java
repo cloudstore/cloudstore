@@ -29,8 +29,8 @@ public class ReleasePreparer {
 	//   * to update the symlinks on the web-server after the release was successful;
 	//   * to update the auto-update-meta-files on the web-server.
 
-//	protected String newMavenVersion = "1.0.0";
-	protected String newMavenVersion = "1.0.0-SNAPSHOT";
+	protected String newMavenVersion = "1.0.0";
+//	protected String newMavenVersion = "1.0.1-SNAPSHOT";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DO NOT CHANGE ANYTHING BELOW THIS POINT, if you don't really want to improve this program.

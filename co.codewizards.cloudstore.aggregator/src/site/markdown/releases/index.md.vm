@@ -14,6 +14,7 @@ In the following you find a list of all releases:
 
 * [Latest development snapshot](../../latest-dev/) (Not stable & not yet released!)
 * [Latest stable version](../../latest-stable/)
+* [1.0.0](../../1.0.0/) (released 2020-02-23)
 * [0.10.7](../../0.10.7/) (released 2019-10-06)
 * [0.10.6](../../0.10.6/) (released 2018-12-25)
 * [0.10.5](../../0.10.5/) (released 2018-08-16)
@@ -36,3 +37,14 @@ In the following you find a list of all releases:
 * [0.9.2](../../0.9.2/) (released 2014-03-10)
 * [0.9.1](../../0.9.1/) (released 2014-02-18)
 * [0.9.0](../../0.9.0/) (released 2014-01-28)
+
+
+$H$H$H$H Java 11 vs. Java 8
+
+Since version 1.0.0, CloudStore supports Java 11 and all its JARs contain a <code>module-java.class</code>.
+
+CloudStore 1.0.0 should work with both Java 11 and Java 8 (actually even Java 7 should still be supported). But this was
+not yet properly tested. Therefore, we currently do not (yet) automatically update from CloudStore 0.x.
+
+If you freshly download & install CloudStore 1.x and encounter problems with Java 8 (or 7), please give version 0.x
+a try.
