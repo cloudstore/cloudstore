@@ -1,6 +1,11 @@
 package co.codewizards.cloudstore.local.db;
 
 public abstract class AbstractDatabaseAdapterFactory implements DatabaseAdapterFactory {
+	
+	@Override
+	public String getDisableReason() {
+		return null;
+	}
 
 	@Override
 	public DatabaseAdapter createDatabaseAdapter() {

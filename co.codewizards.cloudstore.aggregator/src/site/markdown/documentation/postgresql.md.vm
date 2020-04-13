@@ -1,0 +1,32 @@
+<head><title>PostgreSQL as database</title></head>
+$!{decoration.custom.setAttribute("contentHeaderLogo", "../images/header-notebook.jpg")}
+#set( $H = '#' )
+
+PostgreSQL as database (instead of Derby)
+-------
+
+By default, CloudStore uses Derby, a small embedded database. Derby does not require any configuration at all and
+is therefore a very easy solution.
+
+
+$H$H$H Install PostgreSQL-server
+
+<div><pre>sudo apt install postgresql postgresql-contrib pgadmin3
+
+sudo -u postgres psql postgres
+
+\password postgres</pre></div>
+
+In this example, I use the password 'my_pg_pw', but of course, you should choose a strong and secure password.
+
+
+$H$H$H Configure CloudStore 
+
+CloudStore must know how to connect to the PostgreSQL-server. Therefore, you have to provide the following information:
+
+<div><pre>jdbc.driverName = 
+</pre></div>
+
+
+
+databaseAdapter.name

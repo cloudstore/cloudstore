@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigImpl;
+import co.codewizards.cloudstore.core.util.StringUtil;
 
 public class DatabaseAdapterFactoryRegistry {
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseAdapterFactoryRegistry.class);
@@ -63,6 +64,12 @@ public class DatabaseAdapterFactoryRegistry {
 				databaseAdapterFactory = name2DatabaseAdapter.get(databaseAdaptorName);
 				if (databaseAdapterFactory == null)
 					throw new IllegalArgumentException(String.format("There is no DatabaseAdapterFactory with name='%s'!", databaseAdaptorName));
+				
+				String disableReason = databaseAdapterFactory.getDisableReason();
+				if (! isEmpty(disableReason)) {
+					logger.warn("The factory {} returned the following disable-reason (but using it nevertheless, since it was explicitely chosen): {}",
+							databaseAdapterFactory.getClass().getName(), disableReason);
+				}
 			}
 
 			this.databaseAdapterFactory = databaseAdapterFactory;
@@ -94,8 +101,14 @@ public class DatabaseAdapterFactoryRegistry {
 	private static DatabaseAdapterFactory getDatabaseAdapterFactoryWithHighestPriority(final SortedMap<String, DatabaseAdapterFactory> name2DatabaseAdapter) {
 		DatabaseAdapterFactory databaseAdapterFactory = null;
 		for (final DatabaseAdapterFactory a : name2DatabaseAdapter.values()) {
-			if (databaseAdapterFactory == null || databaseAdapterFactory.getPriority() < a.getPriority())
-				databaseAdapterFactory = a;
+			if (databaseAdapterFactory == null || databaseAdapterFactory.getPriority() < a.getPriority()) {
+				String disableReason = a.getDisableReason();
+				if (isEmpty(disableReason)) {
+					databaseAdapterFactory = a;
+				} else {
+					logger.debug("The factory {} is disabled: {}", databaseAdapterFactory.getClass().getName(), disableReason);
+				}
+			}
 		}
 		return databaseAdapterFactory;
 	}

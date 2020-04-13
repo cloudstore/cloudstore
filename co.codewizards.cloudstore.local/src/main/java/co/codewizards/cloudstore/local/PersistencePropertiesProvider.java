@@ -4,9 +4,13 @@ import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.util.Objects.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.UUID;
 
 import co.codewizards.cloudstore.core.oio.File;
@@ -41,6 +45,21 @@ public class PersistencePropertiesProvider {
 		variablesMap.put(LocalRepoManager.VAR_REPOSITORY_ID, repositoryId);
 		variablesMap.put(LocalRepoManager.VAR_LOCAL_ROOT, localRoot.getPath());
 		variablesMap.put(LocalRepoManager.VAR_META_DIR, getMetaDir().getPath());
+		
+		List<PersistencePropertiesVariableProvider> variableProviders = new LinkedList<>();
+		for (PersistencePropertiesVariableProvider provider : ServiceLoader.load(PersistencePropertiesVariableProvider.class)) {
+			variableProviders.add(provider);
+		}
+		Collections.sort(variableProviders, (o1, o2) -> {
+			int res = Integer.compare(o1.getPriority(), o2.getPriority());
+			if (res == 0)
+				res = o1.getClass().getName().compareTo(o2.getClass().getName());
+
+			return res;
+		});
+		for (PersistencePropertiesVariableProvider provider : variableProviders) {
+			provider.populatePersistencePropertiesVariableMap(variablesMap);
+		}
 
 		Properties rawProperties;
 		try {

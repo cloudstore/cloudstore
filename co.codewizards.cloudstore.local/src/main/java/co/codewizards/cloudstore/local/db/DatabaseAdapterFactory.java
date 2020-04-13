@@ -27,6 +27,16 @@ public interface DatabaseAdapterFactory {
 	String getName();
 
 	int getPriority();
+	
+	/**
+	 * Get the reason <i>not</i> to use this factory.
+	 * <p>
+	 * Checks the current configuration and environment. If the {@link DatabaseAdapter} created by this factory
+	 * can operate in the current situation, this method returns <code>null</code> (or an empty {@code String}).
+	 * Otherwise, it returns the reason, why this database-adapter cannot be used.
+	 * @return <code>null</code> if this factory is active and its {@code DatabaseAdapter} can be used.
+	 */
+	String getDisableReason();
 
 	DatabaseAdapter createDatabaseAdapter();
 }

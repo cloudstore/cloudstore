@@ -44,7 +44,7 @@ public class DerbyDatabaseAdapter extends AbstractDatabaseAdapter {
 		try {
 			Class.forName(connectionDriverName);
 		} catch (Throwable e) { // Might theoretically be a link error (i.e. a sub-class of Error instead of Exception) => catch Throwable
-			logger.warn("initDriverClass" + e, e);
+			logger.warn("initDriverClass: " + e, e);
 		}
 	}
 

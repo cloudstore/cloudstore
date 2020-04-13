@@ -27,7 +27,7 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 	 * <p>
 	 * <b>Important 2:</> The name of the generated file in the application's config directory is dependent on the {@code AppId}!
 	 */
-	private static final String PERSISTENCE_PROPERTIES_TEMPLATE_FILE_NAME = "cloudstore-persistence.${databaseAdapter.name}.properties";
+	public static final String PERSISTENCE_PROPERTIES_TEMPLATE_FILE_NAME = "cloudstore-persistence.${databaseAdapter.name}.properties";
 
 	private AbstractDatabaseAdapterFactory factory;
 

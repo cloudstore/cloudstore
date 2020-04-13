@@ -28,7 +28,9 @@ open module co.codewizards.cloudstore.local {
 		with co.codewizards.cloudstore.local.transport.FileRepoTransportFactory;
 
 	provides co.codewizards.cloudstore.local.db.DatabaseAdapterFactory
-		with co.codewizards.cloudstore.local.db.DerbyDatabaseAdapterFactory;
+		with
+			co.codewizards.cloudstore.local.db.DerbyDatabaseAdapterFactory,
+			co.codewizards.cloudstore.local.db.PostgresqlDatabaseAdapterFactory;
 
 	provides co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider
 		with co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProviderImpl;
@@ -37,4 +39,7 @@ open module co.codewizards.cloudstore.local {
 		with
 			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep002,
 			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep003;
+
+	provides co.codewizards.cloudstore.local.PersistencePropertiesVariableProvider
+		with co.codewizards.cloudstore.local.db.ExternalJdbcPersistencePropertiesVariableProvider;
 }
