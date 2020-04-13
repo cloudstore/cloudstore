@@ -4,6 +4,10 @@ import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static co.codewizards.cloudstore.local.db.DatabaseAdapterFactory.*;
 import static java.util.Objects.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -12,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.config.ConfigImpl;
-import co.codewizards.cloudstore.core.util.StringUtil;
+import co.codewizards.cloudstore.core.oio.File;
 
 public class DatabaseAdapterFactoryRegistry {
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseAdapterFactoryRegistry.class);
@@ -36,6 +40,42 @@ public class DatabaseAdapterFactoryRegistry {
 	public void clearCache() {
 		logger.info("clearCache: entered.");
 		databaseAdapterFactory = null;
+	}
+
+	public DatabaseAdapter createDatabaseAdapter(File localRoot) {
+		requireNonNull(localRoot, "localRoot");
+
+		DatabaseAdapter databaseAdapter = getDatabaseAdapterFactoryOrFail().createDatabaseAdapter();
+		if (databaseAdapter == null)
+			throw new IllegalStateException(String.format("databaseAdapterFactory.createDatabaseAdapter() returned null! Implementation error in %s!",
+					databaseAdapterFactory.getClass().getName()));
+
+		return databaseAdapter;
+	}
+
+	protected DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail(File localRoot) {
+		requireNonNull(localRoot, "localRoot");
+		final SortedMap<String, DatabaseAdapterFactory> name2DatabaseAdapter = getName2DatabaseAdapterFactory();
+		List<DatabaseAdapterFactory> factories = new ArrayList<DatabaseAdapterFactory>(name2DatabaseAdapter.values());
+
+		// We sort highest priority first, because we return the first one matching our localRoot.
+		Collections.sort(factories, new Comparator<DatabaseAdapterFactory>() {
+			@Override
+			public int compare(DatabaseAdapterFactory o1, DatabaseAdapterFactory o2) {
+				int res = -1 * Integer.compare(o1.getPriority(), o2.getPriority());
+				if (res == 0)
+					res = o1.getClass().getName().compareTo(o2.getClass().getName());
+
+				return res;
+			}
+		});
+
+		for (DatabaseAdapterFactory factory : factories) {
+			if (factory.isLocalRootSupported(localRoot)) {
+				return factory;
+			}
+		}
+		return null;
 	}
 
 	public DatabaseAdapter createDatabaseAdapter() {
@@ -64,7 +104,7 @@ public class DatabaseAdapterFactoryRegistry {
 				databaseAdapterFactory = name2DatabaseAdapter.get(databaseAdaptorName);
 				if (databaseAdapterFactory == null)
 					throw new IllegalArgumentException(String.format("There is no DatabaseAdapterFactory with name='%s'!", databaseAdaptorName));
-				
+
 				String disableReason = databaseAdapterFactory.getDisableReason();
 				if (! isEmpty(disableReason)) {
 					logger.warn("The factory {} returned the following disable-reason (but using it nevertheless, since it was explicitely chosen): {}",

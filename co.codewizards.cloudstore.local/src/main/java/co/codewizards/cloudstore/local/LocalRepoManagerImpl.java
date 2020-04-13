@@ -40,6 +40,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
@@ -76,7 +77,6 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequest;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 /**
  * Manager of a repository.
@@ -288,7 +288,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			initLockFile();
 			try {
 				repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
-				try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter();) {
+				try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter(localRoot);) {
 					databaseAdapter.setRepositoryId(requireNonNull(repositoryId, "repositoryId"));
 					databaseAdapter.setLocalRoot(requireNonNull(localRoot, "localRoot"));
 
@@ -317,7 +317,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void createRepositoryPropertiesFile(DatabaseAdapter databaseAdapter) {
 		requireNonNull(databaseAdapter, "databaseAdapter");
-		DbUpdateStepRegistry dbUpdateStepRegistry = new DbUpdateStepRegistry(); 
+		DbUpdateStepRegistry dbUpdateStepRegistry = new DbUpdateStepRegistry();
 		final int version = dbUpdateStepRegistry.getCurrentVersion();
 		final File repositoryPropertiesFile = createFile(getMetaDir(), REPOSITORY_PROPERTIES_FILE_NAME);
 		try {
@@ -334,9 +334,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		DbUpdateStepRegistry dbUpdateStepRegistry = new DbUpdateStepRegistry();
 		DbUpdateManager dbUpdateManager = new DbUpdateManager(localRoot, dbUpdateStepRegistry, databaseAdapter);
 		repositoryProperties = dbUpdateManager.readRepositoryProperties();
-		
+
 		int ver = dbUpdateManager.readRepositoryVersion();
-		
+
 		int currentVersion = dbUpdateStepRegistry.getCurrentVersion();
 		if (ver > currentVersion) {
 			throw new RepositoryCorruptException(localRoot, String.format("DB is too new: Repository is version %d and thus newer than expected version %d!", ver, currentVersion));

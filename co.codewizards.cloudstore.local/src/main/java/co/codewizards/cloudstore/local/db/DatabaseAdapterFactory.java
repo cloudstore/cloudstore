@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.local.db;
 
+import co.codewizards.cloudstore.core.oio.File;
+
 public interface DatabaseAdapterFactory {
 
 	/**
@@ -27,7 +29,7 @@ public interface DatabaseAdapterFactory {
 	String getName();
 
 	int getPriority();
-	
+
 	/**
 	 * Get the reason <i>not</i> to use this factory.
 	 * <p>
@@ -39,4 +41,6 @@ public interface DatabaseAdapterFactory {
 	String getDisableReason();
 
 	DatabaseAdapter createDatabaseAdapter();
+
+	boolean isLocalRootSupported(File localRoot);
 }
