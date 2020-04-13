@@ -8,6 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
 
 public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 
@@ -21,6 +22,7 @@ public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX, "TEST_");
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX, "_TEST");
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
 	}
 
 	@AfterClass
@@ -33,6 +35,7 @@ public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX);
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX);
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
 	}
 
 	protected static String getEnvOrFail(String key) {
