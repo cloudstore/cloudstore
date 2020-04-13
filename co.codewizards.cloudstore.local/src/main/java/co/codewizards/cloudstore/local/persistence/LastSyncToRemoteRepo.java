@@ -2,7 +2,6 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.util.Util.*;
 
-import javax.jdo.annotations.Column;
 import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -19,7 +18,7 @@ public class LastSyncToRemoteRepo extends Entity {
 	private long localRepositoryRevisionSynced = -1;
 	private long localRepositoryRevisionInProgress = -1;
 
-	@Column(defaultValue = "N")
+//	@Column(defaultValue = "N") // does not work with PostgreSQL! In the long term, we likely need a different way of handling upgrades and downward-compatiblity.
 	private boolean resyncMode;
 
 	public RemoteRepository getRemoteRepository() {
