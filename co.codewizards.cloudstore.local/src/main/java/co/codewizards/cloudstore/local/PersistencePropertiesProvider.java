@@ -5,6 +5,7 @@ import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,12 +51,14 @@ public class PersistencePropertiesProvider {
 		for (PersistencePropertiesVariableProvider provider : ServiceLoader.load(PersistencePropertiesVariableProvider.class)) {
 			variableProviders.add(provider);
 		}
-		Collections.sort(variableProviders, (o1, o2) -> {
-			int res = Integer.compare(o1.getPriority(), o2.getPriority());
-			if (res == 0)
-				res = o1.getClass().getName().compareTo(o2.getClass().getName());
-
-			return res;
+		Collections.sort(variableProviders, new Comparator<PersistencePropertiesVariableProvider>() {
+			public int compare(PersistencePropertiesVariableProvider o1, PersistencePropertiesVariableProvider o2) {
+				int res = Integer.compare(o1.getPriority(), o2.getPriority());
+				if (res == 0)
+					res = o1.getClass().getName().compareTo(o2.getClass().getName());
+				
+				return res;
+			}
 		});
 		for (PersistencePropertiesVariableProvider provider : variableProviders) {
 			provider.populatePersistencePropertiesVariableMap(variablesMap);
