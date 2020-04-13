@@ -26,6 +26,7 @@ public class PostgresqlDatabaseAdapterTest extends AbstractTest {
 
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX, "TEST_");
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX, "_TEST");
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
 	}
 
 	@AfterClass
@@ -38,6 +39,7 @@ public class PostgresqlDatabaseAdapterTest extends AbstractTest {
 
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX);
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX);
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
 	}
 
 	protected static String getEnvOrFail(String key) {
