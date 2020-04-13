@@ -12,7 +12,7 @@ import co.codewizards.cloudstore.core.config.Config;
 public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 
 	@BeforeClass
-	public static void before_PostgresqlDatabaseAdapterTest() {
+	public static void before_PostgresqlBasicRepoToRepoSyncIT() {
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_DATABASE_ADAPTER_NAME, "postgresql");
 
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_HOST_NAME, getEnvOrFail("TEST_PG_HOST_NAME"));
@@ -24,7 +24,7 @@ public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 	}
 
 	@AfterClass
-	public static void after_PostgresqlDatabaseAdapterTest() {
+	public static void after_PostgresqlBasicRepoToRepoSyncIT() {
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_DATABASE_ADAPTER_NAME);
 
 		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_HOST_NAME);
