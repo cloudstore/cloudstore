@@ -56,10 +56,10 @@
 
 		<datanucleus-maven-plugin.version>5.2.1</datanucleus-maven-plugin.version>
 		<datanucleus-core.version>5.2.2</datanucleus-core.version>
-		<datanucleus-api-jdo.version>5.2.2</datanucleus-api-jdo.version>
-		<datanucleus-rdbms.version>5.2.1</datanucleus-rdbms.version>
+		<datanucleus-api-jdo.version>5.2.3</datanucleus-api-jdo.version>
+		<datanucleus-rdbms.version>5.2.2</datanucleus-rdbms.version>
 		<datanucleus.javadoc.version>5.0</datanucleus.javadoc.version>
-		<datanucleus-javax-jdo.version>3.2.0-m12</datanucleus-javax-jdo.version>
+		<datanucleus-javax-jdo.version>3.2.0-m13</datanucleus-javax-jdo.version>
 		<apache.directory.server.version>2.0.0-M20</apache.directory.server.version>
 		<jmockit.version>1.24</jmockit.version>
 		<jaxb.version>2.4.0-b180830.0438</jaxb.version>
