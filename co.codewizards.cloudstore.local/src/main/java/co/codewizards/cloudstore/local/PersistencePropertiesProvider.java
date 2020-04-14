@@ -22,6 +22,7 @@ public class PersistencePropertiesProvider {
 
 	private final UUID repositoryId;
 	private final File localRoot;
+	private File overridePersistencePropertiesFile;
 
 	public PersistencePropertiesProvider(final UUID repositoryId, final File localRoot) {
 		this.repositoryId = requireNonNull(repositoryId, "repositoryId");
@@ -33,12 +34,21 @@ public class PersistencePropertiesProvider {
 		return createFile(localRoot, LocalRepoManager.META_DIR_NAME);
 	}
 
+	public File getOverridePersistencePropertiesFile() {
+		return overridePersistencePropertiesFile;
+	}
+	public void setOverridePersistencePropertiesFile(File persistencePropertiesFile) {
+		this.overridePersistencePropertiesFile = persistencePropertiesFile;
+	}
+
 	public Map<String, String> getPersistenceProperties() {
-		final File metaDirectory = getMetaDir();
-		if (!metaDirectory.isDirectory())
+		final File metaDirectory = overridePersistencePropertiesFile != null ? null : getMetaDir();
+		if (metaDirectory != null && ! metaDirectory.isDirectory())
 			throw new IllegalStateException("The localRoot does not contain the meta-directory: " + metaDirectory.getAbsolutePath());
 
-		final File persistencePropertiesFile = createFile(metaDirectory, LocalRepoManager.PERSISTENCE_PROPERTIES_FILE_NAME);
+		final File persistencePropertiesFile =
+				overridePersistencePropertiesFile != null
+				? overridePersistencePropertiesFile : createFile(metaDirectory, LocalRepoManager.PERSISTENCE_PROPERTIES_FILE_NAME);
 		if (!persistencePropertiesFile.isFile())
 			throw new IllegalStateException("The persistencePropertiesFile does not exist or is not a file: " + persistencePropertiesFile.getAbsolutePath());
 
@@ -46,17 +56,18 @@ public class PersistencePropertiesProvider {
 		variablesMap.put(LocalRepoManager.VAR_REPOSITORY_ID, repositoryId);
 		variablesMap.put(LocalRepoManager.VAR_LOCAL_ROOT, localRoot.getPath());
 		variablesMap.put(LocalRepoManager.VAR_META_DIR, getMetaDir().getPath());
-		
+
 		List<PersistencePropertiesVariableProvider> variableProviders = new LinkedList<>();
 		for (PersistencePropertiesVariableProvider provider : ServiceLoader.load(PersistencePropertiesVariableProvider.class)) {
 			variableProviders.add(provider);
 		}
 		Collections.sort(variableProviders, new Comparator<PersistencePropertiesVariableProvider>() {
+			@Override
 			public int compare(PersistencePropertiesVariableProvider o1, PersistencePropertiesVariableProvider o2) {
 				int res = Integer.compare(o1.getPriority(), o2.getPriority());
 				if (res == 0)
 					res = o1.getClass().getName().compareTo(o2.getClass().getName());
-				
+
 				return res;
 			}
 		});

@@ -53,7 +53,7 @@ public class DatabaseAdapterFactoryRegistry {
 		return databaseAdapter;
 	}
 
-	protected DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail(File localRoot) {
+	public DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail(File localRoot) {
 		requireNonNull(localRoot, "localRoot");
 		final SortedMap<String, DatabaseAdapterFactory> name2DatabaseAdapter = getName2DatabaseAdapterFactory();
 		List<DatabaseAdapterFactory> factories = new ArrayList<DatabaseAdapterFactory>(name2DatabaseAdapter.values());
@@ -88,7 +88,7 @@ public class DatabaseAdapterFactoryRegistry {
 		return databaseAdapter;
 	}
 
-	protected DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail() {
+	public DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail() {
 		DatabaseAdapterFactory databaseAdapterFactory = this.databaseAdapterFactory;
 		if (databaseAdapterFactory == null) {
 			final String databaseAdaptorName = ConfigImpl.getInstance().getPropertyAsNonEmptyTrimmedString(

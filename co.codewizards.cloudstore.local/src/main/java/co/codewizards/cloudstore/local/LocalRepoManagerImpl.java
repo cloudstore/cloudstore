@@ -16,14 +16,10 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
@@ -496,7 +492,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		final PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
 		try {
 			try {
-				initPersistenceCapableClasses(pm);
+				CloudStorePersistenceCapableClassesProvider.Helper.initPersistenceCapableClasses(pm);
 			} catch (final Exception x) {
 				if (x instanceof RuntimeException)
 					throw (RuntimeException)x;
@@ -506,38 +502,6 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		} finally {
 			if (pm != null)
 				pm.close();
-		}
-	}
-
-	private void initPersistenceCapableClasses(final PersistenceManager pm) {
-		List<CloudStorePersistenceCapableClassesProvider> providers = new LinkedList<CloudStorePersistenceCapableClassesProvider>();
-		final ServiceLoader<CloudStorePersistenceCapableClassesProvider> sl = ServiceLoader.load(CloudStorePersistenceCapableClassesProvider.class);
-		for (final CloudStorePersistenceCapableClassesProvider provider : sl) {
-			providers.add(provider);
-		}
-
-		Collections.sort(providers, new Comparator<CloudStorePersistenceCapableClassesProvider>() {
-			@Override
-			public int compare(CloudStorePersistenceCapableClassesProvider o1,
-					CloudStorePersistenceCapableClassesProvider o2) {
-				int res = Integer.compare(o1.getOrderHint(), o2.getOrderHint());
-				if (res == 0)
-					res = o1.getClass().getName().compareTo(o2.getClass().getName());
-
-				return res;
-			}
-		});
-
-		for (final CloudStorePersistenceCapableClassesProvider provider : providers) {
-			final Class<?>[] classes = provider.getPersistenceCapableClasses();
-			if (classes != null) {
-				for (Class<?> clazz : classes) {
-					pm.getExtent(clazz);
-
-					final Class<?> c = getExtendingClass(clazz);
-					pm.getExtent(c);
-				}
-			}
 		}
 	}
 
