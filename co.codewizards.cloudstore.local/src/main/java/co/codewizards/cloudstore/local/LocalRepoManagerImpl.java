@@ -532,6 +532,8 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			final Class<?>[] classes = provider.getPersistenceCapableClasses();
 			if (classes != null) {
 				for (Class<?> clazz : classes) {
+					pm.getExtent(clazz);
+
 					final Class<?> c = getExtendingClass(clazz);
 					pm.getExtent(c);
 				}
