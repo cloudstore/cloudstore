@@ -5,12 +5,16 @@ public class CloudStorePersistenceCapableClassesProviderImpl extends
 		AbstractCloudStorePersistenceCapableClassesProvider {
 
 	@Override
+	public int getOrderHint() {
+		return 0;
+	}
+
+	@Override
 	public Class<?>[] getPersistenceCapableClasses() {
 		return new Class<?>[] {
 				CopyModification.class,
 				DeleteModification.class,
 				Directory.class,
-				Entity.class,
 				FileChunk.class,
 				LastSyncToRemoteRepo.class,
 				LocalRepository.class,
@@ -19,7 +23,6 @@ public class CloudStorePersistenceCapableClassesProviderImpl extends
 				RemoteRepository.class,
 				RemoteRepositoryRequest.class,
 				Repository.class,
-				RepoFile.class,
 				FileInProgressMarker.class,
 				Symlink.class
 		};

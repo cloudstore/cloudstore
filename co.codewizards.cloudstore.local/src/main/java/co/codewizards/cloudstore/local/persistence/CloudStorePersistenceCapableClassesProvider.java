@@ -16,6 +16,14 @@ import javax.jdo.annotations.PersistenceCapable;
  * @author Marco หงุ่ยตระกูล-Schulze - marco at codewizards dot co
  */
 public interface CloudStorePersistenceCapableClassesProvider {
+
+	/**
+	 * Provider-instances are sorted by {@code orderHint} (ascending) and fully qualified class-name
+	 * (in case the hint of 2 implementations is equal).
+	 * @return the order used to sort provider-instances.
+	 */
+	int getOrderHint();
+
 	/**
 	 * Gets the {@linkplain PersistenceCapable persistence-capable} classes.
 	 * <p>
