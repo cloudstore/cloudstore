@@ -15,12 +15,14 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.oio.File;
 
 public class DatabaseAdapterFactoryRegistry {
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseAdapterFactoryRegistry.class);
 
+	private long configVersion;
 	private DatabaseAdapterFactory databaseAdapterFactory;
 
 	protected DatabaseAdapterFactoryRegistry() { }
@@ -45,7 +47,8 @@ public class DatabaseAdapterFactoryRegistry {
 	public DatabaseAdapter createDatabaseAdapter(File localRoot) {
 		requireNonNull(localRoot, "localRoot");
 
-		DatabaseAdapter databaseAdapter = getDatabaseAdapterFactoryOrFail().createDatabaseAdapter();
+		DatabaseAdapterFactory databaseAdapterFactory = getDatabaseAdapterFactoryOrFail();
+		DatabaseAdapter databaseAdapter = databaseAdapterFactory.createDatabaseAdapter();
 		if (databaseAdapter == null)
 			throw new IllegalStateException(String.format("databaseAdapterFactory.createDatabaseAdapter() returned null! Implementation error in %s!",
 					databaseAdapterFactory.getClass().getName()));
@@ -89,9 +92,15 @@ public class DatabaseAdapterFactoryRegistry {
 	}
 
 	public DatabaseAdapterFactory getDatabaseAdapterFactoryOrFail() {
+		Config config = ConfigImpl.getInstance();
+		long configVersion = config.getVersion();
+		if (this.configVersion != configVersion) {
+			this.configVersion = configVersion;
+			clearCache();
+		}
 		DatabaseAdapterFactory databaseAdapterFactory = this.databaseAdapterFactory;
 		if (databaseAdapterFactory == null) {
-			final String databaseAdaptorName = ConfigImpl.getInstance().getPropertyAsNonEmptyTrimmedString(
+			final String databaseAdaptorName = config.getPropertyAsNonEmptyTrimmedString(
 					CONFIG_KEY_DATABASE_ADAPTER_NAME, DEFAULT_DATABASE_ADAPTER_NAME);
 
 			final SortedMap<String, DatabaseAdapterFactory> name2DatabaseAdapter = getName2DatabaseAdapterFactory();
