@@ -8,6 +8,9 @@ import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -16,6 +19,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -460,108 +464,177 @@ public class DatabaseMigrater {
 		requireNonNull(targetTable, "targetTable");
 		requireNonNull(sourceColumnName2Column, "sourceColumnName2Column");
 		requireNonNull(targetColumnName2Column, "targetColumnName2Column");
+		boolean sourceAutoCommit = sourceConnection.getAutoCommit();
+		boolean targetAutoCommit = targetConnection.getAutoCommit();
+		try {
+			sourceConnection.setAutoCommit(false);
+			targetConnection.setAutoCommit(false);
 
-		SortedMap<Column, Column> sourceColumn2TargetColumn = new TreeMap<Column, Column>();
-		for (Column sourceColumn : sourceColumnName2Column.values()) {
-			Column targetColumn = targetColumnName2Column.get(sourceColumn.name.toUpperCase(Locale.UK));
-			if (targetColumn == null) {
-				continue;
-			}
-			sourceColumn2TargetColumn.put(sourceColumn, targetColumn);
-		}
-
-		try (Statement deleteStatement = targetConnection.createStatement()) {
-			String sql = String.format("delete from \"%s\"", targetTable.name);
-			logger.debug("copyTableData: Executing: {}", sql);
-			int rowsAffected = deleteStatement.executeUpdate(sql);
-			logger.debug("copyTableData: rowsAffected: {}", rowsAffected);
-		}
-
-		final long sourceTableRowCount;
-		try (Statement sourceStatement = sourceConnection.createStatement()) {
-			String sql = String.format("select count(*) from \"%s\"", sourceTable.name);
-
-			logger.debug("copyTableData: Executing: {}", sql);
-			try (ResultSet rs = sourceStatement.executeQuery(sql)) {
-				if (! rs.next())
-					throw new IllegalStateException("'SELECT count(*)' failed to return a row!");
-
-				sourceTableRowCount = rs.getLong(1);
-
-				if (rs.next())
-					throw new IllegalStateException("'SELECT count(*)' returned multiple rows!");
+			SortedMap<Column, Column> sourceColumn2TargetColumn = new TreeMap<Column, Column>();
+			for (Column sourceColumn : sourceColumnName2Column.values()) {
+				Column targetColumn = targetColumnName2Column.get(sourceColumn.name.toUpperCase(Locale.UK));
+				if (targetColumn == null) {
+					continue;
+				}
+				sourceColumn2TargetColumn.put(sourceColumn, targetColumn);
 			}
 
-			logger.info("copyTableData: Table '{}' contains {} rows to be copied.",
-					sourceTable.name.toUpperCase(Locale.UK), sourceTableRowCount);
-
-			sql = "select ";
-			int idx = 0;
-			for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
-				Column sourceColumn = me.getKey();
-				if (++idx > 1)
-					sql += ", ";
-
-				sql += "\"" + sourceColumn.name + "\"";
+			try (Statement deleteStatement = targetConnection.createStatement()) {
+				String sql = String.format("delete from \"%s\"", targetTable.name);
+				logger.debug("copyTableData: Executing: {}", sql);
+				int rowsAffected = deleteStatement.executeUpdate(sql);
+				logger.debug("copyTableData: rowsAffected: {}", rowsAffected);
 			}
-			sql += " from \"" + sourceTable.name + "\"";
+			targetConnection.commit();
 
-			logger.debug("copyTableData: Executing: {}", sql);
-			try (ResultSet rs = sourceStatement.executeQuery(sql)) {
+			final long sourceTableRowCount;
+			try (Statement sourceStatement = sourceConnection.createStatement()) {
+				String sql = String.format("select count(*) from \"%s\"", sourceTable.name);
 
-				sql = "insert into \"" + targetTable.name + "\" (";
-				idx = 0;
+				logger.debug("copyTableData: Executing: {}", sql);
+				try (ResultSet rs = sourceStatement.executeQuery(sql)) {
+					if (! rs.next())
+						throw new IllegalStateException("'SELECT count(*)' failed to return a row!");
+
+					sourceTableRowCount = rs.getLong(1);
+
+					if (rs.next())
+						throw new IllegalStateException("'SELECT count(*)' returned multiple rows!");
+				}
+
+				logger.info("copyTableData: Table '{}' contains {} rows to be copied.",
+						sourceTable.name.toUpperCase(Locale.UK), sourceTableRowCount);
+
+				sql = "select ";
+				int idx = 0;
 				for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
-					Column targetColumn = me.getValue();
+					Column sourceColumn = me.getKey();
 					if (++idx > 1)
 						sql += ", ";
 
-					sql += "\"" + targetColumn.name + "\"";
+					sql += "\"" + sourceColumn.name + "\"";
 				}
+				sql += " from \"" + sourceTable.name + "\"";
 
-				sql += ") values (";
-				idx = 0;
-				for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
-					if (++idx > 1)
-						sql += ", ";
+				logger.debug("copyTableData: Executing: {}", sql);
+				try (ResultSet rs = sourceStatement.executeQuery(sql)) {
 
-					sql += "?";
-				}
-				sql += ")";
+					sql = "insert into \"" + targetTable.name + "\" (";
+					idx = 0;
+					for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
+						Column targetColumn = me.getValue();
+						if (++idx > 1)
+							sql += ", ";
 
-				logger.debug("copyTableData: Preparing: {}", sql);
-				try (PreparedStatement insertStatement = targetConnection.prepareStatement(sql)) {
-					long rowCountProcessed = 0;
-					while (rs.next()) {
-						idx = 0;
-						for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
-							Column sourceColumn = me.getKey();
-							Column targetColumn = me.getValue();
-							Object sourceValue = rs.getObject(++idx);
-							Object targetValue = convertValue(sourceColumn, targetColumn, sourceValue);
-							if (targetValue == null)
-								insertStatement.setNull(idx, targetColumn.dataType);
-							else
-								insertStatement.setObject(idx, targetValue);
+						sql += "\"" + targetColumn.name + "\"";
+					}
+
+					sql += ") values (";
+					idx = 0;
+					for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
+						if (++idx > 1)
+							sql += ", ";
+
+						sql += "?";
+					}
+					sql += ")";
+
+					logger.debug("copyTableData: Preparing: {}", sql);
+					try (PreparedStatement insertStatement = targetConnection.prepareStatement(sql)) {
+						long rowCountProcessed = 0;
+						while (rs.next()) {
+							idx = 0;
+							for (Map.Entry<Column, Column> me : sourceColumn2TargetColumn.entrySet()) {
+								Column sourceColumn = me.getKey();
+								Column targetColumn = me.getValue();
+								Object sourceValue = rs.getObject(++idx);
+								Object targetValue = convertValue(sourceColumn, targetColumn, sourceValue);
+								if (logger.isTraceEnabled()) {
+									logger.trace("copyTableData: tableName={} columnName={} columnIndex={} sourceJdbcType={} sourceValue.class={} sourceValue={} targetJdbcType={} targetValue.class={} targetValue={}",
+											targetTable.name, targetColumn.name, idx,
+											getJdbcTypeAsString(sourceColumn.dataType), (sourceValue == null ? null : sourceValue.getClass().getName()), sourceValue,
+											getJdbcTypeAsString(targetColumn.dataType), (targetValue == null ? null : targetValue.getClass().getName()), targetValue);
+								}
+								if (targetValue == null) {
+									int dataType = targetColumn.dataType;
+
+									insertStatement.setNull(idx, dataType);
+								}
+								else
+									insertStatement.setObject(idx, targetValue);
+							}
+							int rowsAffected = insertStatement.executeUpdate();
+							if (rowsAffected != 1)
+								throw new IllegalStateException("INSERT caused rowsAffected=" + rowsAffected);
+
+
+							++rowCountProcessed;
+							if ((rowCountProcessed % 1000) == 0 || rowCountProcessed == sourceTableRowCount) {
+								targetConnection.commit();
+								logger.info("copyTableData: Table '{}': {} of {} rows have been copied.",
+										sourceTable.name.toUpperCase(Locale.UK), rowCountProcessed, sourceTableRowCount);
+							}
 						}
-						int rowsAffected = insertStatement.executeUpdate();
-						if (rowsAffected != 1)
-							throw new IllegalStateException("INSERT caused rowsAffected=" + rowsAffected);
-
-						++rowCountProcessed;
-						if ((rowCountProcessed % 1000) == 0 || rowCountProcessed == sourceTableRowCount)
-							logger.info("copyTableData: Table '{}': {} of {} rows have been copied.",
-									sourceTable.name.toUpperCase(Locale.UK), rowCountProcessed, sourceTableRowCount);
 					}
 				}
 			}
+			sourceConnection.commit();
+			targetConnection.commit();
+		} finally {
+			sourceConnection.rollback();
+			targetConnection.rollback();
+			sourceConnection.setAutoCommit(sourceAutoCommit);
+			targetConnection.setAutoCommit(targetAutoCommit);
 		}
 	}
 
-	protected Object convertValue(Column sourceColumn, Column targetColumn, Object sourceValue) {
+	private static Map<Integer, String> jdbcTypeIntToString;
+
+	protected String getJdbcTypeAsString(int dataType) {
+		if (jdbcTypeIntToString == null) {
+			try {
+				Map<Integer, String> m = new HashMap<Integer, String>();
+				for (Field field : Types.class.getFields()) {
+					if (field.isSynthetic())
+						continue;
+
+					if ((field.getModifiers() & Modifier.STATIC) == 0)
+						continue;
+
+					if (field.getType() != Integer.class && field.getType() != int.class)
+						continue;
+
+					Integer value = (Integer) field.get(null);
+					m.put(value, field.getName() + "(" + value + ")");
+				}
+				jdbcTypeIntToString = Collections.unmodifiableMap(m);
+			} catch (Exception e) {
+				logger.warn("getJdbcTypeAsString: " + e, e);
+				jdbcTypeIntToString = Collections.emptyMap();
+			}
+		}
+
+		String string = jdbcTypeIntToString.get(dataType);
+		if (string != null)
+			return string;
+
+		return Integer.toString(dataType);
+	}
+
+	protected Object convertValue(Column sourceColumn, Column targetColumn, Object sourceValue) throws Exception {
 		if (sourceValue == null
 				|| sourceColumn.dataType == targetColumn.dataType)
 			return sourceValue;
+
+		if (sourceValue instanceof Blob) {
+			Blob sourceBlob = (Blob) sourceValue;
+			long length = sourceBlob.length();
+			if (length > Integer.MAX_VALUE)
+				throw new IllegalStateException("sourceBlob.length > Integer.MAX_VALUE!!!");
+
+			byte[] bytes = sourceBlob.getBytes(1L, (int) length);
+			return bytes;
+		}
 
 		switch (targetColumn.dataType) {
 			case Types.BOOLEAN:
