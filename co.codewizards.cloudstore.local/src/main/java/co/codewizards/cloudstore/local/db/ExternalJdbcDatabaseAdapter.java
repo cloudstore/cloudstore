@@ -66,9 +66,10 @@ public abstract class ExternalJdbcDatabaseAdapter extends AbstractDatabaseAdapte
 
 	@Override
 	protected void createDatabase() throws Exception {
-		initProperties();
-		initDriverClass();
-
+		if (connectionURL == null) {
+			initProperties();
+			initDriverClass();
+		}
 		Config config = ConfigImpl.getInstance();
 		ExternalJdbcDatabaseAdapterFactory factory = (ExternalJdbcDatabaseAdapterFactory) getFactoryOrFail();
 
@@ -169,6 +170,10 @@ public abstract class ExternalJdbcDatabaseAdapter extends AbstractDatabaseAdapte
 
 	@Override
 	public Connection createConnection() throws SQLException {
+		if (connectionURL == null) {
+			initProperties();
+			initDriverClass();
+		}
 		if (isEmpty(connectionUserName) && isEmpty(connectionPassword))
 			return DriverManager.getConnection(connectionURL);
 		else

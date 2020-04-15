@@ -24,6 +24,8 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseEvent;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerCloseListener;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerException;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+import co.codewizards.cloudstore.local.db.DatabaseMigrater;
+import co.codewizards.cloudstore.local.db.DatabaseMigraterThreadManager;
 
 /**
  * Registry of {@link LocalRepoManager}s.
@@ -66,6 +68,12 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	@Override
 	public synchronized LocalRepoManager createLocalRepoManagerForExistingRepository(File localRoot) throws LocalRepoManagerException {
 		localRoot = canonicalize(localRoot);
+
+		DatabaseMigrater databaseMigrater = new DatabaseMigrater(localRoot);
+		if (databaseMigrater.isMigrationInProcess()) {
+			DatabaseMigraterThreadManager.getInstance().launch(databaseMigrater);
+			throw new IllegalStateException("Database-migration in process! localRoot: " + localRoot.getAbsolutePath());
+		}
 
 		LocalRepoManagerImpl localRepoManagerImpl = localRoot2LocalRepoManagerImpl.get(localRoot);
 		if (localRepoManagerImpl != null && !localRepoManagerImpl.open()) {

@@ -2,6 +2,8 @@ package co.codewizards.cloudstore.local;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.local.db.DatabaseAdapterFactory.*;
+import static co.codewizards.cloudstore.local.db.ExternalJdbcDatabaseAdapter.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -23,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.DevMode;
 import co.codewizards.cloudstore.core.Uid;
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.IoFile;
 import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
@@ -30,12 +34,12 @@ import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.util.IOUtil;
+import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
 import co.codewizards.cloudstore.local.persistence.Directory;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
-import co.codewizards.cloudstore.core.config.ConfigDir;
 
 public abstract class AbstractTest {
 
@@ -290,4 +294,35 @@ public abstract class AbstractTest {
 		}
 	}
 
+	protected static void enablePostgresql() {
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_DATABASE_ADAPTER_NAME, "postgresql");
+
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_HOST_NAME, getEnvOrFail("TEST_PG_HOST_NAME"));
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_USER_NAME, getEnvOrFail("TEST_PG_USER_NAME"));
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_PASSWORD, getEnvOrFail("TEST_PG_PASSWORD"));
+
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX, "TEST_");
+		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX, "_TEST");
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
+	}
+
+	protected static void disablePostgresql() {
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_DATABASE_ADAPTER_NAME);
+
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_HOST_NAME);
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_USER_NAME);
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_PASSWORD);
+
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_PREFIX);
+		System.clearProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_JDBC_DB_NAME_SUFFIX);
+		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
+	}
+
+	protected static String getEnvOrFail(String key) {
+		String value = System.getenv(key);
+		if (value == null)
+			throw new IllegalStateException("Environment-variable not set: " + key);
+
+		return value;
+	}
 }

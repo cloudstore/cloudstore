@@ -36,6 +36,8 @@
 	<logger name="co.codewizards.cloudstore.core.persistence" level="ALL" />
 	<logger name="co.codewizards.cloudstore.local.transport.file.FileRepoTransport" level="ALL" />
 
+	<logger name="co.codewizards.cloudstore.local.dbmigrate" level="DEBUG" />
+
 	<!-- The level of the root logger is set to DEBUG by default. But we want to be able to change it here. -->
 	<!--
 	<root level="ALL">

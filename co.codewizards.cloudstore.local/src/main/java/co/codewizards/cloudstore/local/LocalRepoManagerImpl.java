@@ -3,7 +3,6 @@ package co.codewizards.cloudstore.local;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DerbyUtil.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
 import static java.util.Objects.*;
 
@@ -65,6 +64,7 @@ import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.db.DatabaseAdapter;
 import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
+import co.codewizards.cloudstore.local.db.DatabaseMigrater;
 import co.codewizards.cloudstore.local.dbupdate.DbUpdateManager;
 import co.codewizards.cloudstore.local.dbupdate.DbUpdateStepRegistry;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
@@ -156,6 +156,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			}
 
 			initMetaDir(createRepository);
+			new DatabaseMigrater(localRoot).createTriggerFile();
 
 			initPersistenceManagerFactory(createRepository);
 			deleteExpiredRemoteRepositoryRequests();
@@ -632,7 +633,13 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 		return result;
 	}
 
-	protected long getCloseDeferredMillis() {
+	@Override
+	public void setCloseDeferredMillis(long value) {
+		this.closeDeferredMillis = value;
+	}
+
+	@Override
+	public long getCloseDeferredMillis() {
 		if (closeDeferredMillis < 0) {
 			@SuppressWarnings("deprecation")
 			long closeDeferredMillis = PropertiesUtil.getSystemPropertyValueAsLong(
@@ -731,7 +738,12 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				}
 				persistenceManagerFactory = null;
 				try {
-					shutdownDerbyDatabase(connectionURL);
+					try (DatabaseAdapter databaseAdapter = DatabaseAdapterFactoryRegistry.getInstance().createDatabaseAdapter(localRoot)) {
+						databaseAdapter.setLocalRoot(localRoot);
+						databaseAdapter.setRepositoryId(repositoryId);
+
+						databaseAdapter.shutdownEmbeddedDatabase();
+					}
 				} catch (final Exception x) {
 					logger.warn("Shutting down Derby database failed: " + x, x);
 				}

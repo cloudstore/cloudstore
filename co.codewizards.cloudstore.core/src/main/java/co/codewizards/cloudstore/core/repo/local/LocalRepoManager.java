@@ -207,4 +207,8 @@ public interface LocalRepoManager extends AutoCloseable {
 	void removeRepositoryAlias(String repositoryAlias);
 
 	LocalRepoMetaData getLocalRepoMetaData();
+
+	long getCloseDeferredMillis();
+
+	void setCloseDeferredMillis(long value);
 }

@@ -102,4 +102,9 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 	public void close() throws Exception {
 		// nothing to do - sub-classes may extend
 	}
+
+	@Override
+	public void shutdownEmbeddedDatabase() {
+		// nothing to do - sub-classes may extend
+	}
 }
