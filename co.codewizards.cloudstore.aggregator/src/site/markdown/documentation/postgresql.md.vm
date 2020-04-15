@@ -8,25 +8,78 @@ PostgreSQL as database (instead of Derby)
 By default, CloudStore uses Derby, a small embedded database. Derby does not require any configuration at all and
 is therefore a very easy solution.
 
+However, with extremely large repositories, Derby might get to its limits and you might want to switch to an external
+database-server. We thus also support PostgreSQL as alternative to Derby.
+
 
 $H$H$H Install PostgreSQL-server
 
-<div><pre>sudo apt install postgresql postgresql-contrib pgadmin3
+<div><pre>
+sudo apt install postgresql postgresql-contrib pgadmin3
 
 sudo -u postgres psql postgres
 
-\password postgres</pre></div>
+\password postgres
+</pre></div>
 
-In this example, I use the password 'my_pg_pw', but of course, you should choose a strong and secure password.
+In this example, I use the password 'my_pg_pw', but of course, you should enter a strong and secure password.
 
 
-$H$H$H Configure CloudStore 
+$H$H$H Configure CloudStore
 
-CloudStore must know how to connect to the PostgreSQL-server. Therefore, you have to provide the following information:
+CloudStore must know how to connect to the PostgreSQL-server. Therefore, you have to provide the following information
+in your *\$\{user.home\}/.cloudstore/cloudstore.properties* (see [Configuration](./config.html):
 
-<div><pre>jdbc.driverName = 
+<div><pre>
+jdbc.hostName = localhost
+jdbc.userName = postgres
+jdbc.password = my_pg_pw
+</pre></div>
+
+The user specified here must have the permissions to create databases. In case the creation & initialisation of a database fails,
+it tries to drop it, hence giving it the permission to drop a database might make sense. But if you don't want this for safety
+reasons, create-database-permission is all that's essentially needed.
+
+
+$H$H$H$H Optional name-prefix/-suffix
+
+You can <i>optionally</i> configure a prefix or a suffix (or both) for the database-names:
+
+<div><pre>
+jdbc.dbNamePrefix = CLOUDSTORE_
+#jdbc.dbNameSuffix = _CLOUDSTORE
 </pre></div>
 
 
+$H$H$H$H Optional sys-DB
 
-databaseAdapter.name
+When creating a new database, the user first needs to connect to a system-database, since the new database does not yet exist.
+By default, when not specifying any database in the JDBC-URL, the user connects to the database with the same name, e.g. the
+user "postgres" connects to the database "postgres".
+
+If this is not possible, you want to specify another initial database via the following setting:
+
+<div><pre>jdbc.sysdbName = EXAMPLE_DB</pre></div>
+
+
+$H$H$H$H Force usage of PostgreSQL
+
+If you set the above correctly, CloudStore automatically uses PostgreSQL. If, however, the database cannot be accessed, e.g.
+because of some wrong data, it falls back to Derby.
+
+In order to enforce the usage of PostgreSQL, you might want to add the following setting:
+
+<div><pre>databaseAdapter.name = postgresql</pre></div>
+
+
+$H$H$H Migrate an existing repository-database
+
+When you switch to PostgreSQL using the above settings, this has an effect only on newly created databases! This means,
+your existing CloudStore-repositories are not automatically migrated.
+
+You can migrate an existing repository after you configured the above by deleting the file *dbmigrate.deleteToRun*
+in the repository's *.cloudstore-repo/*-folder.
+
+**Important:** After the migration, the repository still stays locked until you delete the file *dbmigrate.status.properties*,
+which was created during the migration. The idea is to give you the possibility to manually check the result. 
+
