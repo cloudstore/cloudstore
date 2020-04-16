@@ -81,7 +81,10 @@ You can migrate an existing repository after you configured the above by deletin
 in the repository's *.cloudstore-repo/*-folder.
 
 **Important:** After the migration, the repository still stays locked until you delete the file *dbmigrate.status.properties*,
-which was created during the migration. The idea is to give you the possibility to manually check the result.
+which was created during the migration. The idea is to give you the possibility to manually check the result. At this point,
+you may still undo the migration and switch back to the previously used database. The migration creates backup-files
+which you may restore (e.g. you'll find a *cloudstore-persistence.properties.dbmigrate_k929skee.bak* which contains
+your original persistence-configuration).
 
 **Important:** Never manually modify the file *dbmigrate.status.properties*! Only delete it, when the migration is complete
 and you want to activate the repository, again.
@@ -108,6 +111,8 @@ $H$H$H$H When is it done?
 The migration of a database is completely done, when you see the following log-message (requires log-level *INFO* being active):
 
 	06:20:31.524 [main] INFO  c.c.c.l.d.DatabaseMigrater - migrateIfNeeded: localRoot='/home/mn/...path...': Migration complete!
+
+Also, the file *dbmigrate.deleteToRun* (which you deleted to start the migration) is recreated.
 
 Additionally, the file *dbmigrate.status.properties* in the repository's *.cloudstore-repo/*-folder contains the
 following line, as soon as the work is complete:
