@@ -936,7 +936,7 @@ public class DatabaseMigrater implements DaoProvider {
 	/**
 	 * Perform a few smoke-tests to see whether the target-database is actually usable.
 	 */
-	protected void testTargetPersistence() {
+	protected void testTargetPersistence() throws Exception {
 		requireNonNull(targetPm, "targetPm");
 		String nf0Name = "test_" + Long.toString(System.currentTimeMillis(), 36) + "_" + new Uid();
 		long nf0Id;
