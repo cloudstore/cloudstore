@@ -65,7 +65,7 @@ public class DbMigrateFromPostgresqlToDerbyTest extends AbstractDbMigrateTest {
 		System.setProperty(Config.SYSTEM_PROPERTY_PREFIX + CONFIG_KEY_DATABASE_ADAPTER_NAME, "derby");
 		DatabaseAdapterFactoryRegistry.getInstance().clearCache();
 
-		DatabaseMigrater databaseMigrater = new DatabaseMigrater(localRoot);
+		DatabaseMigrater databaseMigrater = DatabaseMigrater.create(localRoot);
 		databaseMigrater.deleteTriggerFile();
 		databaseMigrater.migrateIfNeeded();
 	}

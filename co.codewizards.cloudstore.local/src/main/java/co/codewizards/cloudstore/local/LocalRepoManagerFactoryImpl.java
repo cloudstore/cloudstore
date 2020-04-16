@@ -69,7 +69,7 @@ public class LocalRepoManagerFactoryImpl implements LocalRepoManagerFactory {
 	public synchronized LocalRepoManager createLocalRepoManagerForExistingRepository(File localRoot) throws LocalRepoManagerException {
 		localRoot = canonicalize(localRoot);
 
-		DatabaseMigrater databaseMigrater = new DatabaseMigrater(localRoot);
+		DatabaseMigrater databaseMigrater = DatabaseMigrater.create(localRoot);
 		if (databaseMigrater.isMigrationInProcess()) {
 			DatabaseMigraterThreadManager.getInstance().launch(databaseMigrater);
 			throw new IllegalStateException("Database-migration in process! localRoot: " + localRoot.getAbsolutePath());

@@ -61,7 +61,7 @@ public class DbMigrateFromDerbyToPostgresqlTest extends AbstractDbMigrateTest {
 
 		enablePostgresql();
 
-		DatabaseMigrater databaseMigrater = new DatabaseMigrater(localRoot);
+		DatabaseMigrater databaseMigrater = DatabaseMigrater.create(localRoot);
 		databaseMigrater.deleteTriggerFile();
 		databaseMigrater.migrateIfNeeded();
 	}

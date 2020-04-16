@@ -156,7 +156,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 			}
 
 			initMetaDir(createRepository);
-			new DatabaseMigrater(localRoot).createTriggerFile();
+			DatabaseMigrater.create(localRoot).createTriggerFile();
 
 			initPersistenceManagerFactory(createRepository);
 			deleteExpiredRemoteRepositoryRequests();
@@ -822,6 +822,9 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	@Override
 	public LocalRepoTransactionImpl beginWriteTransaction() {
+		if (DatabaseMigrater.create(localRoot).isMigrationInProcess()) {
+			throw new IllegalStateException("There is currently a database-migration in process for this localRoot: " + localRoot.getPath());
+		}
 		lock.lock();
 		try {
 			assertOpen();

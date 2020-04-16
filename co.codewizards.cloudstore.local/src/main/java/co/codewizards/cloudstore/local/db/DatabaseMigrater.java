@@ -1,6 +1,7 @@
 package co.codewizards.cloudstore.local.db;
 
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.repo.local.LocalRepoManager.*;
 import static co.codewizards.cloudstore.core.util.StringUtil.*;
@@ -20,6 +21,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -41,21 +43,29 @@ import javax.jdo.PersistenceManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.io.IInputStream;
 import co.codewizards.cloudstore.core.io.IOutputStream;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.oio.File;
+import co.codewizards.cloudstore.core.repo.local.DaoProvider;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
+import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.PersistencePropertiesProvider;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
+import co.codewizards.cloudstore.local.persistence.Dao;
+import co.codewizards.cloudstore.local.persistence.Directory;
+import co.codewizards.cloudstore.local.persistence.NormalFile;
+import co.codewizards.cloudstore.local.persistence.NormalFileDao;
+import co.codewizards.cloudstore.local.persistence.RepoFile;
+import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 
-public class DatabaseMigrater {
+public class DatabaseMigrater implements DaoProvider {
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseMigrater.class);
 
 	public static final String DBMIGRATE_TRIGGER_FILE_NAME = "dbmigrate.deleteToRun";
-	public static final String DBMIGRATE_LOCK_FILE_NAME = "dbmigrate.lock";
 	public static final String DBMIGRATE_STATUS_FILE_NAME = "dbmigrate.status.properties";
 	public static final String DBMIGRATE_TARGET_DIR_NAME = "dbmigrate.target.tmp";
 
@@ -87,16 +97,22 @@ public class DatabaseMigrater {
 	protected PersistenceManager targetPm;
 	protected Connection sourceConnection;
 	protected Connection targetConnection;
+	private final Map<Class<?>, Object> daoClass2Dao = new HashMap<>();
 
-	public DatabaseMigrater(File localRoot) {
+	protected DatabaseMigrater(File localRoot) {
 		this.localRoot = requireNonNull(localRoot, "localRoot");
 		this.metaDir = this.localRoot.createFile(META_DIR_NAME);
-		this.lockFile = this.metaDir.createFile(DBMIGRATE_LOCK_FILE_NAME);
+		this.lockFile = this.metaDir.createFile(REPOSITORY_LOCK_FILE_NAME);
 
 		this.targetLocalRoot = this.metaDir.createFile(DBMIGRATE_TARGET_DIR_NAME);
 		this.targetMetaDir = this.targetLocalRoot.createFile(META_DIR_NAME);
 
 		this.repositoryId = readRepositoryIdFromRepositoryPropertiesFile();
+	}
+
+	public static DatabaseMigrater create(File localRoot) {
+		requireNonNull(localRoot, "localRoot");
+		return createObject(DatabaseMigrater.class, localRoot);
 	}
 
 	private UUID readRepositoryIdFromRepositoryPropertiesFile() {
@@ -150,6 +166,9 @@ public class DatabaseMigrater {
 					return;
 				}
 				try {
+					if (LocalRepoManagerFactory.Helper.getInstance().getLocalRoots().contains(localRoot)) {
+						throw new IllegalStateException("There is currently a LocalRepoManager open for this localRoot: " +localRoot.getPath());
+					}
 					DatabaseAdapterFactoryRegistry databaseAdapterFactoryRegistry = DatabaseAdapterFactoryRegistry.getInstance();
 					sourceDbAdapterFactory = databaseAdapterFactoryRegistry.getDatabaseAdapterFactoryOrFail(localRoot);
 					targetDbAdapterFactory = databaseAdapterFactoryRegistry.getDatabaseAdapterFactoryOrFail();
@@ -202,11 +221,14 @@ public class DatabaseMigrater {
 
 						// Re-create the PMFs in order to re-create the target's foreign-keys.
 						createPersistenceManagerFactories();
+						testTargetPersistence();
+						closePersistenceManagerFactories();
 
 						moveTargetMetaDirContents();
 
 						status.setProperty(STATUS_MIGRATION_COMPLETE, STATUS_MIGRATION_COMPLETE + " *** *** *** Please delete this file now. *** *** ***");
 						writeStatus();
+						logger.info("migrateIfNeeded: Migration complete!");
 					}
 					// Finally, when we're completely done, we create the trigger-file, again.
 					createTriggerFile();
@@ -909,5 +931,87 @@ public class DatabaseMigrater {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Perform a few smoke-tests to see whether the target-database is actually usable.
+	 */
+	protected void testTargetPersistence() {
+		requireNonNull(targetPm, "targetPm");
+		String nf0Name = "test_" + Long.toString(System.currentTimeMillis(), 36) + "_" + new Uid();
+		long nf0Id;
+
+		targetPm.currentTransaction().begin();
+		try {
+			NormalFileDao nfDao = getDao(NormalFileDao.class);
+			RepoFileDao rfDao = getDao(RepoFileDao.class);
+
+			RepoFile rootDir = rfDao.getChildRepoFile(null, "");
+			requireNonNull(rootDir, "rootDir");
+
+			if (! (rootDir instanceof Directory))
+				throw new IllegalStateException("rootDir is an instance of " + rootDir.getClass().getName() + ", but it must be an instance of Directory: " + rootDir);
+
+			NormalFile nf = createObject(NormalFile.class);
+			nf.setLastModified(new Date());
+			nf.setParent(rootDir);
+			nf.setName(nf0Name);
+			nf.setSha1("xyz");
+			nf.setLength(666);
+
+			nf = rfDao.makePersistent(nf);
+			nfDao.getPersistenceManager().flush();
+
+			nf0Id = nf.getId();
+
+			nfDao.getObjectByIdOrFail(nf0Id);
+
+			RepoFile nf0 = rfDao.getChildRepoFile(rootDir, nf0Name);
+			requireNonNull(nf0, "nf0");
+			if (nf0.getId() != nf0Id)
+				throw new IllegalStateException(String.format("nf0.getId() != nf0Id :: %s != %s", nf0.getId(), nf0Id));
+		} finally {
+			targetPm.currentTransaction().rollback();
+		}
+
+		targetPm.currentTransaction().begin();
+		try {
+			NormalFileDao nfDao = getDao(NormalFileDao.class);
+			RepoFileDao rfDao = getDao(RepoFileDao.class);
+
+			RepoFile rootDir = rfDao.getChildRepoFile(null, "");
+			requireNonNull(rootDir, "rootDir");
+
+			RepoFile nf0 = rfDao.getChildRepoFile(rootDir, nf0Name);
+			if (nf0 != null)
+				throw new IllegalStateException("Data written in rolled-back transaction is still there!");
+
+			nf0 = nfDao.getObjectByIdOrNull(nf0Id);
+			if (nf0 != null)
+				throw new IllegalStateException("Data written in rolled-back transaction is still there!");
+		} finally {
+			targetPm.currentTransaction().rollback();
+		}
+	}
+
+	@Override
+	public <D> D getDao(final Class<D> daoClass) {
+		requireNonNull(daoClass, "daoClass");
+
+		@SuppressWarnings("unchecked")
+		D dao = (D) daoClass2Dao.get(daoClass);
+
+		if (dao == null) {
+			dao = createObject(daoClass);
+
+			if (!(dao instanceof Dao))
+				throw new IllegalStateException(String.format("dao class %s does not extend Dao!", daoClass.getName()));
+
+			((Dao<?, ?>)dao).setPersistenceManager(targetPm);
+			((Dao<?, ?>)dao).setDaoProvider(this);
+
+			daoClass2Dao.put(daoClass, dao);
+		}
+		return dao;
 	}
 }

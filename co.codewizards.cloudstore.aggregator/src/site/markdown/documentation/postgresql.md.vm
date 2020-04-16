@@ -71,6 +71,9 @@ In order to enforce the usage of PostgreSQL, you might want to add the following
 
 <div><pre>databaseAdapter.name = postgresql</pre></div>
 
+**Note:** You do not need to restart any CloudStore-process. Changes to this configuration become visible to existing
+processes when you save the configuration-file.
+
 
 $H$H$H Migrate an existing repository-database
 
@@ -82,4 +85,3 @@ in the repository's *.cloudstore-repo/*-folder.
 
 **Important:** After the migration, the repository still stays locked until you delete the file *dbmigrate.status.properties*,
 which was created during the migration. The idea is to give you the possibility to manually check the result. 
-

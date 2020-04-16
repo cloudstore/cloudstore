@@ -24,7 +24,7 @@ public class DbUpdateTest extends AbstractTest {
 		if (! localRoot.isDirectory())
 			throw new IllegalStateException("Directory does not exist: " + localRoot.getAbsolutePath());
 
-		new DatabaseMigrater(localRoot).createTriggerFile(); // we do *not* want to trigger the newly implemented DB-migration!
+		DatabaseMigrater.create(localRoot).createTriggerFile(); // we do *not* want to trigger the newly implemented DB-migration!
 
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRoot);
 		assertThat(localRepoManager).isNotNull();

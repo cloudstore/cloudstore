@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static java.util.Objects.*;
 
 import java.util.HashMap;
@@ -211,13 +212,7 @@ public class LocalRepoTransactionImpl implements LocalRepoTransaction, ContextWi
 
 		if (dao == null) {
 			final PersistenceManager pm = getPersistenceManager();
-			try {
-				dao = daoClass.newInstance();
-			} catch (final InstantiationException e) {
-				throw new RuntimeException(e);
-			} catch (final IllegalAccessException e) {
-				throw new RuntimeException(e);
-			}
+			dao = createObject(daoClass);
 
 			if (!(dao instanceof Dao))
 				throw new IllegalStateException(String.format("dao class %s does not extend Dao!", daoClass.getName()));
