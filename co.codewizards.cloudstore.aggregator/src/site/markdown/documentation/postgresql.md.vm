@@ -14,13 +14,14 @@ database-server. We thus also support PostgreSQL as alternative to Derby.
 
 $H$H$H Install PostgreSQL-server
 
-<div><pre>
-sudo apt install postgresql postgresql-contrib pgadmin3
+On an Ubuntu or another Debian-based system, you can install the PostgreSQL-server with the administration-tool pgAdmin
+via the following commands:
 
-sudo -u postgres psql postgres
-
-\password postgres
-</pre></div>
+	sudo apt install postgresql postgresql-contrib pgadmin3
+	
+	sudo -u postgres psql postgres
+	
+	\password postgres
 
 In this example, I use the password 'my_pg_pw', but of course, you should enter a strong and secure password.
 
@@ -30,11 +31,9 @@ $H$H$H Configure CloudStore
 CloudStore must know how to connect to the PostgreSQL-server. Therefore, you have to provide the following information
 in your *\$\{user.home\}/.cloudstore/cloudstore.properties* (see [Configuration](./config.html):
 
-<div><pre>
-jdbc.hostName = localhost
-jdbc.userName = postgres
-jdbc.password = my_pg_pw
-</pre></div>
+	jdbc.hostName = localhost
+	jdbc.userName = postgres
+	jdbc.password = my_pg_pw
 
 The user specified here must have the permissions to create databases. In case the creation & initialisation of a database fails,
 it tries to drop it, hence giving it the permission to drop a database might make sense. But if you don't want this for safety
@@ -45,10 +44,8 @@ $H$H$H$H Optional name-prefix/-suffix
 
 You can <i>optionally</i> configure a prefix or a suffix (or both) for the database-names:
 
-<div><pre>
-jdbc.dbNamePrefix = CLOUDSTORE_
-#jdbc.dbNameSuffix = _CLOUDSTORE
-</pre></div>
+	jdbc.dbNamePrefix = cloudstore_
+	#jdbc.dbNameSuffix = _cloudstore
 
 
 $H$H$H$H Optional sys-DB
@@ -59,7 +56,7 @@ user "postgres" connects to the database "postgres".
 
 If this is not possible, you want to specify another initial database via the following setting:
 
-<div><pre>jdbc.sysdbName = EXAMPLE_DB</pre></div>
+	jdbc.sysdbName = EXAMPLE_DB
 
 
 $H$H$H$H Force usage of PostgreSQL
@@ -69,7 +66,7 @@ because of some wrong data, it falls back to Derby.
 
 In order to enforce the usage of PostgreSQL, you might want to add the following setting:
 
-<div><pre>databaseAdapter.name = postgresql</pre></div>
+	databaseAdapter.name = postgresql
 
 **Note:** You do not need to restart any CloudStore-process. Changes to this configuration become visible to existing
 processes when you save the configuration-file.
@@ -84,4 +81,38 @@ You can migrate an existing repository after you configured the above by deletin
 in the repository's *.cloudstore-repo/*-folder.
 
 **Important:** After the migration, the repository still stays locked until you delete the file *dbmigrate.status.properties*,
-which was created during the migration. The idea is to give you the possibility to manually check the result. 
+which was created during the migration. The idea is to give you the possibility to manually check the result.
+
+**Important:** Never manually modify the file *dbmigrate.status.properties*! Only delete it, when the migration is complete
+and you want to activate the repository, again.
+
+
+$H$H$H$H Logging
+
+In order to monitor the progress of the migration, you can control the log-level in your
+*\$\{user.home\}/.cloudstore/logback.\*.xml*. Add or update the following element:
+
+	<logger name="co.codewizards.cloudstore.local.db" level="DEBUG" />
+
+**Important:** You should *not* set it to *TRACE* or *ALL* unless you're a developer and know what you're doing. The
+migration of a productive database likely causes millions of log-lines, if you set the log-level finer than *DEBUG*.
+You do not want this! Either use *INFO* or *DEBUG*.
+
+With at least the log-level *INFO* being active, you'll see a log-message like this, as soon as the migration starts:
+
+	06:20:29.643 [main] INFO  c.c.c.l.d.DatabaseMigrater - migrateIfNeeded: localRoot='/home/mn/...path...': sourceDatabaseAdapterName == 'derby' != targetDatabaseAdapterName == 'postgresql' :: Starting migration, now!
+
+
+$H$H$H$H When is it done?
+
+The migration of a database is completely done, when you see the following log-message (requires log-level *INFO* being active):
+
+	06:20:31.524 [main] INFO  c.c.c.l.d.DatabaseMigrater - migrateIfNeeded: localRoot='/home/mn/...path...': Migration complete!
+
+Additionally, the file *dbmigrate.status.properties* in the repository's *.cloudstore-repo/*-folder contains the
+following line, as soon as the work is complete:
+
+	MIGRATION_COMPLETE=MIGRATION_COMPLETE *** *** *** Please delete this file now. *** *** ***
+
+**Important:** Never manually modify the file *dbmigrate.status.properties*! You may read it. You should finally delete it.
+But you must not modify it!

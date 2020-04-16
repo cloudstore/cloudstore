@@ -157,7 +157,7 @@ public class DatabaseMigrater implements DaoProvider {
 				if (! lock.tryLock(3000, TimeUnit.MILLISECONDS))
 					throw new IllegalStateException("Cannot lock within timeout!");
 			} catch (InterruptedException x) {
-				logger.warn("migrateIfNeeded: " + x, x);
+				logger.warn("migrateIfNeeded: localRoot='" + localRoot + "': " + x, x);
 				return;
 			}
 			try {
@@ -228,7 +228,7 @@ public class DatabaseMigrater implements DaoProvider {
 
 						status.setProperty(STATUS_MIGRATION_COMPLETE, STATUS_MIGRATION_COMPLETE + " *** *** *** Please delete this file now. *** *** ***");
 						writeStatus();
-						logger.info("migrateIfNeeded: Migration complete!");
+						logger.info("migrateIfNeeded: localRoot='{}': Migration complete!", localRoot);
 					}
 					// Finally, when we're completely done, we create the trigger-file, again.
 					createTriggerFile();
@@ -249,7 +249,7 @@ public class DatabaseMigrater implements DaoProvider {
 		File[] newFiles = targetMetaDir.listFiles();
 		requireNonNull(newFiles, "targetMetaDir.listFiles() :: targetMetaDir=" + targetMetaDir.getAbsolutePath());
 
-		final String backupFileNameSuffix = ".bak_dbmigrate_" + Long.toString(System.currentTimeMillis(), 36);
+		final String backupFileNameSuffix = ".dbmigrate_" + Long.toString(System.currentTimeMillis(), 36) + ".bak";
 
 		for (File newFile : newFiles) {
 			File oldFile = metaDir.createFile(newFile.getName());
