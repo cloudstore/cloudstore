@@ -25,11 +25,23 @@ via the following commands:
 
 In this example, I use the password 'my_pg_pw', but of course, you should enter a strong and secure password.
 
+But be careful with special characters -- some characters need escaping in the
+<a href="https://docs.oracle.com/javase/7/docs/api/java/util/Properties.html#load(java.io.Reader)" target="_blank">properties-file</a>.
+In order to avoid problems with wrong escape-chars in the properties-files, it is recommended that the password
+contains only the following characters:
+
+  * A...Z
+  * a...Z
+  * 0...9
+  * +-*/,.;:='"~?[]()&%$
+
+You must definitely *not* use the character \\ (backslash)! This is an escape-character.
+
 
 $H$H$H Configure CloudStore
 
 CloudStore must know how to connect to the PostgreSQL-server. Therefore, you have to provide the following information
-in your *\$\{user.home\}/.cloudstore/cloudstore.properties* (see [Configuration](./config.html):
+in your *\$\{user.home\}/.cloudstore/cloudstore.properties* (see [Configuration](./config.html)):
 
 	jdbc.hostName = localhost
 	jdbc.userName = postgres
