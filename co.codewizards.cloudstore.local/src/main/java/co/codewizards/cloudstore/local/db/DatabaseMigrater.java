@@ -1014,6 +1014,9 @@ public class DatabaseMigrater implements DaoProvider {
 		@SuppressWarnings("unchecked")
 		D dao = (D) daoClass2Dao.get(daoClass);
 
+		if (dao != null && ((Dao<?, ?>)dao).getPersistenceManager() != targetPm)
+			dao = null;
+
 		if (dao == null) {
 			dao = createObject(daoClass);
 

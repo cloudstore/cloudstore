@@ -5,7 +5,7 @@
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/jdo/orm http://xmlns.jcp.org/xml/ns/jdo/orm_3_0.xsd"
 	version="3.0">
 
-    <package name="co.codewizards.cloudstore.local.persistence">
+	<package name="co.codewizards.cloudstore.local.persistence">
 		<class name="CopyModification">
 			<field name="fromPath">
 				<column jdbc-type="LONGVARCHAR" />
@@ -32,6 +32,5 @@
 				<column jdbc-type="LONGVARCHAR" />
 			</field>
 		</class>
-
-    </package>
+	</package>
 </orm>
