@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -505,7 +506,7 @@ public class DatabaseMigrater implements DaoProvider {
 				String sql = String.format("delete from \"%s\"", targetTable.name);
 				logger.debug("copyTableData: Executing: {}", sql);
 				int rowsAffected = deleteStatement.executeUpdate(sql);
-				logger.debug("copyTableData: rowsAffected: {}", rowsAffected);
+				logger.debug("copyTableData: Deleted {} rows from '{}'.", rowsAffected, targetTable.name);
 			}
 			targetConnection.commit();
 
@@ -644,9 +645,18 @@ public class DatabaseMigrater implements DaoProvider {
 	}
 
 	protected Object convertValue(Column sourceColumn, Column targetColumn, Object sourceValue) throws Exception {
-		if (sourceValue == null
-				|| sourceColumn.dataType == targetColumn.dataType)
+		if (sourceValue == null)
 			return sourceValue;
+
+		if (sourceValue instanceof Clob) {
+			Clob sourceClob = (Clob) sourceValue;
+			long length = sourceClob.length();
+			if (length > Integer.MAX_VALUE)
+				throw new IllegalStateException("sourceClob.length > Integer.MAX_VALUE!!!");
+
+			String string = sourceClob.getSubString(1, (int) length);
+			return string;
+		}
 
 		if (sourceValue instanceof Blob) {
 			Blob sourceBlob = (Blob) sourceValue;
@@ -657,6 +667,9 @@ public class DatabaseMigrater implements DaoProvider {
 			byte[] bytes = sourceBlob.getBytes(1L, (int) length);
 			return bytes;
 		}
+
+		if (sourceColumn.dataType == targetColumn.dataType)
+			return sourceValue;
 
 		switch (targetColumn.dataType) {
 			case Types.BOOLEAN:
