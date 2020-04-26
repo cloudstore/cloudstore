@@ -10,6 +10,7 @@ import static java.util.Objects.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -18,12 +19,16 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,15 +36,19 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import javax.jdo.FetchGroup;
+import javax.jdo.FetchPlan;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +67,7 @@ import co.codewizards.cloudstore.local.PersistencePropertiesProvider;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
 import co.codewizards.cloudstore.local.persistence.Dao;
 import co.codewizards.cloudstore.local.persistence.Directory;
+import co.codewizards.cloudstore.local.persistence.Entity;
 import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.NormalFileDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
@@ -487,6 +497,10 @@ public class DatabaseMigrater implements DaoProvider {
 		requireNonNull(targetTable, "targetTable");
 		requireNonNull(sourceColumnName2Column, "sourceColumnName2Column");
 		requireNonNull(targetColumnName2Column, "targetColumnName2Column");
+
+		// Without explicitly declaring the time-zone via this calendar, the timestamps are not correctly copied!
+		final Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
 		boolean sourceAutoCommit = sourceConnection.getAutoCommit();
 		boolean targetAutoCommit = targetConnection.getAutoCommit();
 		try {
@@ -571,6 +585,14 @@ public class DatabaseMigrater implements DaoProvider {
 								Column sourceColumn = me.getKey();
 								Column targetColumn = me.getValue();
 								Object sourceValue = rs.getObject(++idx);
+
+								if (sourceValue instanceof Timestamp)
+									sourceValue = rs.getTimestamp(idx, utc);
+								else if (sourceValue instanceof java.sql.Date)
+									sourceValue = rs.getDate(idx, utc);
+								else if (sourceValue instanceof java.sql.Time)
+									sourceValue = rs.getTime(idx, utc);
+
 								Object targetValue = convertValue(sourceColumn, targetColumn, sourceValue);
 								if (logger.isTraceEnabled()) {
 									logger.trace("copyTableData: tableName={} columnName={} columnIndex={} sourceJdbcType={} sourceValue.class={} sourceValue={} targetJdbcType={} targetValue.class={} targetValue={}",
@@ -580,11 +602,18 @@ public class DatabaseMigrater implements DaoProvider {
 								}
 								if (targetValue == null) {
 									int dataType = targetColumn.dataType;
-
 									insertStatement.setNull(idx, dataType);
 								}
-								else
-									insertStatement.setObject(idx, targetValue);
+								else {
+									if (targetValue instanceof Timestamp)
+										insertStatement.setTimestamp(idx, (Timestamp) targetValue, utc);
+									else if (targetValue instanceof java.sql.Date)
+										insertStatement.setDate(idx, (java.sql.Date) targetValue, utc);
+									else if (targetValue instanceof java.sql.Time)
+										insertStatement.setTime(idx, (java.sql.Time) targetValue, utc);
+									else
+										insertStatement.setObject(idx, targetValue);
+								}
 							}
 							int rowsAffected = insertStatement.executeUpdate();
 							if (rowsAffected != 1)
@@ -1005,6 +1034,298 @@ public class DatabaseMigrater implements DaoProvider {
 		} finally {
 			targetPm.currentTransaction().rollback();
 		}
+
+		sourcePm.currentTransaction().begin();
+		targetPm.currentTransaction().begin();
+		try {
+			for (Class<?> pcClass : CloudStorePersistenceCapableClassesProvider.Helper.getPersistenceCapableClasses()) {
+				if (! Entity.class.isAssignableFrom(pcClass))
+					continue;
+
+				if ((pcClass.getModifiers() & Modifier.ABSTRACT) != 0)
+					continue;
+
+				comparePersistentObjects(pcClass);
+			}
+		} finally {
+			sourcePm.currentTransaction().rollback();
+			targetPm.currentTransaction().rollback();
+		}
+	}
+
+	protected void comparePersistentObjects(final Class<?> pcClass) {
+		requireNonNull(pcClass, "pcClass");
+		final long idBlockSize = 1000;
+		final long minId = getMinId(sourcePm, pcClass); final long targetMinId = getMinId(targetPm, pcClass);
+		final long maxId = getMaxId(sourcePm, pcClass); final long targetMaxId = getMaxId(targetPm, pcClass);
+
+		if (minId != targetMinId)
+			throw new IllegalStateException(String.format("%s: sourceMinId != targetMinId :: %d != %d", pcClass.getName(), minId, targetMinId));
+
+		if (maxId != targetMaxId)
+			throw new IllegalStateException(String.format("%s: sourceMaxId != targetMaxId :: %d != %d", pcClass.getName(), maxId, targetMaxId));
+
+		if (minId == Long.MIN_VALUE || maxId == Long.MIN_VALUE) {
+			if (minId != maxId)
+				throw new IllegalStateException(String.format("%s: minId != maxId :: %d != %d", pcClass.getName(), minId, maxId));
+
+			logger.debug("comparePersistentObjects: pcClass={}: *EMPTY*", pcClass.getName());
+			return;
+		}
+		logger.debug("comparePersistentObjects: pcClass={}: minId={} maxId={}", pcClass.getName(), minId, maxId);
+
+		long objectCount = 0;
+		long fromIdIncl = minId;
+		while (fromIdIncl <= maxId) {
+			long toIdExcl = fromIdIncl + idBlockSize;
+			objectCount += comparePersistentObjects(pcClass, fromIdIncl, toIdExcl);
+			fromIdIncl = toIdExcl;
+		}
+		logger.info("comparePersistentObjects: pcClass={}: {} objects are equal.", pcClass.getName(), objectCount);
+	}
+
+	protected int comparePersistentObjects(final Class<?> pcClass, final long fromIdIncl, final long toIdExcl) {
+		requireNonNull(pcClass, "pcClass");
+		final List<Entity> sourceObjects = getPersistentObjects(sourcePm, pcClass, fromIdIncl, toIdExcl);
+		final List<Entity> targetObjects = getPersistentObjects(targetPm, pcClass, fromIdIncl, toIdExcl);
+
+		if (sourceObjects.size() != targetObjects.size())
+			throw new IllegalStateException(String.format("%s: fromIdIncl=%d toIdExcl=%d :: sourceObjects.size != targetObjects.size :: %d != %d",
+					pcClass.getName(), fromIdIncl, toIdExcl, sourceObjects.size(), targetObjects.size()));
+
+		final Iterator<Entity> targetIterator = targetObjects.iterator();
+		for (final Entity sourceObject : sourceObjects) {
+			final Entity targetObject = targetIterator.next();
+
+			if (sourceObject.getId() != targetObject.getId())
+				throw new IllegalStateException(String.format("%s: fromIdIncl=%d toIdExcl=%d :: sourceObject.id != targetObjects.id :: %d != %d",
+						pcClass.getName(), fromIdIncl, toIdExcl, sourceObject.getId(), targetObject.getId()));
+
+			comparePersistentObject(sourceObject, targetObject);
+		}
+		logger.debug("comparePersistentObjects: pcClass={} fromIdIncl={} toIdExcl={}: {} objects are equal.",
+				pcClass.getName(), fromIdIncl, toIdExcl, sourceObjects.size());
+		return sourceObjects.size();
+	}
+
+	protected void comparePersistentObject(final Entity sourceObject, final Entity targetObject) {
+		requireNonNull(sourceObject, "sourceObject");
+		requireNonNull(targetObject, "targetObject");
+
+		if (sourceObject.getId() != targetObject.getId())
+			throw new IllegalStateException(String.format("sourceObject.id != targetObjects.id :: %d != %d",
+					sourceObject.getId(), targetObject.getId()));
+
+		final Class<? extends Entity> objectClass = sourceObject.getClass();
+		if (objectClass != targetObject.getClass())
+			throw new IllegalStateException(String.format("sourceObject.class != targetObjects.class :: %s != %s",
+					objectClass.getName(), targetObject.getClass().getName()));
+
+		for (final Method getter : getGetters(objectClass)) {
+			final String propertyName = getPropertyName(getter);
+			final Object sourceValue = invokeGetter(getter, sourceObject);
+			final Object targetValue = invokeGetter(getter, targetObject);
+			comparePropertyValue(sourceObject, targetObject, propertyName, sourceValue, targetValue);
+		}
+	}
+
+	protected void comparePropertyValue(final Entity sourceObject, final Entity targetObject, final String propertyName,
+			final Object sourceValue, final Object targetValue) {
+		requireNonNull(sourceObject, "sourceObject");
+		requireNonNull(targetObject, "targetObject");
+		requireNonNull(propertyName, "propertyName");
+		// sourceValue may be null!
+		// targetValue may be null!
+
+		if (sourceValue == null) {
+			if (targetValue == null)
+				return;
+
+			throw new IllegalStateException(String.format("Property '%s' of %s differs between source and target: sourceValue=null targetValue='%s'",
+					propertyName, sourceObject, targetValue));
+		}
+		if (targetValue == null)
+			throw new IllegalStateException(String.format("Property '%s' of %s differs between source and target: sourceValue='%s' targetValue=null",
+					propertyName, sourceObject, sourceValue));
+
+		if (sourceValue.getClass() != targetValue.getClass())
+			throw new IllegalStateException(String.format("Property '%s' of %s differs between source and target: Class mismatch! sourceValue.class=%s targetValue.class=%s sourceValue='%s' targetValue='%s'",
+					propertyName, sourceObject, sourceValue.getClass().getName(), targetValue.getClass().getName(), sourceValue, targetValue));
+
+		if (sourceValue.getClass().isArray()) {
+			if (! arrayEquals(sourceValue, targetValue))
+				throw new IllegalStateException(String.format("Property '%s' of %s differs between source and target: sourceValue=%s targetValue=%s",
+						propertyName, sourceObject, arrayToString(sourceValue), arrayToString(targetValue)));
+		}
+		else {
+			if (! sourceValue.equals(targetValue))
+				throw new IllegalStateException(String.format("Property '%s' of %s differs between source and target: sourceValue='%s' targetValue='%s'",
+						propertyName, sourceObject, sourceValue, targetValue));
+		}
+	}
+
+	protected static String arrayToString(final Object array) {
+		requireNonNull(array, "array");
+
+		if (array instanceof boolean[])
+			return Arrays.toString((boolean[]) array);
+
+		if (array instanceof byte[])
+			return Arrays.toString((byte[]) array);
+
+		if (array instanceof char[])
+			return Arrays.toString((char[]) array);
+
+		if (array instanceof double[])
+			return Arrays.toString((double[]) array);
+
+		if (array instanceof float[])
+			return Arrays.toString((float[]) array);
+
+		if (array instanceof int[])
+			return Arrays.toString((int[]) array);
+
+		if (array instanceof long[])
+			return Arrays.toString((long[]) array);
+
+		if (array instanceof short[])
+			return Arrays.toString((short[]) array);
+
+		if (array instanceof Object[])
+			return Arrays.toString((Object[]) array);
+
+		throw new IllegalArgumentException("Unexpected type: " + array.getClass().getName());
+	}
+
+	protected static boolean arrayEquals(final Object sourceArray, final Object targetArray) {
+		requireNonNull(sourceArray, "sourceArray");
+		requireNonNull(targetArray, "targetArray");
+
+		if (sourceArray instanceof boolean[])
+			return Arrays.equals((boolean[]) sourceArray, (boolean[]) targetArray);
+
+		if (sourceArray instanceof byte[])
+			return Arrays.equals((byte[]) sourceArray, (byte[]) targetArray);
+
+		if (sourceArray instanceof char[])
+			return Arrays.equals((char[]) sourceArray, (char[]) targetArray);
+
+		if (sourceArray instanceof double[])
+			return Arrays.equals((double[]) sourceArray, (double[]) targetArray);
+
+		if (sourceArray instanceof float[])
+			return Arrays.equals((float[]) sourceArray, (float[]) targetArray);
+
+		if (sourceArray instanceof int[])
+			return Arrays.equals((int[]) sourceArray, (int[]) targetArray);
+
+		if (sourceArray instanceof long[])
+			return Arrays.equals((long[]) sourceArray, (long[]) targetArray);
+
+		if (sourceArray instanceof short[])
+			return Arrays.equals((short[]) sourceArray, (short[]) targetArray);
+
+		if (sourceArray instanceof Object[])
+			return Arrays.equals((Object[]) sourceArray, (Object[]) targetArray);
+
+		throw new IllegalArgumentException("Unexpected type: " + sourceArray.getClass().getName());
+	}
+
+	private Map<Class<?>, List<Method>> objectClass2Getters = new HashMap<Class<?>, List<Method>>();
+
+	protected Object invokeGetter(final Method getter, final Object object) {
+		requireNonNull(getter, "getter");
+		requireNonNull(object, "object");
+		try {
+			return getter.invoke(object);
+		} catch (Exception e) {
+			throw new RuntimeException(String.format("Getter for property '%s' on %s failed: %s", getPropertyName(getter), object, e), e);
+		}
+	}
+
+	protected List<Method> getGetters(Class<? extends Entity> objectClass) {
+		requireNonNull(objectClass, "objectClass");
+
+		List<Method> getters = objectClass2Getters.get(objectClass);
+		if (getters == null) {
+			getters = new ArrayList<Method>();
+			for (Method method : objectClass.getMethods()) {
+				if (method.getParameterCount() == 0 && isGetterName(method.getName()))
+					getters.add(method);
+			}
+			objectClass2Getters.put(objectClass, getters);
+		}
+		return getters;
+	}
+
+	protected static String getPropertyName(Method method) {
+		String methodName = requireNonNull(method, "method").getName();
+		String propertyName;
+		if (methodName.startsWith("get"))
+			propertyName = methodName.substring(3);
+		else if (methodName.startsWith("is"))
+			propertyName = methodName.substring(2);
+		else
+			throw new IllegalArgumentException("method.name is not a valid getter-name (wrong prefix): " + method);
+
+		if (propertyName.isEmpty())
+			throw new IllegalArgumentException("method.name is not a valid getter-name (too short): " + method);
+
+		return Character.toLowerCase(propertyName.charAt(0)) + propertyName.substring(1);
+	}
+
+	protected static boolean isGetterName(final String methodName) {
+		requireNonNull(methodName, "methodName");
+		return (methodName.startsWith("get") && methodName.length() > 3)
+				|| (methodName.startsWith("is") && methodName.length() > 2);
+	}
+
+	protected long getMinId(PersistenceManager pm, Class<?> pcClass) {
+		requireNonNull(pm, "pm");
+		requireNonNull(pcClass, "pcClass");
+		Query<?> query = pm.newQuery(pcClass);
+
+		Long result = (Long) query
+				.result("min(this.id)")
+				.execute();
+
+		query.closeAll();
+		return result == null ? Long.MIN_VALUE : result;
+	}
+
+	protected long getMaxId(PersistenceManager pm, Class<?> pcClass) {
+		requireNonNull(pm, "pm");
+		requireNonNull(pcClass, "pcClass");
+		Query<?> query = pm.newQuery(pcClass);
+
+		Long result = (Long) query
+				.result("max(this.id)")
+				.execute();
+
+		query.closeAll();
+		return result == null ? Long.MIN_VALUE : result;
+	}
+
+	protected List<Entity> getPersistentObjects(PersistenceManager pm, Class<?> pcClass, long fromIdIncl, long toIdExcl) {
+		requireNonNull(pm, "pm");
+		requireNonNull(pcClass, "pcClass");
+
+		Query<?> query = pm.newQuery(pcClass);
+
+		FetchPlan fetchPlan = query.getFetchPlan();
+		fetchPlan.clearGroups();
+		fetchPlan.addGroup(FetchGroup.ALL);
+		fetchPlan.setMaxFetchDepth(1);
+
+		@SuppressWarnings("unchecked")
+		List<Entity> result = (List<Entity>) query
+				.filter("this.id >= :fromIdIncl && this.id < :toIdExcl")
+				.orderBy("this.id ASCENDING")
+				.execute(fromIdIncl, toIdExcl);
+
+		result = new ArrayList<Entity>(result);
+		query.closeAll();
+		return result;
 	}
 
 	@Override

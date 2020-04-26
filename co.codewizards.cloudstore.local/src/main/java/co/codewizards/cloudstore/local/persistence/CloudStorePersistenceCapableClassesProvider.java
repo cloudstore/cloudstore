@@ -2,11 +2,14 @@ package co.codewizards.cloudstore.local.persistence;
 
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.PersistenceCapable;
@@ -40,8 +43,11 @@ public interface CloudStorePersistenceCapableClassesProvider {
 	Class<?>[] getPersistenceCapableClasses();
 
 	public static class Helper {
-		public static void initPersistenceCapableClasses(final PersistenceManager pm) {
-			List<CloudStorePersistenceCapableClassesProvider> providers = new LinkedList<CloudStorePersistenceCapableClassesProvider>();
+
+		public static List<Class<?>> getPersistenceCapableClasses() {
+			final List<Class<?>> resultList = new ArrayList<Class<?>>();
+			final Set<Class<?>> resultSet = new HashSet<Class<?>>();
+			final List<CloudStorePersistenceCapableClassesProvider> providers = new LinkedList<CloudStorePersistenceCapableClassesProvider>();
 			final ServiceLoader<CloudStorePersistenceCapableClassesProvider> sl = ServiceLoader.load(CloudStorePersistenceCapableClassesProvider.class);
 			for (final CloudStorePersistenceCapableClassesProvider provider : sl) {
 				providers.add(provider);
@@ -63,13 +69,19 @@ public interface CloudStorePersistenceCapableClassesProvider {
 				final Class<?>[] classes = provider.getPersistenceCapableClasses();
 				if (classes != null) {
 					for (Class<?> clazz : classes) {
-						pm.getExtent(clazz);
-
 						final Class<?> c = getExtendingClass(clazz);
-						pm.getExtent(c);
+						if (resultSet.add(c))
+							resultList.add(c);
 					}
 				}
 			}
+			return resultList;
 		}
+
+		public static void initPersistenceCapableClasses(final PersistenceManager pm) {
+			for (Class<?> clazz : getPersistenceCapableClasses())
+				pm.getExtent(clazz);
+		}
+
 	}
 }
