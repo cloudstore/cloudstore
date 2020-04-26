@@ -1250,8 +1250,11 @@ public class DatabaseMigrater implements DaoProvider {
 		if (getters == null) {
 			getters = new ArrayList<Method>();
 			for (Method method : objectClass.getMethods()) {
-				if (method.getParameterCount() == 0 && isGetterName(method.getName()))
-					getters.add(method);
+				if (method.getParameterCount() == 0 && isGetterName(method.getName())) {
+					IgnoreDatabaseMigraterComparison ignore = method.getAnnotation(IgnoreDatabaseMigraterComparison.class);
+					if (ignore == null)
+						getters.add(method);
+				}
 			}
 			objectClass2Getters.put(objectClass, getters);
 		}
