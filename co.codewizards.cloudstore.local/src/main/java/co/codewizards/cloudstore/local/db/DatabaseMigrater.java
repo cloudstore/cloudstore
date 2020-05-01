@@ -62,6 +62,7 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.DaoProvider;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
+import co.codewizards.cloudstore.core.util.DebugUtil;
 import co.codewizards.cloudstore.core.util.PropertiesUtil;
 import co.codewizards.cloudstore.local.PersistencePropertiesProvider;
 import co.codewizards.cloudstore.local.persistence.CloudStorePersistenceCapableClassesProvider;
@@ -1114,6 +1115,7 @@ public class DatabaseMigrater implements DaoProvider {
 		targetPm.currentTransaction().rollback();
 		targetPm.evictAll();
 		targetPm.currentTransaction().begin();
+		DebugUtil.logMemoryStats(logger);
 		return result;
 	}
 
