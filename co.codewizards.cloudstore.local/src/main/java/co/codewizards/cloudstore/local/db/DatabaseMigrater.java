@@ -1109,11 +1109,13 @@ public class DatabaseMigrater implements DaoProvider {
 				pcClass.getName(), fromIdIncl, toIdExcl, result);
 
 		sourcePm.currentTransaction().rollback();
-		sourcePm.evictAll();
+		sourcePm.evictAll(); sourcePm.close(); sourcePm = null;
+		sourcePm = sourcePmf.getPersistenceManager();
 		sourcePm.currentTransaction().begin();
 
 		targetPm.currentTransaction().rollback();
-		targetPm.evictAll();
+		targetPm.evictAll(); targetPm.close(); targetPm = null;
+		targetPm = targetPmf.getPersistenceManager();
 		targetPm.currentTransaction().begin();
 		DebugUtil.logMemoryStats(logger);
 		return result;
