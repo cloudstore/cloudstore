@@ -1089,9 +1089,10 @@ public class DatabaseMigrater implements DaoProvider {
 		final List<Entity> sourceObjects = getPersistentObjects(sourcePm, pcClass, fromIdIncl, toIdExcl);
 		final List<Entity> targetObjects = getPersistentObjects(targetPm, pcClass, fromIdIncl, toIdExcl);
 
-		if (sourceObjects.size() != targetObjects.size())
+		final int result = sourceObjects.size();
+		if (result != targetObjects.size())
 			throw new IllegalStateException(String.format("%s: fromIdIncl=%d toIdExcl=%d :: sourceObjects.size != targetObjects.size :: %d != %d",
-					pcClass.getName(), fromIdIncl, toIdExcl, sourceObjects.size(), targetObjects.size()));
+					pcClass.getName(), fromIdIncl, toIdExcl, result, targetObjects.size()));
 
 		final Iterator<Entity> targetIterator = targetObjects.iterator();
 		for (final Entity sourceObject : sourceObjects) {
@@ -1104,8 +1105,16 @@ public class DatabaseMigrater implements DaoProvider {
 			comparePersistentObject(sourceObject, targetObject);
 		}
 		logger.debug("comparePersistentObjects: pcClass={} fromIdIncl={} toIdExcl={}: {} objects are equal.",
-				pcClass.getName(), fromIdIncl, toIdExcl, sourceObjects.size());
-		return sourceObjects.size();
+				pcClass.getName(), fromIdIncl, toIdExcl, result);
+
+		sourcePm.currentTransaction().rollback();
+		sourcePm.evictAll();
+		sourcePm.currentTransaction().begin();
+
+		targetPm.currentTransaction().rollback();
+		targetPm.evictAll();
+		targetPm.currentTransaction().begin();
+		return result;
 	}
 
 	protected void comparePersistentObject(final Entity sourceObject, final Entity targetObject) {
