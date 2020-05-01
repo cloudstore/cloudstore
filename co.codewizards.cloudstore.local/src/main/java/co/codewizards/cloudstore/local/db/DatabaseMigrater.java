@@ -90,6 +90,11 @@ public class DatabaseMigrater implements DaoProvider {
 	public static final String STATUS_TARGET_TABLE_IDENTITY_COLUMN_ACTIVATED_FORMAT = "targetTable[%s].identityColumnActivated";
 	public static final String STATUS_TABLE_DATA_COPIED_FORMAT = "table[%s].dataCopied";
 
+	public static final String STATUS_COMPARE_PERSISTENT_OBECTS_MIN_ID_FORMAT = "comparePersistentObjects[%s].minId";
+	public static final String STATUS_COMPARE_PERSISTENT_OBECTS_MAX_ID_FORMAT = "comparePersistentObjects[%s].maxId";
+	public static final String STATUS_COMPARE_PERSISTENT_OBECTS_FROM_ID_INCL_FORMAT = "comparePersistentObjects[%s].fromIdIncl";
+	public static final String STATUS_COMPARE_PERSISTENT_OBECTS_OBJECT_COUNT_FORMAT = "comparePersistentObjects[%s].objectCount";
+
 	protected final File localRoot;
 	protected final File metaDir;
 	protected final File lockFile;
@@ -1054,17 +1059,29 @@ public class DatabaseMigrater implements DaoProvider {
 		}
 	}
 
-	protected void comparePersistentObjects(final Class<?> pcClass) {
+	protected void comparePersistentObjects(final Class<?> pcClass) throws Exception {
 		requireNonNull(pcClass, "pcClass");
 		final long idBlockSize = 1000;
-		final long minId = getMinId(sourcePm, pcClass); final long targetMinId = getMinId(targetPm, pcClass);
-		final long maxId = getMaxId(sourcePm, pcClass); final long targetMaxId = getMaxId(targetPm, pcClass);
 
-		if (minId != targetMinId)
-			throw new IllegalStateException(String.format("%s: sourceMinId != targetMinId :: %d != %d", pcClass.getName(), minId, targetMinId));
+		long minId = getComparePersistentObjectsMinId(pcClass);
+		if (minId == Long.MIN_VALUE) {
+			minId = getMinId(sourcePm, pcClass); final long targetMinId = getMinId(targetPm, pcClass);
 
-		if (maxId != targetMaxId)
-			throw new IllegalStateException(String.format("%s: sourceMaxId != targetMaxId :: %d != %d", pcClass.getName(), maxId, targetMaxId));
+			if (minId != targetMinId)
+				throw new IllegalStateException(String.format("%s: sourceMinId != targetMinId :: %d != %d", pcClass.getName(), minId, targetMinId));
+
+			setComparePersistentObjectsMinId(pcClass, minId);
+		}
+
+		long maxId = getComparePersistentObjectsMaxId(pcClass);
+		if (maxId == Long.MIN_VALUE) {
+			maxId = getMaxId(sourcePm, pcClass); final long targetMaxId = getMaxId(targetPm, pcClass);
+
+			if (maxId != targetMaxId)
+				throw new IllegalStateException(String.format("%s: sourceMaxId != targetMaxId :: %d != %d", pcClass.getName(), maxId, targetMaxId));
+
+			setComparePersistentObjectsMaxId(pcClass, maxId);
+		}
 
 		if (minId == Long.MIN_VALUE || maxId == Long.MIN_VALUE) {
 			if (minId != maxId)
@@ -1075,14 +1092,87 @@ public class DatabaseMigrater implements DaoProvider {
 		}
 		logger.debug("comparePersistentObjects: pcClass={}: minId={} maxId={}", pcClass.getName(), minId, maxId);
 
-		long objectCount = 0;
-		long fromIdIncl = minId;
+		long objectCount = getComparePersistentObjectsObjectCount(pcClass);
+		long fromIdIncl = getComparePersistentObjectsFromIdIncl(pcClass);
+		if (fromIdIncl == Long.MIN_VALUE)
+			fromIdIncl = minId;
+
 		while (fromIdIncl <= maxId) {
 			long toIdExcl = fromIdIncl + idBlockSize;
 			objectCount += comparePersistentObjects(pcClass, fromIdIncl, toIdExcl);
 			fromIdIncl = toIdExcl;
+			setComparePersistentObjectsFromIdIncl(pcClass, fromIdIncl);
+			setComparePersistentObjectsObjectCount(pcClass, objectCount);
 		}
 		logger.info("comparePersistentObjects: pcClass={}: {} objects are equal.", pcClass.getName(), objectCount);
+	}
+
+	protected long getComparePersistentObjectsMinId(final Class<?> pcClass) {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_MIN_ID_FORMAT, pcClass.getName());
+		String statusValue = status.getProperty(statusKey);
+		if (statusValue == null || statusValue.trim().isEmpty())
+			return Long.MIN_VALUE;
+
+		return Long.parseLong(statusValue);
+	}
+
+	protected void setComparePersistentObjectsMinId(final Class<?> pcClass, long id) throws Exception {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_MIN_ID_FORMAT, pcClass.getName());
+		status.setProperty(statusKey, id == Long.MIN_VALUE ? "" : Long.toString(id));
+		writeStatus();
+	}
+
+	protected long getComparePersistentObjectsMaxId(final Class<?> pcClass) {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_MAX_ID_FORMAT, pcClass.getName());
+		String statusValue = status.getProperty(statusKey);
+		if (statusValue == null || statusValue.trim().isEmpty())
+			return Long.MIN_VALUE;
+
+		return Long.parseLong(statusValue);
+	}
+
+	protected void setComparePersistentObjectsMaxId(final Class<?> pcClass, long id) throws Exception {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_MAX_ID_FORMAT, pcClass.getName());
+		status.setProperty(statusKey, id == Long.MIN_VALUE ? "" : Long.toString(id));
+		writeStatus();
+	}
+
+	protected long getComparePersistentObjectsFromIdIncl(final Class<?> pcClass) {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_FROM_ID_INCL_FORMAT, pcClass.getName());
+		String statusValue = status.getProperty(statusKey);
+		if (statusValue == null || statusValue.trim().isEmpty())
+			return Long.MIN_VALUE;
+
+		return Long.parseLong(statusValue);
+	}
+
+	protected void setComparePersistentObjectsFromIdIncl(final Class<?> pcClass, long id) throws Exception {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_FROM_ID_INCL_FORMAT, pcClass.getName());
+		status.setProperty(statusKey, id == Long.MIN_VALUE ? "" : Long.toString(id));
+		writeStatus();
+	}
+
+	protected long getComparePersistentObjectsObjectCount(final Class<?> pcClass) {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_OBJECT_COUNT_FORMAT, pcClass.getName());
+		String statusValue = status.getProperty(statusKey);
+		if (statusValue == null || statusValue.trim().isEmpty())
+			return 0;
+
+		return Long.parseLong(statusValue);
+	}
+
+	protected void setComparePersistentObjectsObjectCount(final Class<?> pcClass, long count) throws Exception {
+		requireNonNull(pcClass, "pcClass");
+		String statusKey = String.format(STATUS_COMPARE_PERSISTENT_OBECTS_OBJECT_COUNT_FORMAT, pcClass.getName());
+		status.setProperty(statusKey, count == Long.MIN_VALUE ? "" :Long.toString(count));
+		writeStatus();
 	}
 
 	protected int comparePersistentObjects(final Class<?> pcClass, final long fromIdIncl, final long toIdExcl) {
