@@ -10,6 +10,7 @@ open module co.codewizards.cloudstore.local {
 
 	exports co.codewizards.cloudstore.local;
 	exports co.codewizards.cloudstore.local.db;
+	exports co.codewizards.cloudstore.local.dbupdate;
 	exports co.codewizards.cloudstore.local.dto;
 	exports co.codewizards.cloudstore.local.persistence;
 	exports co.codewizards.cloudstore.local.transport;
@@ -39,7 +40,8 @@ open module co.codewizards.cloudstore.local {
 	provides co.codewizards.cloudstore.local.dbupdate.DbUpdateStep
 		with
 			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep002,
-			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep003;
+			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep003,
+			co.codewizards.cloudstore.local.dbupdate.DbUpdateStep004;
 
 	provides co.codewizards.cloudstore.local.PersistencePropertiesVariableProvider
 		with co.codewizards.cloudstore.local.db.ExternalJdbcPersistencePropertiesVariableProvider;
