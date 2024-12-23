@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.db;
 
+import static co.codewizards.cloudstore.local.db.PostgresqlDatabaseAdapterTest.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class DbMigrateFromDerbyToPostgresqlTest extends AbstractDbMigrateTest {
 
 	@Test
 	public void migrateFromDerbyToPostgresql() throws Exception {
+		assumeNotPostgresqlSkip();
 
 		localRoot = newTestRepositoryLocalRoot("local");
 		assertThat(localRoot.exists()).isFalse();

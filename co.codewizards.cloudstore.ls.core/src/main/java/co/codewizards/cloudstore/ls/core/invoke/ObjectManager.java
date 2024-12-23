@@ -312,7 +312,7 @@ public class ObjectManager {
 		return object;
 	}
 
-	private synchronized void remove(final ObjectRef objectRef) {
+	protected synchronized void remove(final ObjectRef objectRef) {
 		requireNonNull(objectRef, "objectRef");
 
 		if (!objectRef2Object.containsKey(objectRef))

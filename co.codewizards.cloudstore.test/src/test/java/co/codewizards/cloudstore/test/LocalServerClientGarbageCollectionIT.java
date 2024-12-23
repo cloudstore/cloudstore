@@ -6,13 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import mockit.Invocation;
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
-
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +18,11 @@ import co.codewizards.cloudstore.test.model.ExampleService;
 import co.codewizards.cloudstore.test.model.ExampleServiceImpl;
 import co.codewizards.cloudstore.test.model.ExampleServiceRegistry;
 import co.codewizards.cloudstore.test.model.ExampleServiceRegistryImpl;
+import mockit.Invocation;
+import mockit.Mock;
+import mockit.MockUp;
 
-@RunWith(JMockit.class)
+//@RunWith(JMockit.class)
 public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalServerClientGarbageCollectionIT.class);
@@ -71,8 +68,8 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 			client = null;
 		}
 
-		for (MockUp<?> mockUp : mockUps)
-			mockUp.tearDown();
+//		for (MockUp<?> mockUp : mockUps)
+//			mockUp.tearDown(); // seems not to be needed, anymore
 
 		mockUps.clear();
 

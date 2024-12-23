@@ -4,7 +4,7 @@ open module co.codewizards.cloudstore.local {
 	requires transitive org.datanucleus;
 
 	requires transitive co.codewizards.cloudstore.core;
-//	requires static co.codewizards.cloudstore.core.oio.nio; // not needed, because communication works exclusively over service.
+	requires static co.codewizards.cloudstore.core.oio.nio; // not needed, because communication works exclusively over service. // update: seems to be necessary by now
 
 	requires transitive log4j;
 

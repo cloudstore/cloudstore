@@ -180,7 +180,7 @@ public class ConfigImpl implements Config {
 		return getInstance(file, false);
 	}
 
-	private static Config getInstance(final File file, final boolean isDirectory) {
+	protected static Config getInstance(final File file, final boolean isDirectory) {
 		requireNonNull(file, "file");
 		cleanFileRefs();
 
@@ -231,7 +231,7 @@ public class ConfigImpl implements Config {
 		}
 	}
 
-	private void readIfNeeded() {
+	protected void readIfNeeded() {
 		synchronized (instanceMutex) {
 			for (int i = 0; i < propertiesFiles.length; i++) {
 				final File propertiesFile = propertiesFiles[i];
@@ -247,7 +247,7 @@ public class ConfigImpl implements Config {
 			parentConfig.readIfNeeded();
 	}
 
-	private void read() {
+	protected void read() {
 		synchronized (instanceMutex) {
 			logger.trace("read: Entered instanceMutex.");
 			try {
@@ -277,7 +277,7 @@ public class ConfigImpl implements Config {
 		}
 	}
 
-	private void write() {
+	protected void write() {
 		synchronized (instanceMutex) {
 			logger.trace("read: Entered instanceMutex.");
 			try {
@@ -308,7 +308,7 @@ public class ConfigImpl implements Config {
 		}
 	}
 
-	private File getSinglePropertiesFile() {
+	protected File getSinglePropertiesFile() {
 		File result = null;
 		for (final File propertiesFile : propertiesFiles) {
 			if (propertiesFile.exists()) {
@@ -340,7 +340,7 @@ public class ConfigImpl implements Config {
 	 * @return the {@link File#lastModified() lastModified} timestamp. 0, if the specified {@code file}
 	 * does not exist.
 	 */
-	private long getLastModifiedAndWaitIfNeeded(final File file) {
+	protected long getLastModifiedAndWaitIfNeeded(final File file) {
 		requireNonNull(file, "file");
 		long lastModified = file.lastModified(); // is 0 for non-existing file
 		final long now = System.currentTimeMillis();

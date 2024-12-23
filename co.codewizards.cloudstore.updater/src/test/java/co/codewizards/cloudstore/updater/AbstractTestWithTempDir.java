@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.updater;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createTempDirectory;
-import static co.codewizards.cloudstore.core.util.IOUtil.transferStreamData;
-import static co.codewizards.cloudstore.core.util.StringUtil.isEmpty;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.IOUtil.*;
+import static co.codewizards.cloudstore.core.util.StringUtil.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import co.codewizards.cloudstore.core.oio.File;
 
 public abstract class AbstractTestWithTempDir {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(AbstractTestWithTempDir.class);
 
 	protected File tempDir;

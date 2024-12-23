@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
@@ -16,9 +15,8 @@ import co.codewizards.cloudstore.core.version.Version;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
 
-@RunWith(JMockit.class)
+//@RunWith(JMockit.class)
 public class CloudStoreUpdaterTest extends AbstractTestWithTempDir {
 
 	/**

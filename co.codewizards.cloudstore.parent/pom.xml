@@ -51,6 +51,11 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Java version. -->
+		<!--
+		2024-12-23: Building works with Java 17 and also setting these values to 17. But I reverted these values to 9 for compatibility.
+		Also, I just tested building with Java 11, again, after all changes, and it works still fine. Building with Java 9 failed, though.
+		As of today, I'm pretty sure that it now works with all Java-versions from 11 to 17.
+		-->
 		<maven.compiler.source>9</maven.compiler.source>
 		<maven.compiler.target>9</maven.compiler.target>
 
@@ -61,7 +66,7 @@
 		<datanucleus.javadoc.version>5.0</datanucleus.javadoc.version>
 		<datanucleus-javax-jdo.version>3.2.0-m13</datanucleus-javax-jdo.version>
 		<apache.directory.server.version>2.0.0-M20</apache.directory.server.version>
-		<jmockit.version>1.24</jmockit.version>
+		<jmockit.version>1.49</jmockit.version>
 		<jaxb.version>2.4.0-b180830.0438</jaxb.version>
 
 		<!-- javadoc-generation still fails, but we do not necessarily need this => disable! -->
@@ -705,7 +710,11 @@
 						<forkCount>1.5C</forkCount>
 						<reuseForks>false</reuseForks>
 
-						<argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
+						<argLine>
+							-javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar
+							--add-opens java.base/java.lang=ALL-UNNAMED
+							--add-opens java.base/java.util=ALL-UNNAMED
+						</argLine>
 						<useSystemClassLoader>true</useSystemClassLoader>
 					</configuration>
 					<executions>

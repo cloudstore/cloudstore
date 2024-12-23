@@ -4,7 +4,7 @@ BIN_DIR=`dirname $0`
 INSTALLATION_DIR="$BIN_DIR/.."
 UPDATER_DIR="$INSTALLATION_DIR/updater"
 
-java -jar "$INSTALLATION_DIR/lib/${project.artifactId}-${project.version}.jar" "$@"
+java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -jar "$INSTALLATION_DIR/lib/${project.artifactId}-${project.version}.jar" "$@"
 
 if [ -d "$UPDATER_DIR" ]; then
 	echo "Updating CloudStore..."

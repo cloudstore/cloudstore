@@ -1,6 +1,6 @@
 @echo off
 
-java -jar "%~dp0\..\lib\${project.artifactId}-${project.version}.jar" %*
+java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -jar "%~dp0\..\lib\${project.artifactId}-${project.version}.jar" %*
 
 REM The command created the 'updater' directory, if it detected that an update must be done.
 

@@ -4,6 +4,7 @@ import static co.codewizards.cloudstore.local.db.DatabaseAdapterFactory.*;
 import static co.codewizards.cloudstore.local.db.ExternalJdbcDatabaseAdapter.*;
 
 import org.junit.AfterClass;
+import org.junit.AssumptionViolatedException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -11,6 +12,18 @@ import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.local.db.DatabaseAdapterFactoryRegistry;
 
 public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
+
+	public static final String ENV_TEST_PG_SKIP = "TEST_PG_SKIP";
+
+	public static boolean isPostgresqlSkip() {
+		String s = System.getenv(ENV_TEST_PG_SKIP);
+		return s != null && Boolean.valueOf(s.trim());
+	}
+
+	public static void assumeNotPostgresqlSkip() {
+		if (isPostgresqlSkip())
+			throw new AssumptionViolatedException(String.format("Env-var '%s' is 'true'! Skipping test.", ENV_TEST_PG_SKIP));
+	}
 
 	@BeforeClass
 	public static void before_PostgresqlBasicRepoToRepoSyncIT() {
@@ -49,24 +62,28 @@ public class PostgresqlBasicRepoToRepoSyncIT extends BasicRepoToRepoSyncIT {
 	@Override
 	@Test
 	public void syncFromRemoteToLocal() throws Exception {
+		assumeNotPostgresqlSkip();
 		super.syncFromRemoteToLocal();
 	}
 
 	@Override
 	@Test
 	public void syncFromLocalToRemote() throws Exception {
+		assumeNotPostgresqlSkip();
 		super.syncFromLocalToRemote();
 	}
 
 	@Override
 	@Test
 	public void syncMovedFile() throws Exception {
+		assumeNotPostgresqlSkip();
 		super.syncMovedFile();
 	}
 
 	@Override
 	@Test
 	public void syncMovedFileToNewDir() throws Exception {
+		assumeNotPostgresqlSkip();
 		super.syncMovedFileToNewDir();
 	}
 }

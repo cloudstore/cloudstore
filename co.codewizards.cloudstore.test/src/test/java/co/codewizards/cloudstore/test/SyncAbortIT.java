@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ import co.codewizards.cloudstore.local.transport.TempChunkFileManager;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -36,7 +34,7 @@ import net.jcip.annotations.NotThreadSafe;
  *
  * @author Sebastian Schefczyk
  */
-@RunWith(JMockit.class)
+//@RunWith(JMockit.class)
 @NotThreadSafe // seems to be necessary because mocking of ObjectFactory otherwise does not work :-(
 public class SyncAbortIT extends AbstractRepoAwareIT {
 

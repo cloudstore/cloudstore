@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.io.ByteArrayInputStream;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import co.codewizards.cloudstore.core.io.IInputStream;
 import co.codewizards.cloudstore.core.io.IOutputStream;
@@ -18,9 +17,8 @@ import co.codewizards.cloudstore.ls.core.invoke.RemoteObjectProxy;
 import co.codewizards.cloudstore.ls.rest.client.LocalServerRestClient;
 import mockit.Mock;
 import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
 
-@RunWith(JMockit.class)
+//@RunWith(JMockit.class)
 public class FileLsIT extends AbstractIT {
 
 	@Override

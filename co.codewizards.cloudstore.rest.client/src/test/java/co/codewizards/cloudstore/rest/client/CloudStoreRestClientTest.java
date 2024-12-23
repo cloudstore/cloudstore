@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.rest.client;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.MalformedURLException;
 
@@ -9,16 +9,14 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 
+import org.junit.Test;
+
+import mockit.Expectations;
 import mockit.Mocked;
-import mockit.StrictExpectations;
 import mockit.Verifications;
-import mockit.integration.junit4.JMockit;
 import net.jcip.annotations.NotThreadSafe;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-@RunWith(JMockit.class)
+//@RunWith(JMockit.class)
 @NotThreadSafe
 public class CloudStoreRestClientTest{
 
@@ -31,7 +29,7 @@ public class CloudStoreRestClientTest{
 
 	@Test(expected = IllegalStateException.class)
 	public void baseUrlNotFound() throws MalformedURLException {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build();
 			result = client;
 			client.register(any); result = client;
@@ -46,7 +44,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void successAtTheFirstCall() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -67,7 +65,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void urlIsBaseUrl() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -83,7 +81,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void doubleSlashInUrl() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -106,7 +104,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void successAtTheLastCall() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -127,7 +125,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void successAtTheMiddleCall() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -151,7 +149,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void urlWithoutPort() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
@@ -172,7 +170,7 @@ public class CloudStoreRestClientTest{
 
 	@Test
 	public void urlWithoutSlashAtTheEnd() {
-		new StrictExpectations() {{
+		new Expectations() {{
 			clientBuilder.build(); result = client;
 			client.register(any); result = client;
 
