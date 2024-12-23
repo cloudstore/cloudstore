@@ -696,6 +696,7 @@
 				<plugin>
 					<artifactId>maven-failsafe-plugin</artifactId>
 <!-- 					<version>2.17</version> -->
+					<version>3.0.0-M5</version>
 					<configuration>
 						<!--
 						Multi-threading tests (no matter whether 'classes', 'methods' or 'all') within
@@ -729,12 +730,13 @@
 
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>
-<!-- 					<version>2.4</version> -->
+ 					<version>2.4</version>
 				</plugin>
 
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
 <!-- 					<version>2.19.1</version> -->
+					<version>2.12.4</version>
 					<configuration>
 						<!--
 						<parallel>classes</parallel>
@@ -848,7 +850,7 @@
 
 				<plugin>
 					<artifactId>maven-resources-plugin</artifactId>
-<!-- 					<version>2.5</version> -->
+ 					<version>2.6</version>
 					<configuration>
 						<encoding>UTF-8</encoding>
 					</configuration>
@@ -856,7 +858,7 @@
 
 				<plugin>
 					<artifactId>maven-source-plugin</artifactId>
-<!-- 					<version>2.1.2</version> -->
+ 					<version>3.2.1</version>
 <!--
 					<configuration>
 						<includePom>true</includePom>
