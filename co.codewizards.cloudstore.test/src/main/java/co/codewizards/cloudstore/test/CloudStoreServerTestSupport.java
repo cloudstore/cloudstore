@@ -1,7 +1,8 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
+
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Timer;
@@ -11,17 +12,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.util.IOUtil;
-import co.codewizards.cloudstore.rest.client.CloudStoreRestClient;
 import co.codewizards.cloudstore.core.Uid;
 import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.server.CloudStoreServer;
 
 public class CloudStoreServerTestSupport {
 
 	private static final Logger logger = LoggerFactory.getLogger(CloudStoreServerTestSupport.class);
 
-	public final Uid instanceId = new Uid(); 
+	public final Uid instanceId = new Uid();
 	private static final SecureRandom random = new SecureRandom();
 	private static final AtomicInteger cloudStoreServerStopTimerIndex = new AtomicInteger();
 	private CloudStoreServer cloudStoreServer;
@@ -81,7 +81,7 @@ public class CloudStoreServerTestSupport {
 //		final int port = serverSocket.getLocalPort();
 //		serverSocket.close();
 //		return port;
-		
+
 		for (int tryCount = 0; tryCount < 100; ++tryCount) {
 			int port = 1024 + 1 + random.nextInt(3 * 10240);
 			logger.debug("[{}].getRandomAvailableServerPort: port={}: Trying to connect...", instanceId, port);
@@ -105,7 +105,7 @@ public class CloudStoreServerTestSupport {
 	private void waitForServerToOpenSecurePort() {
 		logger.debug("[{}].waitForServerToOpenSecurePort: securePort={}: entered.", instanceId, getSecurePort());
 		final long timeoutMillis = 3 * 60_000L;
-		final long begin = System.currentTimeMillis();
+		final long begin = nowAsMillis();
 		while (true) {
 			try {
 				final Socket socket = new Socket("localhost", getSecurePort());
@@ -117,7 +117,7 @@ public class CloudStoreServerTestSupport {
 				try { Thread.sleep(1000); } catch (final InterruptedException ie) { }
 			}
 
-			if (System.currentTimeMillis() - begin > timeoutMillis) {
+			if (nowAsMillis() - begin > timeoutMillis) {
 				String message = String.format("Server on securePort=%s did not start within timeout=%s ms!", getSecurePort(), timeoutMillis);
 				logger.error("[{}].waitForServerToOpenSecurePort: {}", instanceId, message);
 				throw new IllegalStateException(message);

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static java.util.Objects.*;
 
 import java.util.Arrays;
@@ -190,18 +191,18 @@ public class TransientRepoPasswordManager {
 
 	private boolean isAfterRenewalDateOrInEarlyRenewalPeriod(final TransientRepoPassword transientRepoPassword) {
 		requireNonNull(transientRepoPassword, "authRepoPassword");
-		return System.currentTimeMillis() + getEarlyRenewalPeriod() > transientRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
+		return nowAsMillis() + getEarlyRenewalPeriod() > transientRepoPassword.getAuthToken().getRenewalDateTime().getMillis();
 	}
 
 	private boolean isExpired(final TransientRepoPassword transientRepoPassword) {
 		requireNonNull(transientRepoPassword, "authRepoPassword");
-		return System.currentTimeMillis() > transientRepoPassword.getAuthToken().getExpiryDateTime().getMillis();
+		return nowAsMillis() > transientRepoPassword.getAuthToken().getExpiryDateTime().getMillis();
 	}
 
 	private AuthToken createAuthToken() {
 		final AuthToken authToken = new AuthToken();
-		final Date expiryDate = new Date(System.currentTimeMillis() + getValidityPeriod());
-		final Date renewalDate = new Date(System.currentTimeMillis() + getRenewalPeriod());
+		final Date expiryDate = new Date(nowAsMillis() + getValidityPeriod());
+		final Date renewalDate = new Date(nowAsMillis() + getRenewalPeriod());
 		authToken.setExpiryDateTime(new DateTime(expiryDate));
 		authToken.setRenewalDateTime(new DateTime(renewalDate));
 		authToken.setPassword(new String(PasswordUtil.createRandomPassword(40)));

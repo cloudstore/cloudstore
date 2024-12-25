@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.client;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -158,7 +159,7 @@ public class LocalServerRestClient {
 		while (true) {
 			acquireClient();
 			try {
-				final long start = System.currentTimeMillis();
+				final long start = nowAsMillis();
 
 				if (logger.isDebugEnabled())
 					logger.debug("execute: starting try {} of {}", retryCounter + 1, retryMax + 1);
@@ -168,7 +169,7 @@ public class LocalServerRestClient {
 					final R result = request.execute();
 
 					if (logger.isDebugEnabled())
-						logger.debug("execute: invocation took {} ms", System.currentTimeMillis() - start);
+						logger.debug("execute: invocation took {} ms", nowAsMillis() - start);
 
 					if (result == null && !request.isResultNullable())
 						throw new IllegalStateException("result == null, but request.resultNullable == false!");

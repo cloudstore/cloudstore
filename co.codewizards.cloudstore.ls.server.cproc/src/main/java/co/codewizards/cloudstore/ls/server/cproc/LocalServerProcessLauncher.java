@@ -1,7 +1,7 @@
 package co.codewizards.cloudstore.ls.server.cproc;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
@@ -15,16 +15,15 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.LsConfig;
 
@@ -110,10 +109,10 @@ public class LocalServerProcessLauncher {
 	}
 
 	private void waitUntilServerOnline() {
-		final long startTimestamp = System.currentTimeMillis();
+		final long startTimestamp = nowAsMillis();
 		while (true) {
 			final long timeoutMs = LsConfig.getLocalServerProcessStartTimeout();
-			final boolean timeout = System.currentTimeMillis() - startTimestamp > timeoutMs;
+			final boolean timeout = nowAsMillis() - startTimestamp > timeoutMs;
 
 			LocalServerPropertiesManager.getInstance().clear();
 			final String baseUrlString = LocalServerPropertiesManager.getInstance().getBaseUrl();
@@ -163,7 +162,7 @@ public class LocalServerProcessLauncher {
 	private File getProcessRedirectInputFile() {
 		final File tempDir = getTempDir();
 		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
-		final String now = df.format(now());
+		final String now = df.format(nowAsDate());
 		final File file = tempDir.createFile(String.format("LocalServer.%s.in", now)).getAbsoluteFile();
 		logger.debug("getProcessRedirectInputFile: file='{}'", file);
 		return file;
@@ -176,7 +175,7 @@ public class LocalServerProcessLauncher {
 	private File getProcessRedirectOutputFile() {
 		final File tempDir = getTempDir();
 		final DateFormat df = new SimpleDateFormat("YYYY-MM-dd-HH-mm-ss");
-		final String now = df.format(now());
+		final String now = df.format(nowAsDate());
 		final File file = tempDir.createFile(String.format("LocalServer.%s.out", now)).getAbsoluteFile();
 		logger.debug("getProcessRedirectOutputFile: file='{}'", file);
 		return file;

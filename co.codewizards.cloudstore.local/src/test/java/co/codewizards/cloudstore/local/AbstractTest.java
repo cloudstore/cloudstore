@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.local.db.DatabaseAdapterFactory.*;
@@ -63,7 +64,7 @@ public abstract class AbstractTest {
 
 	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		final long timestamp = System.currentTimeMillis();
+		final long timestamp = nowAsMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
 		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);

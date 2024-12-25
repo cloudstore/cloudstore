@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.util.Objects.*;
@@ -1371,7 +1372,7 @@ public final class IOUtil {
 		final File result = createFile(parentFile,
 				String.format("%s.%s%s%s",
 						fileName,
-						Long.toString(System.currentTimeMillis(), 36) + new Uid(),
+						Long.toString(nowAsMillis(), 36) + new Uid(),
 						COLLISION_FILE_NAME_INFIX,
 						fileExtension));
 		return result;

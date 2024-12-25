@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static java.util.Objects.*;
 
 import java.util.Collection;
@@ -28,15 +29,15 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsAfter_remoteRepository_localRevision");
 		try {
 			clearFetchGroups();
-			long startTimestamp = System.currentTimeMillis();
+			long startTimestamp = nowAsMillis();
 			@SuppressWarnings("unchecked")
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
-			logger.debug("getModificationsAfter: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+			logger.debug("getModificationsAfter: query.execute(...) took {} ms.", nowAsMillis() - startTimestamp);
 
 			fetchPlanBackup.restore(pm);
-			startTimestamp = System.currentTimeMillis();
+			startTimestamp = nowAsMillis();
 			modifications = load(modifications);
-			logger.debug("getModificationsAfter: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
+			logger.debug("getModificationsAfter: Loading result-set with {} elements took {} ms.", modifications.size(), nowAsMillis() - startTimestamp);
 
 			return modifications;
 		} finally {
@@ -52,15 +53,15 @@ public class ModificationDao extends Dao<Modification, ModificationDao> {
 		final Query query = pm.newNamedQuery(getEntityClass(), "getModificationsBeforeOrEqual_remoteRepository_localRevision");
 		try {
 			clearFetchGroups();
-			long startTimestamp = System.currentTimeMillis();
+			long startTimestamp = nowAsMillis();
 			@SuppressWarnings("unchecked")
 			Collection<Modification> modifications = (Collection<Modification>) query.execute(remoteRepository, localRevision);
-			logger.debug("getModificationsBeforeOrEqual: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+			logger.debug("getModificationsBeforeOrEqual: query.execute(...) took {} ms.", nowAsMillis() - startTimestamp);
 
 			fetchPlanBackup.restore(pm);
-			startTimestamp = System.currentTimeMillis();
+			startTimestamp = nowAsMillis();
 			modifications = load(modifications);
-			logger.debug("getModificationsBeforeOrEqual: Loading result-set with {} elements took {} ms.", modifications.size(), System.currentTimeMillis() - startTimestamp);
+			logger.debug("getModificationsBeforeOrEqual: Loading result-set with {} elements took {} ms.", modifications.size(), nowAsMillis() - startTimestamp);
 
 			return modifications;
 		} finally {

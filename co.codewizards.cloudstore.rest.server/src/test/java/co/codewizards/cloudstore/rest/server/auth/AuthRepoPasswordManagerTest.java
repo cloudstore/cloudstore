@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.rest.server.auth;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashSet;
@@ -77,14 +78,14 @@ public class AuthRepoPasswordManagerTest {
 	public void getCurrentAuthRepoPasswordForSameReposOverTime() throws Exception {
 		UUID serverRepositoryId = UUID.randomUUID();
 		UUID clientRepositoryId = UUID.randomUUID();
-		long beginTimestamp = System.currentTimeMillis();
+		long beginTimestamp = nowAsMillis();
 		TransientRepoPassword transientRepoPassword = transientRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 		assertThat(transientRepoPassword).isNotNull();
 		assertThat(transientRepoPassword.getPassword()).isNotNull();
 
 		while (true) {
 			TransientRepoPassword authRepoPassword2 = transientRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
-			if (System.currentTimeMillis() > beginTimestamp + PASSWORD_VALIDITIY_DURATION_MIN_MILLIS) {
+			if (nowAsMillis() > beginTimestamp + PASSWORD_VALIDITIY_DURATION_MIN_MILLIS) {
 				// Fetch it again to make sure, we're REALLY after the time - it might have changed just while the if-clause was evaluated.
 				authRepoPassword2 = transientRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 				assertThat(authRepoPassword2).isNotNull();
@@ -105,11 +106,11 @@ public class AuthRepoPasswordManagerTest {
 		UUID clientRepositoryId = UUID.randomUUID();
 		Set<TransientRepoPassword> transientRepoPasswords = new HashSet<TransientRepoPassword>();
 
-		long beginTimestamp = System.currentTimeMillis();
+		long beginTimestamp = nowAsMillis();
 		long expectedLoopBeginTimestamp = beginTimestamp;
 		int validCount = 0;
 		int invalidCount = 0;
-		while (System.currentTimeMillis() <= beginTimestamp + 33000) {
+		while (nowAsMillis() <= beginTimestamp + 33000) {
 			{
 				TransientRepoPassword transientRepoPassword = transientRepoPasswordManager.getCurrentAuthRepoPassword(serverRepositoryId, clientRepositoryId);
 				assertThat(transientRepoPassword).isNotNull();
@@ -126,17 +127,17 @@ public class AuthRepoPasswordManagerTest {
 					++invalidCount;
 			}
 
-			if (System.currentTimeMillis() > beginTimestamp + PASSWORD_VALIDITIY_DURATION_MAX_MILLIS + 300) // + 300 ms reserve
+			if (nowAsMillis() > beginTimestamp + PASSWORD_VALIDITIY_DURATION_MAX_MILLIS + 300) // + 300 ms reserve
 				assertThat(invalidCount).isGreaterThanOrEqualTo(1);
 
 			assertThat(validCount).isGreaterThanOrEqualTo(1).isLessThanOrEqualTo(2);
 
 			expectedLoopBeginTimestamp += 505; // 5 ms reserve
-			long difference = expectedLoopBeginTimestamp - System.currentTimeMillis();
+			long difference = expectedLoopBeginTimestamp - nowAsMillis();
 			if (difference > 0)
 				Thread.sleep(difference);
 
-			System.out.println("difference=" + difference + " now=" + System.currentTimeMillis());
+			System.out.println("difference=" + difference + " now=" + nowAsMillis());
 		}
 		assertThat(transientRepoPasswords).hasSize(7);
 		assertThat(validCount).isEqualTo(2);

@@ -1,18 +1,24 @@
 package co.codewizards.cloudstore.core.util;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
+
 import java.util.Date;
 
+import co.codewizards.cloudstore.core.chronos.ChronosUtil;
+
 public final class DateUtil {
-	
+
 	private DateUtil() {
 	}
 
 	/**
 	 * Gets the timestamp of now.
 	 * @return the current timestamp. Never <code>null</code>.
+	 * @deprecated Replace by {@link ChronosUtil#nowAsDate()}!
 	 */
+	@Deprecated
 	public static Date now() {
-		return new Date();
+		return nowAsDate();
 	}
 
 	/**

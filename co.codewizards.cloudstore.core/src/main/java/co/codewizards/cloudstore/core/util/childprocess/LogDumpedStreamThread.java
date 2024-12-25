@@ -1,13 +1,16 @@
 package co.codewizards.cloudstore.core.util.childprocess;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
+
 import java.io.BufferedReader;
-import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.codewizards.cloudstore.core.io.ByteArrayOutputStream;
 
 /**
  * Thread used to log standard-out or standard-error from a child-process.
@@ -73,7 +76,7 @@ public class LogDumpedStreamThread extends Thread
 
 		synchronized (bufferOutputStream) {
 			bufferOutputStream.write(data, 0, length);
-			lastWriteTimestamp = System.currentTimeMillis();
+			lastWriteTimestamp = nowAsMillis();
 			if (firstNonLoggedWriteTimestamp == null)
 				firstNonLoggedWriteTimestamp = lastWriteTimestamp;
 		}
@@ -132,8 +135,8 @@ public class LogDumpedStreamThread extends Thread
 	{
 		synchronized (bufferOutputStream) {
 			if (bufferOutputStream.size() > 0) {
-				final long firstNonLoggedWriteAge = firstNonLoggedWriteTimestamp == null ? 0 : System.currentTimeMillis() - firstNonLoggedWriteTimestamp;
-				final long noWritePeriod = System.currentTimeMillis() - lastWriteTimestamp;
+				final long firstNonLoggedWriteAge = firstNonLoggedWriteTimestamp == null ? 0 : nowAsMillis() - firstNonLoggedWriteTimestamp;
+				final long noWritePeriod = nowAsMillis() - lastWriteTimestamp;
 				if (force || firstNonLoggedWriteAge > logMaxAge || noWritePeriod > logAfterNoWritePeriod || bufferOutputStream.size() > logWhenBufferExceedsSize) {
 					String currentBufferString;
 					try {

@@ -1,9 +1,10 @@
 package co.codewizards.cloudstore.server;
 
-import static co.codewizards.cloudstore.core.io.StreamUtil.castStream;
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
-import static co.codewizards.cloudstore.core.util.Util.doNothing;
-import static java.util.Objects.requireNonNull;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
+import static co.codewizards.cloudstore.core.io.StreamUtil.*;
+import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
+import static co.codewizards.cloudstore.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,7 +143,7 @@ public class CloudStoreServer implements Runnable {
 					localServer = null;
 
 				server = createServer();
-				
+
 				logger.debug("[{}].run: Starting server (securePort={})...", instanceId, getSecurePort());
 				server.start();
 
@@ -250,7 +251,7 @@ public class CloudStoreServer implements Runnable {
 			System.out.println("There is no key, yet. Creating a new RSA key pair, now. This might");
 			System.out.println("take a while (a few seconds up to a few minutes). Please be patient!");
 			System.out.println("**********************************************************************");
-			final long keyGenStartTimestamp = System.currentTimeMillis();
+			final long keyGenStartTimestamp = nowAsMillis();
 			final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null, KEY_STORE_PASSWORD_CHAR_ARRAY);
 
@@ -264,8 +265,8 @@ public class CloudStoreServer implements Runnable {
 
 			v3CertGen.setSerialNumber(BigInteger.valueOf(serial).abs());
 			v3CertGen.setIssuerDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
-			v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - (1000L * 60 * 60 * 24 * 3)));
-			v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + (1000L * 60 * 60 * 24 * 365 * 10)));
+			v3CertGen.setNotBefore(new Date(nowAsMillis() - (1000L * 60 * 60 * 24 * 3)));
+			v3CertGen.setNotAfter(new Date(nowAsMillis() + (1000L * 60 * 60 * 24 * 365 * 10)));
 			v3CertGen.setSubjectDN(new X509Principal("CN=" + CERTIFICATE_COMMON_NAME + ", OU=None, O=None, C=None"));
 
 			v3CertGen.setPublicKey(pair.getPublic());
@@ -283,7 +284,7 @@ public class CloudStoreServer implements Runnable {
 				fos.close();
 			}
 
-			final long keyGenDuration = System.currentTimeMillis() - keyGenStartTimestamp;
+			final long keyGenDuration = nowAsMillis() - keyGenStartTimestamp;
 			logger.info("initKeyStore: Creating RSA key pair took {} ms.", keyGenDuration);
 			System.out.println(String.format("Generating a new RSA key pair took %s ms.", keyGenDuration));
 		}

@@ -7,9 +7,9 @@ import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.config.ConfigImpl;
+import co.codewizards.cloudstore.core.updater.CloudStoreUpdaterCore;
 
 public class CloudStoreUpdaterTimer {
 
@@ -87,7 +87,7 @@ public class CloudStoreUpdaterTimer {
 		};
 
 		final Date nextRun;
-		if (onStart) {
+		if (onStart) { // must use System.currentTimeMillis() instead of Chronos, because timer.schedule(...) works with the real time.
 			nextRun = new Date(System.currentTimeMillis() + ON_START_TIMER_PERIOD);
 			logger.info("schedule: onStart=true nextRun={}", nextRun);
 		}

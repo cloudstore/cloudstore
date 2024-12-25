@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.io;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -99,14 +100,14 @@ class LockFileImpl implements LockFile {
 		if (timeoutMillis < 0)
 			throw new IllegalArgumentException("timeoutMillis < 0");
 
-		final long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = nowAsMillis();
 
 		while (!tryAcquire()) {
 			try {
 				Thread.sleep(300);
 			} catch (final InterruptedException e) { doNothing(); }
 
-			if (timeoutMillis > 0 && System.currentTimeMillis() - beginTimestamp > timeoutMillis) {
+			if (timeoutMillis > 0 && nowAsMillis() - beginTimestamp > timeoutMillis) {
 				throw new TimeoutException(String.format("Could not lock '%s' within timeout of %s ms!",
 						file.getAbsolutePath(), timeoutMillis));
 			}

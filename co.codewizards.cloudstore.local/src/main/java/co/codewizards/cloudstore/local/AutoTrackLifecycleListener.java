@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.local;
 
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -86,7 +86,7 @@ public class AutoTrackLifecycleListener extends AbstractLocalRepoTransactionList
 		// localRevision in the database (once per transaction).
 		final long localRevision = getTransactionOrFail().getLocalRevision();
 
-		final Date changed = now();
+		final Date changed = nowAsDate();
 		final Object oid = JDOHelper.getObjectId(pc);
 		if (!defer && oid != null) { // there is no OID, yet, if the object is NEW (not yet persisted).
 			final Date oldLastChanged = oid2LastChanged.get(oid);
@@ -129,7 +129,7 @@ public class AutoTrackLifecycleListener extends AbstractLocalRepoTransactionList
 	@Override
 	public void onCommit() {
 		defer = false;
-		final long start = System.currentTimeMillis();
+		final long start = nowAsMillis();
 		final PersistenceManager pm = getTransactionOrFail().getPersistenceManager();
 		for (final Map.Entry<Object, Date> me : oid2LastChanged.entrySet()) {
 			try {
@@ -147,7 +147,7 @@ public class AutoTrackLifecycleListener extends AbstractLocalRepoTransactionList
 		final int oid2LastChangedSize = oid2LastChanged.size();
 		oid2LastChanged.clear();
 
-		final long duration = System.currentTimeMillis() - start;
+		final long duration = nowAsMillis() - start;
 		if (duration >= 500)
 			logger.info("onCommit: Deferred operations took {} ms for {} entities.", duration, oid2LastChangedSize);
 		else

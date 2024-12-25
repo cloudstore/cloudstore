@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.ignore;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
@@ -61,7 +62,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 
 	private static void cleanFileRefs() {
 		synchronized (classMutex) {
-			if (System.currentTimeMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
+			if (nowAsMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
 				return;
 
 			for (final Iterator<SoftReference<File>> it = fileSoftRefs.iterator(); it.hasNext(); ) {
@@ -69,7 +70,7 @@ public class IgnoreRuleManagerImpl implements IgnoreRuleManager {
 				if (fileRef.get() == null)
 					it.remove();
 			}
-			fileRefsCleanLastTimestamp = System.currentTimeMillis();
+			fileRefsCleanLastTimestamp = nowAsMillis();
 		}
 	}
 

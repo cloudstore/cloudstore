@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
@@ -115,7 +116,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 	private Timer closeDeferredTimer;
 	private TimerTask closeDeferredTimerTask;
 	private final Lock lock = new ReentrantLock();
-	private final long created = System.currentTimeMillis();
+	private final long created = nowAsMillis();
 
 	private LocalRepoMetaDataImpl localRepoMetaDataImpl;
 
@@ -439,7 +440,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 	private void initPersistenceManagerFactory(final boolean createRepository) throws LocalRepoManagerException {
 		logger.debug("[{}]initPersistenceManagerFactory: Starting up PersistenceManagerFactory...", id);
-		final long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = nowAsMillis();
 //		initPersistenceManagerFactoryAndPersistenceCapableClassesWithRetry(createRepository);
 		initPersistenceManagerFactoryAndPersistenceCapableClasses(createRepository);
 
@@ -461,7 +462,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 
 			pm.close();
 		}
-		logger.info("[{}]initPersistenceManagerFactory: Started up PersistenceManagerFactory successfully in {} ms.", id, System.currentTimeMillis() - beginTimestamp);
+		logger.info("[{}]initPersistenceManagerFactory: Started up PersistenceManagerFactory successfully in {} ms.", id, nowAsMillis() - beginTimestamp);
 	}
 
 	private void deleteExpiredRemoteRepositoryRequests() {
@@ -472,7 +473,7 @@ class LocalRepoManagerImpl implements LocalRepoManager {
 				pm.currentTransaction().begin();
 
 				final RemoteRepositoryRequestDao dao = new RemoteRepositoryRequestDao().persistenceManager(pm);
-				final Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(System.currentTimeMillis() - remoteRepositoryRequestExpiryAge));
+				final Collection<RemoteRepositoryRequest> expiredRequests = dao.getRemoteRepositoryRequestsChangedBefore(new Date(nowAsMillis() - remoteRepositoryRequestExpiryAge));
 				pm.deletePersistentAll(expiredRequests);
 
 				pm.currentTransaction().commit();

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.ls.rest.server;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -310,15 +311,15 @@ public class InverseInvoker implements Invoker {
 			}
 
 			// The request is pushed, hence from now on, we wait for the response until the timeout in PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS.
-			final long startTimestamp = System.currentTimeMillis();
+			final long startTimestamp = nowAsMillis();
 
 			synchronized (requestId2InverseServiceResponse) {
 				boolean first = true;
-				while (first || System.currentTimeMillis() - startTimestamp < PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
+				while (first || nowAsMillis() - startTimestamp < PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
 					if (first)
 						first = false;
 					else {
-						final long timeSpentTillNowMillis = System.currentTimeMillis() - startTimestamp;
+						final long timeSpentTillNowMillis = nowAsMillis() - startTimestamp;
 						final long waitTimeout = PERFORM_INVERSE_SERVICE_REQUEST_TIMEOUT_MS - timeSpentTillNowMillis;
 						if (waitTimeout > 0) {
 							try {
@@ -371,15 +372,15 @@ public class InverseInvoker implements Invoker {
 	}
 
 	public InverseServiceRequest pollInverseServiceRequest() {
-		final long startTimestamp = System.currentTimeMillis();
+		final long startTimestamp = nowAsMillis();
 
 		synchronized (inverseServiceRequests) {
 			boolean first = true;
-			while (first || System.currentTimeMillis() - startTimestamp < POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
+			while (first || nowAsMillis() - startTimestamp < POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS) {
 				if (first)
 					first = false;
 				else {
-					final long timeSpentTillNowMillis = System.currentTimeMillis() - startTimestamp;
+					final long timeSpentTillNowMillis = nowAsMillis() - startTimestamp;
 					final long waitTimeout = POLL_INVERSE_SERVICE_REQUEST_TIMEOUT_MS - timeSpentTillNowMillis;
 					if (waitTimeout > 0) {
 						try {

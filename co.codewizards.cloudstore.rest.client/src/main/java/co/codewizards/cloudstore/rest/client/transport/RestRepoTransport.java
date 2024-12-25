@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.rest.client.transport;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.util.Objects.*;
@@ -176,12 +177,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 			logger.error("getChangeSetDto: Reading ChangeSetDto-cache-file failed: " + x, x);
 		}
 
-		final long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = nowAsMillis();
 		while (true) {
 			try {
 				result = getClient().execute(new GetChangeSetDto(getRepositoryId().toString(), localSync, lastSyncToRemoteRepoLocalRepositoryRevisionSynced));
 			} catch (final DeferredCompletionException x) {
-				if (System.currentTimeMillis() > beginTimestamp + changeSetTimeout)
+				if (nowAsMillis() > beginTimestamp + changeSetTimeout)
 					throw new TimeoutException(String.format("Could not get change-set within %s milliseconds!", changeSetTimeout), x);
 
 				logger.info("getChangeSetDto: Got DeferredCompletionException; will retry.");
@@ -243,12 +244,12 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 	@Override
 	public RepoFileDto getRepoFileDto(String path) {
 		path = prefixPath(path);
-		final long beginTimestamp = System.currentTimeMillis();
+		final long beginTimestamp = nowAsMillis();
 		while (true) {
 			try {
 				return getClient().execute(new GetRepoFileDto(getRepositoryId().toString(), path));
 			} catch (final DeferredCompletionException x) {
-				if (System.currentTimeMillis() > beginTimestamp + fileChunkSetTimeout)
+				if (nowAsMillis() > beginTimestamp + fileChunkSetTimeout)
 					throw new TimeoutException(String.format("Could not get file-chunk-set within %s milliseconds!", fileChunkSetTimeout), x);
 
 				logger.info("getFileChunkSet: Got DeferredCompletionException; will retry.");
@@ -366,7 +367,7 @@ public class RestRepoTransport extends AbstractRepoTransport implements Credenti
 
 	private boolean isAfterRenewalDate(final AuthToken authToken) {
 		requireNonNull(authToken, "authToken");
-		return System.currentTimeMillis() > authToken.getRenewalDateTime().getMillis();
+		return nowAsMillis() > authToken.getRenewalDateTime().getMillis();
 	}
 
 	protected CloudStoreRestClient getClient() {

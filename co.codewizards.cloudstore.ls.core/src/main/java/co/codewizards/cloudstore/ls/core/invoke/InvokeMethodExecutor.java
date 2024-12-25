@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.ReflectionUtil.*;
 import static java.util.Objects.*;
 
@@ -45,7 +46,7 @@ public class InvokeMethodExecutor {
 					for (final Iterator<DelayedResponseIdScheduledEviction> it = delayedResponseIdScheduledEvictions.iterator(); it.hasNext(); ) {
 						final DelayedResponseIdScheduledEviction delayedResponseIdScheduledEviction = it.next();
 
-						if (System.currentTimeMillis() < delayedResponseIdScheduledEviction.getScheduledEvictionTimestamp())
+						if (nowAsMillis() < delayedResponseIdScheduledEviction.getScheduledEvictionTimestamp())
 							break;
 
 						delayedResponseIdsToEvict.add(delayedResponseIdScheduledEviction.getDelayedResponseId());
@@ -109,7 +110,7 @@ public class InvokeMethodExecutor {
 	public MethodInvocationResponse getDelayedResponse(final Uid delayedResponseId) throws Exception {
 		requireNonNull(delayedResponseId, "delayedResponseId");
 
-		long schedEvTiSt = System.currentTimeMillis() + 240000; // scheduled eviction in 4 minutes
+		long schedEvTiSt = nowAsMillis() + 240000; // scheduled eviction in 4 minutes
 		final InvocationRunnable invocationRunnable = delayedResponseId2InvocationRunnable.get(delayedResponseId);
 		if (invocationRunnable == null)
 			throw new IllegalArgumentException("delayedResponseId unknown: " + delayedResponseId);
@@ -133,7 +134,7 @@ public class InvokeMethodExecutor {
 				logger.debug("performMethodInvocation: " + e, e);
 			}
 
-			schedEvTiSt = System.currentTimeMillis() + 240000; // scheduled eviction in 4 minutes
+			schedEvTiSt = nowAsMillis() + 240000; // scheduled eviction in 4 minutes
 
 			methodInvocationResponse = invocationRunnable.getMethodInvocationResponse();
 			if (methodInvocationResponse != null) {
@@ -229,7 +230,7 @@ public class InvokeMethodExecutor {
 				if (delayedResponseId != null) {
 					// We give the client 15 minutes to fetch the result.
 					delayedResponseIdScheduledEvictions.add(new DelayedResponseIdScheduledEviction(
-							System.currentTimeMillis() + 900L * 1000L, delayedResponseId));
+							nowAsMillis() + 900L * 1000L, delayedResponseId));
 				}
 			}
 		}

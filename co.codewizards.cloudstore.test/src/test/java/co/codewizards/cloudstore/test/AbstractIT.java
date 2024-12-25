@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
@@ -23,6 +24,7 @@ import org.junit.BeforeClass;
 
 import co.codewizards.cloudstore.core.DevMode;
 import co.codewizards.cloudstore.core.Uid;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManagerFactory;
@@ -35,7 +37,6 @@ import co.codewizards.cloudstore.local.persistence.NormalFile;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
-import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionContext;
 import co.codewizards.cloudstore.rest.client.ssl.CheckServerTrustedCertificateExceptionResult;
 import co.codewizards.cloudstore.rest.client.ssl.DynamicX509TrustManagerCallback;
@@ -101,7 +102,7 @@ public abstract class AbstractIT {
 
 	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		final long timestamp = System.currentTimeMillis();
+		final long timestamp = nowAsMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
 		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);

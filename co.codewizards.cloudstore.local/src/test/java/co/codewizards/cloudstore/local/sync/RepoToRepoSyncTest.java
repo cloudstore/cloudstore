@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.sync;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
@@ -678,9 +679,9 @@ public class RepoToRepoSyncTest extends AbstractTest {
 		assertThat(broken.isSymbolicLink()).isTrue();
 		assertThat(broken.exists()).isFalse(); // following is not possible, because it's broken, i.e. exists() must be false!
 
-		final long child_1_a_lastModified = System.currentTimeMillis() - (24L * 3600);
-		final long symlink_b_lastModified = System.currentTimeMillis() - (3L * 3600);
-		final long symlink_broken_lastModified = System.currentTimeMillis() - (7L * 3600);
+		final long child_1_a_lastModified = nowAsMillis() - (24L * 3600);
+		final long symlink_b_lastModified = nowAsMillis() - (3L * 3600);
+		final long symlink_broken_lastModified = nowAsMillis() - (7L * 3600);
 
 		child_1_a.setLastModifiedNoFollow(child_1_a_lastModified);
 		assertThat(child_1_a.getLastModifiedNoFollow()).isBetween(child_1_a_lastModified - 2000, child_1_a_lastModified + 2000);

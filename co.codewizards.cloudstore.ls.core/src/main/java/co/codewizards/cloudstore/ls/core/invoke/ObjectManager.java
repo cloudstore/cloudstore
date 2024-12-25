@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.ls.core.invoke;
 
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -137,7 +137,7 @@ public class ObjectManager {
 
 		final List<ObjectManager> objectManagersToClose = new LinkedList<>();
 		synchronized (ObjectManager.class) {
-			final long now = System.currentTimeMillis();
+			final long now = nowAsMillis();
 
 			if (evictOldObjectManagersLastInvocation > now - EVICT_UNUSED_OBJECT_MANAGER_PERIOD_MS)
 				return;
@@ -172,7 +172,7 @@ public class ObjectManager {
 	}
 
 	private static void allObjectManagers_evictZeroReferenceObjectRefs() {
-		final long now = System.currentTimeMillis();
+		final long now = nowAsMillis();
 
 		if (evictZeroReferenceObjectRefsLastInvocation > now - EVICT_ZERO_REFERENCE_OBJECT_REFS_PERIOD_MS)
 			return;
@@ -185,7 +185,7 @@ public class ObjectManager {
 	}
 
 	private synchronized void evictZeroReferenceObjectRefs() {
-		final long now = System.currentTimeMillis();
+		final long now = nowAsMillis();
 
 		final LinkedList<ObjectRef> objectRefsToRemove = new LinkedList<>();
 		for (final Map.Entry<ObjectRef, Long> me : zeroReferenceObjectRef2Timestamp.entrySet()) {
@@ -211,7 +211,7 @@ public class ObjectManager {
 		return lastUseDate;
 	}
 	private void updateLastUseDate() {
-		this.lastUseDate = now();
+		this.lastUseDate = nowAsDate();
 	}
 
 	public boolean isNeverEvict() {
@@ -268,13 +268,13 @@ public class ObjectManager {
 
 			objectRef2Object.put(objectRef, object);
 			object2ObjectRef.put(object, objectRef);
-			zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+			zeroReferenceObjectRef2Timestamp.put(objectRef, nowAsMillis());
 		}
 		else {
 			// Must refresh timestamp to guarantee enough time for reference handling.
 			// Otherwise it might be released after maybe only a few millis!
 			if (zeroReferenceObjectRef2Timestamp.containsKey(objectRef))
-				zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+				zeroReferenceObjectRef2Timestamp.put(objectRef, nowAsMillis());
 		}
 		return objectRef;
 	}
@@ -370,7 +370,7 @@ public class ObjectManager {
 
 			if (refIds.isEmpty()) {
 				objectRef2RefIds.remove(objectRef);
-				zeroReferenceObjectRef2Timestamp.put(objectRef, System.currentTimeMillis());
+				zeroReferenceObjectRef2Timestamp.put(objectRef, nowAsMillis());
 			}
 		}
 		logger.trace("[{}].decRefCount: {} refCountAfter={} refCountBefore={} refId={}",

@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
 import static java.util.Objects.*;
 
@@ -35,6 +35,8 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.DirectoryDto;
@@ -86,8 +88,6 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepositoryRequestDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
 import co.codewizards.cloudstore.local.persistence.Symlink;
-import co.codewizards.cloudstore.core.config.Config;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 
 public class FileRepoTransport extends AbstractRepoTransport implements LocalRepoTransport {
 	private static final Logger logger = LoggerFactory.getLogger(FileRepoTransport.class);
@@ -147,7 +147,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 				if (!remoteRepositoryRequest.getLocalPathPrefix().equals(localPathPrefix))
 					throw new IllegalStateException("Cannot modify the local path-prefix! Use 'dropRepoConnection' to drop the old request or wait until it expired.");
 
-				remoteRepositoryRequest.setChanged(now()); // make sure it is not deleted soon (the request expires after a while)
+				remoteRepositoryRequest.setChanged(nowAsDate()); // make sure it is not deleted soon (the request expires after a while)
 			}
 			else {
 				final long remoteRepositoryRequestsCount = remoteRepositoryRequestDao.getObjectsCount();
@@ -544,14 +544,14 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 	}
 
 //	private List<FileChunkDto> toFileChunkDtos(final Set<FileChunk> fileChunks) {
-//		final long startTimestamp = System.currentTimeMillis();
+//		final long startTimestamp = nowAsMillis();
 //		final List<FileChunkDto> result = new ArrayList<FileChunkDto>(requireNonNull("fileChunks", fileChunks).size());
 //		for (final FileChunk fileChunk : fileChunks) {
 //			final FileChunkDto fileChunkDto = toFileChunkDto(fileChunk);
 //			if (fileChunkDto != null)
 //				result.add(fileChunkDto);
 //		}
-//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
+//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), nowAsMillis() - startTimestamp);
 //		return result;
 //	}
 //
@@ -563,7 +563,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //		return dto;
 //	}
 //	private List<RepoFileDto> toRepoFileDtos(final Collection<RepoFile> fileChunks) {
-//		final long startTimestamp = System.currentTimeMillis();
+//		final long startTimestamp = nowAsMillis();
 //		final RepoFileDtoConverter converter = new RepoFileDtoConverter(transaction);
 //		final List<RepoFileDto> result = new ArrayList<RepoFileDto>(requireNonNull("fileChunks", fileChunks).size());
 //		for (final RepoFile fileChunk : fileChunks) {
@@ -571,7 +571,7 @@ public class FileRepoTransport extends AbstractRepoTransport implements LocalRep
 //			if (fileChunkDto != null)
 //				result.add(fileChunkDto);
 //		}
-//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
+//		logger.debug("toFileChunkDtos: Creating {} FileChunkDtos took {} ms.", result.size(), nowAsMillis() - startTimestamp);
 //		return result;
 //	}
 //

@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.updater;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.UrlUtil.*;
 import static java.util.Objects.*;
 
@@ -109,7 +109,7 @@ public class CloudStoreUpdaterCore {
 		if (remoteVersion == null) {
 			final RemoteVersionCache remoteVersionCache = readRemoteVersionCacheFromProperties();
 			final long cachePeriod = getRemoteVersionCacheValidityPeriod();
-			if (remoteVersionCache != null && System.currentTimeMillis() - remoteVersionCache.remoteVersionTimestamp.getMillis() <= cachePeriod) {
+			if (remoteVersionCache != null && nowAsMillis() - remoteVersionCache.remoteVersionTimestamp.getMillis() <= cachePeriod) {
 				logger.debug("getRemoteVersion: Cached value '{}' is from {} and still valid (it expires {}). Using this value (not asking server).",
 						remoteVersionCache.remoteVersion,
 						remoteVersionCache.remoteVersionTimestamp.toDate(),
@@ -141,7 +141,7 @@ public class CloudStoreUpdaterCore {
 					} finally {
 						in.close();
 					}
-					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(now())));
+					writeRemoteVersionCacheToProperties(new RemoteVersionCache(remoteVersion, new DateTime(nowAsDate())));
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}

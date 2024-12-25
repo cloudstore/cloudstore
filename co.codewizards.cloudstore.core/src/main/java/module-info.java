@@ -1,7 +1,8 @@
 open module co.codewizards.cloudstore.core {
 
 //	requires transitive java.base; // https://bugs.openjdk.java.net/browse/JDK-8182734
-	requires transitive java.se;
+
+requires transitive java.se;
 
 	requires transitive java.xml;
 	requires transitive java.xml.bind;
@@ -15,6 +16,7 @@ open module co.codewizards.cloudstore.core {
 	exports co.codewizards.cloudstore.core.appid;
 	exports co.codewizards.cloudstore.core.auth;
 	exports co.codewizards.cloudstore.core.bean;
+	exports co.codewizards.cloudstore.core.chronos;
 	exports co.codewizards.cloudstore.core.collection;
 	exports co.codewizards.cloudstore.core.concurrent;
 	exports co.codewizards.cloudstore.core.config;
@@ -40,6 +42,7 @@ open module co.codewizards.cloudstore.core {
 	exports co.codewizards.cloudstore.core.version;
 
 	uses co.codewizards.cloudstore.core.appid.AppId;
+	uses co.codewizards.cloudstore.core.chronos.Chronos;
 	uses co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProvider;
 	uses co.codewizards.cloudstore.core.objectfactory.ClassExtension;
 	uses co.codewizards.cloudstore.core.oio.FileFactory;
@@ -49,6 +52,9 @@ open module co.codewizards.cloudstore.core {
 
 	provides co.codewizards.cloudstore.core.appid.AppId
 		with co.codewizards.cloudstore.core.appid.CloudStoreAppId;
+
+	provides co.codewizards.cloudstore.core.chronos.Chronos
+	with co.codewizards.cloudstore.core.chronos.DefaultChronosImpl;
 
 	provides co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProvider
 		with co.codewizards.cloudstore.core.dto.jaxb.CloudStoreJaxbContextProviderImpl;

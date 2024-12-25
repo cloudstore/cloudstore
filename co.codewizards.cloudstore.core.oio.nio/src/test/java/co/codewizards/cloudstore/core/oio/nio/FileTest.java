@@ -1,6 +1,5 @@
 package co.codewizards.cloudstore.core.oio.nio;
 
-import static co.codewizards.cloudstore.core.oio.OioFileFactory.createFile;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -22,7 +21,6 @@ import org.junit.runners.Parameterized;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.oio.FileFactory;
 import co.codewizards.cloudstore.core.oio.IoFileFactory;
-import co.codewizards.cloudstore.core.oio.nio.NioFileFactory;
 
 @RunWith(value = Parameterized.class)
 public class FileTest {
@@ -403,10 +401,10 @@ public class FileTest {
 	public void lastModifiedNoFollow() {
 		final long tolerance = 1000;
 		long lastModified = file.lastModified();
-		final long currentTimeMillis = System.currentTimeMillis();
-		assertThat(lastModified).isBetween(currentTimeMillis - tolerance, currentTimeMillis + tolerance);
+		final long now = System.currentTimeMillis(); // nowAsMillis(); // the file's last-modified-timestamp is assigned by the OS => use real time
+		assertThat(lastModified).isBetween(now - tolerance, now + tolerance);
 
-		final long newLastModified = currentTimeMillis - 60 * 1000;
+		final long newLastModified = now - 60 * 1000;
 		file.setLastModifiedNoFollow(newLastModified);
 		lastModified = file.lastModified();
 		assertThat(lastModified).isBetween(newLastModified - tolerance, newLastModified + tolerance);

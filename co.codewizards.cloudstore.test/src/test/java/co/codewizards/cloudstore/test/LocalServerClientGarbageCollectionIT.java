@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.test;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 	@Test
 	public void testMultiThreadGarbageCollection() throws Exception {
 		final ExampleServiceRegistry registry = client.invokeStatic(ExampleServiceRegistryImpl.class, "getInstance");
-		final long startTimestamp = System.currentTimeMillis();
+		final long startTimestamp = nowAsMillis();
 
 		final List<Thread> threads = new ArrayList<Thread>();
 
@@ -130,7 +131,7 @@ public class LocalServerClientGarbageCollectionIT extends AbstractIT {
 			Thread t = new Thread() {
 				@Override
 				public void run() {
-					while (System.currentTimeMillis() - startTimestamp < 30000L && errors.isEmpty()) {
+					while (nowAsMillis() - startTimestamp < 30000L && errors.isEmpty()) {
 						try {
 							ExampleService exampleService = registry.getExampleServiceOrCreate(random.nextInt(5));
 							exampleService.setStringValue("bla");

@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.oio;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static java.util.Objects.*;
 
@@ -25,7 +26,7 @@ public class IoFileUtil {
 	public static File createTempDirectory(final String prefix) throws IOException {
 		final String checkedPrefix = (prefix == null) ? "" : prefix;
 		final java.io.File javaIoTmpDir = new java.io.File(System.getProperty("java.io.tmpdir"));
-		final String baseName = checkedPrefix + System.currentTimeMillis();
+		final String baseName = checkedPrefix + nowAsMillis();
 		final int attempts = 1000;
 		for (int i = 0; i < attempts; i++) {
 			final java.io.File tmpDir = new java.io.File(javaIoTmpDir, baseName + i);
@@ -181,7 +182,7 @@ public class IoFileUtil {
 		//first, lets check with a simple rename:
 		if (!fromDir.isDirectory())
 			throw new IOException("fromDir must be directory, aborting move!");
-		final File f = createFile(fromDir.getParentFile(), Long.toString(System.currentTimeMillis()));
+		final File f = createFile(fromDir.getParentFile(), Long.toString(nowAsMillis()));
 		final boolean mkdir = f.mkdir();
 		if (!mkdir)
 			throw new IOException("Can not create mkdir, aborting move!");

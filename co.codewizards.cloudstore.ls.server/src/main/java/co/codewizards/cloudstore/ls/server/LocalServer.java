@@ -27,12 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import co.codewizards.cloudstore.core.auth.BouncyCastleRegistrationUtil;
+import co.codewizards.cloudstore.core.config.ConfigDir;
+import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.core.io.LockFile;
 import co.codewizards.cloudstore.core.io.LockFileFactory;
 import co.codewizards.cloudstore.core.io.TimeoutException;
 import co.codewizards.cloudstore.core.oio.File;
-import co.codewizards.cloudstore.core.config.ConfigDir;
-import co.codewizards.cloudstore.core.config.ConfigImpl;
 import co.codewizards.cloudstore.ls.core.LocalServerPropertiesManager;
 import co.codewizards.cloudstore.ls.core.LsConfig;
 import co.codewizards.cloudstore.ls.rest.server.LocalServerRest;
@@ -207,7 +207,7 @@ public class LocalServer {
 //			return;
 //
 //		final long timeoutMillis = 60000L;
-//		final long begin = System.currentTimeMillis();
+//		final long begin = nowAsMillis();
 //		while (true) {
 //			try {
 //				final Socket socket = new Socket("127.0.0.1", localPort);
@@ -217,7 +217,7 @@ public class LocalServer {
 //				try { Thread.sleep(1000); } catch (final InterruptedException ie) { }
 //			}
 //
-//			if (System.currentTimeMillis() - begin > timeoutMillis)
+//			if (nowAsMillis() - begin > timeoutMillis)
 //				throw new TimeoutException("Server did not start within timeout (ms): " + timeoutMillis);
 //		}
 //	}

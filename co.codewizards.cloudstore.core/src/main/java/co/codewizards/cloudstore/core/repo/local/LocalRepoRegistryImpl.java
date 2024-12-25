@@ -1,8 +1,8 @@
 package co.codewizards.cloudstore.core.repo.local;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
 import static java.util.Objects.*;
 
@@ -438,12 +438,12 @@ public class LocalRepoRegistryImpl implements LocalRepoRegistry
 		removeProperty(PROP_EVICT_DEAD_ENTRIES_PERIOD);
 		final Date last = getPropertyAsDate(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP);
 		if (last != null) {
-			final long millisAfterLast = System.currentTimeMillis() - last.getTime();
+			final long millisAfterLast = nowAsMillis() - last.getTime();
 			if (millisAfterLast >= 0 && millisAfterLast <= period) // < 0 : travelled back in time
 				return false;
 		}
 		final boolean modified = evictDeadEntries();
-		setProperty(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP, now());
+		setProperty(PROP_EVICT_DEAD_ENTRIES_LAST_TIMESTAMP, nowAsDate());
 		return modified;
 	}
 

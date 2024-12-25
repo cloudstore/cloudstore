@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.Util.*;
@@ -157,7 +158,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 		boolean restoreRenamedFiles = false;
 		try {
 			stopLocalServer();
-			final long localServerStoppedTimestamp = System.currentTimeMillis();
+			final long localServerStoppedTimestamp = nowAsMillis();
 
 			final File downloadFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].downloadURL");
 			final File signatureFile = downloadURLViaRemoteUpdateProperties("artifact[${artifactId}].signatureURL");
@@ -165,7 +166,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 			System.out.println("Verifying PGP signature.");
 			new PGPVerifier().verify(downloadFile, signatureFile);
 
-			final long durationAfterLocalServerStop = System.currentTimeMillis() - localServerStoppedTimestamp;
+			final long durationAfterLocalServerStop = nowAsMillis() - localServerStoppedTimestamp;
 			final long additionalWaitTime = 10_000L - durationAfterLocalServerStop;
 			if (additionalWaitTime > 0L) {
 				// We make sure, at least 10 seconds passed after the LocalServer stopped in order to make sure
@@ -178,7 +179,7 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 
 			final File backupDir = getBackupDir();
 			backupDir.mkdirs();
-			final File backupTarGzFile = createFile(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(System.currentTimeMillis(), 36))));
+			final File backupTarGzFile = createFile(backupDir, resolve(String.format("${artifactId}-${localVersion}.backup-%s.tar.gz", Long.toString(nowAsMillis(), 36))));
 			System.out.println("Creating backup: " + backupTarGzFile);
 
 			new TarGzFile(backupTarGzFile)
@@ -246,9 +247,9 @@ public class CloudStoreUpdater extends CloudStoreUpdaterCore {
 				}
 
 				System.out.println("Waiting for LocalServer to stop...");
-				final long waitStartTimestamp = System.currentTimeMillis();
+				final long waitStartTimestamp = nowAsMillis();
 				do {
-					if (System.currentTimeMillis() - waitStartTimestamp > 120_000L)
+					if (nowAsMillis() - waitStartTimestamp > 120_000L)
 						throw new TimeoutException("LocalServer did not stop within timeout!");
 
 					localServerRunning = ! tryAcquireLocalServerRunningLockFile();

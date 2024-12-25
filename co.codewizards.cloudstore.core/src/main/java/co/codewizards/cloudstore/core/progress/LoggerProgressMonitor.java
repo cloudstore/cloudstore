@@ -1,5 +1,7 @@
 package co.codewizards.cloudstore.core.progress;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.regex.Pattern;
@@ -228,7 +230,7 @@ public class LoggerProgressMonitor implements ProgressMonitor
 			doLog = true;
 
 		// log when the last log happened very long ago (longer than our minimum period).
-		final long now = System.currentTimeMillis();
+		final long now = nowAsMillis();
 		if (!doLog && (now - lastLogMessage_timestamp >= logMinPeriodMSec))
 			doLog = true;
 

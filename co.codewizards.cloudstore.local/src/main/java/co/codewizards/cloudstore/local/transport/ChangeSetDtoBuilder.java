@@ -1,9 +1,9 @@
 package co.codewizards.cloudstore.local.transport;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
-import static co.codewizards.cloudstore.core.util.AssertUtil.*;
 import static java.util.Objects.*;
 
 import java.io.IOException;
@@ -22,6 +22,7 @@ import javax.jdo.FetchPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.dto.ChangeSetDto;
 import co.codewizards.cloudstore.core.dto.ConfigPropSetDto;
 import co.codewizards.cloudstore.core.dto.CopyModificationDto;
@@ -33,7 +34,6 @@ import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoTransaction;
 import co.codewizards.cloudstore.core.repo.transport.RepoTransport;
-import co.codewizards.cloudstore.core.util.AssertUtil;
 import co.codewizards.cloudstore.local.ContextWithPersistenceManager;
 import co.codewizards.cloudstore.local.dto.DeleteModificationDtoConverter;
 import co.codewizards.cloudstore.local.dto.RepoFileDtoConverter;
@@ -53,7 +53,6 @@ import co.codewizards.cloudstore.local.persistence.RemoteRepository;
 import co.codewizards.cloudstore.local.persistence.RemoteRepositoryDao;
 import co.codewizards.cloudstore.local.persistence.RepoFile;
 import co.codewizards.cloudstore.local.persistence.RepoFileDao;
-import co.codewizards.cloudstore.core.config.Config;
 
 public class ChangeSetDtoBuilder {
 
@@ -319,14 +318,14 @@ public class ChangeSetDtoBuilder {
 	}
 
 	private List<ModificationDto> toModificationDtos(final Collection<Modification> modifications) {
-		final long startTimestamp = System.currentTimeMillis();
+		final long startTimestamp = nowAsMillis();
 		final List<ModificationDto> result = new ArrayList<ModificationDto>(requireNonNull(modifications, "modifications").size());
 		for (final Modification modification : modifications) {
 			final ModificationDto modificationDto = toModificationDto(modification);
 			if (modificationDto != null)
 				result.add(modificationDto);
 		}
-		logger.debug("toModificationDtos: Creating {} ModificationDtos took {} ms.", result.size(), System.currentTimeMillis() - startTimestamp);
+		logger.debug("toModificationDtos: Creating {} ModificationDtos took {} ms.", result.size(), nowAsMillis() - startTimestamp);
 		return result;
 	}
 

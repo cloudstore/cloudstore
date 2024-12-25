@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.repo.sync;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.HashUtil.*;
@@ -743,7 +744,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			subMonitor.beginTask("Synchronising...", fromFileChunkDtosDirty.size());
 			fileChunkIndex = -1;
 			long bytesCopied = 0;
-			final long copyChunksBeginTimestamp = System.currentTimeMillis();
+			final long copyChunksBeginTimestamp = nowAsMillis();
 			for (final FileChunkDto fileChunkDto : fromFileChunkDtosDirty) {
 				++fileChunkIndex;
 				if (logger.isTraceEnabled()) {
@@ -781,7 +782,7 @@ public class RepoToRepoSync implements AutoCloseable {
 			subMonitor.done();
 
 			logger.info("Copied {} dirty file-chunks with together {} bytes in {} ms. path='{}'",
-					fromFileChunkDtosDirty.size(), bytesCopied, System.currentTimeMillis() - copyChunksBeginTimestamp, path);
+					fromFileChunkDtosDirty.size(), bytesCopied, nowAsMillis() - copyChunksBeginTimestamp, path);
 
 			endPutFile(fromRepoTransport, toRepoTransport, repoFileDtoTreeNode, path, fromNormalFileDto);
 			localRepoTransport.markFileInProgress(fromRepoTransport.getRepositoryId(), toRepoTransport.getRepositoryId(), path, false);

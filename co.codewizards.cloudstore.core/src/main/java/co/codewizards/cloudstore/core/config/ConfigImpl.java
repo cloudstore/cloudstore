@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.core.config;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.AssertUtil.*;
@@ -140,7 +141,7 @@ public class ConfigImpl implements Config {
 
 	private static void cleanFileRefs() {
 		synchronized (classMutex) {
-			if (System.currentTimeMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
+			if (nowAsMillis() - fileRefsCleanLastTimestamp < fileRefsCleanPeriod)
 				return;
 
 			for (final Iterator<SoftReference<File>> it = fileSoftRefs.iterator(); it.hasNext(); ) {
@@ -148,7 +149,7 @@ public class ConfigImpl implements Config {
 				if (fileRef.get() == null)
 					it.remove();
 			}
-			fileRefsCleanLastTimestamp = System.currentTimeMillis();
+			fileRefsCleanLastTimestamp = nowAsMillis();
 		}
 	}
 
@@ -343,7 +344,7 @@ public class ConfigImpl implements Config {
 	protected long getLastModifiedAndWaitIfNeeded(final File file) {
 		requireNonNull(file, "file");
 		long lastModified = file.lastModified(); // is 0 for non-existing file
-		final long now = System.currentTimeMillis();
+		final long now = nowAsMillis();
 
 		// Check and handle timestamp in the future.
 		if (lastModified > now) {

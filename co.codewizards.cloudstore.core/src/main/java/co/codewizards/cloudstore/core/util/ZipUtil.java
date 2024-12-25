@@ -303,7 +303,7 @@ public final class ZipUtil {
 
 		boolean doUnzip = true;
 		long zipLength = -1;
-		long zipLastModified = System.currentTimeMillis();
+		long zipLastModified = System.currentTimeMillis(); // not using chronos, because timestamp given by file-system.
 
 		if ("file".equals(zipArchive.getProtocol())) {
 			final File fileToCheck = createFile(UrlUtil.urlToUri(zipArchive));

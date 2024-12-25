@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.db;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.objectfactory.ObjectFactoryUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
@@ -266,7 +267,7 @@ public class DatabaseMigrater implements DaoProvider {
 		File[] newFiles = targetMetaDir.listFiles();
 		requireNonNull(newFiles, "targetMetaDir.listFiles() :: targetMetaDir=" + targetMetaDir.getAbsolutePath());
 
-		final String backupFileNameSuffix = ".dbmigrate_" + Long.toString(System.currentTimeMillis(), 36) + ".bak";
+		final String backupFileNameSuffix = ".dbmigrate_" + Long.toString(nowAsMillis(), 36) + ".bak";
 
 		for (File newFile : newFiles) {
 			File oldFile = metaDir.createFile(newFile.getName());
@@ -896,7 +897,7 @@ public class DatabaseMigrater implements DaoProvider {
 		if (getTargetPersistencePropertiesFile().exists()) {
 			File directory = getTargetPersistencePropertiesFile().getParentFile();
 			File backupFile = directory.createFile(
-					getTargetPersistencePropertiesFile().getName() + ".bak_" + Long.toHexString(System.currentTimeMillis()));
+					getTargetPersistencePropertiesFile().getName() + ".bak_" + Long.toHexString(nowAsMillis()));
 			getTargetPersistencePropertiesFile().renameTo(backupFile);
 
 			if (getTargetPersistencePropertiesFile().exists())
@@ -986,7 +987,7 @@ public class DatabaseMigrater implements DaoProvider {
 	 */
 	protected void testTargetPersistence() throws Exception {
 		requireNonNull(targetPm, "targetPm");
-		String nf0Name = "test_" + Long.toString(System.currentTimeMillis(), 36) + "_" + new Uid();
+		String nf0Name = "test_" + Long.toString(nowAsMillis(), 36) + "_" + new Uid();
 		long nf0Id;
 
 		targetPm.currentTransaction().begin();

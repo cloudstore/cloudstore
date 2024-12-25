@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.client;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -9,11 +10,11 @@ import java.util.Arrays;
 import java.util.Random;
 
 import co.codewizards.cloudstore.core.DevMode;
+import co.codewizards.cloudstore.core.config.ConfigDir;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.util.IOUtil;
 import co.codewizards.cloudstore.local.FilenameFilterSkipMetaDir;
-import co.codewizards.cloudstore.core.config.ConfigDir;
 
 public abstract class AbstractTest {
 
@@ -28,7 +29,7 @@ public abstract class AbstractTest {
 
 	protected File newTestRepositoryLocalRoot(final String suffix) throws IOException {
 		assertThat(suffix).isNotNull();
-		final long timestamp = System.currentTimeMillis();
+		final long timestamp = nowAsMillis();
 		final int randomNumber = random.nextInt(BigInteger.valueOf(36).pow(5).intValue());
 		final String repoName = Long.toString(timestamp, 36) + '-' + Integer.toString(randomNumber, 36) + (suffix.isEmpty() ? "" : "-") + suffix;
 		final File localRoot = createFile(getTestRepositoryBaseDir(), repoName);

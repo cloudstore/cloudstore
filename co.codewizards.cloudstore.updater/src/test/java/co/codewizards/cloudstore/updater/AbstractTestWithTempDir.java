@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.updater;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.io.StreamUtil.*;
 import static co.codewizards.cloudstore.core.oio.OioFileFactory.*;
 import static co.codewizards.cloudstore.core.util.IOUtil.*;
@@ -39,7 +40,7 @@ public abstract class AbstractTestWithTempDir {
 
 	protected File downloadFileToTempDir(String urlStr) throws IOException {
 		logger.info("downloadFileToTempDir: {}", urlStr);
-		long startTimestamp = System.currentTimeMillis();
+		long startTimestamp = nowAsMillis();
 		URL url = new URL(urlStr);
 
 		String fileName = url.getPath();
@@ -57,7 +58,7 @@ public abstract class AbstractTestWithTempDir {
 				transferStreamData(in, out);
 			}
 		}
-		logger.info("downloadFileToTempDir: Download took {} ms: {}", System.currentTimeMillis() - startTimestamp, urlStr);
+		logger.info("downloadFileToTempDir: Download took {} ms: {}", nowAsMillis() - startTimestamp, urlStr);
 		return file;
 	}
 

@@ -1,6 +1,6 @@
 package co.codewizards.cloudstore.core.concurrent;
 
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static java.util.Objects.*;
 
 import java.lang.ref.WeakReference;
@@ -115,7 +115,7 @@ public class DeferrableExecutor {
 			try {
 				return delegate.call();
 			} finally {
-				callIdentifier2DoneDate.put(identifier, now());
+				callIdentifier2DoneDate.put(identifier, nowAsDate());
 			}
 		}
 
@@ -137,7 +137,7 @@ public class DeferrableExecutor {
 		rescheduleExpiredEntriesTimerTaskIfExpiryPeriodChanged();
 
 		List<String> expiredCallIdentifiers = new LinkedList<String>();
-		Date expireDoneBeforeDate = new Date(System.currentTimeMillis() - getExpiryPeriod());
+		Date expireDoneBeforeDate = new Date(nowAsMillis() - getExpiryPeriod());
 		synchronized (callIdentifier2DoneDate) {
 			for (Map.Entry<String, Date> me : callIdentifier2DoneDate.entrySet()) {
 				if (me.getValue().before(expireDoneBeforeDate))

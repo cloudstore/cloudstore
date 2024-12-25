@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
@@ -15,11 +16,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.codewizards.cloudstore.core.config.Config;
 import co.codewizards.cloudstore.core.oio.File;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoManager;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistry;
 import co.codewizards.cloudstore.core.repo.local.LocalRepoRegistryImpl;
-import co.codewizards.cloudstore.core.config.Config;
 
 public class LocalRepoRegistryTest extends AbstractTest
 {
@@ -78,7 +79,7 @@ public class LocalRepoRegistryTest extends AbstractTest
 		LocalRepoManager localRepoManager = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRootOld);
 		final UUID repositoryId = localRepoManager.getRepositoryId();
 		assertThat(localRepoManager).isNotNull();
-		final String aliasPrefix = Long.toString(System.currentTimeMillis(), 36);
+		final String aliasPrefix = Long.toString(nowAsMillis(), 36);
 		final String alias1 = aliasPrefix + "_alias1";
 		final String alias2 = aliasPrefix + "_alias2";
 		localRepoManager.putRepositoryAlias(alias1);
@@ -99,7 +100,7 @@ public class LocalRepoRegistryTest extends AbstractTest
 		final File localRoot2 = newTestRepositoryLocalRoot().getCanonicalFile();
 		localRoot2.mkdir();
 		final LocalRepoManager localRepoManager2 = localRepoManagerFactory.createLocalRepoManagerForNewRepository(localRoot2);
-		localRepoManager2.putRepositoryAlias(Long.toString(System.currentTimeMillis(), 36));
+		localRepoManager2.putRepositoryAlias(Long.toString(nowAsMillis(), 36));
 		localRepoManager2.close();
 
 		localRepoManager = localRepoManagerFactory.createLocalRepoManagerForExistingRepository(localRootNew);

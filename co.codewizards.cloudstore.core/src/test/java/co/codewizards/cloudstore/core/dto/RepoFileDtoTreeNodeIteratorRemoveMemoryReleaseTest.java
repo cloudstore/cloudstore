@@ -1,10 +1,9 @@
 package co.codewizards.cloudstore.core.dto;
 
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static co.codewizards.cloudstore.core.util.DebugUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +63,7 @@ public class RepoFileDtoTreeNodeIteratorRemoveMemoryReleaseTest {
 		DirectoryDto root = new DirectoryDto();
 		root.setId(nextRepoFileId());
 		root.setName(""); // root is level 0
-		root.setLastModified(now());
+		root.setLastModified(nowAsDate());
 		repoFileDtos.add(root);
 		createDummyRepoFileDtos(repoFileDtos, root, 1); // children are level 1
 		return RepoFileDtoTreeNode.createTree(repoFileDtos);
@@ -86,7 +85,7 @@ public class RepoFileDtoTreeNodeIteratorRemoveMemoryReleaseTest {
 			child.setId(nextRepoFileId());
 			child.setParentId(parent.getId());
 			child.setName(s + s + s + s);
-			child.setLastModified(now());
+			child.setLastModified(nowAsDate());
 
 			child.setSha1(HashUtil.sha1(randomBytes));
 			repoFileDtos.add(child);
@@ -101,7 +100,7 @@ public class RepoFileDtoTreeNodeIteratorRemoveMemoryReleaseTest {
 			child.setId(nextRepoFileId());
 			child.setParentId(parent.getId());
 			child.setName(s + s);
-			child.setLastModified(now());
+			child.setLastModified(nowAsDate());
 
 			if (level < maxLevel) {
 				createDummyRepoFileDtos(repoFileDtos, child, level + 1);

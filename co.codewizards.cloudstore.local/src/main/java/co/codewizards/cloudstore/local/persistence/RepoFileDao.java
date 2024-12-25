@@ -1,5 +1,6 @@
 package co.codewizards.cloudstore.local.persistence;
 
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static java.util.Objects.*;
 
 import java.util.Collection;
@@ -154,15 +155,15 @@ public class RepoFileDao extends Dao<RepoFile, RepoFileDao> {
 		final Query query = pm.newNamedQuery(getEntityClass(), "getRepoFilesChangedAfter_localRevision_exclLastSyncFromRepositoryId");
 		try {
 			clearFetchGroups();
-			long startTimestamp = System.currentTimeMillis();
+			long startTimestamp = nowAsMillis();
 			@SuppressWarnings("unchecked")
 			Collection<RepoFile> repoFiles = (Collection<RepoFile>) query.execute(localRevision, exclLastSyncFromRepositoryId.toString());
-			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: query.execute(...) took {} ms.", System.currentTimeMillis() - startTimestamp);
+			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: query.execute(...) took {} ms.", nowAsMillis() - startTimestamp);
 
 			fetchPlanBackup.restore(pm);
-			startTimestamp = System.currentTimeMillis();
+			startTimestamp = nowAsMillis();
 			repoFiles = load(repoFiles);
-			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: Loading result-set with {} elements took {} ms.", repoFiles.size(), System.currentTimeMillis() - startTimestamp);
+			logger.debug("getRepoFilesChangedAfterExclLastSyncFromRepositoryId: Loading result-set with {} elements took {} ms.", repoFiles.size(), nowAsMillis() - startTimestamp);
 
 			return repoFiles;
 		} finally {

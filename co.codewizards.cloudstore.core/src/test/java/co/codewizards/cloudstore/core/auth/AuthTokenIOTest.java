@@ -1,17 +1,13 @@
 package co.codewizards.cloudstore.core.auth;
 
-import static co.codewizards.cloudstore.core.util.DateUtil.*;
+import static co.codewizards.cloudstore.core.chronos.ChronosUtil.*;
 import static java.lang.System.*;
 import static org.assertj.core.api.Assertions.*;
-
-import java.util.Date;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import co.codewizards.cloudstore.core.auth.AuthToken;
-import co.codewizards.cloudstore.core.auth.AuthTokenIO;
 import co.codewizards.cloudstore.core.dto.DateTime;
 
 public class AuthTokenIOTest {
@@ -41,8 +37,8 @@ public class AuthTokenIOTest {
 
 	public static AuthToken createAuthToken() {
 		final AuthToken authToken = new AuthToken();
-		authToken.setExpiryDateTime(new DateTime(now()));
-		authToken.setRenewalDateTime(new DateTime(now()));
+		authToken.setExpiryDateTime(new DateTime(nowAsDate()));
+		authToken.setRenewalDateTime(new DateTime(nowAsDate()));
 		authToken.setPassword("fadgfsdagasd");
 		return authToken;
 	}
